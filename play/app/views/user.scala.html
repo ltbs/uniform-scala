@@ -1,0 +1,75 @@
+@(taxpayer: String, nino: String, page: Long)
+
+@main("Taxpayer Details page") {
+
+    <header class="hero">
+        <section class="hero__content">
+            <h1 class="hero__heading-large">Personal Details for: @taxpayer</h1>
+            <h2 class="hero__heading-small">
+                Data generated is based upon the custom Taxpayer model
+            </h2>
+        </section>
+    </header>
+
+    <div id="content">
+        <div class="alpha-banner">
+            <p>
+                <strong class="phase-tag">ALPHA</strong>
+                <span>This is a trial service. Help us improve it - send your
+                    <a href="">feedback</a>.</span>
+            </p>
+        </div>
+    </div>
+    <div class="grid-layout">
+        <div class="grid-layout__column--1-3">
+                <img src="@routes.Assets.versioned("images/female.png")" alt="">
+        </div>
+
+        <div class="grid-layout__column--2-3">
+            <ul class="action-list">
+                <div class="grid-layout__column--1-2">
+                    <li>
+                        <p><b>NINO:</b> </p>
+                        <p>@nino</p>
+                    </li>
+                    <li>
+                        <p><b>Gender:</b><p>
+                        <p>@taxpayer</p>
+                    </li>
+                    <li>`
+                        <p><b>Forename:</b><p>
+                        <p>@taxpayer</p>
+                    </li>
+                    <li>
+                        <p><b>Job:</b><p></p>
+                    </li>
+                    <li id="computers">
+                        <p><b>Computers:</b><p>
+                    </p>
+                    </li>
+                </div>
+
+                <div class="grid-layout__column--1-2">
+                    <li>
+                        <p><b>UTR:</b><p>
+                        <p>@taxpayer</p>
+                    </li>
+                    <li>
+                        <p><b>Surname:</b><p>
+                        <p>@taxpayer</p>
+                    </li>
+                    <li>
+                        <p><b>Middle Name:</b><p>
+                        <p></p>
+                    </li>
+                    <li>
+                        <p><b>Address:</b><p>
+                        <p>@taxpayer</p>
+                    </li>
+                </div>
+            </ul>
+            <a class="back-link" role="button" href="@routes.HomeController.index(page)" >Back</a>
+        </div>
+    </div>
+
+}

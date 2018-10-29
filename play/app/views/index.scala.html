@@ -1,0 +1,102 @@
+@(page: Long, totalPages: Long, records: Iterable[(String, String)])
+
+@main(s"Example Uniform 3 Service") {
+
+    <header class="hero">
+        <section class="hero__content">
+            <h1 class="hero__heading-large">Example Uniform 3 Service</h1>
+            <h2 class="hero__heading-small">
+                This is a Play 2.6 application generated from a Uniform 3 program. 
+            </h2>
+        </section>
+    </header>
+
+    <div id="content">
+        <div class="alpha-banner">
+            <p>
+                <strong class="phase-tag">POC</strong>
+                <span>This is a technical proof-of-concept service. It is not intended for production use.</span>
+            </p>
+
+            <article class="content__body">
+                <table class="table--spaced-top table--light-header">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                UTR
+                            </th>
+                            <th>
+                                Job
+                            </th>
+                            <th>
+                                Rebate
+                            </th>
+                        </tr>
+                    </thead>
+                    @for((nino, record) <- records) {
+                        <tr>
+                            <td>
+                                <a href="@routes.HomeController.user(nino, page)">
+                                    @record
+                                </a>
+                            </td>
+                            <td>
+                            @record
+                            </td>
+                            <td>
+                            @record
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                    }
+                </table>
+
+
+                <br />
+
+
+            </article>
+        </div>
+        <nav class="page-navigation--previous-next" role="navigation"
+        aria-label="Page navigation">
+            <ul>
+                <li class="page-nav__item page-nav__item--previous no-bullets">
+                    @if(page > 1) {
+                        <a class="page-nav__link page-nav__link--previous"
+                        title="Navigate to previous part" rel="prev" href="@routes.HomeController.index(page - 1)">
+
+                            <span class="page-nav__label">Previous</span>
+                            } else {
+                        <a class="page-nav__link page-nav__link--previous"
+                        title="Navigate to previous part" rel="prev" href="">
+                            <span class="page-nav__label">Previous</span>
+                            }
+                </a></a>
+                </li>
+                <li class="page-nav__item page-nav__item--next no-bullets">
+                    @if(page < totalPages - 1) {
+                        <a class="page-nav__link page-nav__link--next"
+                        title="Navigate to next part" rel="next" href="@routes.HomeController.index(page + 1)">
+
+                            <span class="page-nav__label">Next</span>
+                            } else {
+                        <a class="page-nav__link page-nav__link--next"
+                        title="Navigate to next part" rel="next" href="">
+                            <span class="page-nav__label">Next</span>
+                            }</a></a>
+                </li>
+            </ul>
+        </nav>
+        <p class="page-info">Showing page @{
+            f"$page%,d"
+        } of @{
+            f"$totalPages%,d"
+        }</p>
+    </div>
+}
+
+

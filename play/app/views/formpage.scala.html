@@ -1,0 +1,31 @@
+@(key: String, form: Form[_])(content: Html)(implicit request: Request[_])
+@main(key) {
+
+    @if(form.hasErrors) {
+        <div class="error-summary"
+             id="error-summary-display"
+             role="alert"
+             aria-labelledby="error-summary-heading"
+             tabindex="-1">
+            <h2 id="error-summary-heading" class="heading-medium error-summary-heading">sdil.common.errorSummary</h2>
+            <ul class="error-summary-list">
+                @form.errors.map { error =>
+                    <li role="tooltip">
+                    <a href="#@error.key"
+                    id="@{error.key}-error-summary"
+                    data-focuses="@error.key">
+                    @error.message @error.args
+                    </a>
+                    </li>
+                }
+            </ul>
+        </div>
+        }
+
+    @helper.form(action = play.api.mvc.Call("post", key)) {
+        @helper.CSRF.formField
+        <h1>@key</h1>
+        @content
+        <input type="submit" />
+    }
+}

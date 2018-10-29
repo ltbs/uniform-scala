@@ -1,0 +1,13 @@
+@(key: String, options: List[String], existing: Option[String], form: Form[_])(implicit request: Request[_])
+@formpage(key, form) {
+
+  <fieldset id="@key" class="form-field-group">
+  @for(opt <- options) {
+    <div class="multiple-choice">
+      <input id="@key-@opt" name="@key" value="@opt" type="radio" @{ existing.filter(_ == opt).map{ _ => "selected" } } />
+      <label for="@key-@opt" class="block-label less-padding">@opt</label>
+    </div>
+  }
+  </fieldset>
+  
+}

@@ -1,2 +1,7 @@
-*.class
-*.log
+*/target
+
+.ensime
+.ensime_cache
+target
+**~
+ensime.sbt
