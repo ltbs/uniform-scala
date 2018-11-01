@@ -69,7 +69,7 @@ We need to add an extra import to include the new interpreter -
 
 ```
 libraryDependencies +=
-  "com.luketebbs.uniform" % "interpreter-logictable" %% "[VERSION]"
+  "com.luketebbs.uniform" %% "interpreter-logictable" % "{{ site.last-stable-version }}"
 ```
 
 And we need to import 

@@ -1,5 +1,11 @@
 lazy val root = project.in(file("."))
-  .aggregate(coreJS, coreJVM)
+  .aggregate(
+    coreJS,
+    coreJVM,
+    `interpreter-cli`,
+    `interpreter-gui`,
+    `interpreter-logictable`
+  )
   .settings(
     publishLocal := {},
     publish := {},
@@ -15,7 +21,7 @@ lazy val commonSettings = Seq(
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
   scalacOptions ++= Seq(
-//    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.  
+    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.  
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.
@@ -93,6 +99,15 @@ lazy val core = crossProject.crossType(CrossType.Pure).settings(commonSettings)
     scalaJSUseMainModuleInitializer := true
   )
 
+lazy val `interpreter-cli` = project.settings(commonSettings)
+  .dependsOn(coreJVM)
+
+lazy val `interpreter-gui` = project.settings(commonSettings)
+  .dependsOn(coreJVM)
+
+lazy val `interpreter-logictable` = project.settings(commonSettings)
+  .dependsOn(coreJVM)
+
 lazy val prototype = project.settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
@@ -130,6 +145,9 @@ lazy val docs = project
     micrositeGithubRepo     := "uniform-scala",
     micrositeBaseUrl        := "/uniform-scala",
     micrositeHighlightTheme := "color-brewer",
+    micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
+      "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
+    )),
     micrositePalette := Map(
       "brand-primary"   -> "#5236E0",
       "brand-secondary" -> "#32423F",

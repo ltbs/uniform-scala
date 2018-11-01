@@ -43,7 +43,7 @@ We need to add an extra import to include the new interpreter -
 
 ```
 libraryDependencies +=
-  "com.luketebbs.uniform" % "interpreter-cli" %% "[VERSION]"
+  "com.luketebbs.uniform" %% "interpreter-cli" % "{{ site.last-stable-version }}"
 ```
 
 ## Running the program 

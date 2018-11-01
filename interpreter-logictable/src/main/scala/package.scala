@@ -1,13 +1,14 @@
-package ltbs.uniform
+package ltbs.uniform.interpreters
 
 import scala.language.implicitConversions
 
+import ltbs.uniform._
 import org.atnos.eff._
 import org.atnos.eff.all._
 import org.atnos.eff.syntax.all._
 import cats.data.Writer
 
-object LogicTableInterpreter {
+package object logictable {
 
   type LogicTableStack = Fx.fx3[Either[String,?], Writer[String,?], List]
 

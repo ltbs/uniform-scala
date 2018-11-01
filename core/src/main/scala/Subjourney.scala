@@ -2,11 +2,7 @@ package tree
 
 
 import org.atnos.eff._
-import cats.data.Validated
 import org.atnos.eff.all.{none => _, _}
-import cats.implicits._
-import cats.Monoid
-
 
 sealed trait UniformTree[S,A] {
   def key: String

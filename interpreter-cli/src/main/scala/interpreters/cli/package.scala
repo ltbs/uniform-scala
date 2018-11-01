@@ -7,6 +7,7 @@ import org.atnos.eff.syntax.all._
 import cats.implicits._
 import scala.util.Try
 import ltbs.uniform._
+import scala.io.StdIn.readLine
 
 package object cli { 
 
