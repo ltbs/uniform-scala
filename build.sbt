@@ -1,6 +1,8 @@
 lazy val root = project.in(file(".")).
   aggregate(coreJS, coreJVM)
 
+enablePlugins(GitVersioning)
+
 lazy val commonSettings = Seq(
   scalaVersion := "2.12.6",
   organization := "com.luketebbs.uniform",
