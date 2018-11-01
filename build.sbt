@@ -5,6 +5,8 @@ enablePlugins(GitVersioning)
 
 lazy val commonSettings = Seq(
   scalaVersion := "2.12.6",
+  crossScalaVersions := Seq("2.12.6"),
+  homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
   scalacOptions ++= Seq(
