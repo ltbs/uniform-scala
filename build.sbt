@@ -1,5 +1,10 @@
-lazy val root = project.in(file(".")).
-  aggregate(coreJS, coreJVM)
+lazy val root = project.in(file("."))
+  .aggregate(coreJS, coreJVM)
+  .settings(
+    publishLocal := {},
+    publish := {},
+    publishArtifact := false
+  )
 
 enablePlugins(GitVersioning)
 
