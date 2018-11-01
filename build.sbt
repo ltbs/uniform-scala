@@ -114,12 +114,12 @@ lazy val docs = project
   .settings(commonSettings)
   .settings(
     fork in Test := true,
-    micrositeName           := "uniform",
+    micrositeName           := "uniform-scala",
     micrositeDescription    := "Purely functional user-interaction",
     micrositeAuthor         := "Luke Tebbs",
     micrositeGithubOwner    := "ltbs",
     micrositeGithubRepo     := "uniform-scala",
-    micrositeBaseUrl        := "/uniform/",
+    micrositeBaseUrl        := "/uniform-scala",
     micrositeHighlightTheme := "color-brewer",
     micrositePalette := Map(
       "brand-primary"   -> "#5236E0",
