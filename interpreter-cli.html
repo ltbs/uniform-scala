@@ -1,0 +1,120 @@
+<html><head><title>uniform: CLI Interpreter</title><meta charset="utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Luke Tebbs" /><meta name="description" content="Purely functional user-interaction" /><meta name="og:image" content="/uniform//img/poster.png" /><meta name="og:title" content="uniform: CLI Interpreter" /><meta name="og:site_name" content="uniform" /><meta name="og:url" content="" /><meta name="og:type" content="website" /><meta name="og:description" content="Purely functional user-interaction" /><link rel="icon" type="image/png" href="/uniform//img/favicon.png" /><meta name="twitter:title" content="uniform: CLI Interpreter" /><meta name="twitter:image" content="img/poster.png" /><meta name="twitter:description" content="Purely functional user-interaction" /><meta name="twitter:card" content="summary_large_image" /><link rel="icon" type="image/png" sizes="16x16" href="/uniform//img/favicon16x16.png" /><link rel="icon" type="image/png" sizes="24x24" href="/uniform//img/favicon24x24.png" /><link rel="icon" type="image/png" sizes="32x32" href="/uniform//img/favicon32x32.png" /><link rel="icon" type="image/png" sizes="48x48" href="/uniform//img/favicon48x48.png" /><link rel="icon" type="image/png" sizes="57x57" href="/uniform//img/favicon57x57.png" /><link rel="icon" type="image/png" sizes="60x60" href="/uniform//img/favicon60x60.png" /><link rel="icon" type="image/png" sizes="64x64" href="/uniform//img/favicon64x64.png" /><link rel="icon" type="image/png" sizes="70x70" href="/uniform//img/favicon70x70.png" /><link rel="icon" type="image/png" sizes="72x72" href="/uniform//img/favicon72x72.png" /><link rel="icon" type="image/png" sizes="76x76" href="/uniform//img/favicon76x76.png" /><link rel="icon" type="image/png" sizes="96x96" href="/uniform//img/favicon96x96.png" /><link rel="icon" type="image/png" sizes="114x114" href="/uniform//img/favicon114x114.png" /><link rel="icon" type="image/png" sizes="120x120" href="/uniform//img/favicon120x120.png" /><link rel="icon" type="image/png" sizes="128x128" href="/uniform//img/favicon128x128.png" /><link rel="icon" type="image/png" sizes="144x144" href="/uniform//img/favicon144x144.png" /><link rel="icon" type="image/png" sizes="150x150" href="/uniform//img/favicon150x150.png" /><link rel="icon" type="image/png" sizes="152x152" href="/uniform//img/favicon152x152.png" /><link rel="icon" type="image/png" sizes="196x196" href="/uniform//img/favicon196x196.png" /><link rel="icon" type="image/png" sizes="310x310" href="/uniform//img/favicon310x310.png" /><link rel="icon" type="image/png" sizes="310x150" href="/uniform//img/favicon310x150.png" /><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" /><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" /><link rel="stylesheet" href="/uniform//highlight/styles/color-brewer.css" /><link rel="stylesheet" href="/uniform//css/style.css" /><link rel="stylesheet" href="/uniform//css/palette.css" /><link rel="stylesheet" href="/uniform//css/codemirror.css" /></head><body class="docs"><div id="wrapper"><div id="sidebar-wrapper"><ul id="sidebar" class="sidebar-nav"><li class="sidebar-brand"><a href="/uniform//" class="brand"><div class="brand-wrapper"><span>uniform</span></div></a></li> <li><a href="/uniform//index.html" class="">Home</a></li> <li><a href="/uniform//writing-a-program.html" class="">Writing a program</a></li> <li><a href="/uniform//interpreters.html" class="">Interpreters</a> <ul class="sub_section"> <li><a href="/uniform//interpreter-cli.html" class=" active ">CLI Interpreter</a></li> <li><a href="/uniform//interpreter-logic-table.html" class="">Logic Table Interpreter</a></li> <li><a href="/uniform//interpreter-play.html" class="">Play Framework Interpreter</a></li> <li><a href="/uniform//interpreter-static-site.html" class="">Static Site interpreter</a></li> <li><a href="/uniform//interpreter-selenium.html" class="">Selenium Interpreter</a></li></ul></li></ul></div><div id="page-content-wrapper"><div class="nav"><div class="container-fluid"><div class="row"><div class="col-lg-12"><div class="action-menu pull-left clearfix"><a href="#menu-toggle" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a></div><ul class="pull-right"><li id="gh-eyes-item" class="hidden-xs"><a href="https://github.com/ltbs/uniform-scala"><i class="fa fa-eye"></i><span>WATCH<span id="eyes" class="label label-default">--</span></span></a></li><li id="gh-stars-item" class="hidden-xs"><a href="https://github.com/ltbs/uniform-scala"><i class="fa fa-star-o"></i><span>STARS<span id="stars" class="label label-default">--</span></span></a></li><li><a href="#" onclick="shareSiteTwitter('uniform Purely functional user-interaction');"><i class="fa fa-twitter"></i></a></li><li><a href="#" onclick="shareSiteFacebook('uniform Purely functional user-interaction');"><i class="fa fa-facebook"></i></a></li><li><a href="#" onclick="shareSiteGoogle();"><i class="fa fa-google-plus"></i></a></li></ul></div></div></div></div><div id="content" data-github-owner="ltbs" data-github-repo="uniform-scala"><div class="content-wrapper"><section><h1 id="cli-interpreter">CLI Interpreter</h1>
+
+<p>Probably the simplest implementation of an interactive user interface
+is a text-only, monolingual command-line application.</p>
+
+<p>We’re unlikely to use this in production, but it can form an extremely
+cheap-but-cheerful way to explain or verify logic or user journeys
+with stakeholders in the early stages of a project.</p>
+
+<p>Because of its simplicity it is also a great way to see the
+fundamentals of uniform in action.</p>
+
+<h2 id="starting-with-a-program">Starting with a program</h2>
+
+<p>First of all you need a program. Lets start with a simple greeting application -</p>
+
+<div class="language-scala highlighter-rouge"><pre class="codehilite"><code><span class="k">import</span> <span class="nn">org.atnos.eff._</span>
+<span class="k">import</span> <span class="nn">ltbs.uniform._</span>
+
+<span class="k">def</span> <span class="n">helloProgram</span><span class="o">[</span><span class="kt">S</span> <span class="kt">:</span> <span class="k">_</span><span class="kt">uniform</span><span class="o">[</span><span class="kt">String</span>,<span class="kt">?</span><span class="o">]]</span> <span class="k">:</span> <span class="kt">Eff</span><span class="o">[</span><span class="kt">S</span>,<span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="k">for</span> <span class="o">{</span>
+  <span class="n">forename</span> <span class="k">&lt;-</span> <span class="n">uask</span><span class="o">[</span><span class="kt">S</span>,<span class="kt">String</span><span class="o">](</span><span class="s">"forename"</span><span class="o">)</span>
+  <span class="n">surname</span>  <span class="k">&lt;-</span> <span class="n">uask</span><span class="o">[</span><span class="kt">S</span>,<span class="kt">String</span><span class="o">](</span><span class="s">"surname"</span><span class="o">)</span>
+<span class="o">}</span> <span class="k">yield</span> <span class="n">s</span><span class="s">"Hello $forename $surname"</span>
+</code></pre></div>
+
+<p>Notice we are only using a single data type here - <code class="highlighter-rouge">String</code>. While you
+can have as many data-types as you want in your program each
+interpreter needs to understand how to handle that data-type before it
+can operate on your program.</p>
+
+<p>Generally therefore it’s best to start off with just a few basic
+data-types and add more specialisation as you go.</p>
+
+<h2 id="importing-the-interpreter">Importing the interpreter</h2>
+
+<p>We need to add an extra import to include the new interpreter -</p>
+
+<div class="highlighter-rouge"><pre class="codehilite"><code>libraryDependencies +=
+  "com.luketebbs.uniform" % "interpreter-cli" %% "[VERSION]"
+</code></pre></div>
+
+<h2 id="running-the-program">Running the program</h2>
+
+<p>We need to import the interpreter -</p>
+
+<div class="language-scala highlighter-rouge"><pre class="codehilite"><code><span class="k">import</span> <span class="nn">ltbs.uniform.interpreters.cli._</span>
+</code></pre></div>
+
+<p>We also need to define a value for the Stack we are using. This will
+consist of all the <code class="highlighter-rouge">UniformAsk</code> and <code class="highlighter-rouge">UniformSelect</code> usages, plus
+possibly some other monads that the interpreter itself needs. Our CLI
+interpreter uses the <code class="highlighter-rouge">Eval</code> monad from the cats library.</p>
+
+<div class="language-scala highlighter-rouge"><pre class="codehilite"><code><span class="k">type</span> <span class="kt">Stack</span> <span class="o">=</span> <span class="nc">Fx</span><span class="o">.</span><span class="n">fx2</span><span class="o">[</span><span class="kt">UniformAsk</span><span class="o">[</span><span class="kt">String</span>,<span class="kt">?</span><span class="o">]</span>, <span class="kt">cats.Eval</span><span class="o">]</span>
+</code></pre></div>
+
+<p>The program can now be executed using the interpreter.</p>
+
+<div class="language-scala highlighter-rouge"><pre class="codehilite"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="k">import</span> <span class="nn">org.atnos.eff.syntax.all._</span> <span class="c1">// provides runEval and run
+</span><span class="k">import</span> <span class="nn">org.atnos.eff.syntax.all._</span>
+
+<span class="n">scala</span><span class="o">&gt;</span> <span class="k">def</span> <span class="n">runHelloProgram</span> <span class="k">=</span> <span class="n">helloProgram</span><span class="o">[</span><span class="kt">Stack</span><span class="o">].</span>
+     <span class="o">|</span>   <span class="n">using</span><span class="o">(</span><span class="n">identity</span><span class="o">).</span> <span class="c1">// String =&gt; String
+</span>     <span class="o">|</span>   <span class="n">runEval</span><span class="o">.</span>
+     <span class="o">|</span>   <span class="n">run</span>
+<span class="n">runHelloProgram</span><span class="k">:</span> <span class="kt">String</span>
+</code></pre></div>
+
+<p>If invoked <code class="highlighter-rouge">runHelloProgram</code> will now prompt the user for a forename,
+then a surname and then give the expected greeting.</p>
+
+<h2 id="adding-new-field-types">Adding new field types</h2>
+
+<p>We’ll update our program to include a new field type -</p>
+
+<div class="language-scala highlighter-rouge"><pre class="codehilite"><code><span class="k">def</span> <span class="n">helloProgram2</span><span class="o">[</span><span class="kt">S</span> <span class="kt">:</span> <span class="k">_</span><span class="kt">uniform</span><span class="o">[</span><span class="kt">String</span>,<span class="kt">?</span><span class="o">]</span> <span class="kt">:</span> <span class="k">_</span><span class="kt">uniform</span><span class="o">[</span><span class="kt">Boolean</span>,<span class="kt">?</span><span class="o">]]</span> <span class="k">:</span> <span class="kt">Eff</span><span class="o">[</span><span class="kt">S</span>,<span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="k">for</span> <span class="o">{</span>
+  <span class="n">forename</span> <span class="k">&lt;-</span> <span class="n">uask</span><span class="o">[</span><span class="kt">S</span>,<span class="kt">String</span><span class="o">](</span><span class="s">"forename"</span><span class="o">)</span>
+  <span class="n">surname</span>  <span class="k">&lt;-</span> <span class="n">uask</span><span class="o">[</span><span class="kt">S</span>,<span class="kt">String</span><span class="o">](</span><span class="s">"surname"</span><span class="o">)</span>
+  <span class="n">cheese</span>  <span class="k">&lt;-</span> <span class="n">uask</span><span class="o">[</span><span class="kt">S</span>,<span class="kt">Boolean</span><span class="o">](</span><span class="s">"likeCheese"</span><span class="o">)</span>  
+<span class="o">}</span> <span class="k">yield</span> <span class="o">{</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">cheese</span><span class="o">)</span> 
+    <span class="n">s</span><span class="s">"Here $forename $surname, have some stilton!"</span>
+  <span class="k">else</span>
+    <span class="n">s</span><span class="s">"Hello $forename $surname"</span>  
+<span class="o">}</span>
+</code></pre></div>
+
+<p>And add a new stack -</p>
+
+<div class="language-scala highlighter-rouge"><pre class="codehilite"><code><span class="k">type</span> <span class="kt">Stack2</span> <span class="o">=</span> <span class="nc">Fx</span><span class="o">.</span><span class="n">fx3</span><span class="o">[</span><span class="kt">UniformAsk</span><span class="o">[</span><span class="kt">Boolean</span>,<span class="kt">?</span><span class="o">]</span>, <span class="kt">UniformAsk</span><span class="o">[</span><span class="kt">String</span>,<span class="kt">?</span><span class="o">]</span>, <span class="kt">cats.Eval</span><span class="o">]</span>
+</code></pre></div>
+
+<p>The program is perfectly valid, but our interpreter doesn’t know how
+to handle a boolean -</p>
+
+<div class="language-scala highlighter-rouge"><pre class="codehilite"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="k">def</span> <span class="n">runHelloProgram2</span> <span class="k">=</span> <span class="n">helloProgram2</span><span class="o">[</span><span class="kt">Stack2</span><span class="o">].</span>
+     <span class="o">|</span>   <span class="n">using</span><span class="o">(</span><span class="n">identity</span><span class="o">).</span> <span class="c1">// String =&gt; String
+</span>     <span class="o">|</span>   <span class="n">runEval</span><span class="o">.</span>
+     <span class="o">|</span>   <span class="n">run</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">29</span><span class="k">:</span> <span class="kt">error:</span> <span class="kt">value</span> <span class="kt">run</span> <span class="kt">is</span> <span class="kt">not</span> <span class="kt">a</span> <span class="kt">member</span> <span class="kt">of</span> <span class="kt">org.atnos.eff.Eff</span><span class="o">[</span><span class="kt">org.atnos.eff.Fx1</span><span class="o">[[</span><span class="kt">V</span><span class="o">]</span><span class="kt">ltbs.uniform.UniformAsk</span><span class="o">[</span><span class="kt">Boolean</span>,<span class="kt">V</span><span class="o">]]</span>,<span class="kt">String</span><span class="o">]</span>
+<span class="n">possible</span> <span class="n">cause</span><span class="k">:</span> <span class="kt">maybe</span> <span class="kt">a</span> <span class="kt">semicolon</span> <span class="kt">is</span> <span class="kt">missing</span> <span class="kt">before</span> <span class="kt">`value</span> <span class="kt">run'?</span>
+         <span class="kt">run</span>
+         <span class="o">^</span>
+</code></pre></div>
+
+<p>We must write a <code class="highlighter-rouge">String ⇒ Boolean</code> function and provide
+it to our interpreter so the interpreter knows how to take the users
+input (a <code class="highlighter-rouge">String</code>) and convert it into a valid <code class="highlighter-rouge">Boolean</code>.</p>
+
+<div class="language-scala highlighter-rouge"><pre class="codehilite"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="k">def</span> <span class="n">runHelloProgram2</span> <span class="k">=</span> <span class="n">helloProgram2</span><span class="o">[</span><span class="kt">Stack2</span><span class="o">].</span>
+     <span class="o">|</span>   <span class="n">using</span><span class="o">(</span><span class="n">identity</span><span class="o">).</span>			<span class="c1">// String =&gt; String
+</span>     <span class="o">|</span>   <span class="n">using</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">toLowerCase</span><span class="o">.</span><span class="n">startsWith</span><span class="o">(</span><span class="s">"y"</span><span class="o">)).</span> <span class="c1">// Boolean =&gt; String  
+</span>     <span class="o">|</span>   <span class="n">runEval</span><span class="o">.</span>
+     <span class="o">|</span>   <span class="n">run</span>
+<span class="n">runHelloProgram2</span><span class="k">:</span> <span class="kt">String</span>
+</code></pre></div>
+</section></div></div></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script><script src="/uniform//highlight/highlight.pack.js"></script><script>hljs.configure({languages:['scala','java','bash']});
+hljs.initHighlighting();
+              </script><script>((window.gitter = {}).chat = {}).options = {
+room: 'ltbs/uniform-scala'};</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js"></script><script src="/uniform//js/main.js"></script></body></html>
