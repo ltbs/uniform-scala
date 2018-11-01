@@ -27,13 +27,10 @@ object LogicTableInterpreter {
 
   type LogicTableStack = Fx.fx3[Either[String,?], Writer[String,?], List]
 
-  trait Examples[T] {
-    def examples(key: String): List[T]
-  }
+  type Examples[T] = Function[String, List[T]]
 
-  implicit def listToExamples[A](in: List[A]): Examples[A] = new Examples[A] {
-    def examples(key: String): List[A] = in
-  }
+  implicit def listToExamples[A](in: List[A]): Examples[A] = _ => in
+  implicit def partialToExamples[A](in: PartialFunction[String,List[A]]): Examples[A] = x => in(x)
 
   implicit class UniformListEffectOps[R, A](e: Eff[R, A]) {
     type _either[Q] = Either[String,?] |= Q
@@ -52,7 +49,7 @@ object LogicTableInterpreter {
           ax match {
             case UniformAsk(key,v) =>
               val i: Eff[U,X] = for {
-                a <- ListEffect.values(reader.examples(key):_*)
+                a <- ListEffect.values(reader(key):_*)
                 vu = a.asInstanceOf[X]
                 _ <- WriterEffect.tell(s"$key:$vu")
                 va <- send(v(vu).toEither)
@@ -60,6 +57,12 @@ object LogicTableInterpreter {
               i
           }
       })
+
+    // def runLogicTable[U](
+    //   implicit member1: Member.Aux[Either[String,?], R1, U],
+    //   member2: Member.Aux[Writer[String,?], R2, R1],
+    //   member3: Member.Aux[List, R3, R2]
+    // ): Eff[U, A] = e.runEither.runWriter.runList.run
   }
 
 }

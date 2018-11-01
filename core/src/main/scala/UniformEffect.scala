@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ltbs.uniform
+package ltbs
 
 import org.atnos.eff._
 import cats.data.Validated
@@ -22,7 +22,10 @@ import org.atnos.eff.all.{none => _, _}
 import cats.implicits._
 import cats.Monoid
 
-object UniformEffect {
+package object uniform {
+
+  type _uniform[V,R] = UniformAsk[V,?] |= R
+  type _uniformSelect[V,R] = UniformSelect[V,?] |= R
 
   def uask[R, T](key: String, validation: T => Validated[String,T] = {v:T => v.valid})(implicit member: UniformAsk[T, ?] |= R): Eff[R, T] =
     send[UniformAsk[T, ?], R, T](UniformAsk(key, validation))
@@ -66,4 +69,8 @@ object UniformEffect {
   def when[R, A](b: => Boolean)(wm: Eff[R, A]): Eff[R,Option[A]] =
     if(b) wm.map{_.some} else Eff.pure[R,Option[A]](none[A])
 
+}
+
+package uniform {
+	object UniformEffect {} 
 }

@@ -1,0 +1,22 @@
+options:
+  - title: Home
+    url: index.html
+    section: intro
+
+  - title: Writing a program
+    url: writing-a-program.html
+
+  - title: Interpreters
+    url: interpreters.html
+    nested_options:
+     - title: CLI Interpreter
+       url: interpreter-cli.html
+     - title: Logic Table Interpreter
+       url: interpreter-logic-table.html
+     - title: Play Framework Interpreter
+       url: interpreter-play.html
+     - title: Static Site interpreter
+       url: interpreter-static-site.html       
+     - title: Selenium Interpreter
+       url: interpreter-selenium.html
+       

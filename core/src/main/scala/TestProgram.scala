@@ -23,8 +23,6 @@ import UniformEffect._
 
 object UniformTest {
 
-  type _uniform[V,R] = UniformAsk[V,?] |= R
-
   type Litres = (Long,Long)
 
   implicit class RichVal[A](private val a:A) extends AnyVal {

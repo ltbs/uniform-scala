@@ -92,6 +92,11 @@ lazy val prototype = project.settings(commonSettings)
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(coreJS)
 
+lazy val html = crossProject
+  .crossType(CrossType.Full)
+  .settings(commonSettings)
+  .settings(libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7")
+
 lazy val play = project.settings(commonSettings)
   .enablePlugins(PlayScala)
   .dependsOn(coreJVM)
@@ -99,3 +104,33 @@ lazy val play = project.settings(commonSettings)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
+
+lazy val htmlJS = html.js.dependsOn(coreJS)
+lazy val htmlJVM = html.jvm.dependsOn(coreJVM)
+
+lazy val docs = project
+  .dependsOn(coreJVM)
+  .enablePlugins(MicrositesPlugin)
+  .settings(commonSettings)
+  .settings(
+    fork in Test := true,
+    micrositeName           := "uniform",
+    micrositeDescription    := "Purely functional user-interaction",
+    micrositeAuthor         := "Luke Tebbs",
+    micrositeGithubOwner    := "ltbs",
+    micrositeGithubRepo     := "uniform-scala",
+    micrositeBaseUrl        := "/uniform/",
+    micrositeHighlightTheme := "color-brewer",
+    micrositePalette := Map(
+      "brand-primary"   -> "#5236E0",
+      "brand-secondary" -> "#32423F",
+      "brand-tertiary"  -> "#232F2D",
+      "gray-dark"       -> "#3E4645",
+      "gray"            -> "#7F8483",
+      "gray-light"      -> "#E2E3E3",
+      "gray-lighter"    -> "#F3F4F4",
+      "white-color"     -> "#FFFFFF"),
+    micrositeExtraMdFiles := Map(),
+    scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
+    scalacOptions in Tut += "-Xfatal-warnings"    
+  )
