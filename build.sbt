@@ -7,6 +7,7 @@ lazy val root = project.in(file("."))
     `interpreter-logictable`
   )
   .settings(
+    scalaVersion := "2.12.6",
     publishLocal := {},
     publish := {},
     publishArtifact := false
@@ -99,6 +100,16 @@ lazy val core = crossProject.crossType(CrossType.Pure).settings(commonSettings)
     scalaJSUseMainModuleInitializer := true
   )
 
+lazy val coreJS = core.js
+lazy val coreJVM = core.jvm
+
+lazy val `test-programs` = crossProject
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+
+lazy val testProgramsJS = `test-programs`.js.dependsOn(coreJS)
+lazy val testProgramsJVM = `test-programs`.jvm.dependsOn(coreJVM)
+
 lazy val `interpreter-cli` = project.settings(commonSettings)
   .dependsOn(coreJVM)
 
@@ -121,16 +132,13 @@ lazy val html = crossProject
   .settings(commonSettings)
   .settings(libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7")
 
+lazy val htmlJS = html.js.dependsOn(coreJS)
+lazy val htmlJVM = html.jvm.dependsOn(coreJVM)
+
 lazy val play = project.settings(commonSettings)
   .enablePlugins(PlayScala)
   .dependsOn(coreJVM)
   .settings(libraryDependencies ++= Seq(filters,guice))
-
-lazy val coreJS = core.js
-lazy val coreJVM = core.jvm
-
-lazy val htmlJS = html.js.dependsOn(coreJS)
-lazy val htmlJVM = html.jvm.dependsOn(coreJVM)
 
 lazy val docs = project
   .dependsOn(coreJVM)
