@@ -130,7 +130,9 @@ lazy val prototype = project.settings(commonSettings)
 lazy val html = crossProject
   .crossType(CrossType.Full)
   .settings(commonSettings)
-  .settings(libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7")
+  .settings(libraryDependencies ++= Seq(
+              "com.lihaoyi" %%% "scalatags" % "0.6.7",
+              "com.chuusai" %%% "shapeless" % "2.3.3"))
 
 lazy val htmlJS = html.js.dependsOn(coreJS)
 lazy val htmlJVM = html.jvm.dependsOn(coreJVM)
