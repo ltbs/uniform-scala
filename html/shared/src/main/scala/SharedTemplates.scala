@@ -52,7 +52,7 @@ class SharedTemplates[Builder, Output <: FragT, FragT](
       input(`type`:="radio", name:=key, value:="yes", id:=key ++ "_yes"),
       label(`for`:=key ++ "_yes", "yes"),
       input(`type`:="radio", name:=key, value:="no", id:=key ++ "_no"),
-      label(`for`:=key ++ "_no", "no"),
+      label(`for`:=key ++ "_no", "no")
     )
   }
 
