@@ -9,7 +9,7 @@ import play.twirl.api.Html
 import scala.util.Try
 
 import ltbs.uniform.webmonad._
-import ltbs.uniform.UniformTest._
+import ltbs.uniform.test.LitreageTest._
 import org.atnos.eff._, all._, syntax.all._, future._
 import cats.data._
 import cats.implicits._

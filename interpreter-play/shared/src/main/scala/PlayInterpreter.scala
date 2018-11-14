@@ -11,7 +11,6 @@ import play.api.data.Form
 import play.twirl.api.Html
 import scala.concurrent.{ ExecutionContext, Future }
 import ltbs.uniform._
-import UniformTest._
 import play.api._
 import play.api.mvc._
 import org.atnos.eff.future._

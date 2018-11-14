@@ -1,13 +1,21 @@
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+
 lazy val root = project.in(file("."))
   .aggregate(
     coreJS,
     coreJVM,
     `interpreter-cli`,
     `interpreter-gui`,
-    `interpreter-logictable`
+    `interpreter-logictable`,
+    `interpreter-play25`,
+    `interpreter-play26`,
+    testProgramsJS,
+    testProgramsJVM,
+    htmlJS,
+    htmlJVM
   )
   .settings(
-    scalaVersion := "2.12.6",
+    scalaVersion := "2.12.7",
     publishLocal := {},
     publish := {},
     publishArtifact := false
@@ -16,13 +24,13 @@ lazy val root = project.in(file("."))
 enablePlugins(GitVersioning)
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.6",
-  crossScalaVersions := Seq("2.12.6"),
+  scalaVersion := "2.12.7",
+  crossScalaVersions := Seq("2.11.12", "2.12.7"),
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
   scalacOptions ++= Seq(
-    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.  
+//    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.
@@ -32,7 +40,7 @@ lazy val commonSettings = Seq(
     "-Xfuture",                          // Turn on future language features.
     "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
     "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
-    "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
+//    "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
     "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
     "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
     "-Xlint:inaccessible",               // Warn about inaccessible types in method signatures.
@@ -50,18 +58,19 @@ lazy val commonSettings = Seq(
     "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
     "-Ypartial-unification",             // Enable partial unification in type constructor inference
     "-Ywarn-dead-code",                  // Warn when dead code is identified.
-    "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
+//    "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
     "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
     "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
     "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
     "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
     "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-    "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
-    "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
-    "-Ywarn-unused:locals",              // Warn if a local definition is unused.
-    "-Ywarn-unused:params",              // Warn if a value parameter is unused.
-    "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
-    "-Ywarn-unused:privates",            // Warn if a private member is unused.
+    "-Ywarn-unused",
+//    "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
+//    "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
+//   "-Ywarn-unused:locals",              // Warn if a local definition is unused.
+//    "-Ywarn-unused:params",              // Warn if a value parameter is unused.
+//    "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
+//    "-Ywarn-unused:privates",            // Warn if a private member is unused.
     "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
   ),
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
@@ -94,8 +103,12 @@ lazy val commonSettings = Seq(
   licenses += ("GPL-3", url("https://www.gnu.org/licenses/gpl-3.0.en.html"))
 )
 
-lazy val core = crossProject.crossType(CrossType.Pure).settings(commonSettings)
+lazy val core = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
   .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7"),
     libraryDependencies += "org.atnos" %%% "eff" % "5.2.0",
     scalaJSUseMainModuleInitializer := true
   )
@@ -103,23 +116,47 @@ lazy val core = crossProject.crossType(CrossType.Pure).settings(commonSettings)
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
-lazy val `test-programs` = crossProject
+lazy val `test-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7")
+  )
 
 lazy val testProgramsJS = `test-programs`.js.dependsOn(coreJS)
 lazy val testProgramsJVM = `test-programs`.jvm.dependsOn(coreJVM)
 
-lazy val `interpreter-cli` = project.settings(commonSettings)
+lazy val `interpreter-cli` = project
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7")
+  )
   .dependsOn(coreJVM)
 
-lazy val `interpreter-gui` = project.settings(commonSettings)
+lazy val `interpreter-gui` = project
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7")
+  )
   .dependsOn(coreJVM)
 
-lazy val `interpreter-logictable` = project.settings(commonSettings)
+lazy val `interpreter-logictable` = project
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7")
+  )
   .dependsOn(coreJVM)
 
-lazy val prototype = project.settings(commonSettings)
+lazy val prototype = project
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7")
+  )
   .settings(
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
@@ -127,9 +164,13 @@ lazy val prototype = project.settings(commonSettings)
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(coreJS)
 
-lazy val html = crossProject
+lazy val html = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
   .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7")
+  )
   .settings(libraryDependencies ++= Seq(
               "com.lihaoyi" %%% "scalatags" % "0.6.7",
               "com.chuusai" %%% "shapeless" % "2.3.3"))
@@ -139,14 +180,35 @@ lazy val htmlJVM = html.jvm.dependsOn(coreJVM)
 
 lazy val play = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(coreJVM)
+  .dependsOn(coreJVM, htmlJVM, `interpreter-play26`, testProgramsJVM)
   .settings(libraryDependencies ++= Seq(filters,guice))
+
+lazy val `interpreter-play`: sbtcrossproject.CrossProject = crossProject(Play25, Play26)
+  .crossType(CrossType.Full)
+  .settings(commonSettings)
+
+lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
+  .dependsOn(coreJVM, htmlJVM)
+  .settings(
+    name := "interpreter-play25",
+    scalaVersion := "2.11.12",
+    crossScalaVersions := Seq("2.11.12")
+  )
+
+lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
+  .dependsOn(coreJVM, htmlJVM)
+  .settings(
+    name := "interpreter-play26",
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7")
+  )
 
 lazy val docs = project
   .dependsOn(coreJVM)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
+    scalaVersion := "2.12.7",
     fork in Test := true,
     micrositeName           := "uniform-scala",
     micrositeDescription    := "Purely functional user-interaction",
@@ -169,5 +231,5 @@ lazy val docs = project
       "white-color"     -> "#FFFFFF"),
     micrositeExtraMdFiles := Map(),
     scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-    scalacOptions in Tut += "-Xfatal-warnings"    
+    scalacOptions in Tut += "-Xfatal-warnings"
   )
