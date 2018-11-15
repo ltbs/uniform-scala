@@ -1,0 +1,497 @@
+{
+  "_id": "CS3",
+  "formName": "CS3",
+  "description": "",
+  "dmsSubmission": {
+    "dmsFormId": "SF1",
+    "customerId": "${utrRepComp}",
+    "classificationType": "BT-NRU-Environmental",
+    "businessArea": "FinanceOpsCorpT"
+  },
+  "authConfig":{
+    "authModule": "hmrc"
+  },
+  "emailTemplateId": "eeitt_submission_confirmation",
+  "submitSuccessUrl": "https://www.gov.uk/government/organisations/hm-revenue-customs",
+  "submitErrorUrl": "https://www.gov.uk/government/organisations/hm-revenue-customs",
+  "sections": [
+    {
+      "title": "CS3 - Page 1",
+      "fields": [
+        {
+          "id": "reasonForNotification",
+          "type": "group",
+          "label": "Reason for the notification (Please select as applicable",
+          "fields": [
+          ]
+        },
+        {
+          "id": "establishmentName",
+          "type": "text",
+          "label": "Name of establishment, agency or holiday scheme for disabled children",
+          "mandatory":"yes"
+        },
+        {
+          "id": "indLeavingChoice",
+          "type": "choice",
+          "label": "Individuals are leaving",
+          "choices": [
+            "Applicable",
+            "Not applicable"
+          ]
+        },
+        {
+          "type":"address",
+          "id":"blahAddress",
+          "label":"Address of establishment, agency or holiday scheme for disabled children",
+          "postcodeLookup":"no"
+        },
+        {
+          "id": "indJoiningChoice",
+          "type": "choice",
+          "label": "Individuals are joining",
+          "choices": [
+            "Applicable",
+            "Not applicable"
+          ]
+        },
+        {
+          "id": "newDirectorChoice",
+          "type": "choice",
+          "label": "New responsible individual or children's home director",
+          "choices": [
+            "Applicable",
+            "Not applicable"
+          ]
+        },
+        {
+          "id": "absenceRegisteredManagerChoice",
+          "type": "choice",
+          "label": "Notice of absence for the registered manager (Does not apply to Holiday Schemes for Disabled Children)",
+          "choices": [
+            "Applicable",
+            "Not applicable"
+          ]
+        },
+        {
+          "id": "changesToPremisesChoice",
+          "type": "choice",
+          "label": "Changes to the premises (Does not apply to Holiday Schemes for Disabled Children)",
+          "choices": [
+            "Applicable",
+            "Not applicable"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Details of social care provider",
+      "fields": [
+        {
+          "id": "registeredProviderName",
+          "type": "text",
+          "label": "Name of registered provider or local authority service",
+          "mandatory":"yes"
+        },
+        {
+          "id": "currentResponsibleName",
+          "type": "text",
+          "label": "Name of current responsible individual",
+          "mandatory":"yes"
+        },
+        {
+          "id": "establishmentName",
+          "type": "text",
+          "label": "Name of establishment, agency or holiday scheme for disabled children",
+          "mandatory":"yes"
+        },
+        {
+          "id": "uniqueReferenceNumber",
+          "type": "text",
+          "label": "Unique Reference Number (URN)",
+          "format": "positiveWholeNumber",
+          "mandatory":"yes"
+        },
+        {
+          "type":"address",
+          "id":"establishmentAddress",
+          "label":"Address of establishment, agency or holiday scheme for disabled children",
+          "postcodeLookup":"no"
+        }
+      ]
+    },
+    {
+      "includeIf": "${indLeavingChoice=0}",
+      "title": "Notice of change, individuals who are leaving",
+      "fields": [
+        {
+          "id": "listIndividualsWhoWillCease",
+          "type": "group",
+          "label": "Please list individuals who will cease to be associated with the above provider / establishment / agency / holiday scheme for disabled children",
+          "repeatsMax": 5,
+          "repeatAddAnotherText": "Add other individual",
+          "presentationHint": "summariseGroupAsGrid",
+          "fields": [
+            {
+              "id": "leavingIndTitle",
+              "type": "text",
+              "label": "Title",
+              "mandatory":"yes"
+            },
+            {
+              "id": "leavingIndFirstName",
+              "type": "text",
+              "label": "First Name",
+              "mandatory":"yes"
+            },
+            {
+              "id": "leavingIndLastName",
+              "type": "text",
+              "label": "Surname",
+              "mandatory":"yes"
+            },
+            {
+              "id": "leavingBirthDate",
+              "type": "date",
+              "label": "Date of Birth",
+              "helpText": "Example: 08 03 1996",
+              "errorMessage": "Please enter a valid Birth date"
+            },
+            {
+              "type":"address",
+              "id":"individualLeavingAddress",
+              "label":"Address",
+              "postcodeLookup":"no"
+            },
+            {
+              "id": "leavingDaytimePhone",
+              "type": "text",
+              "label": "Daytime Telephone",
+              "format": "telephoneNumber",
+              "mandatory":"yes"
+            },
+            {
+              "id": "leavingURN",
+              "type": "text",
+              "label": "URN (if applicable)",
+              "format": "positiveWholeNumber",
+              "mandatory":"yes"
+            },
+            {
+              "id": "leavingPosition",
+              "type": "text",
+              "label": "Position",
+              "mandatory":"yes"
+            },
+            {
+              "id": "leaverDateLeaving",
+              "type": "date",
+              "label": "Date Leaving",
+              "helpText": "Example: 15 06 2018",
+              "errorMessage": "Please enter a valid leaving date"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "includeIf": "${indJoiningChoice=0 ||newDirectorChoice=0}",
+      "title": "Notice of change, individuals who are joining",
+      "fields": [
+        {
+          "id": "listIndividualsJoining",
+          "type": "group",
+          "label": "Please list any individuals who are joining",
+          "repeatsMax": 5,
+          "repeatAddAnotherText": "Add other individual",
+          "presentationHint": "summariseGroupAsGrid",
+          "fields": [
+            {
+              "id": "joiningIndTitle",
+              "type": "text",
+              "label": "Title",
+              "mandatory":"yes"
+            },
+            {
+              "id": "joiningIndFirstName",
+              "type": "text",
+              "label": "First Name",
+              "mandatory":"yes"
+            },
+            {
+              "id": "joiningIndLastName",
+              "type": "text",
+              "label": "Surname",
+              "mandatory":"yes"
+            },
+            {
+              "id": "joiningBirthDate",
+              "type": "date",
+              "label": "Date of Birth",
+              "helpText": "Example: 08 03 1996",
+              "errorMessage": "Please enter a valid Birth date"
+            },
+            {
+              "id": "joiningMaidenName",
+              "type": "text",
+              "label": "Surname at birth",
+              "mandatory":"yes"
+            },
+            {
+              "id": "joiningOtherFirstNames",
+              "type": "text",
+              "label": "Other first names used",
+              "mandatory":"yes"
+            },
+            {
+              "id": "joiningOtherSurnames",
+              "type": "text",
+              "label": "Other surname(s)",
+              "mandatory":"yes"
+            },
+            {
+              "type":"address",
+              "id":"individualJoiningAddress",
+              "label":"Address",
+              "postcodeLookup":"no"
+            },
+            {
+              "id": "joiningDaytimePhone",
+              "type": "text",
+              "label": "Daytime Telephone",
+              "format": "telephoneNumber",
+              "mandatory":"yes"
+            },
+            {
+              "id": "joiningEmailAddress",
+              "type": "text",
+              "label": "Email address",
+              "format": "email",
+              "mandatory":"yes"
+            },
+            {
+              "id": "joiningURN",
+              "type": "text",
+              "label": "If you are already known to Ofsted, please provide details below including URN if known",
+              "mandatory":"yes"
+            },
+            {
+              "id": "joiningPosition",
+              "type": "text",
+              "label": "Position",
+              "mandatory":"yes"
+            },
+            {
+              "id": "joinerDateLeaving",
+              "type": "date",
+              "label": "Date Leaving",
+              "helpText": "Example: 15 06 2018",
+              "errorMessage": "Please enter a valid leaving date"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "includeIf": "${newDirectorChoice=0}",
+      "title": "Notice of change, new responsible individual/children's home director",
+      "fields": [
+        {
+          "id": "completedNeededChecksChoice",
+          "type": "choice",
+          "label": "Have you completed all necessary checks on the new responsible individual as identified in the relevant regulations? (6)",
+          "choices": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "type": "info",
+          "id": "6Regulations",
+          "label": "Click here to show relevant legislation.",
+          "infoType": "long",
+          "infoText": "The Children's Homes(England) Regulations 2015, regulation 26(7) The adoption Support Agencies (England) and Adoption Agencies (Miscellaneous Amendments) Regulations 2005 regulation 7, The Residential Family Centres Regulations 2002, regulation 5, The Residential Holiday Schemes for Disabled Children (England) Regulations 2013, regulation 5, The Fostering Services (England) Regulations 2011 regulation 5."
+        },
+        {
+          "id": "completedNeededChecksDirectorChoice",
+          "type": "choice",
+          "label": "Have you completed all necessary checks on the new children's home director as identified in the relevant regulations? (7)",
+          "choices": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "type": "info",
+          "id": "7Regulations",
+          "label": "Click here to show relevant legislation.",
+          "infoType": "long",
+          "infoText": "The Children's Homes (England) Regulations 2015, regulation 26(4)"
+        }
+      ]
+    },
+    {
+      "includeIf": "${absenceRegisteredManagerChoice=0}",
+      "title": "Notice of absence, registered manager",
+      "fields": [
+        {
+          "id": "noticeOfAbsenceTitle",
+          "type": "group",
+          "label": "This section does not apply to residential holiday schemes for disabled children",
+          "fields": [
+            {
+              "type": "info",
+              "id": "pleaseProvideMoreDetails",
+              "label": "",
+              "infoType": "noformat",
+              "infoText": "Please provide details of any proposed absence for a continuous period of 28 days or more."
+            }
+          ]
+        },
+        {
+          "type": "info",
+          "id": "e1InfoBox",
+          "label": "",
+          "infoType": "noformat",
+          "infoText": "The law states that where the registered manager of an adoption support agency, a children's home, an independent fostering agency or residential family centre proposes to be absent for continuous period of 28 days or more, written notice must be given to us. We must be notified no later than one month before the proposed absence starts (or within one week of the absence occurring where there is an emergency)"
+        },
+        {
+          "id": "noticeAbsenceTitle",
+          "type": "text",
+          "label": "Title",
+          "mandatory":"yes"
+        },
+        {
+          "id": "noticeAbsenceFirstName",
+          "type": "text",
+          "label": "First name",
+          "mandatory":"yes"
+        },
+        {
+          "id": "noticeAbsenceLastName",
+          "type": "text",
+          "label": "Last name",
+          "mandatory":"yes"
+        },
+        {
+          "id": "noticeAbsenceDateOfBirth",
+          "type": "date",
+          "label": "Date of Birth",
+          "helpText": "Example: 31 03 1980",
+          "errorMessage": "Please enter a valid Birth date"
+        },
+        {
+          "id": "urnReferenceNumberE1",
+          "type": "text",
+          "label": "Unique Reference Number(URN) (If applicable)",
+          "mandatory":"no"
+        },
+        {
+          "type": "info",
+          "id": "e2InfoBox",
+          "label": "",
+          "infoType": "noformat",
+          "infoText": "Certain information must also be provided about the proposed absence. If at this time you do not know who will manage the establishment or agency during the absence you must provide details about how you will appoint someone and by what date"
+        },
+        {
+          "id": "e2DateToEnd",
+          "type": "date",
+          "label": "Date absence to end",
+          "helpText": "Example: 31 03 1980",
+          "errorMessage": "Please enter a valid absence end date"
+        },
+        {
+          "id": "e2ReasonForAbsence",
+          "type": "text",
+          "label": "Reason for absence",
+          "multiline": "yes",
+          "mandatory":"yes"
+        },
+        {
+          "id": "e2RArrangementForRunning",
+          "type": "text",
+          "label": "Arrangement for running the establishment or agency during the absence",
+          "multiline": "yes",
+          "mandatory":"yes"
+        }
+      ]
+    },
+    {
+      "includeIf": "${changesToPremisesChoice=0}",
+      "title": "Notice of change - changes to the premises",
+      "fields": [
+      ]
+    }
+  ],
+  "acknowledgementSection": {
+    "shortName": "Acknowledgement Page",
+    "title": "Acknowledgement Page",
+    "fields": [
+      {
+        "id": "helpText8",
+        "label": "",
+        "infoText": "This page is your last opportunity to print a copy of your submitted form, if you require a printed copy please print now.",
+        "type":"info"
+      },
+      {
+        "type": "info",
+        "id": "ackpageInfo",
+        "label": "Payment",
+        "infoText": "The Board of Bacs Payments Scheme Ltd (BAC) limits the maximum value of any single Bacs transaction.  Consequently HMRC are not able to collect Direct Debits in excess of £20 million. If you have a payment to make which exceeds £20 million, you need to make arrangements with your own bank to make sure payment reaches HMRC on the due date, by an alternative method such as CHAPS.\n\nIf you have already set up a Direct Debit for this tax, you don’t need to do anything else. Your payment will be collected automatically from your bank.\n\nOtherwise, paying electronically, such as BACS, CHAPS or Faster Payments, is an easy and secure way to pay. Make sure to include your 15 digit registration number on any payment.\n\nSort code: 08-32-00\n\nAccount number: 12000938\n\nAccount name: HMRC Air Passenger Duty"
+      }
+    ]
+  },
+  "declarationSection": {
+    "shortName": "Declaration",
+    "title": "Declaration",
+    "fields": [
+      {
+        "id": "decText",
+        "type": "info",
+        "infoText": "You can avoid financial penalties by making sure we get your completed return and payment on account by the due date.\n\nIf you give incomplete or inaccurate information, we may charge a financial penalty or even prosecute you.\n\nBy accepting, you declare that the information that you have provided is true and complete. ",
+        "label": ""
+      },
+      {
+        "id": "declarationNameGroup",
+        "type": "group",
+        "label": "Provide details below of who is signing the declaration",
+        "fields": [
+          {
+            "id": "declaration-firstname",
+            "type": "text",
+            "label": "First name",
+            "errorMessage": "First name can only include letters a to z, numbers, spaces, hyphens and apostrophes"
+          },
+          {
+            "id": "declaration-lastname",
+            "type": "text",
+            "label": "Last name",
+            "errorMessage": "Last name can only include letters a to z, numbers, spaces, hyphens and apostrophes"
+          },
+          {
+            "id": "declaration-status",
+            "type": "text",
+            "label": "Status",
+            "helpText": "For example, director, financial controller or secretary",
+            "errorMessage": "Position in the company can only include letters, numbers, spaces, hyphens and apostrophes"
+          }
+        ]
+      },
+      {
+        "id": "declarationEmailGroup",
+        "type": "group",
+        "label": "To receive confirmation that your return has been submitted, enter an email address below",
+        "fields": [
+          {
+            "id": "email",
+            "type": "text",
+            "label": "Email address",
+            "mandatory": "true",
+            "format": "email",
+            "errorMessage": "Enter a valid email address with no spaces, like name@example.com"
+          }
+        ]
+      }
+    ]
+  }
+}

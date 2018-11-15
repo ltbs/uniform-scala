@@ -178,6 +178,12 @@ lazy val html = crossProject(JSPlatform, JVMPlatform)
 lazy val htmlJS = html.js.dependsOn(coreJS)
 lazy val htmlJVM = html.jvm.dependsOn(coreJVM)
 
+lazy val wsdl = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+
+lazy val wsdlJS = wsdl.js.dependsOn(coreJS)
+lazy val wsdlJVM = wsdl.jvm.dependsOn(coreJVM)
+
 lazy val play = project.settings(commonSettings)
   .enablePlugins(PlayScala)
   .dependsOn(coreJVM, htmlJVM, `interpreter-play26`, testProgramsJVM)
@@ -202,6 +208,46 @@ lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
     scalaVersion := "2.12.7",
     crossScalaVersions := Seq("2.11.12", "2.12.7")
   )
+
+lazy val `gforms-parser` = crossProject.crossType(CrossType.Pure)
+  .settings(commonSettings)
+  .settings(
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
+    libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.9.2" % "compile",
+    libraryDependencies += "com.github.pureconfig" %% "pureconfig-enumeratum" % "0.9.2" % "compile",
+    libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1" % "compile",
+    libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13"
+  )
+
+lazy val gformsParserJS = `gforms-parser`.js.dependsOn(coreJS)
+lazy val gformsParserJVM = `gforms-parser`.jvm.dependsOn(coreJVM)
+
+lazy val `ofsted-program` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+
+lazy val `ofsted-prototype` = project.settings(commonSettings)
+  .settings(
+    scalaJSUseMainModuleInitializer := true,
+    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
+  )
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(coreJS)
+  .dependsOn(gformsParserJS)
+  .dependsOn(prototype)
+  .dependsOn(ofstedProgramJS)
+
+lazy val `ofsted-play` = project.settings(commonSettings)
+  .enablePlugins(PlayScala)
+  .dependsOn(coreJVM, `interpreter-play26`)
+  .dependsOn(ofstedProgramJVM)
+  .settings(
+    libraryDependencies ++= Seq(filters,guice),
+    watchTransitiveSources += (baseDirectory).value / "ofsted-program" / "src" / "main" / "resources" / "template-cs3.json"
+  )
+
+lazy val ofstedProgramJS = `ofsted-program`.js.dependsOn(gformsParserJS)
+lazy val ofstedProgramJVM = `ofsted-program`.jvm.dependsOn(gformsParserJVM)
 
 lazy val docs = project
   .dependsOn(coreJVM)
