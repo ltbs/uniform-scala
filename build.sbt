@@ -12,7 +12,8 @@ lazy val root = project.in(file("."))
     testProgramsJS,
     testProgramsJVM,
     htmlJS,
-    htmlJVM
+    htmlJVM,
+    `sbt-uniform-parser-xsd`
   )
   .settings(
     scalaVersion := "2.12.7",
@@ -162,7 +163,7 @@ lazy val prototype = project
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS)
+  .dependsOn(coreJS,testProgramsJS)
 
 lazy val html = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
@@ -186,7 +187,7 @@ lazy val wsdlJVM = wsdl.jvm.dependsOn(coreJVM)
 
 lazy val play = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(coreJVM, htmlJVM, `interpreter-play26`, testProgramsJVM)
+  .dependsOn(coreJVM, `interpreter-play26`, testProgramsJVM)
   .settings(libraryDependencies ++= Seq(filters,guice))
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject = crossProject(Play25, Play26)
@@ -194,7 +195,7 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject = crossProject(Play25,
   .settings(commonSettings)
 
 lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
-  .dependsOn(coreJVM, htmlJVM)
+  .dependsOn(coreJVM)
   .settings(
     name := "interpreter-play25",
     scalaVersion := "2.11.12",
@@ -202,14 +203,14 @@ lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
   )
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
-  .dependsOn(coreJVM, htmlJVM)
+  .dependsOn(coreJVM)
   .settings(
     name := "interpreter-play26",
     scalaVersion := "2.12.7",
     crossScalaVersions := Seq("2.11.12", "2.12.7")
   )
 
-lazy val `gforms-parser` = crossProject.crossType(CrossType.Pure)
+lazy val `gforms-parser` = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
@@ -221,6 +222,11 @@ lazy val `gforms-parser` = crossProject.crossType(CrossType.Pure)
 
 lazy val gformsParserJS = `gforms-parser`.js.dependsOn(coreJS)
 lazy val gformsParserJVM = `gforms-parser`.jvm.dependsOn(coreJVM)
+
+lazy val `sbt-uniform-parser-xsd` = project.settings(commonSettings)
+  .enablePlugins(SbtPlugin)
+  .settings(crossScalaVersions := Seq(scalaVersion.value))
+  .dependsOn(coreJVM)
 
 lazy val `ofsted-program` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -236,6 +242,14 @@ lazy val `ofsted-prototype` = project.settings(commonSettings)
   .dependsOn(gformsParserJS)
   .dependsOn(prototype)
   .dependsOn(ofstedProgramJS)
+
+lazy val `example-play` = project.settings(commonSettings)
+  .enablePlugins(PlayScala)
+  .dependsOn(coreJVM, `interpreter-play26`, testProgramsJVM)
+  .dependsOn(`interpreter-logictable` % "test")
+  .settings(
+    libraryDependencies ++= Seq(filters,guice)
+  )
 
 lazy val `ofsted-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)

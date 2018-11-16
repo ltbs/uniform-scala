@@ -19,7 +19,6 @@ object LitreageTest {
   type TestProgramStack = Fx2[UniformAsk[Litres,?], UniformAsk[Boolean,?]]
 
   def program[R : _uniform[Litres,?] : _uniform[Boolean,?]]: Eff[R, String] = for {
-    hiaz <- uask[R, Boolean]("hiaz")
     n <- uask[R, Litres]("litresProduced", validation = {case a@(l,h) => if (l > h) "lower cannot be more than higher".invalid else a.valid})
     s <- uask[R, Boolean]("imports")
     t <- uask[R, Boolean]("copacksForOthers")

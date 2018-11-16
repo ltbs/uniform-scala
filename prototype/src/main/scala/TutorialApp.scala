@@ -6,7 +6,9 @@ import org.atnos.eff._, all._
 import org.atnos.eff.syntax.all._
 import org.querki.jquery._
 import scala.collection.MapLike
-import ltbs.uniform._, UniformTest._
+import ltbs.uniform._
+import ltbs.uniform.test.LitreageTest._
+
 import JsInterpreter._
 import JsImplementations._
 import scala.scalajs.js.annotation.JSExportTopLevel
