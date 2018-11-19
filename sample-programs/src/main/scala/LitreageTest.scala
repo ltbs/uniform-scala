@@ -1,4 +1,4 @@
-package ltbs.uniform.test
+package ltbs.uniform.sampleprograms
 
 import cats.implicits._
 import org.atnos.eff._
@@ -22,7 +22,7 @@ object LitreageTest {
     n <- uask[R, Litres]("litresProduced", validation = {case a@(l,h) => if (l > h) "lower cannot be more than higher".invalid else a.valid})
     s <- uask[R, Boolean]("imports")
     t <- uask[R, Boolean]("copacksForOthers")
-    n <- uask[R, Litres]("copackedByOtherUk")
+    i <- uask[R, Litres]("copackedByOtherUk")
   } yield (s"$s AND $n")
 
 }

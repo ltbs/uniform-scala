@@ -69,11 +69,6 @@ trait PlayInterpreter extends Controller {
     }
   }
 
-  type Encoded = String
-  type DB = Map[String,Encoded]
-  type ValidationError = String
-  type ValidatedData[A] = Option[Validated[ValidationError, A]]
-
   type PlayStack = Fx.fx6[Reader[String, ?], Reader[Request[AnyContent], ?], State[DB, ?], State[List[String],?], Either[Result, ?], TimedFuture]
 
   implicit class PlayEffectOps[R, A](e: Eff[R, A]) {
@@ -241,11 +236,6 @@ trait PlayInterpreter extends Controller {
         }
       }
     )
-  }
-
-  trait Persistence {
-    def dataGet: Future[DB]
-    def dataPut(dataIn: DB): Future[Unit]
   }
 
   implicit val scheduler = ExecutorServices.schedulerFromGlobalExecutionContext

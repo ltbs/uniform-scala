@@ -75,7 +75,7 @@ libraryDependencies +=
 And we need to import 
 
 ```tut:silent
-import LogicTableInterpreter._
+import ltbs.uniform.interpreters.logictable._
 ```
 
 And we need to define a stack for our program. The logic table

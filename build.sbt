@@ -9,8 +9,8 @@ lazy val root = project.in(file("."))
     `interpreter-logictable`,
     `interpreter-play25`,
     `interpreter-play26`,
-    testProgramsJS,
-    testProgramsJVM,
+    sampleProgramsJS,
+    sampleProgramsJVM,
     htmlJS,
     htmlJVM,
     `sbt-uniform-parser-xsd`
@@ -117,7 +117,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
-lazy val `test-programs` = crossProject(JSPlatform, JVMPlatform)
+lazy val `sample-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
@@ -125,8 +125,8 @@ lazy val `test-programs` = crossProject(JSPlatform, JVMPlatform)
     crossScalaVersions := Seq("2.11.12", "2.12.7")
   )
 
-lazy val testProgramsJS = `test-programs`.js.dependsOn(coreJS)
-lazy val testProgramsJVM = `test-programs`.jvm.dependsOn(coreJVM)
+lazy val sampleProgramsJS = `sample-programs`.js.dependsOn(coreJS)
+lazy val sampleProgramsJVM = `sample-programs`.jvm.dependsOn(coreJVM)
 
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
@@ -163,7 +163,7 @@ lazy val prototype = project
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS,testProgramsJS)
+  .dependsOn(coreJS,sampleProgramsJS)
 
 lazy val html = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
@@ -187,7 +187,7 @@ lazy val wsdlJVM = wsdl.jvm.dependsOn(coreJVM)
 
 lazy val play = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(coreJVM, `interpreter-play26`, testProgramsJVM)
+  .dependsOn(coreJVM, `interpreter-play26`, sampleProgramsJVM)
   .settings(libraryDependencies ++= Seq(filters,guice))
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject = crossProject(Play25, Play26)
@@ -245,7 +245,7 @@ lazy val `ofsted-prototype` = project.settings(commonSettings)
 
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(coreJVM, `interpreter-play26`, testProgramsJVM)
+  .dependsOn(coreJVM, `interpreter-play26`, sampleProgramsJVM)
   .dependsOn(`interpreter-logictable` % "test")
   .settings(
     libraryDependencies ++= Seq(filters,guice)
@@ -264,7 +264,7 @@ lazy val ofstedProgramJS = `ofsted-program`.js.dependsOn(gformsParserJS)
 lazy val ofstedProgramJVM = `ofsted-program`.jvm.dependsOn(gformsParserJVM)
 
 lazy val docs = project
-  .dependsOn(coreJVM)
+  .dependsOn(coreJVM, `interpreter-play26`, `interpreter-logictable`, `interpreter-cli`, sampleProgramsJVM)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
@@ -275,7 +275,7 @@ lazy val docs = project
     micrositeAuthor         := "Luke Tebbs",
     micrositeGithubOwner    := "ltbs",
     micrositeGithubRepo     := "uniform-scala",
-    micrositeBaseUrl        := "/uniform-scala",
+//    micrositeBaseUrl        := "/uniform-scala",
     micrositeHighlightTheme := "color-brewer",
     micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
       "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
@@ -290,6 +290,7 @@ lazy val docs = project
       "gray-lighter"    -> "#F3F4F4",
       "white-color"     -> "#FFFFFF"),
     micrositeExtraMdFiles := Map(),
-    scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-    scalacOptions in Tut += "-Xfatal-warnings"
+    scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
+//    scalacOptions in Tut += "-Xfatal-warnings", // play controller scuppers this
+    libraryDependencies += "com.typesafe.play" %% "play" % "2.6.20" // used for the play interpreter demo
   )
