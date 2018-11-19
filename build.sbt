@@ -9,8 +9,8 @@ lazy val root = project.in(file("."))
     `interpreter-logictable`,
     `interpreter-play25`,
     `interpreter-play26`,
-    sampleProgramsJS,
-    sampleProgramsJVM,
+    exampleProgramsJS,
+    exampleProgramsJVM,
     htmlJS,
     htmlJVM,
     `sbt-uniform-parser-xsd`
@@ -117,17 +117,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
-lazy val `sample-programs` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
-  )
-
-lazy val sampleProgramsJS = `sample-programs`.js.dependsOn(coreJS)
-lazy val sampleProgramsJVM = `sample-programs`.jvm.dependsOn(coreJVM)
-
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
   .settings(
@@ -163,7 +152,7 @@ lazy val prototype = project
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS,sampleProgramsJS)
+  .dependsOn(coreJS,exampleProgramsJS)
 
 lazy val html = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
@@ -179,15 +168,9 @@ lazy val html = crossProject(JSPlatform, JVMPlatform)
 lazy val htmlJS = html.js.dependsOn(coreJS)
 lazy val htmlJVM = html.jvm.dependsOn(coreJVM)
 
-lazy val wsdl = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-
-lazy val wsdlJS = wsdl.js.dependsOn(coreJS)
-lazy val wsdlJVM = wsdl.jvm.dependsOn(coreJVM)
-
 lazy val play = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(coreJVM, `interpreter-play26`, sampleProgramsJVM)
+  .dependsOn(coreJVM, `interpreter-play26`, exampleProgramsJVM)
   .settings(libraryDependencies ++= Seq(filters,guice))
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject = crossProject(Play25, Play26)
@@ -210,6 +193,20 @@ lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
     crossScalaVersions := Seq("2.11.12", "2.12.7")
   )
 
+lazy val `interpreter-js` = project
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7")
+  )
+  .settings(
+    scalaJSUseMainModuleInitializer := true,
+    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
+  )
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(coreJS)
+
+
 lazy val `gforms-parser` = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
@@ -228,6 +225,13 @@ lazy val `sbt-uniform-parser-xsd` = project.settings(commonSettings)
   .settings(crossScalaVersions := Seq(scalaVersion.value))
   .dependsOn(coreJVM)
 
+lazy val `ofsted-uipack` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+
+lazy val ofstedUiPackJS = `ofsted-uipack`.js.dependsOn(coreJS)
+lazy val ofstedUiPackJVM = `ofsted-uipack`.jvm.dependsOn(coreJVM)
+
 lazy val `ofsted-program` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
@@ -243,13 +247,38 @@ lazy val `ofsted-prototype` = project.settings(commonSettings)
   .dependsOn(prototype)
   .dependsOn(ofstedProgramJS)
 
+
+lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7")
+  )
+
+lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
+lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
+
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(coreJVM, `interpreter-play26`, sampleProgramsJVM)
+  .dependsOn(coreJVM, `interpreter-play26`, exampleProgramsJVM)
   .dependsOn(`interpreter-logictable` % "test")
   .settings(
     libraryDependencies ++= Seq(filters,guice)
   )
+
+lazy val `example-js` = project
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7")
+  )
+  .settings(
+    scalaJSUseMainModuleInitializer := true,
+    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
+  )
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(coreJS, `interpreter-js`, exampleProgramsJS)
 
 lazy val `ofsted-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
@@ -264,7 +293,7 @@ lazy val ofstedProgramJS = `ofsted-program`.js.dependsOn(gformsParserJS)
 lazy val ofstedProgramJVM = `ofsted-program`.jvm.dependsOn(gformsParserJVM)
 
 lazy val docs = project
-  .dependsOn(coreJVM, `interpreter-play26`, `interpreter-logictable`, `interpreter-cli`, sampleProgramsJVM)
+  .dependsOn(coreJVM, `interpreter-play26`, `interpreter-logictable`, `interpreter-cli`, exampleProgramsJVM)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
