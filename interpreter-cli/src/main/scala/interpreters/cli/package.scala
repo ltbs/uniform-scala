@@ -31,7 +31,7 @@ package object cli {
                       val s = Try(f(readLine())).toEither.leftMap { _.getLocalizedMessage }
                       s.flatMap{x => v(x.asInstanceOf[X]).toEither} match {
                         case Left(err) =>
-                          println("Error: " ++ err)
+                          println("Error: " ++ err.toString)
                           read()
                         case Right(value) => value
                       }

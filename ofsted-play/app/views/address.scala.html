@@ -1,0 +1,47 @@
+@(key: String, form: Form[ltbs.uniform.gformsparser.Address])(implicit request: Request[_], messages: Messages)
+
+@formpage(key, form) {
+
+    <fieldset id="@key" class="form-field-group">
+        <label class="govuk-label" for="@{key}_address1">
+            Line 1
+        </label>
+        <input class="form-control form-control-3-4 @if(form.hasErrors) {form-control-error}"
+               id="@{key}_address1"
+               name="@{key}.address1"
+               value="@{form(key).value.getOrElse("")}">
+
+        <label class="govuk-label" for="@{key}_address2">
+            Line 2
+        </label>
+        <input class="form-control form-control-3-4 @if(form.hasErrors) {form-control-error}"
+               id="@{key}_address2"
+               name="@{key}.address2"
+               value="@{form(key).value.getOrElse("")}">
+
+        <label class="govuk-label" for="@{key}_address3">
+            Line 3
+        </label>
+        <input class="form-control form-control-3-4 @if(form.hasErrors) {form-control-error}"
+               id="@{key}_address3"
+               name="@{key}.address3"
+               value="@{form(key).value.getOrElse("")}">
+
+        <label class="govuk-label" for="@{key}_address4">
+            Line 4
+        </label>
+        <input class="form-control form-control-3-4 @if(form.hasErrors) {form-control-error}"
+               id="@{key}_address4"
+               name="@{key}.address4"
+               value="@{form(key).value.getOrElse("")}">
+
+        <label class="govuk-label" for="@{key}_postcode">
+            Postcode
+        </label>
+        <input class="form-control form-control-3-4 @if(form.hasErrors) {form-control-error}"
+               id="@{key}_postcode"
+               name="@{key}.postcode"
+               value="@{form(key).value.getOrElse("")}">
+    </fieldset>
+
+}

@@ -8,7 +8,6 @@ import org.atnos.eff.all._
 import org.atnos.eff.syntax.all._
 import org.querki.jquery._
 import ltbs.uniform._
-import UniformTest._
 import cats.data.{ Writer, State, ValidatedNel }
 
 object JsInterpreter {
