@@ -3,8 +3,9 @@ package ltbs.uniform
 import org.atnos.eff._
 import cats.implicits._
 import org.atnos.eff.syntax.all._
-import UniformTest._
-import LogicTableInterpreter._
+
+import interpreters.logictable._
+import sampleprograms.LitreageTest._
 
 object UniformLogicTest {
 
@@ -21,9 +22,9 @@ object UniformLogicTest {
     .run
 
   def main(args: Array[String]): Unit = {
-  output.foreach{ case (a,b) =>
-    println(s"""${b.mkString(",")} => ${a.toValidated}""")
-  }
+    output.foreach{ case (a,b) =>
+      println(s"""${b.mkString(",")} => ${a.toValidated}""")
+    }
   }
 
 }

@@ -16,7 +16,6 @@ lazy val root = project.in(file("."))
     `sbt-uniform-parser-xsd`
   )
   .settings(
-    scalaVersion := "2.12.7",
     publishLocal := {},
     publish := {},
     publishArtifact := false
@@ -140,6 +139,7 @@ lazy val `interpreter-logictable` = project
     crossScalaVersions := Seq("2.11.12", "2.12.7")
   )
   .dependsOn(coreJVM)
+  .dependsOn(exampleProgramsJVM % "test")
 
 lazy val prototype = project
   .settings(commonSettings)
