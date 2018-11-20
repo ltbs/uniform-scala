@@ -10,17 +10,15 @@ lazy val root = project.in(file("."))
     `interpreter-play25`,
     `interpreter-play26`,
     exampleProgramsJS,
-    exampleProgramsJVM,
-    htmlJS,
-    htmlJVM,
+    exampleProgramsJVM, 
     `sbt-uniform-parser-xsd`
   )
   .settings(
-    scalaVersion := "2.12.7",
     publishLocal := {},
     publish := {},
     publishArtifact := false
   )
+  .settings(commonSettings)
 
 enablePlugins(GitVersioning)
 
@@ -96,6 +94,10 @@ lazy val commonSettings = Seq(
     else
       Some("releases"  at nexus + "service/local/staging/deploy/maven2")
   },
+  publishConfiguration := publishConfiguration.value.withOverwrite(isSnapshot.value),
+  com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration.value.withOverwrite(isSnapshot.value),
+  publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(isSnapshot.value),
+  com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration.value.withOverwrite(isSnapshot.value),
   git.gitTagToVersionNumber := { tag: String =>
     if(tag matches "[0-9]+\\..*") Some(tag)
     else None
@@ -140,6 +142,7 @@ lazy val `interpreter-logictable` = project
     crossScalaVersions := Seq("2.11.12", "2.12.7")
   )
   .dependsOn(coreJVM)
+  .dependsOn(exampleProgramsJVM % "test")
 
 lazy val prototype = project
   .settings(commonSettings)
