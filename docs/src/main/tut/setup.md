@@ -11,7 +11,19 @@ program in a separate jar file to where it will be executed then you
 only need the core dependency in your `build.sbt` -
 
 ```
-libraryDependencies += "com.luketebbs.uniform" % %% "core" % "VERSION"
+libraryDependencies += "com.luketebbs.uniform" %% "core" % "{{ site.last-stable-version }}"
+```
+
+Or if you're using ScalaJS - 
+
+```
+libraryDependencies += "com.luketebbs.uniform" %%% "core" % "{{ site.last-stable-version }}"
+```
+
+You can save yourself a lot of pain by using the kind projector compiler plugin - 
+
+```
+addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3")
 ```
 
 # Adding an interpreter
@@ -21,6 +33,6 @@ it. Uniform also provides several ready-to-use interpreters
 out-of-the-box for you to experiment with - 
 
 ```
-libraryDependencies += "com.luketebbs.uniform" %% "interpreter-play26" % "VERSION"
+libraryDependencies += "com.luketebbs.uniform" %% "interpreter-play26" % "{{ site.last-stable-version }}"
 ```
 

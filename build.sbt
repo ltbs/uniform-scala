@@ -6,9 +6,11 @@ lazy val root = project.in(file("."))
     coreJVM,
     `interpreter-cli`,
     `interpreter-gui`,
-    `interpreter-logictable`,
+    interpreterLogictableJS,
+    interpreterLogictableJVM,
     `interpreter-play25`,
     `interpreter-play26`,
+    `interpreter-js`,
     exampleProgramsJS,
     exampleProgramsJVM, 
     `sbt-uniform-parser-xsd`
@@ -135,12 +137,18 @@ lazy val `interpreter-gui` = project
   )
   .dependsOn(coreJVM)
 
-lazy val `interpreter-logictable` = project
+lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
     scalaVersion := "2.12.7",
     crossScalaVersions := Seq("2.11.12", "2.12.7")
   )
+
+lazy val interpreterLogictableJS = `interpreter-logictable`.js
+  .dependsOn(coreJS)
+  .dependsOn(exampleProgramsJS % "test")
+lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJVM % "test")
 
@@ -171,11 +179,6 @@ lazy val html = crossProject(JSPlatform, JVMPlatform)
 lazy val htmlJS = html.js.dependsOn(coreJS)
 lazy val htmlJVM = html.jvm.dependsOn(coreJVM)
 
-lazy val play = project.settings(commonSettings)
-  .enablePlugins(PlayScala)
-  .dependsOn(coreJVM, `interpreter-play26`, exampleProgramsJVM)
-  .settings(libraryDependencies ++= Seq(filters,guice))
-
 lazy val `interpreter-play`: sbtcrossproject.CrossProject = crossProject(Play25, Play26)
   .crossType(CrossType.Full)
   .settings(commonSettings)
@@ -191,9 +194,7 @@ lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
   .dependsOn(coreJVM)
   .settings(
-    name := "interpreter-play26",
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
+    name := "interpreter-play26"
   )
 
 lazy val `interpreter-js` = project
@@ -238,6 +239,7 @@ lazy val ofstedUiPackJVM = `ofsted-uipack`.jvm.dependsOn(coreJVM)
 lazy val `ofsted-program` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
+  .settings(libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13")
 
 lazy val `ofsted-prototype` = project.settings(commonSettings)
   .settings(
@@ -249,7 +251,6 @@ lazy val `ofsted-prototype` = project.settings(commonSettings)
   .dependsOn(gformsParserJS)
   .dependsOn(prototype)
   .dependsOn(ofstedProgramJS)
-
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -265,7 +266,7 @@ lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
   .dependsOn(coreJVM, `interpreter-play26`, exampleProgramsJVM)
-  .dependsOn(`interpreter-logictable` % "test")
+  .dependsOn(interpreterLogictableJVM % "test")
   .settings(
     libraryDependencies ++= Seq(filters,guice)
   )
@@ -283,20 +284,21 @@ lazy val `example-js` = project
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(coreJS, `interpreter-js`, exampleProgramsJS)
 
-lazy val `ofsted-play` = project.settings(commonSettings)
+lazy val `ofsted-play` = project
+  .dependsOn(`interpreter-play26`, ofstedProgramJVM)
+  .settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(coreJVM, `interpreter-play26`)
-  .dependsOn(ofstedProgramJVM)
   .settings(
-    libraryDependencies ++= Seq(filters,guice),
-    watchTransitiveSources += (baseDirectory).value / "ofsted-program" / "src" / "main" / "resources" / "template-cs3.json"
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.12.7"),
+    libraryDependencies ++= Seq(filters,guice)
   )
 
 lazy val ofstedProgramJS = `ofsted-program`.js.dependsOn(gformsParserJS)
 lazy val ofstedProgramJVM = `ofsted-program`.jvm.dependsOn(gformsParserJVM)
 
 lazy val docs = project
-  .dependsOn(coreJVM, `interpreter-play26`, `interpreter-logictable`, `interpreter-cli`, exampleProgramsJVM)
+  .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
@@ -307,7 +309,7 @@ lazy val docs = project
     micrositeAuthor         := "Luke Tebbs",
     micrositeGithubOwner    := "ltbs",
     micrositeGithubRepo     := "uniform-scala",
-//    micrositeBaseUrl        := "/uniform-scala",
+    micrositeBaseUrl        := "/uniform-scala",
     micrositeHighlightTheme := "color-brewer",
     micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
       "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))

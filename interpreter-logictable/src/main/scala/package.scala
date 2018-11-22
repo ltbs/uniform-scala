@@ -43,6 +43,40 @@ package object logictable {
           }
       })
 
+    def giveSelectionExamples[C, U](
+      reader: Examples[Set[C]]
+    )(
+      implicit member: Member.Aux[UniformSelect[C,?], R, U],
+      eitherM: _either[U],
+      writerM:_writer[U],
+      listM:_list[U]
+    ): Eff[U, A] = e.translate(
+      new Translate[UniformSelect[C,?], U] {
+        def apply[X](ax: UniformSelect[C,X]): Eff[U, X] =
+          ax match {
+            case UniformSelectOne(key,opts,v) =>
+              val selections = reader(key).flatten
+
+              val i: Eff[U,X] = for {
+                a <- ListEffect.values(selections:_*)
+                vu = a.asInstanceOf[X]
+                _ <- WriterEffect.tell(s"$key:$vu")
+                va <- send(v(vu).toEither)
+              } yield va
+              i
+
+            case UniformSelectMany(key,opts,min,max,v) =>
+              val i: Eff[U,X] = for {
+                a <- ListEffect.values(reader(key):_*)
+                vu = a.asInstanceOf[X]
+                _ <- WriterEffect.tell(s"$key:$vu")
+                va <- send(v(vu).toEither)
+              } yield va
+              i
+          }
+      })
+
+
     // def runLogicTable[U](
     //   implicit member1: Member.Aux[Either[String,?], R1, U],
     //   member2: Member.Aux[Writer[String,?], R2, R1],

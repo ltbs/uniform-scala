@@ -26,17 +26,19 @@ libraryDependencies +=
 Next you will need to extend your controller using `PlayController`.
 
 ```tut:silent
+import ltbs.uniform.interpreters.playframework._
+
 import cats.Monoid
 import cats.data.Validated
 import cats.implicits._
 import concurrent.{Future, ExecutionContext}
-import ltbs.uniform.webmonad._
 import org.atnos.eff._
 import play.api._, mvc._
 import play.api.data._, Forms._
 import play.twirl.api.Html
 
 class ExampleController extends Controller with PlayInterpreter {
+
 }
 ```
 
