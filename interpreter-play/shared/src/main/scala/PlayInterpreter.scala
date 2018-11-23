@@ -118,20 +118,24 @@ trait PlayInterpreter extends Compatibility.PlayController {
         def apply[X](ax: UniformSelect[C,X]): Eff[U, X] = {
           val wmForm: WebMonadSelectPage[X] = wmFormC.imap(_.asInstanceOf[X])(_.asInstanceOf[C])
 
-          val options: Set[X] = ax match {
-            case a: UniformSelectOne[U,X] => a.options
-            case a: UniformSelectMany[U,X] => a.options
-          }
-
-          (ax.key, ax.validation) match {
-            case (id, validation) =>
-
+          ax match {
+            case a: UniformSelectOne[U,X] =>
               val i: Eff[U,X] = pageLogic[U,X](
-                id,
-                wmForm.render(_,options, _, _),
+                a.key,
+                wmForm.renderOne(_,a.options, _, _),
                 wmForm.decode,
                 wmForm.encode,
-                wmForm.playForm(id, validation(_))
+                wmForm.playFormOne(a.key, a.validation(_))
+              )
+              i
+
+            case a: UniformSelectMany[U,X] =>
+              val i: Eff[U,Set[X]] = pageLogic[U,Set[X]](
+                a.key,
+                wmForm.renderMany(_,a.options, _, _),
+                (x => x.split(",").filter(_.nonEmpty).map(wmForm.decode).toSet),
+                (x => x.map(wmForm.encode).mkString(",")),
+                wmForm.playFormMany(a.key, a.validation(_))
               )
               i
           }

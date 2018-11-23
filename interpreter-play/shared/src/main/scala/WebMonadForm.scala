@@ -14,8 +14,10 @@ trait WebMonadForm[T] {
 
 trait WebMonadSelectPage[T] {
   def toHtml(in: T): Html
-  def render(key: String, options: Set[T], existing: ValidatedData[T], request: Request[AnyContent]): Html
+  def renderOne(key: String, options: Set[T], existing: ValidatedData[T], request: Request[AnyContent]): Html
+  def renderMany(key: String, options: Set[T], existing: ValidatedData[Set[T]], request: Request[AnyContent]): Html
   def encode(in: T): Encoded
   def decode(out: Encoded): T
-  def playForm(key: String, validation: T => Validated[ValidationError, T]): Form[T]
+  def playFormOne(key: String, validation: T => Validated[ValidationError, T]): Form[T]
+  def playFormMany(key: String, validation: Set[T] => Validated[ValidationError, Set[T]]): Form[Set[T]]
 }

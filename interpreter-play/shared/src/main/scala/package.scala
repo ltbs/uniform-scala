@@ -35,12 +35,16 @@ package object playframework {
 
     def imap[A, B](fa: WebMonadSelectPage[A])(f: A => B)(g: B => A): WebMonadSelectPage[B] = new WebMonadSelectPage[B]{
       def toHtml(in: B): Html = fa.toHtml(g(in))
-      def render(key: String, options: Set[B], existing: ValidatedData[B], request: Request[AnyContent]): Html =
-        fa.render(key, options.map(g), existing.map{_.map(g)}, request)
+      def renderOne(key: String, options: Set[B], existing: ValidatedData[B], request: Request[AnyContent]): Html =
+        fa.renderOne(key, options.map(g), existing.map{_.map(g)}, request)
+      def renderMany(key: String, options: Set[B], existing: ValidatedData[Set[B]], request: Request[AnyContent]): Html =
+        fa.renderMany(key, options.map(g), existing.map{_.map(_.map(g))}, request)
       def encode(in: B): Encoded = fa.encode(g(in))
       def decode(out: Encoded): B = f(fa.decode(out))
-      def playForm(key: String, validation: B => Validated[ValidationError, B]): Form[B] =
-        fa.playForm(key, { a: A => validation(f(a)).map(g) }).imap(f)(g)
+      def playFormOne(key: String, validation: B => Validated[ValidationError, B]): Form[B] =
+        fa.playFormOne(key, { a: A => validation(f(a)).map(g) }).imap(f)(g)
+      def playFormMany(key: String, validation: Set[B] => Validated[ValidationError, Set[B]]): Form[Set[B]] =
+        fa.playFormMany(key, { a: Set[A] => validation(a.map(f)).map(_.map(g)) }).imap(_.map(f))(_.map(g))
     }
   }
 
