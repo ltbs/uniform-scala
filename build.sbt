@@ -297,6 +297,15 @@ lazy val `ofsted-play` = project
 lazy val ofstedProgramJS = `ofsted-program`.js.dependsOn(gformsParserJS)
 lazy val ofstedProgramJVM = `ofsted-program`.jvm.dependsOn(gformsParserJVM)
 
+lazy val `data-pipeline` = project
+  .settings(commonSettings).dependsOn(coreJVM)
+  .settings(
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % "3.0.5" % "test",
+                                "com.chuusai" %%% "shapeless" % "2.3.3",
+                                "com.github.mpilquist" %% "simulacrum" % "0.14.0")
+  )
+
 lazy val docs = project
   .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)
   .enablePlugins(MicrositesPlugin)
@@ -310,6 +319,7 @@ lazy val docs = project
     micrositeGithubOwner    := "ltbs",
     micrositeGithubRepo     := "uniform-scala",
     micrositeBaseUrl        := "/uniform-scala",
+    micrositeGitterChannel  := false,
     micrositeHighlightTheme := "color-brewer",
     micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
       "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
@@ -326,5 +336,8 @@ lazy val docs = project
     micrositeExtraMdFiles := Map(),
     scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
 //    scalacOptions in Tut += "-Xfatal-warnings", // play controller scuppers this
-    libraryDependencies += "com.typesafe.play" %% "play" % "2.6.20" // used for the play interpreter demo
+    libraryDependencies ++= Seq(
+      "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
+      "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
+    )
   )
