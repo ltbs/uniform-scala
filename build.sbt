@@ -74,7 +74,7 @@ lazy val commonSettings = Seq(
 //    "-Ywarn-unused:privates",            // Warn if a private member is unused.
     "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
   ),
-  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
+  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings", "-Ywarn-unused"),
   scmInfo := Some(
     ScmInfo(
       url("https://github.com/ltbs/uniform-scala"),
@@ -297,14 +297,40 @@ lazy val `ofsted-play` = project
 lazy val ofstedProgramJS = `ofsted-program`.js.dependsOn(gformsParserJS)
 lazy val ofstedProgramJVM = `ofsted-program`.jvm.dependsOn(gformsParserJVM)
 
-lazy val `data-pipeline` = project
-  .settings(commonSettings).dependsOn(coreJVM)
+lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
   .settings(
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
-    libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % "3.0.5" % "test",
+    libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.5" % "test",
                                 "com.chuusai" %%% "shapeless" % "2.3.3",
-                                "com.github.mpilquist" %% "simulacrum" % "0.14.0")
+                                "com.github.mpilquist" %%% "simulacrum" % "0.14.0")
   )
+
+lazy val dataPipelineJVM = `data-pipeline`.jvm.dependsOn(coreJVM)
+lazy val dataPipelineJS = `data-pipeline`.js.dependsOn(coreJS)
+
+lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7"),
+    libraryDependencies ++= Seq(
+      "com.chuusai" %%% "shapeless" % "2.3.3",
+      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+    ),
+    sourceDirectories in (Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value,
+    TwirlKeys.templateImports ++= Seq(
+      "ltbs.uniform.datapipeline._",
+      "ltbs.uniform.widgets.govuk._"
+    ),
+    initialCommands in console := "import ltbs.uniform._;import ltbs.uniform.widgets.govuk._;import ltbs.uniform.datapipeline._"
+  )
+  .enablePlugins(SbtTwirl)
+
+lazy val govukWidgetsJVM = `govuk-widgets`.jvm.dependsOn(dataPipelineJVM)
+lazy val govukWidgetsJS = `govuk-widgets`.js.dependsOn(dataPipelineJS)
 
 lazy val docs = project
   .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)

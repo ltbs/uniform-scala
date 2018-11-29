@@ -14,4 +14,9 @@ case class Tree[K,V](
   }
 
   def add(key: K, newValue: Tree[K,V]): Tree[K,V] = Tree(value, children + (key -> newValue))
+
+  def atPath(path: K*): Option[V] =
+    path.foldLeft(this.some){
+      case (tree, p) => tree.flatMap(_.children.get(p))
+    }.map(_.value)
 }

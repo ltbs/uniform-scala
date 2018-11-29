@@ -1,0 +1,12 @@
+@(key: String, values: Input, errors: Error, messages: Messages)
+
+@path=@{key.split("[.]").filter(_.nonEmpty)}
+
+@standardfield(key, errors, messages) {
+
+    <input class="form-control @if(errors.atPath(path:_*).nonEmpty) {form-control-error}"
+           id="@key"
+           name="@key"
+           value="@{values.atPath(path:_*)}">
+
+}

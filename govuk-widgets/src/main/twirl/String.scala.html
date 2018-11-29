@@ -1,0 +1,22 @@
+@(key: String, values: Input, errors: Error)(implicit messages: Messages)
+
+<div class="form-group @if(errors.atPath(key).nonEmpty) {form-group-error}">
+
+    <label for="@key">
+        <span class="form-label">@messages(s"${key}.label")</span>
+        @field.errors.map { error =>
+            <span class="error-message" role="tooltip" data-journey="search-page:error:@key">
+            @messages(error.message, error.args: _*)
+            </span>
+        }
+    </label>
+
+    @messages.list(s"$key.hint").map { msg => 
+        <span class="form-hint">@msg</span>
+    }
+
+    <input class="form-control @if(errors.atPath(key).nonEmpty) {form-control-error}"
+           id="@key"
+           name="@key"
+           value="@{values.atPath(key)}">
+</div>

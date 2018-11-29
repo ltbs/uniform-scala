@@ -1,0 +1,23 @@
+@(key: String, errors: Error, messages: Messages)(content: Html)
+
+@path=@{key.split(".").filter(_.nonEmpty)}
+@fieldErrors=@{errors.atPath(path:_*)}
+
+<div class="form-group @if(fieldErrors.nonEmpty) {form-group-error}">
+
+    <label for="@key">
+        <span class="form-label">@messages(s"${key}.label")</span>
+        @fieldErrors.map { error =>
+            <span class="error-message" role="tooltip" data-journey="search-page:error:@key">
+            @messages(error)
+            </span>
+        }
+    </label>
+
+    @messages.list(s"$key.hint").map { msg => 
+        <span class="form-hint">@msg</span>
+    }
+
+    @content
+
+</div>

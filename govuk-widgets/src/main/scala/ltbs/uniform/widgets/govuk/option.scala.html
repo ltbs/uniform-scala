@@ -1,0 +1,8 @@
+@(key: String, values: Input, errors: Error, messages: Messages, inner: (String, Input, Error, Messages) => Html)
+
+@path=@{key.split("[.]").toList.filter(_.nonEmpty): List[String]}
+
+@radios(s"${key}.outer", Set("TRUE","FALSE"), values.atPath({path :+ "outer"}:_*).flatMap(_.headOption), errors, messages)
+
+@inner(s"${key}.inner", values, errors, messages)
+
