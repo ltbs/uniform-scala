@@ -8,28 +8,25 @@ import org.atnos.eff.all._
 import org.atnos.eff.syntax.all._
 import org.querki.jquery._
 import ltbs.uniform._
-import cats.data.{ Writer, State, ValidatedNel }
+import cats.data.State
+import ltbs.uniform.datapipeline.Tree
 
 object JsInterpreter {
 
   case class Page(title: Option[String] = None,
                   body: Option[String] = None,
-                  errors: List[ValidationError] = Nil)
+                  errors: ErrorTree = Tree.empty)
 
   type Encoded = String
   type DB = Map[String,Encoded]
-//  type Page = String
-  type ValidationError = String
-  type ValidatedData[A] = Option[ValidatedNel[ValidationError, A]]
-
-  def validationFix[X,A](v: Validated[X, A]): ValidatedNel[X,A] =
-    v.bimap(NonEmptyList(_,Nil), identity)
+  //  type Page = String
+  type ErrorTree = Tree[String,String]
 
   trait Form[T] {
-    def render(existing: ValidatedData[T]): String
-    def fromNode(fieldSet: JQuery): ValidatedNel[ValidationError,T]
+    def render(key: String, existing: Option[T]): String
+    def fromNode(key: String, fieldSet: JQuery): Either[ErrorTree, T]
     def encode(in: T): Encoded
-    def decode(out: Encoded): T
+    def decode(out: Encoded): Either[ErrorTree,T]
   }
 
   type JsStack = Fx.fx4[Reader[String, ?], Eval, State[DB, ?], Either[Page, ?]]
@@ -39,11 +36,14 @@ object JsInterpreter {
     type _either[Q] = Either[Page,?] |= Q
     type _readStage[Q] = Reader[String,?] |= Q
 
+    def validationToErrorTree[V](f: V => Validated[String,V]): V => Either[ErrorTree,V] = {
+      x => f(x).toEither.leftMap(Tree(_))
+    }      
+
     def useForm[C, U](
       form: Form[C]
     )(
       implicit member: Member.Aux[UniformAsk[C,?], R, U],
-      evalM: _eval[U],
       stateM: _state[U],
       eitherM: _either[U],
       readStage: _readStage[U]
@@ -57,22 +57,24 @@ object JsInterpreter {
                 state <- get[U, DB]
                 va <- {
                   if (page != key) {
-                    state.get(key).map{d => validation(form.decode(d).asInstanceOf[X])} match {
+                    state.get(key).map{d => form.decode(d).map(_.asInstanceOf[X]).flatMap{
+                      validationToErrorTree(validation)
+                    }} match {
                       case None =>
-                        left[U, Page, X](Page(title = key.some, body = form.render(None).some))
-                      case Some(Validated.Valid(x)) =>
+                        left[U, Page, X](Page(title = key.some, body = form.render(key, None).some))
+                      case Some(Right(x)) =>
                         right[U, Page, X](x)
-                      case Some(bad@Validated.Invalid(e)) =>
-                        left[U, Page, X](Page(title = key.some, body = form.render(None).some, errors = List(e)))
+                      case Some(Left(e)) =>
+                        left[U, Page, X](Page(title = key.some, body = form.render(key, None).some, e))
                     }
                   } else {
-                    val data: ValidatedNel[ValidationError, X] =
-                      form.fromNode($("#content")) map {_.asInstanceOf[X]} andThen {x => validationFix(validation(x))}
+                    val data =
+                      form.fromNode(key, $("#content")) map {_.asInstanceOf[X]} 
                     println(data)
-                    data match {
-                      case Validated.Invalid(nel) =>
-                        left[U, Page, X](Page(errors = nel.toList))
-                      case Validated.Valid(x) =>
+                    data >>= validationToErrorTree(validation) match {
+                      case Left(e) =>
+                        left[U, Page, X](Page(errors = e))
+                      case Right(x) =>
                         put[U,DB](state + (key -> form.encode(x.asInstanceOf[C]))) >> right[U, Page, X](x)
                     }
                   }

@@ -1,0 +1,174 @@
+.black-border {
+    border: 2px solid #0b0c0c;
+}
+
+.check-your-answers .change-answer {
+    text-align: right;
+    padding-right: 0;
+}
+
+.no-shadow {
+    box-shadow: none;
+}
+
+.less-padding{
+  padding-top: 2px !important;
+  padding-bottom: 3px !important;
+}
+
+.margin-bottom-1{
+    margin-bottom: 1% !important;
+}
+
+@media (min-width: 641px) {
+    body {
+        overflow-x: hidden;
+    }
+
+    .table-row-answer.word-break {
+        word-break: break-word;
+    }
+
+    .table-row-question {
+        width: 62%;
+    }
+
+    .check-your-answers td {
+        font-size: 19px;
+        line-height: 1.31579;
+    }
+
+    .content__body {
+        float: left;
+        width: 66.666667%;
+    }
+
+    .form-litres {
+        width: 50%;
+    }
+
+    .form-litres-3-4 {
+        width: 75%;
+    }
+
+    .form-control-1-4 {
+        width: 25%;
+    }
+
+    table th, table td {
+        font-size: 19px;
+        font-weight: 400;
+        vertical-align: text-top;
+    }
+}
+
+@media (max-width: 640px) {
+
+    .table-row-answer.word-break {
+        word-break: break-all;
+    }
+
+    .button {
+        width: 100%;
+    }
+
+    table th, table td {
+        font-size: 16px;
+        font-weight: 400;
+        vertical-align: text-top;
+    }
+
+    th h2 {
+        width: 200% !important;
+    }
+}
+
+details summary:not([tabindex]) {
+    display: list-item;
+}
+
+.form-postcode .form-control {
+    width: 100px;
+}
+
+html .font-xsmall {
+    font-size: 16px;
+    line-height: 1.25;
+}
+
+/*override the assets-frontend .form-block*/
+.form-block {
+    margin-top: 0 !important;
+    margin-bottom: 10px !important;
+}
+
+.check-your-answers td {
+    vertical-align: top;
+}
+
+.padding-bottom-10 {
+    padding-bottom: 10px;
+}
+
+.margin-bottom-25 {
+    margin-bottom: 25px;
+}
+
+.link-button, .link-button:hover, .link-button:focus, .link-button:active {
+  display: inline;
+  background: none;
+  border: none;
+  color: #005ea5;
+  text-decoration: underline;
+  cursor: pointer;
+  -webkit-box-shadow: none;
+  outline: 0;
+  position: relative;
+  padding-left: 0;
+  padding-right: 0;
+  margin-right: 0;
+}
+
+.link-button:hover {
+    color: #4c2c92;
+}
+
+.cya-change {
+    text-align: right;
+}
+
+button[name="checkyouranswers"] {
+    margin-top: 30px;
+}
+
+.form-field--error .error-notification {
+    font-weight: bold;
+}
+
+.align-right {
+    text-align: right;
+}
+
+.align-centre {
+    text-align: center;
+}
+
+
+.no-minus-wrapping {
+    white-space: nowrap;
+    text-align: left;
+}
+
+details .address.progressive-reveal {
+    padding-left: 25px;
+}
+
+.cya-width {
+    width: 60%;
+}
+
+@media print {
+    .print-link {
+        display: none;
+    }
+}

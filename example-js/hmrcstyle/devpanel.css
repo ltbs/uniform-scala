@@ -1,0 +1,28 @@
+.devpanel .pane {
+    position: absolute;
+    top: 25%;
+    left: 70%;
+    margin: -128px -138.5px;
+    background: #f0f0fd;
+    background: rgba(240,240,253,0.90);
+    padding: 22px 32px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    border-radius: 8px;
+    -moz-box-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+    -webkit-box-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+    -box-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+    text-align: center;
+}
+
+.devpanel .misc
+{
+    position: absolute;
+    top: 103%;
+    left: 0;
+    width: 100%;
+}
+
+.devpanel h2 {
+    margin: 10px;
+}

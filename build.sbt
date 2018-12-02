@@ -152,19 +152,6 @@ lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJVM % "test")
 
-lazy val prototype = project
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
-  )
-  .settings(
-    scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
-  )
-  .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS,exampleProgramsJS)
-
 lazy val html = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
   .settings(commonSettings)
@@ -208,8 +195,7 @@ lazy val `interpreter-js` = project
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS)
-
+  .dependsOn(coreJS, dataPipelineJS)
 
 lazy val `gforms-parser` = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .settings(commonSettings)
@@ -249,7 +235,6 @@ lazy val `ofsted-prototype` = project.settings(commonSettings)
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(coreJS)
   .dependsOn(gformsParserJS)
-  .dependsOn(prototype)
   .dependsOn(ofstedProgramJS)
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
@@ -275,14 +260,12 @@ lazy val `example-js` = project
   .settings(commonSettings)
   .settings(
     scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
-  )
-  .settings(
+    crossScalaVersions := Seq("2.11.12", "2.12.7"),
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS, `interpreter-js`, exampleProgramsJS)
+  .dependsOn(coreJS, `interpreter-js`, exampleProgramsJS, govukWidgetsJS)
 
 lazy val `ofsted-play` = project
   .dependsOn(`interpreter-play26`, ofstedProgramJVM)
@@ -302,9 +285,12 @@ lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
-    libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.5" % "test",
-                                "com.chuusai" %%% "shapeless" % "2.3.3",
-                                "com.github.mpilquist" %%% "simulacrum" % "0.14.0")
+    libraryDependencies ++= Seq(
+      "com.chuusai" %%% "shapeless" % "2.3.3",
+      "com.github.mpilquist" %%% "simulacrum" % "0.14.0",
+      "com.typesafe.play" %%% "twirl-api" % "1.3.15",
+      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+    )
   )
 
 lazy val dataPipelineJVM = `data-pipeline`.jvm.dependsOn(coreJVM)

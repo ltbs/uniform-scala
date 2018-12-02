@@ -1,20 +1,18 @@
 package ltbs.uniform.prototype
 
-import cats._, implicits._, data.State
-import java.io.FileReader
-import org.atnos.eff._, all._
+import cats._, implicits._
+import org.atnos.eff._
 import org.atnos.eff.syntax.all._
 import org.querki.jquery._
-import scala.collection.MapLike
-import ltbs.uniform._
-import ltbs.uniform.test.LitreageTest._
+import ltbs.uniform.sampleprograms.LitreageTest._
 
 import JsInterpreter._
 import JsImplementations._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import cats.Monoid
-
-import scala.concurrent.ExecutionContext.Implicits.global
+import ltbs.uniform.datapipeline._
+import InferParser._
+import InferForm._
 
 object PrototypeApp {
 
@@ -60,11 +58,32 @@ object PrototypeApp {
   var state: DB = implicitly[Monoid[DB]].empty
   var breadcrumbs: List[String] = Nil
 
+  implicit val booleanHtml = new HtmlForm[Boolean] {
+    def render(key: String, values: Input, errors: Error, messages: Messages) =
+      ltbs.uniform.widgets.govuk.html.radios(
+        key,
+        Set("TRUE","FALSE"),
+        values.value.headOption,
+        errors,
+        messages
+      )
+  }
+
+  implicit val longHtml = new HtmlForm[Long] {
+    def render(key: String, values: Input, errors: Error, messages: Messages) =
+      ltbs.uniform.widgets.govuk.html.string(
+        key,
+        values,
+        errors,
+        messages
+      )
+  }
+
   def journey(pageId: String) = {
     val output: (Either[Page, String],DB) =
       program[FxAppend[TestProgramStack, JsStack]]
-        .useForm(booleanForm)
-        .useForm(litresForm)
+        .useForm(inferJsForm[Boolean])
+        .useForm(inferJsForm[(Long,Long)])
         .runEither
         .runEval
         .runState(state)
@@ -74,7 +93,7 @@ object PrototypeApp {
     state = output._2
     output._1 match {
       case Left(page) => setPage(page)
-      case Right(fin) => println(s"fin:$fin")
+      case Right(fin) => scala.scalajs.js.Dynamic.global.alert(fin)
     }
   }
 
@@ -91,7 +110,7 @@ object PrototypeApp {
 
     page.body.map { $("#mainBody").html(_) }
 
-    page.errors match {
+    page.errors.flatTree match {
       case Nil => $("#error-summary-display").css("display", "none")
       case err =>
         $("#error-summary-display").css("display", "block")
@@ -105,6 +124,7 @@ object PrototypeApp {
           }.mkString("")
         }
     }
+    ()
   }
 
 
