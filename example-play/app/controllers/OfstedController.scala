@@ -8,7 +8,7 @@ import play.api.mvc._
 import play.twirl.api.Html
 import scala.util.Try
 
-import ltbs.uniform.webmonad._
+import ltbs.uniform.interpreters.playframework._
 import org.atnos.eff._, all._, syntax.all._, future._
 import cats.data._
 import cats.implicits._
@@ -21,7 +21,11 @@ import java.time.{LocalDate => Date}
 import java.io.File
 import play.api.i18n._
 
-import ltbs.uniform.test.LitreageTest._
+import ltbs.uniform.sampleprograms.LitreageTest._
+import ltbs.uniform.datapipeline.{Messages => _, _}
+import InferParser._
+import InferForm._
+import ltbs.uniform.widgets.govuk._
 
 @Singleton
 class OfstedController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayInterpreter with I18nSupport {
@@ -41,53 +45,14 @@ class OfstedController @Inject()(implicit val messagesApi: MessagesApi) extends 
   //   }
   // }
 
-  val booleanForm = new WebMonadForm[Boolean] {
-    def decode(out: Encoded): Boolean = out == "true"
-    def encode(in: Boolean): Encoded = in.toString
-    def playForm(key: String, validation: Boolean => Validated[ValidationError,Boolean]): Form[Boolean] = Form(single(key -> boolean))
-    def render(key: String, existing: ValidatedData[Boolean], request: Request[AnyContent]): Html = {
-      val form = existing match {
-        case Some(Validated.Invalid(e)) => Form(single(key -> boolean)).withError("", e)
-        case _ => Form(single(key -> boolean))
-      }
 
-      implicit val r: Request[AnyContent] = request
-      views.html.boolean(key, form)
-    }
-  }
-
-  val litresForm = new WebMonadForm[Litres] {
-
-    private def lmapping(key: String): Mapping[Litres] = tuple(
-      s"$key.lower" -> longNumber,
-      s"$key.upper" -> longNumber
-    )
-
-    private def lform(key: String) = Form(lmapping(key))
-
-    def decode(out: Encoded): Litres = {
-      val (a::b::_) = out.split(",").toList
-      (a.toInt,b.toInt)
-    }
-
-    def encode(in: Litres): Encoded = in._1 + "," + in._2
-    def playForm(key: String, validation: Litres => Validated[ValidationError,Litres]): Form[Litres] = lform(key)
-    def render(key: String, existing: ValidatedData[Litres], request: Request[AnyContent]): Html = {
-      val formPop = existing match {
-        case Some(Validated.Invalid(e)) => lform(key).withError("", e)
-        case _ => lform(key)
-      }
-
-      implicit val r: Request[AnyContent] = request
-      views.html.litres(key, formPop)
-    }
-  }
+  def inferForm[A](implicit messages: Messages, parser: DataParser[A], html: HtmlForm[A]) = inferWebMonadForm[A](views.html.chrome.apply)
 
   def cs3action(key: String) = Action.async { implicit request =>
     runWeb(
       program = program[FxAppend[TestProgramStack, PlayStack]]
-        .useForm(litresForm)
-        .useForm(booleanForm),
+        .useForm(inferForm[(Long,Long)])
+        .useForm(inferForm[Boolean]),
       key,
       request,
       persistence

@@ -1,0 +1,9 @@
+@(key: String, errors: Any, content: Html)(implicit messages: Messages)
+@main(key) {
+
+    @helper.form(action = play.api.mvc.Call("post", key)) {
+        <h1>@Messages("field.label")</h1>
+        @content
+        <button type="submit" class="btn btn--submit">Next</button>
+    }
+}

@@ -13,6 +13,7 @@ import ltbs.uniform._
 import play.api._
 import play.api.mvc._
 import org.atnos.eff.syntax.future._
+import ltbs.uniform.datapipeline._
 
 trait PlayInterpreter extends Compatibility.PlayController {
 
@@ -34,63 +35,64 @@ trait PlayInterpreter extends Compatibility.PlayController {
 
     private def pageLogic[S: _readRequest: _readStage: _db: _breadcrumbs: _timedFuture: _either,B](
       id: String,
-      render: (String, Option[Validated[ValidationError, B]], Request[AnyContent]) => Html,
-      decode: Encoded => B,
+      render: (String, Input, ErrorTree) => Html,
+      decode: Encoded => Either[ErrorTree,B],
       encode: B => Encoded,
-      form: Form[B]
+      validation: B => Either[ErrorTree,B],
+      toTree: B => Input,
+      bind: Input => Either[ErrorTree,B],
+      unbind: B => Input
     ): Eff[S,B] ={
-
-      object ValidDecode {
-        def unapply(in: Option[Encoded]): Option[B] = in.map(decode)
-      }
 
       for {
         request <- ask[S, Request[AnyContent]]
         targetId <- ask[S, String]
         method = request.method.toLowerCase
         state <- get[S, DB]
-        data = state.get(id)
+        dbrecord = state.get(id).map(decode(_).flatMap(validation))
         breadcrumbs <- get[S, List[String]]
-        ret <- (method, data, targetId) match {
-
+        ret <- (method, dbrecord, targetId) match {
           case ("get", None, `id`) =>
             log.info("nothing in database, step in URI, render empty form")
-            left[S, Result, B](Ok(render(id, None, request)))
+            left[S, Result, B](Ok(render(id, Tree.empty, Tree.empty)))
 
-          case ("get", ValidDecode(data), `id`) =>
+          case ("get", Some(Right(o)), `id`) =>
             log.info("something in database, step in URI, user revisiting old page, render filled in form")
-            left[S, Result, B](Ok(render(id, Some(data.valid[ValidationError]), request)))
+            left[S, Result, B](Ok(render(id, toTree(o), Tree.empty)))
 
           // TODO: Check validation too
-          case ("get", ValidDecode(data), _) =>
+          case ("get", Some(Right(data)), _) =>
             log.info("something in database, not step in URI, pass through")
             put[S, List[String]](id :: breadcrumbs) >>
               Eff.pure[S, B](data.asInstanceOf[B])
 
           case ("post", _, `id`) =>
-            form
-              .bindFromRequest()(request).fold(
 
-                formWithErrors => {
-                  log.info("form submitted, step in URI, validation failure")
-                  left[S, Result, B](BadRequest(render(id, formToValidated(formWithErrors), request)))
-                },
+            val inputText = encodeUrlString(
+              request.body.asFormUrlEncoded.getOrElse(Map.empty)
+            )
 
-                formData => {
-                  log.info("form submitted, step in URI, validation pass")
-                  put[S, List[String]](id :: breadcrumbs) >>
-                    put[S, DB](state + (id -> encode(formData))) >>
-                    Eff.pure[S, B](formData)
-                }
-              )
+            val input: Input = formToInput(decodeUrlString(inputText))
+            val data: Either[ErrorTree, B] = bind(input.children.getOrElse(targetId, Tree.empty)).flatMap(validation)
 
+            data match {
+              case Left(errors) =>
+                log.info("form submitted, step in URI, validation failure")
+                left[S, Result, B](BadRequest(render(id, input, errors)))
+              case Right(o) => 
+                log.info("form submitted, step in URI, validation pass")
+                put[S, List[String]](id :: breadcrumbs) >>
+                  put[S, DB](state + (id -> encode(o))) >>
+                  Eff.pure[S, B](o)
+
+            }
           case ("post", Some(_), _) if breadcrumbs.contains(targetId) =>
             log.info("something in database, previous page submitted")
             put[S, List[String]](id :: breadcrumbs) >>
               left[S, Result, B](Redirect(s"./$id"))
 
           // TODO: Check validation too
-          case ("post", ValidDecode(data), _) =>
+          case ("post", Some(Right(data)), _) =>
             log.info("something in database, posting, not step in URI nor previous page -> pass through")
             put[S, List[String]](id :: breadcrumbs) >>
               Eff.pure[S, B](data.asInstanceOf[B])
@@ -103,45 +105,45 @@ trait PlayInterpreter extends Compatibility.PlayController {
     }
 
 
-    def useSelectPage[C,U](
-      wmFormC: WebMonadSelectPage[C]
-    )(
-      implicit member: Member.Aux[UniformSelect[C,?], R, U],
-      readStage: _readStage[U],
-      readRequest: _readRequest[U],
-      dbM: _db[U],
-      breadcrumbsM: _breadcrumbs[U],
-      futureM: _timedFuture[U],
-      eitherM: _either[U]
-    ): Eff[U, A] = e.translate(
-      new Translate[UniformSelect[C,?], U] {
-        def apply[X](ax: UniformSelect[C,X]): Eff[U, X] = {
-          val wmForm: WebMonadSelectPage[X] = wmFormC.imap(_.asInstanceOf[X])(_.asInstanceOf[C])
+    // def useSelectPage[C,U](
+    //   wmFormC: WebMonadSelectPage[C]
+    // )(
+    //   implicit member: Member.Aux[UniformSelect[C,?], R, U],
+    //   readStage: _readStage[U],
+    //   readRequest: _readRequest[U],
+    //   dbM: _db[U],
+    //   breadcrumbsM: _breadcrumbs[U],
+    //   futureM: _timedFuture[U],
+    //   eitherM: _either[U]
+    // ): Eff[U, A] = e.translate(
+    //   new Translate[UniformSelect[C,?], U] {
+    //     def apply[X](ax: UniformSelect[C,X]): Eff[U, X] = {
+    //       val wmForm: WebMonadSelectPage[X] = wmFormC.imap(_.asInstanceOf[X])(_.asInstanceOf[C])
 
-          ax match {
-            case a: UniformSelectOne[U,X] =>
-              val i: Eff[U,X] = pageLogic[U,X](
-                a.key,
-                wmForm.renderOne(_,a.options, _, _),
-                wmForm.decode,
-                wmForm.encode,
-                wmForm.playFormOne(a.key, a.validation(_))
-              )
-              i
+    //       ax match {
+    //         case a: UniformSelectOne[U,X] =>
+    //           val i: Eff[U,X] = pageLogic[U,X](
+    //             a.key,
+    //             wmForm.renderOne(_,a.options, _, _),
+    //             wmForm.decode,
+    //             wmForm.encode,
+    //             wmForm.playFormOne(a.key, a.validation(_))
+    //           )
+    //           i
 
-            case a: UniformSelectMany[U,X] =>
-              val i: Eff[U,Set[X]] = pageLogic[U,Set[X]](
-                a.key,
-                wmForm.renderMany(_,a.options, _, _),
-                (x => x.split(",").filter(_.nonEmpty).map(wmForm.decode).toSet),
-                (x => x.map(wmForm.encode).mkString(",")),
-                wmForm.playFormMany(a.key, a.validation(_))
-              )
-              i
-          }
-        }
-      }
-    )
+    //         case a: UniformSelectMany[U,X] =>
+    //           val i: Eff[U,Set[X]] = pageLogic[U,Set[X]](
+    //             a.key,
+    //             wmForm.renderMany(_,a.options, _, _),
+    //             (x => x.split(",").filter(_.nonEmpty).map(wmForm.decode).toSet),
+    //             (x => x.map(wmForm.encode).mkString(",")),
+    //             wmForm.playFormMany(a.key, a.validation(_))
+    //           )
+    //           i
+    //       }
+    //     }
+    //   }
+    // )
 
 
     def useForm[C, U](
@@ -167,7 +169,10 @@ trait PlayInterpreter extends Compatibility.PlayController {
                 wmForm.render,
                 wmForm.decode,
                 wmForm.encode,
-                wmForm.playForm(id, validation(_))
+                validation.map{_.toEither.leftMap(Tree(_))},
+                wmForm.toTree,
+                wmForm.bind,
+                wmForm.unbind
               )
               i
           }

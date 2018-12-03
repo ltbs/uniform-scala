@@ -34,7 +34,6 @@ object PrototypeApp {
 
   @JSExportTopLevel("reloadMessages")
   def reloadMessages(): Unit = {
-    println("FFS!")
     messages.reload()
   }
 

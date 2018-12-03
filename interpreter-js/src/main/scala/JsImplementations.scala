@@ -1,11 +1,9 @@
 package ltbs.uniform.prototype
 
-import cats.data.NonEmptyList
-import scala.scalajs.runtime.UndefinedBehaviorError
 import ltbs.uniform.{datapipeline => dpl}
 import org.querki.jquery._
 import JsInterpreter._
-import cats.implicits._
+import cats.implicits._ // needed for monadic either in 2.11
 
 object JsImplementations {
 
@@ -16,38 +14,30 @@ object JsImplementations {
     ): Form[A] = new Form[A] {
 
     def decode(out: Encoded): Either[ErrorTree,A] = {
-      println(s"Decoding $out")
       val a = dpl.decodeInput(out)
-      println(s"Decoding $out: a: $a")
       val b = a.get("root")
-      println(s"Decoding $out: b: $b")
-      val c = b.flatMap{parser.bind(_)}
-      println(s"Decoding $out gave $c")
-      c
+      b.flatMap{parser.bind(_)}
     }
 
-    def encode(in: A): Encoded = {
-      println(s"Encoding $in")
-      val e = dpl.encodeInput("root", parser.unbind(in))
-      println(s"Encoding $in gave $e")
-      e
+    def encode(in: A): Encoded =
+      dpl.encodeInput("root", parser.unbind(in))
+
+    def fromDataTree(key: String, datatree: dpl.Tree[String,List[String]]): Either[ErrorTree, A] = {
+      datatree.get(key).flatMap(parser.bind)
     }
 
     def fromNode(key: String, fieldSet: JQuery): Either[ErrorTree,A] = {
       val fields = $("fieldset").serialize()
-      println(s"fromNode fields: $fields")
       val decoded=dpl.decodeUrlString(fields)
-      println(s"fromNode decoded: $decoded")
       val input = dpl.formToInput(decoded)
-      println(s"fromNode input: $input")
-      input.get(key).flatMap(parser.bind)
+      parser.bind(input.children.getOrElse(key,dpl.Tree(Nil): dpl.Input))
     }
 
-    def render(key: String, existing: Option[A]): String = {
-      val values: dpl.Input = existing.map{parser.unbind}.getOrElse(dpl.Tree(Nil))
+    def render(key: String, existing: Option[dpl.Input], errors: ErrorTree): String = {
+      val values: dpl.Input = existing.getOrElse(dpl.Tree(Nil))
 
       s"""<fieldset id="$key" class="form-field-group">""" ++
-      html.render(key, values, dpl.Tree(""), dpl.NoopMessages).toString ++
+      html.render(key, values, errors, dpl.NoopMessages).toString ++
       "</fieldset>"
     }
   }

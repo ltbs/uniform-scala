@@ -1,20 +1,46 @@
 package ltbs.uniform
 
 import cats.implicits._
-import cats.data.Validated
-import cats.Invariant
+import cats.{Invariant,Monoid}
 import java.net.URLEncoder.{encode => urlencode}
 import java.net.URLDecoder.{decode => urldecode}
+import java.time.LocalDate
+import enumeratum._
 
 package object datapipeline {
 
   type FormUrlEncoded = Map[String, Seq[String]]
+  type ErrorTree = Tree[String,String]
+  type Input = Tree[String, List[String]]
+  type Error = Tree[String, String]
+
+  implicit def treeMonoid[K, V: Monoid] = new Monoid[Tree[K,V]] {
+    def empty: Tree[K,V] = Tree(Monoid[V].empty)
+
+    def combine(x: Tree[K,V], y: Tree[K,V]): Tree[K,V] = {
+      val value = x.value |+| y.value
+
+      // crude 'unionwith'
+      val xkeys = x.children.keys.toList
+      val ykeys = y.children.keys.toList
+      val shared = xkeys.intersect(ykeys)
+      val xonly = xkeys.map{v => v -> x.children(v)}
+      val yonly = ykeys.map{v => v -> y.children(v)}
+      val merged = shared.map{v => v -> combine(x.children(v), y.children(v))}
+
+      Tree(value, Map({xonly ++ yonly ++ merged}:_*))
+    }
+  }
 
   def decodeUrlString(input: String): FormUrlEncoded =
     input.split("&")
       .toList.map(_.trim).filter(_.nonEmpty)
       .groupBy(_.takeWhile(_ != '='))
-      .mapValues(_.map(x => urldecode(x.dropWhile(_ != '=').tail, "UTF-8")))
+      .map { case (k,v) =>
+        val key = urldecode(k, "UTF-8").replace("[]", "")
+        val value = v.map(x => urldecode(x.dropWhile(_ != '=').drop(1), "UTF-8"))
+        (key, value)
+      }
 
   def encodeUrlString(input: FormUrlEncoded): String =
     input.toList.flatMap{
@@ -40,7 +66,7 @@ package object datapipeline {
       in.split("&")
         .toList.map(_.trim).filter(_.nonEmpty)
         .groupBy(_.takeWhile(_ != '='))
-        .mapValues(_.map(_.dropWhile(_ != '=').tail))
+        .mapValues(_.map(_.dropWhile(_ != '=').drop(1)))
     formToInput(formEnc)
   }
 
@@ -74,19 +100,12 @@ package object datapipeline {
     makeTree(grouped(depth))
   }
 
-  type Input = Tree[String, List[String]]
-  type Error = Tree[String, String]
-  type Pipeline[A] = Input => Either[Error,A]
-
   val required = "required"
-
-  implicit def stringPipeline: Pipeline[String] = _.value match {
-    case s::Nil => s.asRight
-    case _ => Tree("badValue").asLeft
-  }
 
   implicit def stringParser: DataParser[String] = new DataParser[String] {
     def bind(in: Input): Either[Error,String] = in.value match {
+      case Nil => Tree("required").asLeft
+      case empty::Nil if empty.trim == "" => Tree("required").asLeft
       case s::Nil => s.asRight
       case _ => Tree("badValue").asLeft
     }
@@ -96,6 +115,7 @@ package object datapipeline {
 
   implicit def intParser: DataParser[Int] = new DataParser[Int] {
     def bind(in: Input): Either[Error,Int] = in.value match {
+      case ""::Nil | Nil => Tree("required").asLeft
       case s::Nil => Either.catchOnly[NumberFormatException](s.toInt)
           .leftMap(_ => Tree("nonnumericformat"))
       case _ => Tree("badValue").asLeft
@@ -106,21 +126,13 @@ package object datapipeline {
 
   implicit def longParser: DataParser[Long] = new DataParser[Long] {
     def bind(in: Input): Either[Error,Long] = in.value match {
+      case ""::Nil | Nil => Left(Tree("required"))
       case s::Nil => Either.catchOnly[NumberFormatException](s.toLong)
           .leftMap(_ => Tree("nonnumericformat"))
       case _ => Tree("badValue").asLeft
     }
 
     def unbind(a: Long): Input = Tree(List(a.toString))
-  }
-
-  implicit def booleanPipeline: Pipeline[Boolean] = {
-    _.value match {
-      case t::Nil if t.toUpperCase == "TRUE" => true.asRight
-      case f::Nil if f.toUpperCase == "FALSE" => false.asRight
-      case Nil => Tree(required).asLeft
-      case _ => Tree("badValue").asLeft
-    }
   }
 
   implicit def booleanParser: DataParser[Boolean] = new DataParser[Boolean] {
@@ -134,37 +146,73 @@ package object datapipeline {
     def unbind(a: Boolean): Input = Tree(List(a.toString.toUpperCase))
   }
 
-  implicit def optionPipeline[A](implicit subpipe: Pipeline[A]): Pipeline[Option[A]] = { m =>
-    val outer: Either[Error,Boolean] = m.get("outer").flatMap(booleanPipeline)
-    outer >>= {x =>
-      if (x) {
-        m.get("inner") >>= {
-          inner => subpipe(inner).bimap(x => Tree("", Map("inner" -> x)), _.some)
-        }
+  implicit def localDateParser: DataParser[LocalDate] = new DataParser[LocalDate] {
+
+    def bind(in: Input): Either[Error,LocalDate] = {
+      def numField(key: String) =
+        (in.get(key) >>= intParser.bind).leftMap{ x => 
+          Tree("", Map(key -> x))
+        }toValidated
+
+      (
+        numField("year"),
+        numField("month"),
+        numField("day")
+      ).tupled.toEither.flatMap{ case (y,m,d) =>
+        Either.catchOnly[java.time.DateTimeException]{
+          LocalDate.of(y,m,d)
+        }.leftMap(_ => Tree("badDate"))
       }
-      else none[A].asRight
     }
+
+    def unbind(a: LocalDate): Input = Tree(
+      Nil,
+      Map(
+        "year" -> Tree(List(a.getYear.toString)),
+        "month" -> Tree(List(a.getMonthValue.toString)),
+        "day" -> Tree(List(a.getDayOfMonth.toString)))
+    )
   }
 
-  implicit def optionParser[A](implicit subpipe: DataParser[A]): DataParser[Option[A]] = new DataParser[Option[A]] {
-    def bind(in: Input): Either[Error,Option[A]] = {
-      val outer: Either[Error,Boolean] = in.get("outer").flatMap(booleanPipeline)
-      outer >>= {x =>
-        if (x) {
-          in.get("inner") >>= {
-            inner => subpipe.bind(inner).bimap(x => Tree("", Map("inner" -> x)), _.some)
+  implicit def enumeratumParser[A <: EnumEntry](implicit enum: Enum[A]): DataParser[A] =
+    new DataParser[A] {
+      def bind(in: Input): Either[Error,A] = stringParser.bind(in) >>= { x =>
+        Either.catchOnly[NoSuchElementException](enum.withName(x)).leftMap{_ => Tree("badValue")}
+      }
+      def unbind(a: A): Input = Tree(List(a.toString))
+    }
+
+  implicit def enumeratumSetParser[A <: EnumEntry](implicit enum: Enum[A]): DataParser[Set[A]] =
+    new DataParser[Set[A]] {
+      def bind(in: Input): Either[Error,Set[A]] = {
+        in.value.map{ x =>
+          Either.catchOnly[NoSuchElementException](enum.withName(x)).leftMap{_ => Tree("badValue"): Error}
+        }.sequence.map{_.toSet}
+      }
+      def unbind(a: Set[A]): Input = Tree(a.map(_.toString).toList)
+    }
+
+
+  implicit def optionParser[A](implicit subpipe: DataParser[A]): DataParser[Option[A]] =
+    new DataParser[Option[A]] {
+      def bind(in: Input): Either[Error,Option[A]] = {
+        val outer: Either[Error,Boolean] = in.get("outer").flatMap(booleanParser.bind)
+        outer >>= {x =>
+          if (x) {
+            in.get("inner") >>= {
+              inner => subpipe.bind(inner).bimap(x => Tree("", Map("inner" -> x)), _.some)
+            }
           }
+          else none[A].asRight
         }
-        else none[A].asRight
+      }
+
+      def unbind(a: Option[A]): Input = a match {
+        case None => Tree(List(""), Map("outer" -> booleanParser.unbind(false)))
+        case Some(x) => Tree(List(""), Map("outer" -> booleanParser.unbind(false),
+                                           "inner" -> subpipe.unbind(x)))
       }
     }
-
-    def unbind(a: Option[A]): Input = a match {
-      case None => Tree(List(""), Map("outer" -> booleanParser.unbind(false)))
-      case Some(x) => Tree(List(""), Map("outer" -> booleanParser.unbind(false),
-                                         "inner" -> subpipe.unbind(x)))
-    }
-  }
 
   implicit val parserInvariant = new Invariant[DataParser] {
     def imap[A, B](fa: DataParser[A])(f: A => B)(g: B => A): DataParser[B] = new DataParser[B] {

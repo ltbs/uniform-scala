@@ -13,7 +13,11 @@ lazy val root = project.in(file("."))
     `interpreter-js`,
     exampleProgramsJS,
     exampleProgramsJVM, 
-    `sbt-uniform-parser-xsd`
+    `sbt-uniform-parser-xsd`,
+    dataPipelineJS,
+    dataPipelineJVM,
+    govukWidgetsJS,
+    govukWidgetsJVM
   )
   .settings(
     publishLocal := {},
@@ -171,7 +175,7 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject = crossProject(Play25,
   .settings(commonSettings)
 
 lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
-  .dependsOn(coreJVM)
+  .dependsOn(coreJVM, dataPipelineJVM)
   .settings(
     name := "interpreter-play25",
     scalaVersion := "2.11.12",
@@ -179,7 +183,7 @@ lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
   )
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
-  .dependsOn(coreJVM)
+  .dependsOn(coreJVM, dataPipelineJVM)
   .settings(
     name := "interpreter-play26"
   )
@@ -250,7 +254,7 @@ lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
 
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(coreJVM, `interpreter-play26`, exampleProgramsJVM)
+  .dependsOn(coreJVM, `interpreter-play26`, exampleProgramsJVM, dataPipelineJVM, govukWidgetsJVM)
   .dependsOn(interpreterLogictableJVM % "test")
   .settings(
     libraryDependencies ++= Seq(filters,guice)
@@ -289,6 +293,7 @@ lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.github.mpilquist" %%% "simulacrum" % "0.14.0",
       "com.typesafe.play" %%% "twirl-api" % "1.3.15",
+      "com.beachape" %%% "enumeratum" % "1.5.13",
       "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
     )
   )
@@ -304,6 +309,7 @@ lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
     crossScalaVersions := Seq("2.11.12", "2.12.7"),
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
+      "com.beachape" %%% "enumeratum" % "1.5.13",
       "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
     ),
     sourceDirectories in (Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value,

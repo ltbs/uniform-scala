@@ -3,7 +3,7 @@ package ltbs.uniform.datapipeline
 import org.scalatest._
 import scala.language.implicitConversions
 
-class DataPipelineSpec extends FlatSpec with Matchers {
+class DataParserSpec extends FlatSpec with Matchers {
 
   implicit def autoTree[A](in: A): Tree[String,List[A]] = Tree(List(in))
   def single[A](in:A): Tree[String,List[A]] = Tree(List(in))
@@ -11,12 +11,12 @@ class DataPipelineSpec extends FlatSpec with Matchers {
 
   "Options" should "return None when outer is false" in {
     val input: Input = Tree(List(""), Map("outer" -> "false"))
-    implicitly[Pipeline[Option[String]]].apply(input) should be (Right(None))
+    implicitly[DataParser[Option[String]]].bind(input) should be (Right(None))
   }
 
   it should "parse nested values" in {
-    val optBoolean = implicitly[Pipeline[Option[Option[Boolean]]]]
-    val r = optBoolean.apply(
+    val optBoolean = implicitly[DataParser[Option[Option[Boolean]]]]
+    val r = optBoolean.bind(
       Tree(
         List(""),
         Map(
@@ -27,8 +27,8 @@ class DataPipelineSpec extends FlatSpec with Matchers {
   }
 
   it should "not care about validation when empty" in {
-    val optBoolean = implicitly[Pipeline[Option[Boolean]]]
-    val result = optBoolean(
+    val optBoolean = implicitly[DataParser[Option[Boolean]]]
+    val result = optBoolean.bind(
       Tree(
         List(""),
         Map(
