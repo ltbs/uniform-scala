@@ -2,6 +2,7 @@ package ltbs.uniform.datapipeline
 
 import shapeless._
 import shapeless.labelled._
+import cats.implicits._ // needed for monadic either in 2.11
 
 object InferParser {
 
@@ -19,13 +20,6 @@ object InferParser {
     val fieldName: String = witness.value.name
 
     new DataParser[FieldType[K,H] :: T] {
-
-      // this should probably be done applicative
-      def bindOld(in: Input): Either[Error,FieldType[K,H] :: T] = for {
-        t <- tParser.bind(in)
-        hdata <- in.get(fieldName)
-        h <- hParser.value.bind(hdata)
-      } yield (field[K](h) :: t)
 
       def bind(in: Input): Either[Error,FieldType[K,H] :: T] = {
         val tailV = tParser.bind(in)

@@ -13,7 +13,11 @@ lazy val root = project.in(file("."))
     `interpreter-js`,
     exampleProgramsJS,
     exampleProgramsJVM, 
-    `sbt-uniform-parser-xsd`
+    `sbt-uniform-parser-xsd`,
+    dataPipelineJS,
+    dataPipelineJVM,
+    govukWidgetsJS,
+    govukWidgetsJVM
   )
   .settings(
     publishLocal := {},
@@ -289,6 +293,7 @@ lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.github.mpilquist" %%% "simulacrum" % "0.14.0",
       "com.typesafe.play" %%% "twirl-api" % "1.3.15",
+      "com.beachape" %%% "enumeratum" % "1.5.13",
       "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
     )
   )
@@ -304,6 +309,7 @@ lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
     crossScalaVersions := Seq("2.11.12", "2.12.7"),
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
+      "com.beachape" %%% "enumeratum" % "1.5.13",
       "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
     ),
     sourceDirectories in (Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value,

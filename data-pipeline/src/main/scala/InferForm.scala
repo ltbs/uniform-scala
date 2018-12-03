@@ -25,14 +25,14 @@ object InferForm {
   implicit def hConsForm[K <: Symbol, H, T <: HList](
     implicit
       witness: Witness.Aux[K],
-    hParser: Lazy[HtmlForm[H]],
-    tParser: HtmlForm[T]
+    hForm: Lazy[HtmlForm[H]],
+    tForm: HtmlForm[T]
   ): HtmlForm[FieldType[K,H] :: T] = new HtmlForm[FieldType[K,H] :: T] {
     val fieldName: String = witness.value.name
 
     def render(key: String, values: Input, errors: Error, messages: Messages): Html =
-      hParser.value.render(s"${key}.${fieldName}", values, errors, messages) |+|
-        tParser.render(key, values, errors, messages)
+      hForm.value.render(s"${key}.${fieldName}", values, errors, messages) |+|
+        tForm.render(key, values, errors, messages)
   }
 
   implicit def genericForm[A, H, T]

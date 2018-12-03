@@ -2,6 +2,7 @@ package ltbs.uniform.datapipeline
 
 import simulacrum._
 import cats.implicits._
+import scala.language.implicitConversions
 
 @typeclass
 trait DataParser[A] {

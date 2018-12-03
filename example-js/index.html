@@ -6,6 +6,8 @@
 
     <title>Which change do you need to make?</title>
     <!--[if gt IE 8]><!--><link href="hmrcstyle/govuk-template.css" media="screen" rel="stylesheet" type="text/css"><!--<![endif]-->
+    <link href="jquery-ui/jquery-ui.theme.min.css" media="screen" rel="stylesheet" type="text/css">
+    <link href="jquery-ui/jquery-ui.min.css" media="screen" rel="stylesheet" type="text/css">
     <link href="hmrcstyle/devpanel.css" media="screen" rel="stylesheet" type="text/css">
     <!--[if IE 6]><link href="/template/assets/stylesheets/govuk-template-ie6.css" media="screen" rel="stylesheet" type="text/css" /><![endif]-->
     <!--[if IE 7]><link href="/template/assets/stylesheets/govuk-template-ie7.css" media="screen" rel="stylesheet" type="text/css" /><![endif]-->
@@ -111,6 +113,7 @@
                     <p>
                         <strong class="phase-tag" style="background-color: red;">PoC</strong>
                         <span>
+                            <a onClick="$( '#devdialog' ).dialog('open');" href="#">Dev Panel</a>
                             This is a technical proof-of-concept – all <a href="http://localhost:9250/contact/beta-feedback?service=soft-drinks-industry-levy-frontend">feedback</a> will be sent to /dev/null.
                     </p>
                 </div>
@@ -178,18 +181,45 @@
     <!--<script src="/template/assets/javascripts/govuk-template.js" type="text/javascript"></script>-->
 
 
-    <div class="devpanel">
-		    <div class="pane">
-            <h2>Developer Panel</h2>
-          <button class="button" type="submit" onclick="enableMessages()">Enable Messages</button><br /><br />
-          <button class="button" type="submit" onclick="disableMessages()">Disable Messages</button><br /><br />
-          <button class="button" type="submit" onclick="reloadMessages()">Reload Messages</button>
-		    </div>
-	  </div>
+    <div id="devdialog" title="Uniform Development Panel" style="z-index: -1000;">
+        <h3>Messages</h3>
+        <div>
+          <div class="controlgroup">
+            <label for="enable-messages">Enabled</label>
+            <input type="checkbox" name="enable-messages" id="enable-messages" onchange="enableMessages()">
+            <label for="debug-messages">Debug</label>
+            <input type="checkbox" name="debug-messages" id="debug-messages" onchange="enableMessages()">
+            <button onclick="reloadMessages()">Reload</button>
+          </div>
+        <p>More text</p>
+        </div>
+        <h3>State</h3>
+        <div id="tabs-2">
+            <p>Morbi tincidunt, dui sit amet facilisis feugiat, odio metus gravida ante, ut pharetra massa metus id nunc. Duis scelerisque molestie turpis. Sed fringilla, massa eget luctus malesuada, metus eros molestie lectus, ut tempus eros massa ut dolor. Aenean aliquet fringilla sem. Suspendisse sed ligula in ligula suscipit aliquam. Praesent in eros vestibulum mi adipiscing adipiscing. Morbi facilisis. Curabitur ornare consequat nunc. Aenean vel metus. Ut posuere viverra nulla. Aliquam erat volutpat. Pellentesque convallis. Maecenas feugiat, tellus pellentesque pretium posuere, felis lorem euismod felis, eu ornare leo nisi vel felis. Mauris consectetur tortor et purus.</p>
+        </div>
+        <h3>Blah2</h3>
+            <div id="tabs-3">
+                <p>Mauris eleifend est et turpis. Duis id erat. Suspendisse potenti. Aliquam vulputate, pede vel vehicula accumsan, mi neque rutrum erat, eu congue orci lorem eget lorem. Vestibulum non ante. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Fusce sodales. Quisque eu urna vel enim commodo pellentesque. Praesent eu risus hendrerit ligula tempus pretium. Curabitur lorem enim, pretium nec, feugiat nec, luctus a, lacus.</p>
+                <p>Duis cursus. Maecenas ligula eros, blandit nec, pharetra at, semper at, magna. Nullam ac lacus. Nulla facilisi. Praesent viverra justo vitae neque. Praesent blandit adipiscing velit. Suspendisse potenti. Donec mattis, pede vel pharetra blandit, magna ligula faucibus eros, id euismod lacus dolor eget odio. Nam scelerisque. Donec non libero sed nulla mattis commodo. Ut sagittis. Donec nisi lectus, feugiat porttitor, tempor ac, tempor vitae, pede. Aenean vehicula velit eu tellus interdum rutrum. Maecenas commodo. Pellentesque nec elit. Fusce in lacus. Vivamus a libero vitae lectus hendrerit hendrerit.</p>
+            </div>
+    </div>
 
     <script type="text/javascript">var ssoUrl = "";</script>
     <script src="hmrcstyle/application.js" type="text/javascript"></script>
     <script type="text/javascript" src="./target/scala-2.12/example-js-fastopt.js"></script>
+	  <script src="jquery-ui/jquery-ui.min.js" type="text/javascript"></script>
+
+    <script>
+     $( "#devdialog" ).accordion();
+     $( "#devdialog" ).dialog({width: "800px", autoOpen: false});
+     $( ".controlgroup" ).controlgroup()
+
+     $( ".ui-dialog" ).css("z-index", "1000"); // govuk css sets headers to 999
+     $( ".ui-dialog" ).css("box-shadow", "20px 20px 50px 15px rgba(0,0,0,0.5)");
+     $( ".ui-button" ).css("box-shadow", "none");
+     $( ".ui-button" ).css("-webkit-box-shadow", "none");
+
+    </script>
 
   </body>
 </html>

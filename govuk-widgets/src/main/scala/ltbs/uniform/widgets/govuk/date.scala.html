@@ -1,0 +1,23 @@
+@import cats.implicits._
+
+@(pkey: String, values: Input, errors: Error, messages: Messages)
+
+@path=@{pkey.split("[.]").filter(_.nonEmpty)}
+
+@for(field <- List("day", "month", "year")) {
+
+    @standardfield(s"${pkey}.${field}", errors, messages) {
+
+        <input class="form-control @if(errors.definedAtPath({path :+ field}.drop(1):_*)) {form-control-error}"
+               id="@{s"${pkey}.${field}"}"
+               name="@{s"${pkey}.${field}"}"
+               value="@{values.atPath({path :+ field}:_*)}"
+               @{field match {
+                   case "year" =>
+                   "maxlength=4"
+                   case _ =>
+                   "maxlength=2"
+               }} />
+
+    }
+}

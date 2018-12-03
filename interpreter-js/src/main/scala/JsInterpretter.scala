@@ -10,8 +10,15 @@ import org.querki.jquery._
 import ltbs.uniform._
 import cats.data.State
 import ltbs.uniform.datapipeline.Tree
+import ltbs.uniform.{datapipeline => dpl}
 
 object JsInterpreter {
+
+  def extractData(fieldSet: JQuery): Tree[String,List[String]] = {
+    val fields = $("fieldset").serialize()
+    val decoded=dpl.decodeUrlString(fields)
+    dpl.formToInput(decoded)
+  }
 
   case class Page(title: Option[String] = None,
                   body: Option[String] = None,
@@ -23,8 +30,9 @@ object JsInterpreter {
   type ErrorTree = Tree[String,String]
 
   trait Form[T] {
-    def render(key: String, existing: Option[T]): String
+    def render(key: String, existing: Option[Tree[String,List[String]]], errors: ErrorTree): String
     def fromNode(key: String, fieldSet: JQuery): Either[ErrorTree, T]
+    def fromDataTree(key: String, datatree: Tree[String, List[String]]): Either[ErrorTree, T]
     def encode(in: T): Encoded
     def decode(out: Encoded): Either[ErrorTree,T]
   }
@@ -38,7 +46,7 @@ object JsInterpreter {
 
     def validationToErrorTree[V](f: V => Validated[String,V]): V => Either[ErrorTree,V] = {
       x => f(x).toEither.leftMap(Tree(_))
-    }      
+    }
 
     def useForm[C, U](
       form: Form[C]
@@ -61,19 +69,21 @@ object JsInterpreter {
                       validationToErrorTree(validation)
                     }} match {
                       case None =>
-                        left[U, Page, X](Page(title = key.some, body = form.render(key, None).some))
+                        left[U, Page, X](Page(title = key.some, body = form.render(key, None, Tree.empty).some))
                       case Some(Right(x)) =>
                         right[U, Page, X](x)
                       case Some(Left(e)) =>
-                        left[U, Page, X](Page(title = key.some, body = form.render(key, None).some, e))
+                        left[U, Page, X](Page(title = key.some, body = form.render(key, None, e).some, e))
                     }
                   } else {
-                    val data =
-                      form.fromNode(key, $("#content")) map {_.asInstanceOf[X]} 
-                    println(data)
+                    val dataTree = extractData($("#content"))
+
+                    val data = form.fromNode(key, $("#content")) map {_.asInstanceOf[X]}
+
+                    println(s"DATA: $data")
                     data >>= validationToErrorTree(validation) match {
                       case Left(e) =>
-                        left[U, Page, X](Page(errors = e))
+                        left[U, Page, X](Page(body = form.render(key, dataTree.some, e).some, errors = e))
                       case Right(x) =>
                         put[U,DB](state + (key -> form.encode(x.asInstanceOf[C]))) >> right[U, Page, X](x)
                     }
