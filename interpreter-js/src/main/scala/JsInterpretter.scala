@@ -32,7 +32,9 @@ object JsInterpreter {
   trait Form[T] {
     def render(key: String, existing: Option[Tree[String,List[String]]], errors: ErrorTree): String
     def fromNode(key: String, fieldSet: JQuery): Either[ErrorTree, T]
+
     def fromDataTree(key: String, datatree: Tree[String, List[String]]): Either[ErrorTree, T]    // is this needed anymore?
+
     def encode(in: T): Encoded
     def decode(out: Encoded): Either[ErrorTree,T]
   }
