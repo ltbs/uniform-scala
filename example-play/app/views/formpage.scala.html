@@ -1,4 +1,4 @@
-@(key: String, form: Form[_])(content: Html)(implicit request: Request[_], messages: Messages)
+@(key: String, form: Form[_])(content: Html)(implicit request: Request[_], messages: ltbs.uniform.datapipeline.Messages)
 @main(key) {
 
     @if(form.hasErrors) {
@@ -24,7 +24,7 @@
 
     @helper.form(action = play.api.mvc.Call("post", key)) {
         @helper.CSRF.formField
-        <h1>@Messages(s"$key.label")</h1>
+        <h1>@messages(s"$key.label")</h1>
         @content
         <button type="submit" class="btn btn--submit">Next</button>
     }

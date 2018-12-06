@@ -27,7 +27,8 @@ object JsImplementations {
     }
 
     def fromNode(key: String, fieldSet: JQuery): Either[ErrorTree,A] = {
-      val fields = $("fieldset").serialize()
+      val fields = $("fieldset.uniform").serialize()
+      println(s"raw data: $fields")
       val decoded=dpl.decodeUrlString(fields)
       val input = dpl.formToInput(decoded)
       parser.bind(input.children.getOrElse(key,dpl.Tree(Nil): dpl.Input))
@@ -36,7 +37,7 @@ object JsImplementations {
     def render(key: String, existing: Option[dpl.Input], errors: ErrorTree): String = {
       val values: dpl.Input = existing.getOrElse(dpl.Tree(Nil))
 
-      s"""<fieldset id="$key" class="form-field-group">""" ++
+      s"""<fieldset id="uniform" class="uniform" style="border: 0px white; padding: 0px;">""" ++
       html.render(key, values, errors, dpl.NoopMessages).toString ++
       "</fieldset>"
     }

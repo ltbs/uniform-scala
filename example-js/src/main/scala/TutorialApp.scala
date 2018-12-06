@@ -11,6 +11,8 @@ import JsImplementations._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import cats.Monoid
 import ltbs.uniform.datapipeline._
+import ltbs.uniform.widgets.govuk._
+
 import InferParser._
 import InferForm._
 
@@ -57,27 +59,6 @@ object PrototypeApp {
   var state: DB = implicitly[Monoid[DB]].empty
   var breadcrumbs: List[String] = Nil
 
-  implicit val booleanHtml = new HtmlForm[Boolean] {
-    def render(key: String, values: Input, errors: Error, messages: Messages) =
-      ltbs.uniform.widgets.govuk.html.radios(
-        key,
-        Set("TRUE","FALSE"),
-        values.value.headOption,
-        errors,
-        messages
-      )
-  }
-
-  implicit val longHtml = new HtmlForm[Long] {
-    def render(key: String, values: Input, errors: Error, messages: Messages) =
-      ltbs.uniform.widgets.govuk.html.string(
-        key,
-        values,
-        errors,
-        messages
-      )
-  }
-
   def journey(pageId: String) = {
     val output: (Either[Page, String],DB) =
       program[FxAppend[TestProgramStack, JsStack]]
@@ -101,7 +82,7 @@ object PrototypeApp {
       breadcrumbs = title :: breadcrumbs
       $("#title").html(messages.span(s"heading.$title"))
       $("#continue-button").replaceWith(
-        s"""|<button class="button" type="submit" id="continue-button"
+        s"""|<button class="govuk-button" type="submit" id="continue-button"
             |  onclick="saveAndContinue('$title')">
             |    Save and continue
             |</button>""".stripMargin)

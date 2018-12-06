@@ -17,6 +17,13 @@ import ltbs.uniform.datapipeline._
 
 trait PlayInterpreter extends Compatibility.PlayController {
 
+  implicit def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
+    def apply(key: List[String],args: Any*): String = input(key, args)
+    def apply(key: String,args: Any*): String = input(key, args)
+    def get(key: String,args: Any*): Option[String] = ???
+    def list(key: String,args: Any*): List[String] = ???
+  }
+
   val log: Logger = Logger("uniform")
 
   def formToValidated[A](f: Form[A]): ValidatedData[A] =

@@ -5,55 +5,64 @@ import enumeratum._
 
 package object govuk {
 
-  implicit val booleanHtml = new HtmlForm[Boolean] {
+  implicit val booleanField = new HtmlForm[Boolean] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      html.radios(
-        key,
-        Set("TRUE","FALSE"),
-        values.value.headOption,
-        errors,
-        messages
-      )
+      html.standardfield(key, errors, messages)(
+        html.radios(
+          key,
+          Set("TRUE","FALSE"),
+          values.value.headOption,
+          errors,
+          messages
+        ))
   }
 
   implicit val longHtml = new HtmlForm[Long] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      html.string(
-        key,
-        values,
-        errors,
-        messages
+      html.standardfield(key, errors, messages)(
+        html.string(
+          key,
+          values,
+          errors,
+          messages
+        )
       )
   }
 
   implicit val intHtml = new HtmlForm[Int] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      html.string(
-        key,
-        values,
-        errors,
-        messages
+      html.standardfield(key, errors, messages)(
+        html.string(
+          key,
+          values,
+          errors,
+          messages
+        )
       )
   }
 
 
   implicit val stringHtml = new HtmlForm[String] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      html.string(
-        key,
-        values,
-        errors,
-        messages
+      html.standardfield(key, errors, messages)(
+        html.string(
+          key,
+          values,
+          errors,
+          messages
+        )
       )
   }
 
   implicit val localdateHtml = new HtmlForm[java.time.LocalDate] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      html.date(
-        key,
-        values,
-        errors,
-        messages
+      html.standardfield(key, errors, messages)(
+        html.date(
+          key,
+          values,
+          errors,
+          messages
+        )
       )
   }
 
@@ -67,7 +76,10 @@ package object govuk {
       val options: Set[A] = enum.values.toSet
       val path = key.split("[.]").filter(_.nonEmpty)
       val existing: Option[String] = values.atPath(path:_*).flatMap{_.headOption}
-      html.radios(key, options.map{_.toString}, existing, errors, messages)
+
+      html.standardfield(key, errors, messages)(
+        html.radios(key, options.map{_.toString}, existing, errors, messages)
+      )
     }
   }
 
@@ -76,7 +88,10 @@ package object govuk {
       val options: Set[A] = enum.values.toSet
       val path = key.split("[.]").filter(_.nonEmpty)
       val existing: Option[List[String]] = values.atPath(path:_*)
-      html.checkboxes(key, options.map{_.toString}, existing, errors, messages)
+
+      html.standardfield(key, errors, messages)(
+        html.checkboxes(key, options.map{_.toString}, existing, errors, messages)
+      )
     }
   }
 

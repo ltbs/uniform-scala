@@ -15,7 +15,7 @@ import ltbs.uniform.{datapipeline => dpl}
 object JsInterpreter {
 
   def extractData(fieldSet: JQuery): Tree[String,List[String]] = {
-    val fields = $("fieldset").serialize()
+    val fields = $("fieldset.uniform").serialize()
     val decoded=dpl.decodeUrlString(fields)
     dpl.formToInput(decoded)
   }
@@ -80,7 +80,7 @@ object JsInterpreter {
                   } else {
                     val dataTree = extractData($("#content"))
 
-                    val data = form.fromNode(key, $("#content")) map {_.asInstanceOf[X]}
+                    val data = form.fromNode(key, $("fieldset.uniform")) map {_.asInstanceOf[X]}
 
                     println(s"DATA: $data")
                     data >>= validationToErrorTree(validation) match {

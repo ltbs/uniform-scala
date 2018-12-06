@@ -317,7 +317,8 @@ lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
       "ltbs.uniform.datapipeline._",
       "ltbs.uniform.widgets.govuk._"
     ),
-    initialCommands in console := "import ltbs.uniform._;import ltbs.uniform.widgets.govuk._;import ltbs.uniform.datapipeline._"
+    initialCommands in console := "import ltbs.uniform._;import ltbs.uniform.widgets.govuk._;import ltbs.uniform.datapipeline._",
+    scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings", "-Ywarn-unused") // little we can do about twirl throwing warnings
   )
   .enablePlugins(SbtTwirl)
 

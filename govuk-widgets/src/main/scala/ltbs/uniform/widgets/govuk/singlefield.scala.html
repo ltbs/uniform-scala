@@ -5,7 +5,6 @@
 @path=@{key.split("[.]").filter(_.nonEmpty)}
 @fieldErrors=@{errors.atPath(path:_*)}
 
-
 <div class="govuk-form-group @if(errors.definedAtPath(path.drop(1):_*)) {govuk-form-group--error}">
   <fieldset class="govuk-fieldset" aria-describedby="@key-hint">
     <legend class="govuk-fieldset__legend govuk-fieldset__legend--xl">

@@ -1,11 +1,18 @@
 @(key: String, options: Set[String], existing: Option[String], errors: Error, messages: Messages)
-@standardfield(key, errors, messages) {
 
-  @for(opt <- options) {
-    <div class="multiple-choice">
-      <input id="@key-@opt" name="@key" value="@opt" type="radio" @{ existing.filter(_ == opt).map{ _ => "checked" } } />
-      <label for="@key-@opt" class="block-label less-padding">@opt</label>
+<div class="govuk-radios">
+  @for((opt,num) <- options.zipWithIndex) {  
+    <div class="govuk-radios__item">
+      <input class="govuk-radios__input" id="@key-@num" name="@key" type="radio" value="@opt" aria-describedby="@key-@num-item-hint" @{ existing.filter(_ == opt).map{ _ => "selected" } }>
+      <label class="govuk-label govuk-radios__label govuk-label--s" for="@key-@num">
+        @messages(List(s"$key.$opt", opt))
+      </label>
+      @messages.get(s"$key.$opt.hint").map { hint => 
+        <span id="@key-@opt-item-hint" class="govuk-hint govuk-checkboxes__hint">
+          @hint
+        </span>
+      }
     </div>
   }
+</div>
 
-}
