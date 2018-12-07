@@ -6,45 +6,69 @@ import shapeless.labelled._
 import cats.implicits._
 import cats.Monoid
 
+trait HtmlField[A]{
+  def render(key: String, values: Input, errors: Error, messages: Messages): Html
+}
+
 trait HtmlForm[A]{
   def render(key: String, values: Input, errors: Error, messages: Messages): Html
 }
 
-object InferForm {
+trait InferForm {
+
+  def soloField(key: String, values: Input, errors: Error, messages: Messages)(inner: Html): Html
+  def compoundField(key: String, values: Input, errors: Error, messages: Messages)(inner: Html): Html
 
   implicit val htmlMonoidInstance = new Monoid[Html] {
     def empty: Html = Html("")
     def combine(a: Html, b: Html):Html = Html(a.toString ++ b.toString)
   }
 
-  implicit val hnilForm = new HtmlForm[HNil] {
+  implicit val hnilField = new HtmlField[HNil] {
     def render(key: String, values: Input, errors: Error, messages: Messages): Html =
       Monoid[Html].empty
   }
 
-  implicit def hConsForm[K <: Symbol, H, T <: HList](
+  implicit def hConsField[K <: Symbol, H, T <: HList](
     implicit
       witness: Witness.Aux[K],
-    hForm: Lazy[HtmlForm[H]],
-    tForm: HtmlForm[T]
-  ): HtmlForm[FieldType[K,H] :: T] = new HtmlForm[FieldType[K,H] :: T] {
+    hField: Lazy[HtmlField[H]],
+    tField: HtmlField[T]
+  ): HtmlField[FieldType[K,H] :: T] = new HtmlField[FieldType[K,H] :: T] {
     val fieldName: String = witness.value.name
 
     def render(key: String, values: Input, errors: Error, messages: Messages): Html =
-      hForm.value.render(s"${key}.${fieldName}", values, errors, messages) |+|
-        tForm.render(key, values, errors, messages)
+      compoundField(s"${key}.${fieldName}", values, errors, messages)(
+      hField.value.render(s"${key}.${fieldName}", values, errors, messages)) |+|
+        tField.render(key, values, errors, messages)
   }
 
-  implicit def genericForm[A, H, T]
+  def genericField[A, H, T]
     (implicit
        generic: LabelledGeneric.Aux[A,T],
-     hGenParser: Lazy[HtmlForm[T]]
-    ): HtmlForm[A] = new HtmlForm[A]
+     hGenParser: Lazy[HtmlField[T]]
+    ): HtmlField[A] = new HtmlField[A]
   {
 
     def render(key: String, values: Input, errors: Error, messages: Messages): Html =
       hGenParser.value.render(key, values, errors, messages)
   }
 
+  implicit def simpleForm[A](implicit field: HtmlField[A]): HtmlForm[A] = new HtmlForm[A] {
+    def render(key: String, values: Input, errors: Error, messages: Messages): Html =
+      soloField(key, values, errors, messages)(field.render(key, values, errors, messages))
+  }
+
+  implicit def compoundForm[A, H, T]
+    (implicit
+       generic: LabelledGeneric.Aux[A,T],
+     hGenParser: Lazy[HtmlField[T]]
+    ): HtmlForm[A] =
+    new HtmlForm[A] {
+      def render(key: String, values: Input, errors: Error, messages: Messages): Html =
+        soloField(key, values, errors, messages)(
+          genericField(generic, hGenParser).render(key, values, errors, messages)
+        )
+    }
 
 }

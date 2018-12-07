@@ -5,3 +5,4 @@
 target
 **~
 ensime.sbt
+example-play/logs

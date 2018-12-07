@@ -2,76 +2,75 @@ package ltbs.uniform.widgets
 
 import ltbs.uniform.datapipeline._
 import enumeratum._
+import play.twirl.api.Html
 
-package object govuk {
+package object govuk extends InferForm {
 
-  implicit val booleanField = new HtmlForm[Boolean] {
+  def compoundField(key: String, values: Input, errors: Error, messages: Messages)(inner: Html): Html = 
+    html.compoundfield(key, errors, messages)(inner)
+
+  def soloField(key: String, values: Input,errors: Error,messages: Messages)(inner: Html): Html =
+    html.standardfield(key, errors, messages)(inner)
+
+  implicit val booleanField = new HtmlField[Boolean] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      html.standardfield(key, errors, messages)(
+      
         html.radios(
           key,
           Set("TRUE","FALSE"),
           values.value.headOption,
           errors,
           messages
-        ))
+        )
   }
 
-  implicit val longHtml = new HtmlForm[Long] {
+  implicit val longHtml = new HtmlField[Long] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      html.standardfield(key, errors, messages)(
         html.string(
           key,
           values,
           errors,
           messages
         )
-      )
   }
 
-  implicit val intHtml = new HtmlForm[Int] {
+  implicit val intHtml = new HtmlField[Int] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      html.standardfield(key, errors, messages)(
         html.string(
           key,
           values,
           errors,
           messages
         )
-      )
   }
 
 
-  implicit val stringHtml = new HtmlForm[String] {
+  implicit val stringHtml = new HtmlField[String] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      html.standardfield(key, errors, messages)(
         html.string(
           key,
           values,
           errors,
           messages
         )
-      )
   }
 
-  implicit val localdateHtml = new HtmlForm[java.time.LocalDate] {
+  implicit val localdateHtml = new HtmlField[java.time.LocalDate] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      html.standardfield(key, errors, messages)(
         html.date(
           key,
           values,
           errors,
           messages
         )
-      )
   }
 
-  implicit def optionHtml[A](implicit inner: HtmlForm[A]) = new HtmlForm[Option[A]] {
+  implicit def optionHtml[A](implicit inner: HtmlField[A]) = new HtmlField[Option[A]] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
       html.option(key, values, errors, messages, inner.render _)
   }
 
-  implicit def enumeratumHtml[A <: EnumEntry](implicit enum: Enum[A]) = new HtmlForm[A] {
+  implicit def enumeratumHtml[A <: EnumEntry](implicit enum: Enum[A]) = new HtmlField[A] {
     def render(key: String, values: Input, errors: Error, messages: Messages) = {
       val options: Set[A] = enum.values.toSet
       val path = key.split("[.]").filter(_.nonEmpty)
@@ -83,7 +82,7 @@ package object govuk {
     }
   }
 
-  implicit def enumeratumSetHtml[A <: EnumEntry](implicit enum: Enum[A]) = new HtmlForm[Set[A]] {
+  implicit def enumeratumSetHtml[A <: EnumEntry](implicit enum: Enum[A]) = new HtmlField[Set[A]] {
     def render(key: String, values: Input, errors: Error, messages: Messages) = {
       val options: Set[A] = enum.values.toSet
       val path = key.split("[.]").filter(_.nonEmpty)

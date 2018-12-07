@@ -1,7 +1,8 @@
-@(key: String, errors: Any, content: Html)(implicit messages: ltbs.uniform.datapipeline.Messages)
+@(key: String, errors: Any, content: Html)(implicit messages: ltbs.uniform.datapipeline.Messages, requeest: Request[AnyContent])
 @main(key) {
 
     @helper.form(action = play.api.mvc.Call("post", key)) {
+        @helper.CSRF.formField 
         <h1>@messages("field.label")</h1>
         @content
         <button type="submit" class="btn btn--submit">Next</button>

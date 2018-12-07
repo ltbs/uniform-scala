@@ -23,9 +23,9 @@ import play.api.i18n._
 
 import ltbs.uniform.sampleprograms.LitreageTest._
 import ltbs.uniform.datapipeline.{Messages => _, _}
-import InferParser._
-import InferForm._
 import ltbs.uniform.widgets.govuk._
+
+import InferParser._
 
 @Singleton
 class OfstedController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayInterpreter with I18nSupport {
@@ -46,19 +46,27 @@ class OfstedController @Inject()(implicit val messagesApi: MessagesApi) extends 
   // }
 
 
-  def inferForm[A](implicit messages: Messages, parser: DataParser[A], html: HtmlForm[A]) = inferWebMonadForm[A](views.html.chrome.apply)
+  def cs3action(key: String) = {
 
-  def cs3action(key: String) = Action.async { implicit request =>
-    runWeb(
-      program = program[FxAppend[TestProgramStack, PlayStack]]
-        .useForm(inferForm[(Long,Long)])
-        .useForm(inferForm[Boolean]),
-      key,
-      request,
-      persistence
-    )(
-      a => Future.successful(Ok(a))
-    )
+    def inferForm[A](
+      implicit 
+      parser: DataParser[A],
+      html: HtmlForm[A],
+      request: Request[AnyContent]
+    ) = inferWebMonadForm[A](views.html.chrome.apply)
+
+    Action.async { implicit request =>
+      runWeb(
+        program = program[FxAppend[TestProgramStack, PlayStack]]
+          .useForm(inferForm[(Long,Long)])
+          .useForm(inferForm[Boolean]),
+        key,
+        request,
+        persistence
+      )(
+        a => Future.successful(Ok(a))
+      )
+    }
   }
 
   val persistence = new Persistence {

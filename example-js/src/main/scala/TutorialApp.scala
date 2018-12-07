@@ -14,7 +14,6 @@ import ltbs.uniform.datapipeline._
 import ltbs.uniform.widgets.govuk._
 
 import InferParser._
-import InferForm._
 
 object PrototypeApp {
 
