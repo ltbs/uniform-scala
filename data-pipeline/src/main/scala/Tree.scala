@@ -40,6 +40,10 @@ case class Tree[K,V](
     inner(Nil, this)
   }
 
+  def isEmpty(implicit monoid: Monoid[V]): Boolean =
+    this == Tree(monoid.empty)
+
+  def nonEmpty(implicit monoid: Monoid[V]): Boolean = !isEmpty
 }
 
 object Tree {

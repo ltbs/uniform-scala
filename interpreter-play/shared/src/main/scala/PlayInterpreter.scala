@@ -4,7 +4,7 @@ import cats.Monoid
 import cats.data._
 import cats.implicits._
 import org.atnos.eff._
-import org.atnos.eff.all._
+import org.atnos.eff.all.{none => _, _}
 import org.atnos.eff.syntax.all._
 import play.api.data.Form
 import play.twirl.api.Html
@@ -20,8 +20,21 @@ trait PlayInterpreter extends Compatibility.PlayController {
   implicit def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
     def apply(key: List[String],args: Any*): String = input(key, args)
     def apply(key: String,args: Any*): String = input(key, args)
-    def get(key: String,args: Any*): Option[String] = ???
-    def list(key: String,args: Any*): List[String] = ???
+    def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
+      input.messages(key, args:_*).some
+    else
+      none[String]
+
+    def list(key: String,args: Any*): List[String] = {
+      @annotation.tailrec
+      def inner(cnt: Int = 2, list: List[String] = Nil): List[String] =
+        get(s"$key.$cnt", args:_*) match {
+          case Some(_) => inner(cnt+1, input.messages(s"$key.$cnt", args:_*) :: list)
+          case None       => list
+        }
+
+      List(key, s"$key.1").map(get(_, args)).flatten ++ inner().reverse
+    }
   }
 
   val log: Logger = Logger("uniform")

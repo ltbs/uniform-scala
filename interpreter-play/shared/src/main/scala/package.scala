@@ -57,7 +57,8 @@ package object playframework {
   def inferWebMonadForm[A](chrome: (String, ErrorTree, Html) => Html)
   (implicit
      parser: DataParser[A],
-   html: HtmlForm[A]
+    html: HtmlForm[A],
+    messages: Messages
   ): WebMonadForm[A] = new WebMonadForm[A] {
 
     def fromRequest(key: String,request: Request[AnyContent]): Either[ErrorTree,A] = {
@@ -66,7 +67,7 @@ package object playframework {
     }
 
     def render(key: String, input: Input, errors: ErrorTree): Html =
-      chrome(key, errors, html.render(key, input, errors, NoopMessages))
+      chrome(key, errors, html.render(key, input, errors, messages))
 
     def toTree(in: A): Input = parser.unbind(in)
 
@@ -81,7 +82,6 @@ package object playframework {
 
     def bind(in: Input): Either[Error,A] = parser.bind(in)
     def unbind(a:A): Input = parser.unbind(a)
-
 
   }
 }

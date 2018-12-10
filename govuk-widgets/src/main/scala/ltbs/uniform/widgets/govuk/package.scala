@@ -6,6 +6,9 @@ import play.twirl.api.Html
 
 package object govuk extends InferForm {
 
+  def errorSummary(key: String, values: Input, errors: Error, messages: Messages): Html =
+    html.errorsummary(key, values, errors, messages)
+
   def compoundField(key: String, values: Input, errors: Error, messages: Messages)(inner: Html): Html = 
     html.compoundfield(key, errors, messages)(inner)
 

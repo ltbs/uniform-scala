@@ -1,10 +1,37 @@
-@(key: String, errors: Any, content: Html)(implicit messages: ltbs.uniform.datapipeline.Messages, requeest: Request[AnyContent])
-@main(key) {
+@import ltbs.uniform.widgets.govuk.html._
 
-    @helper.form(action = play.api.mvc.Call("post", key)) {
+@(key: String, errors: Any, content: Html)(implicit messages: ltbs.uniform.datapipeline.Messages, requeest: Request[AnyContent])
+<!DOCTYPE html>
+<html lang="en" class="govuk-template ">
+  <head>
+    <meta charset="utf-8" />
+    <title>Uniform Play :: Example Service</title>    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--[if gt IE 8]><!--><link href="/assets/govuk-frontend-ie8-2.4.0.min.css" media="screen" rel="stylesheet" type="text/css"><!--<![endif]-->
+    <link rel="stylesheet" type="text/css" href="/assets/govuk-frontend-2.4.0.min.css">
+    <meta name="theme-color" content="#0b0c0c" /> 
+    <link rel="shortcut icon" sizes="16x16 32x32 48x48" href="/assets/images/favicon.ico" type="image/x-icon" />
+    <link rel="mask-icon" href="/assets/images/govuk-mask-icon.svg" color="#0b0c0c" /> 
+    <meta name="robots" content="noindex, nofollow" />
+    <meta property="og:image" content="/assets/images/govuk-opengraph-image.png" />
+  </head>
+  <body class="govuk-template__body ">
+
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <a href="#main-content" class="govuk-skip-link">Skip to main content</a>
+    
+    @header(Some("Uniform Play Interpreter Example"), Nil, None, Some("EXPERIMENTAL"))
+    <div class="govuk-width-container">
+      <main class="govuk-main-wrapper " id="main-content" role="main">
+        <div id="mainBody">
+      @helper.form(action = play.api.mvc.Call("post", key)) {
         @helper.CSRF.formField 
-        <h1>@messages("field.label")</h1>
         @content
-        <button type="submit" class="btn btn--submit">Next</button>
-    }
-}
+        <button type="submit" class="govuk-button">Save and Continue</button>
+      }
+        </div>
+      </main>
+    </div>  
+    @footer(Nil,Nil)
+  </body>
+  </html>

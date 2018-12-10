@@ -16,6 +16,7 @@ trait HtmlForm[A]{
 
 trait InferForm {
 
+  def errorSummary(key: String, values: Input, errors: Error, messages: Messages): Html  
   def soloField(key: String, values: Input, errors: Error, messages: Messages)(inner: Html): Html
   def compoundField(key: String, values: Input, errors: Error, messages: Messages)(inner: Html): Html
 
@@ -56,6 +57,7 @@ trait InferForm {
 
   implicit def simpleForm[A](implicit field: HtmlField[A]): HtmlForm[A] = new HtmlForm[A] {
     def render(key: String, values: Input, errors: Error, messages: Messages): Html =
+      errorSummary(key, values, errors, messages) |+|
       soloField(key, values, errors, messages)(field.render(key, values, errors, messages))
   }
 
@@ -66,7 +68,8 @@ trait InferForm {
     ): HtmlForm[A] =
     new HtmlForm[A] {
       def render(key: String, values: Input, errors: Error, messages: Messages): Html =
-        soloField(key, values, errors, messages)(
+      errorSummary(key, values, errors, messages) |+|
+        soloField(key, values, Tree(errors.value), messages)(
           genericField(generic, hGenParser).render(key, values, errors, messages)
         )
     }

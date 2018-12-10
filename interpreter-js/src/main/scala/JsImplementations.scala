@@ -10,7 +10,8 @@ object JsImplementations {
   def inferJsForm[A]
     (implicit
       parser: dpl.DataParser[A],
-      html: dpl.HtmlForm[A]
+      html: dpl.HtmlForm[A],
+      messages: dpl.Messages
     ): Form[A] = new Form[A] {
 
     def decode(out: Encoded): Either[ErrorTree,A] = {
@@ -38,7 +39,7 @@ object JsImplementations {
       val values: dpl.Input = existing.getOrElse(dpl.Tree(Nil))
 
       s"""<fieldset id="uniform" class="uniform" style="border: 0px white; padding: 0px;">""" ++
-      html.render(key, values, errors, dpl.NoopMessages).toString ++
+      html.render(key, values, errors, messages).toString ++
       "</fieldset>"
     }
   }

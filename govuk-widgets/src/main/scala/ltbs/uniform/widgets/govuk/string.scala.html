@@ -4,7 +4,7 @@
 
 @path=@{key.split("[.]").filter(_.nonEmpty)}
 
-<input class="govuk-input govuk-!-width-two-thirds @if(errors.definedAtPath(path.drop(1):_*)) {form-control-error}"
+<input class="govuk-input govuk-!-width-two-thirds @if(errors.definedAtPath(path.drop(1):_*)) {govuk-input--error}"
        id="@key"
        name="@key"
        value="@{values.atPath(path:_*)}" />

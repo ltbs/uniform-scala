@@ -58,6 +58,8 @@ object PrototypeApp {
   var state: DB = implicitly[Monoid[DB]].empty
   var breadcrumbs: List[String] = Nil
 
+  implicit val cmsMessages = CmsMessages(Map("litresProduced.heading" -> List("Litres Produced")))
+
   def journey(pageId: String) = {
     val output: (Either[Page, String],DB) =
       program[FxAppend[TestProgramStack, JsStack]]
