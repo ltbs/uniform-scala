@@ -23,8 +23,8 @@ package object playframework {
   implicit val invariantWebMonad: Invariant[WebMonadForm] = new Invariant[WebMonadForm] {
     def imap[A, B](fa: WebMonadForm[A])(f: A => B)(g: B => A): WebMonadForm[B] = new WebMonadForm[B]{
 
-      def render(key: String, existing: Input, errors: ErrorTree): Html =
-        fa.render(key, existing, errors)
+      def render(key: String, existing: Input, errors: ErrorTree, breadcrumbs: List[String]): Html =
+        fa.render(key, existing, errors, breadcrumbs)
 
       def fromRequest(key: String, request: Request[AnyContent]): Either[ErrorTree, B] =
         fa.fromRequest(key, request).map(f)
@@ -54,7 +54,7 @@ package object playframework {
     }
   }
 
-  def inferWebMonadForm[A](chrome: (String, ErrorTree, Html) => Html)
+  def inferWebMonadForm[A](chrome: (String, ErrorTree, Html, List[String]) => Html)
   (implicit
      parser: DataParser[A],
     html: HtmlForm[A],
@@ -66,8 +66,8 @@ package object playframework {
       parser.bind(decodeInput(inputText))
     }
 
-    def render(key: String, input: Input, errors: ErrorTree): Html =
-      chrome(key, errors, html.render(key, input, errors, messages))
+    def render(key: String, input: Input, errors: ErrorTree, breadcrumbs: List[String]): Html =
+      chrome(key, errors, html.render(key, input, errors, messages), breadcrumbs.reverse)
 
     def toTree(in: A): Input = parser.unbind(in)
 

@@ -1,2 +1,19 @@
 # https://www.playframework.com/documentation/latest/ScalaI18N
 crown-copyright=Crown Copyright
+
+litresProduced.heading=Litres Produced
+litresProduced.hint=Do you produce any sugary drinks?
+litresProduced.inner._1.heading=Litres at lower concentration
+litresProduced.inner._1.hint=Lower concentration is between 5 and 8 grams of sugar per 100ml
+litresProduced.inner._2.heading=Litres at higher concentration
+litresProduced.inner._2.hint=Lower concentration is in excess of 8 grams of sugar per 100ml
+litresProduced.details=What if I''m not sure?|You can enter an estimate.
+litresProduced.details.2=What if I want more answers?\
+  |This is to test line-wrapping and also list entries
+
+TRUE=Yes
+FALSE=No
+
+there.is.a.problem=There is a problem
+
+required=This field is mandatory

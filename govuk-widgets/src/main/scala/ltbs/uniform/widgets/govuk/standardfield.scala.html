@@ -20,4 +20,16 @@
     }
     @content
   </fieldset>
+  
 </div>
+
+
+  @for((k::v::_) <- messages.list(s"$key.details").collect{ case x if x.contains("|") => x.split("[|]").toList}) {
+<details class="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">@k</span>
+    </summary>
+    <div class="govuk-details__text">@v</div>
+</details>
+  }
+

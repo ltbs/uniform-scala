@@ -17,14 +17,13 @@ package object govuk extends InferForm {
 
   implicit val booleanField = new HtmlField[Boolean] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
-      
-        html.radios(
-          key,
-          Set("TRUE","FALSE"),
-          values.value.headOption,
-          errors,
-          messages
-        )
+      html.radios(
+        key,
+        Set("TRUE","FALSE"),
+        values.children.get(key).flatMap(_.value.headOption),
+        errors,
+        messages
+      )
   }
 
   implicit val longHtml = new HtmlField[Long] {

@@ -7,7 +7,7 @@ import play.api.mvc.{ Request, AnyContent }
 import ltbs.uniform.datapipeline._
 
 trait WebMonadForm[T] {
-  def render(key: String, existing: Input, errors: ErrorTree): Html
+  def render(key: String, existing: Input, errors: ErrorTree, breadcrumbs: List[String]): Html
   def fromRequest(key: String, request: Request[AnyContent]): Either[ErrorTree, T]
   def encode(in: T): Encoded
   def decode(out: Encoded): Either[ErrorTree,T]

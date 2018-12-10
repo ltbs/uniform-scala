@@ -152,7 +152,7 @@ package object datapipeline {
       def numField(key: String) =
         (in.get(key) >>= intParser.bind).leftMap{ x => 
           Tree("", Map(key -> x))
-        }toValidated
+        }.toValidated
 
       (
         numField("year"),
@@ -209,7 +209,7 @@ package object datapipeline {
 
       def unbind(a: Option[A]): Input = a match {
         case None => Tree(List(""), Map("outer" -> booleanParser.unbind(false)))
-        case Some(x) => Tree(List(""), Map("outer" -> booleanParser.unbind(false),
+        case Some(x) => Tree(List(""), Map("outer" -> booleanParser.unbind(true),
                                            "inner" -> subpipe.unbind(x)))
       }
     }

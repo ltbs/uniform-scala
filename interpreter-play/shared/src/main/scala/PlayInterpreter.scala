@@ -27,10 +27,10 @@ trait PlayInterpreter extends Compatibility.PlayController {
 
     def list(key: String,args: Any*): List[String] = {
       @annotation.tailrec
-      def inner(cnt: Int = 2, list: List[String] = Nil): List[String] =
+      def inner(cnt: Int = 2, acc: List[String] = Nil): List[String] =
         get(s"$key.$cnt", args:_*) match {
-          case Some(_) => inner(cnt+1, input.messages(s"$key.$cnt", args:_*) :: list)
-          case None       => list
+          case Some(m) => inner(cnt+1, m :: acc)
+          case None    => acc
         }
 
       List(key, s"$key.1").map(get(_, args)).flatten ++ inner().reverse
@@ -55,7 +55,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
 
     private def pageLogic[S: _readRequest: _readStage: _db: _breadcrumbs: _timedFuture: _either,B](
       id: String,
-      render: (String, Input, ErrorTree) => Html,
+      render: (String, Input, ErrorTree, List[String]) => Html,
       decode: Encoded => Either[ErrorTree,B],
       encode: B => Encoded,
       validation: B => Either[ErrorTree,B],
@@ -74,13 +74,13 @@ trait PlayInterpreter extends Compatibility.PlayController {
         ret <- (method, dbrecord, targetId) match {
           case ("get", None, `id`) =>
             log.info("nothing in database, step in URI, render empty form")
-            left[S, Result, B](Ok(render(id, Tree.empty, Tree.empty)))
+            left[S, Result, B](Ok(render(id, Tree.empty, Tree.empty, breadcrumbs)))
 
           case ("get", Some(Right(o)), `id`) =>
             log.info("something in database, step in URI, user revisiting old page, render filled in form")
-            left[S, Result, B](Ok(render(id, toTree(o), Tree.empty)))
+            log.info(s"Data: ${toTree(o)}")
+            left[S, Result, B](Ok(render(id, Tree(Nil, Map(id -> toTree(o))), Tree.empty, breadcrumbs)))
 
-          // TODO: Check validation too
           case ("get", Some(Right(data)), _) =>
             log.info("something in database, not step in URI, pass through")
             put[S, List[String]](id :: breadcrumbs) >>
@@ -98,7 +98,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
             data match {
               case Left(errors) =>
                 log.info("form submitted, step in URI, validation failure")
-                left[S, Result, B](BadRequest(render(id, input, errors)))
+                left[S, Result, B](BadRequest(render(id, input, errors, breadcrumbs)))
               case Right(o) => 
                 log.info("form submitted, step in URI, validation pass")
                 put[S, List[String]](id :: breadcrumbs) >>
@@ -111,7 +111,6 @@ trait PlayInterpreter extends Compatibility.PlayController {
             put[S, List[String]](id :: breadcrumbs) >>
               left[S, Result, B](Redirect(s"./$id"))
 
-          // TODO: Check validation too
           case ("post", Some(Right(data)), _) =>
             log.info("something in database, posting, not step in URI nor previous page -> pass through")
             put[S, List[String]](id :: breadcrumbs) >>

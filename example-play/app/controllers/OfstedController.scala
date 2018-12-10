@@ -58,7 +58,7 @@ class OfstedController @Inject()(implicit val messagesApi: MessagesApi) extends 
     Action.async { implicit request =>
       runWeb(
         program = program[FxAppend[TestProgramStack, PlayStack]]
-          .useForm(inferForm[(Long,Long)])
+          .useForm(inferForm[Litres])
           .useForm(inferForm[Boolean]),
         key,
         request,

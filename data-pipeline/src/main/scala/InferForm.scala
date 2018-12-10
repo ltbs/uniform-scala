@@ -44,7 +44,7 @@ trait InferForm {
         tField.render(key, values, errors, messages)
   }
 
-  def genericField[A, H, T]
+  implicit def genericField[A, H, T]
     (implicit
        generic: LabelledGeneric.Aux[A,T],
      hGenParser: Lazy[HtmlField[T]]
@@ -61,17 +61,17 @@ trait InferForm {
       soloField(key, values, errors, messages)(field.render(key, values, errors, messages))
   }
 
-  implicit def compoundForm[A, H, T]
-    (implicit
-       generic: LabelledGeneric.Aux[A,T],
-     hGenParser: Lazy[HtmlField[T]]
-    ): HtmlForm[A] =
-    new HtmlForm[A] {
-      def render(key: String, values: Input, errors: Error, messages: Messages): Html =
-      errorSummary(key, values, errors, messages) |+|
-        soloField(key, values, Tree(errors.value), messages)(
-          genericField(generic, hGenParser).render(key, values, errors, messages)
-        )
-    }
+  // implicit def compoundForm[A, H, T]
+  //   (implicit
+  //      generic: LabelledGeneric.Aux[A,T],
+  //    hGenParser: Lazy[HtmlField[T]]
+  //   ): HtmlForm[A] =
+  //   new HtmlForm[A] {
+  //     def render(key: String, values: Input, errors: Error, messages: Messages): Html =
+  //     errorSummary(key, values, errors, messages) |+|
+  //       soloField(key, values, Tree(errors.value), messages)(
+  //         genericField(generic, hGenParser).render(key, values, errors, messages)
+  //       )
+  //   }
 
 }

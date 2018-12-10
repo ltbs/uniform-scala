@@ -58,13 +58,31 @@ object PrototypeApp {
   var state: DB = implicitly[Monoid[DB]].empty
   var breadcrumbs: List[String] = Nil
 
-  implicit val cmsMessages = CmsMessages(Map("litresProduced.heading" -> List("Litres Produced")))
+  implicit val cmsMessages = CmsMessages.fromText{
+    """
+# https://www.playframework.com/documentation/latest/ScalaI18N
+crown-copyright=Crown Copyright
+
+litresProduced.heading=Litres Produced
+litresProduced._1.heading=Litres produced at lower concentration
+litresProduced._1.hint=Lower concentration is between 5 and 8 grams of sugar per 100ml
+litresProduced.details=What if I''m not sure?|Well then go and measure it
+litresProduced.details.2=What if I want more answers?\
+  |This is just to test line-wrapping and also list entries
+
+TRUE=Yes
+FALSE=No
+
+there.is.a.problem=There is a problem
+
+required={0} is required
+  """}
 
   def journey(pageId: String) = {
     val output: (Either[Page, String],DB) =
       program[FxAppend[TestProgramStack, JsStack]]
         .useForm(inferJsForm[Boolean])
-        .useForm(inferJsForm[(Long,Long)])
+        .useForm(inferJsForm[Litres])
         .runEither
         .runEval
         .runState(state)
