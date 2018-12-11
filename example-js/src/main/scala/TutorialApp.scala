@@ -40,7 +40,7 @@ object PrototypeApp {
 
   @JSExportTopLevel("saveAndContinue")
   def saveAndContinue(pageId: String): Unit = {
-    journey(pageId)
+    journey(Submit(pageId))
     println(s"state: $state")
   }
 
@@ -48,11 +48,11 @@ object PrototypeApp {
   def backLink(): Unit = {
     val (last::others) = breadcrumbs
     breadcrumbs = others
-    journey(last)
+    journey(Back(last))
   }
 
   def main(args: Array[String]): Unit = {
-    journey("")
+    journey(Back(""))
   }
 
   var state: DB = implicitly[Monoid[DB]].empty
@@ -78,19 +78,27 @@ there.is.a.problem=There is a problem
 required={0} is required
   """}
 
-  def journey(pageId: String) = {
-    val output: (Either[Page, String],DB) =
+  @JSExportTopLevel("back")
+  def back(page: String) = journey(Back(page))
+
+
+  def journey(action: Action) = {
+    val output: ((Either[Page, String], DB), List[String]) =
       program[FxAppend[TestProgramStack, JsStack]]
         .useForm(inferJsForm[Boolean])
         .useForm(inferJsForm[Litres])
+        .runReader(action)    
         .runEither
-        .runEval
         .runState(state)
-        .runReader(pageId)
+        .runState(List.empty[String])    
+        .runEval
         .run
 
-    state = output._2
-    output._1 match {
+    val ((result,newState),newBreadcrumbs) = output
+    println(s"breadcrumbs: $breadcrumbs")
+    breadcrumbs = newBreadcrumbs
+    state = newState
+    result match {
       case Left(page) => setPage(page)
       case Right(fin) => scala.scalajs.js.Dynamic.global.alert(fin)
     }
@@ -100,6 +108,7 @@ required={0} is required
     page.title.map { title =>
       breadcrumbs = title :: breadcrumbs
       $("#title").html(messages.span(s"heading.$title"))
+      $("#backlink").html(messages.span(s"heading.$title"))      
       $("#continue-button").replaceWith(
         s"""|<button class="govuk-button" type="submit" id="continue-button"
             |  onclick="saveAndContinue('$title')">
@@ -107,7 +116,13 @@ required={0} is required
             |</button>""".stripMargin)
     }
 
-    page.body.map { $("#mainBody").html(_) }
+    val backlink = { page.breadcrumbs.headOption match {
+      case Some(back) =>
+        s"""<a href="#" onclick="back('$back');" class="govuk-back-link">${messages.getMessage(List(s"back-to-$back","back"))}</a>"""
+      case None => ""
+    }}
+
+    page.body.map { x => $("#mainBody").html(backlink ++ x) }
 
     page.errors.flatTree match {
       case Nil => $("#error-summary-display").css("display", "none")

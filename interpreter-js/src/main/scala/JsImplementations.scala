@@ -23,10 +23,6 @@ object JsImplementations {
     def encode(in: A): Encoded =
       dpl.encodeInput("root", parser.unbind(in))
 
-    def fromDataTree(key: String, datatree: dpl.Tree[String,List[String]]): Either[ErrorTree, A] = {
-      datatree.get(key).flatMap(parser.bind)
-    }
-
     def fromNode(key: String, fieldSet: JQuery): Either[ErrorTree,A] = {
       val fields = $("fieldset.uniform").serialize()
       println(s"raw data: $fields")
@@ -34,6 +30,9 @@ object JsImplementations {
       val input = dpl.formToInput(decoded)
       parser.bind(input.children.getOrElse(key,dpl.Tree(Nil): dpl.Input))
     }
+
+    def toDataTree(in: A): dpl.Tree[String,List[String]] =
+      parser.unbind(in)
 
     def render(key: String, existing: Option[dpl.Input], errors: ErrorTree): String = {
       val values: dpl.Input = existing.getOrElse(dpl.Tree(Nil))
