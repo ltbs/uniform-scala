@@ -17,7 +17,7 @@ object JsInterpreter {
   sealed trait Action {
     def key: String
   }
-  case class Back(key: String) extends Action 
+  case class Back(key: String) extends Action
   case class Submit(key: String) extends Action
 
   def extractData(fieldSet: JQuery): Tree[String,List[String]] = {
@@ -39,10 +39,21 @@ object JsInterpreter {
   type ErrorTree = Tree[String,String]
 
   trait Form[T] {
-    def render(key: String, existing: Option[Tree[String,List[String]]], errors: ErrorTree): String
-    def fromNode(key: String, fieldSet: JQuery): Either[ErrorTree, T]
+    def render(
+      key: String,
+      existing: Option[Tree[String,List[String]]],
+      errors: ErrorTree
+    ): String
+
+    def fromNode(
+      key: String,
+      fieldSet: JQuery
+    ): Either[ErrorTree, T]
+
     def encode(in: T): Encoded
+
     def decode(out: Encoded): Either[ErrorTree,T]
+
     def toDataTree(in: T): Tree[String,List[String]]
   }
 

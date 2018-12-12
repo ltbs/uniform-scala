@@ -1,10 +1,10 @@
 package ltbs.uniform.prototype
 
-import cats._, implicits._
+import cats.implicits._
 import org.atnos.eff._
 import org.atnos.eff.syntax.all._
 import org.querki.jquery._
-import ltbs.uniform.sampleprograms.LitreageTest._
+import ltbs.uniform.sampleprograms.BeardTax._
 
 import JsInterpreter._
 import JsImplementations._
@@ -49,10 +49,12 @@ object PrototypeApp {
     val (last::others) = breadcrumbs
     breadcrumbs = others
     journey(Back(last))
+    ()
   }
 
   def main(args: Array[String]): Unit = {
     journey(Back(""))
+    ()
   }
 
   var state: DB = implicitly[Monoid[DB]].empty
@@ -62,20 +64,32 @@ object PrototypeApp {
     """
 # https://www.playframework.com/documentation/latest/ScalaI18N
 crown-copyright=Crown Copyright
+new.service=This is a new service, your
+help.improve=will help us to improve it
+all-content-available=All content is available under
+ogl3=OGL3
+except-where-otherwise-stated= except where otherwise stated.
 
-litresProduced.heading=Litres Produced
-litresProduced._1.heading=Litres produced at lower concentration
-litresProduced._1.hint=Lower concentration is between 5 and 8 grams of sugar per 100ml
-litresProduced.details=What if I''m not sure?|Well then go and measure it
-litresProduced.details.2=What if I want more answers?\
-  |This is just to test line-wrapping and also list entries
+is-public.heading=Are you a member of the public?
+is-public.outer.FALSE=No, I’m King Henry VIII.
+
+is-public.inner.forename.heading=Forenames
+is-public.inner.surname.heading=Surname
+is-public.inner.age.heading=Age
+
+beard-style.heading=Beard Style
+
+beard-length-mm.heading=Beard Length
+beard-length-mm._1.heading=Length at shortest point
+beard-length-mm._2.heading=Length at longest point
 
 TRUE=Yes
 FALSE=No
 
 there.is.a.problem=There is a problem
-
-required={0} is required
+required=This field is mandatory
+nonnumericformat=Please enter a number
+back=back
   """}
 
   @JSExportTopLevel("back")
@@ -83,10 +97,11 @@ required={0} is required
 
 
   def journey(action: Action) = {
-    val output: ((Either[Page, String], DB), List[String]) =
+    val output: ((Either[Page, Int], DB), List[String]) =
       program[FxAppend[TestProgramStack, JsStack]]
-        .useForm(inferJsForm[Boolean])
-        .useForm(inferJsForm[Litres])
+        .useForm(inferJsForm[Option[MemberOfPublic]])
+        .useForm(inferJsForm[BeardStyle])
+        .useForm(inferJsForm[BeardLength])    
         .runReader(action)    
         .runEither
         .runState(state)
@@ -100,8 +115,22 @@ required={0} is required
     state = newState
     result match {
       case Left(page) => setPage(page)
-      case Right(fin) => scala.scalajs.js.Dynamic.global.alert(fin)
+      case Right(fin) => scala.scalajs.js.Dynamic.global.alert(s"You have $fin to pay")
     }
+  }
+
+  def updateDataTargets(): Unit = {
+    val i = $("""[data-target] > input[type="radio"]""")
+    i.change{ e: org.scalajs.dom.Element =>
+      
+      val radioValue=$(e).value
+      val dataTarget=$(e).parent("[data-target]").attr("data-target")
+	$(".conditional-" + dataTarget).removeClass("govuk-radios__conditional")
+	$(".conditional-" + dataTarget).addClass("govuk-radios__conditional--hidden")
+	$("#conditional-" + dataTarget + "-" + radioValue).removeClass("govuk-radios__conditional--hidden")
+	$("#conditional-" + dataTarget + "-" + radioValue).addClass("govuk-radios__conditional")	      
+    }
+    ()
   }
 
   def setPage(page: Page): Unit = {
@@ -138,7 +167,7 @@ required={0} is required
           }.mkString("")
         }
     }
-    ()
+    updateDataTargets()
   }
 
 

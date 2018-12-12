@@ -77,10 +77,7 @@ package object govuk extends InferForm {
       val options: Set[A] = enum.values.toSet
       val path = key.split("[.]").filter(_.nonEmpty)
       val existing: Option[String] = values.atPath(path:_*).flatMap{_.headOption}
-
-      html.standardfield(key, errors, messages)(
-        html.radios(key, options.map{_.toString}, existing, errors, messages)
-      )
+      html.radios(key, options.map{_.toString}, existing, errors, messages)
     }
   }
 

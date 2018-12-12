@@ -1,19 +1,27 @@
 # https://www.playframework.com/documentation/latest/ScalaI18N
 crown-copyright=Crown Copyright
+new.service=This is a new service, your
+help.improve=will help us to improve it
+all-content-available=All content is available under
+ogl3=OGL3
+except-where-otherwise-stated= except where otherwise stated.
 
-litresProduced.heading=Litres Produced
-litresProduced.hint=Do you produce any sugary drinks?
-litresProduced.inner._1.heading=Litres at lower concentration
-litresProduced.inner._1.hint=Lower concentration is between 5 and 8 grams of sugar per 100ml
-litresProduced.inner._2.heading=Litres at higher concentration
-litresProduced.inner._2.hint=Lower concentration is in excess of 8 grams of sugar per 100ml
-litresProduced.details=What if I''m not sure?|You can enter an estimate.
-litresProduced.details.2=What if I want more answers?\
-  |This is to test line-wrapping and also list entries
+is-public.heading=Are you a member of the public?
+is-public.outer.FALSE=No, I’m King Henry VIII.
+
+is-public.inner.forename.heading=Forenames
+is-public.inner.surname.heading=Surname
+is-public.inner.age.heading=Age
+
+beard-style.heading=Beard Style
+
+beard-length-mm.heading=Beard Length
+beard-length-mm._1.heading=Length at shortest point
+beard-length-mm._2.heading=Length at longest point
 
 TRUE=Yes
 FALSE=No
 
 there.is.a.problem=There is a problem
-
 required=This field is mandatory
+nonnumericformat=Please enter a number

@@ -1,4 +1,5 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import microsites.ExtraMdFileConfig
 
 lazy val root = project.in(file("."))
   .aggregate(
@@ -190,6 +191,7 @@ lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
 
 lazy val `interpreter-js` = project
   .settings(commonSettings)
+  .enablePlugins(TutPlugin)
   .settings(
     scalaVersion := "2.12.7",
     crossScalaVersions := Seq("2.11.12", "2.12.7")
@@ -199,7 +201,7 @@ lazy val `interpreter-js` = project
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS, dataPipelineJS)
+  .dependsOn(coreJS, dataPipelineJS, exampleProgramsJS % "tut")
 
 lazy val `gforms-parser` = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .settings(commonSettings)
@@ -246,7 +248,8 @@ lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
+    crossScalaVersions := Seq("2.11.12", "2.12.7"),
+    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"      
   )
 
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
@@ -327,6 +330,7 @@ lazy val govukWidgetsJS = `govuk-widgets`.js.dependsOn(dataPipelineJS)
 
 lazy val docs = project
   .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)
+  .aggregate(`interpreter-js`)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
@@ -352,7 +356,12 @@ lazy val docs = project
       "gray-light"      -> "#E2E3E3",
       "gray-lighter"    -> "#F3F4F4",
       "white-color"     -> "#FFFFFF"),
-    micrositeExtraMdFiles := Map(),
+    micrositeExtraMdFiles := Map(
+      file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") -> ExtraMdFileConfig(
+        "interpreter-js.md",
+        "docs"
+      )
+    ),
     scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
 //    scalacOptions in Tut += "-Xfatal-warnings", // play controller scuppers this
     libraryDependencies ++= Seq(
