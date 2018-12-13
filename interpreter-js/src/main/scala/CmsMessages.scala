@@ -16,21 +16,27 @@ case class CmsMessages(
     case h :: t => replaceArgs(input.replace(s"[{]$count[}]", h), t, count+1)
   }
 
-  @annotation.tailrec
-  final def apply(key: List[String], args: Any*): String = key match {
-    case Nil => ""
-    case x::xs =>
-      get(x, args:_*) match {
-        case Some(o) => o
-        case None => apply(xs, args:_*)
+  def apply(key: List[String], args: Any*): String = {
+
+    @annotation.tailrec
+    def inner(innerkey: List[String]): String = {
+      innerkey match {
+        case Nil => key.lastOption.getOrElse("???")
+        case x::xs =>
+          get(x, args:_*) match {
+            case Some(o) => o
+            case None => inner(xs)
+          }
       }
+    }
+    inner(key)
   }
 
   def apply(key: String, args: Any*): String =
     get(key, args:_*).getOrElse(key)
  
   def get(key: String, args: Any*): Option[String] =
-    underlying.getOrElse(key,Nil).headOption.map{
+    underlying.get(key).flatMap{_.headOption}.map{
       replaceArgs(_,args.toList.map(_.toString))
     }
 

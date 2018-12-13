@@ -13,17 +13,19 @@ object BeardTax {
   case class MemberOfPublic(
     forename: String,
     surname: String,
-    age: Int
+    age: java.time.LocalDate
   )
+
 
   sealed trait BeardStyle extends EnumEntry
   object BeardStyle extends Enum[BeardStyle] {
     val values = findValues
-    case object Goatee      extends BeardStyle
-    case object Horseshoe   extends BeardStyle
-    case object Gunslinger  extends BeardStyle
-    case object MuttonChops extends BeardStyle
-    case object SoulPatch   extends BeardStyle        
+    case object Goatee           extends BeardStyle
+    case object Horseshoe        extends BeardStyle
+    case object Gunslinger       extends BeardStyle
+    case object MuttonChops      extends BeardStyle
+    case object SoulPatch        extends BeardStyle
+    case object LaughingCavalier extends BeardStyle            
   }
 
   type TestProgramStack = Fx3[
@@ -42,7 +44,7 @@ object BeardTax {
   ]: Eff[R, Int] =
     for {
       memberOfPublic <- uask[R, Option[MemberOfPublic]]("is-public")
-      beardStyle     <- uask[R, BeardStyle]("beard-style")
+      beardStyle     <- uask[R, BeardStyle]("beard-style")            
       beardLength    <- uask[R, BeardLength]("beard-length-mm", validation = {
         case a@(l,h) => if (l > h) "lower-exceeds-higher".invalid else a.valid
       }) emptyUnless (memberOfPublic.isDefined)

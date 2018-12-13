@@ -62,6 +62,7 @@ object PrototypeApp {
 
   implicit val cmsMessages = CmsMessages.fromText{
     """
+
 # https://www.playframework.com/documentation/latest/ScalaI18N
 crown-copyright=Crown Copyright
 new.service=This is a new service, your
@@ -72,6 +73,9 @@ except-where-otherwise-stated= except where otherwise stated.
 
 is-public.heading=Are you a member of the public?
 is-public.outer.FALSE=No, I’m King Henry VIII.
+is-public.details=What happens if I make a claim to the throne?|Making \
+  a false claim to the throne is punishable by hanging and \
+  excommunication on a second offense.
 
 is-public.inner.forename.heading=Forenames
 is-public.inner.surname.heading=Surname
@@ -81,7 +85,10 @@ beard-style.heading=Beard Style
 
 beard-length-mm.heading=Beard Length
 beard-length-mm._1.heading=Length at shortest point
+beard-length-mm._1.hint=Please give length in mm
 beard-length-mm._2.heading=Length at longest point
+beard-length-mm._2.hint=Please give length in mm
+beard-length-mm.details=Details
 
 TRUE=Yes
 FALSE=No
@@ -115,7 +122,7 @@ back=back
     state = newState
     result match {
       case Left(page) => setPage(page)
-      case Right(fin) => scala.scalajs.js.Dynamic.global.alert(s"You have $fin to pay")
+      case Right(fin) => scala.scalajs.js.Dynamic.global.alert(s"You have £$fin to pay")
     }
   }
 
