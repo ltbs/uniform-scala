@@ -9,12 +9,11 @@ lazy val root = project.in(file("."))
     `interpreter-gui`,
     interpreterLogictableJS,
     interpreterLogictableJVM,
-    `interpreter-play25`,
+//    `interpreter-play25`,
     `interpreter-play26`,
     `interpreter-js`,
     exampleProgramsJS,
     exampleProgramsJVM, 
-    `sbt-uniform-parser-xsd`,
     dataPipelineJS,
     dataPipelineJVM,
     govukWidgetsJS,
@@ -126,6 +125,25 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
+
+lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+  .settings(
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    libraryDependencies ++= Seq(
+      "com.chuusai" %%% "shapeless" % "2.3.3",
+      "com.github.mpilquist" %%% "simulacrum" % "0.14.0",
+      "com.typesafe.play" %%% "twirl-api" % "1.3.15",
+      "com.beachape" %%% "enumeratum" % "1.5.13",
+      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+    )
+  )
+
+lazy val dataPipelineJVM = `data-pipeline`.jvm.dependsOn(coreJVM)
+lazy val dataPipelineJS = `data-pipeline`.js.dependsOn(coreJS)
+
+
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
   .settings(
@@ -153,41 +171,29 @@ lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
 lazy val interpreterLogictableJS = `interpreter-logictable`.js
   .dependsOn(coreJS)
   .dependsOn(exampleProgramsJS % "test")
+
 lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJVM % "test")
 
-lazy val html = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Full)
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
-  )
-  .settings(libraryDependencies ++= Seq(
-              "com.lihaoyi" %%% "scalatags" % "0.6.7",
-              "com.chuusai" %%% "shapeless" % "2.3.3"))
-
-lazy val htmlJS = html.js.dependsOn(coreJS)
-lazy val htmlJVM = html.jvm.dependsOn(coreJVM)
-
-lazy val `interpreter-play`: sbtcrossproject.CrossProject = crossProject(Play25, Play26)
-  .crossType(CrossType.Full)
-  .settings(commonSettings)
+lazy val `interpreter-play`: sbtcrossproject.CrossProject =
+  crossProject(Play25, Play26)
+    .crossType(CrossType.Full)
+    .settings(commonSettings)
+    .configurePlatform(Play25)(_.settings(
+      name := "interpreter-play25",
+      scalaVersion := "2.11.12",
+      crossScalaVersions := Seq("2.11.12")
+    ))
+    .configurePlatform(Play26)(_.settings(
+      name := "interpreter-play26"
+    ))
 
 lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
-  .dependsOn(coreJVM, dataPipelineJVM)
-  .settings(
-    name := "interpreter-play25",
-    scalaVersion := "2.11.12",
-    crossScalaVersions := Seq("2.11.12")
-  )
+  .dependsOn(dataPipelineJVM)
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
-  .dependsOn(coreJVM, dataPipelineJVM)
-  .settings(
-    name := "interpreter-play26"
-  )
+  .dependsOn(dataPipelineJVM)
 
 lazy val `interpreter-js` = project
   .settings(commonSettings)
@@ -201,47 +207,7 @@ lazy val `interpreter-js` = project
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS, dataPipelineJS, exampleProgramsJS % "tut")
-
-lazy val `gforms-parser` = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
-  .settings(commonSettings)
-  .settings(
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
-    libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.9.2" % "compile",
-    libraryDependencies += "com.github.pureconfig" %% "pureconfig-enumeratum" % "0.9.2" % "compile",
-    libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1" % "compile",
-    libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13"
-  )
-
-lazy val gformsParserJS = `gforms-parser`.js.dependsOn(coreJS)
-lazy val gformsParserJVM = `gforms-parser`.jvm.dependsOn(coreJVM)
-
-lazy val `sbt-uniform-parser-xsd` = project.settings(commonSettings)
-  .enablePlugins(SbtPlugin)
-  .settings(crossScalaVersions := Seq(scalaVersion.value))
-  .dependsOn(coreJVM)
-
-lazy val `ofsted-uipack` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
-
-lazy val ofstedUiPackJS = `ofsted-uipack`.js.dependsOn(coreJS)
-lazy val ofstedUiPackJVM = `ofsted-uipack`.jvm.dependsOn(coreJVM)
-
-lazy val `ofsted-program` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
-  .settings(libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13")
-
-lazy val `ofsted-prototype` = project.settings(commonSettings)
-  .settings(
-    scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
-  )
-  .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS)
-  .dependsOn(gformsParserJS)
-  .dependsOn(ofstedProgramJS)
+  .dependsOn(dataPipelineJS, exampleProgramsJS % "tut")
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -257,7 +223,7 @@ lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
 
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(coreJVM, `interpreter-play26`, exampleProgramsJVM, dataPipelineJVM, govukWidgetsJVM)
+  .dependsOn(`interpreter-play26`, exampleProgramsJVM, dataPipelineJVM, govukWidgetsJVM)
   .dependsOn(interpreterLogictableJVM % "test")
   .settings(
     libraryDependencies ++= Seq(filters,guice)
@@ -272,37 +238,7 @@ lazy val `example-js` = project
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS, `interpreter-js`, exampleProgramsJS, govukWidgetsJS)
-
-lazy val `ofsted-play` = project
-  .dependsOn(`interpreter-play26`, ofstedProgramJVM)
-  .settings(commonSettings)
-  .enablePlugins(PlayScala)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.12.7"),
-    libraryDependencies ++= Seq(filters,guice)
-  )
-
-lazy val ofstedProgramJS = `ofsted-program`.js.dependsOn(gformsParserJS)
-lazy val ofstedProgramJVM = `ofsted-program`.jvm.dependsOn(gformsParserJVM)
-
-lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
-  .settings(
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
-    libraryDependencies ++= Seq(
-      "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.github.mpilquist" %%% "simulacrum" % "0.14.0",
-      "com.typesafe.play" %%% "twirl-api" % "1.3.15",
-      "com.beachape" %%% "enumeratum" % "1.5.13",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
-    )
-  )
-
-lazy val dataPipelineJVM = `data-pipeline`.jvm.dependsOn(coreJVM)
-lazy val dataPipelineJS = `data-pipeline`.js.dependsOn(coreJS)
+  .dependsOn(`interpreter-js`, exampleProgramsJS, govukWidgetsJS)
 
 lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
