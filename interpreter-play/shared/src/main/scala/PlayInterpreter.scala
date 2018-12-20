@@ -18,12 +18,18 @@ import ltbs.uniform.datapipeline._
 trait PlayInterpreter extends Compatibility.PlayController {
 
   implicit def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
-    def apply(key: List[String],args: Any*): String = input(key, args)
-    def apply(key: String,args: Any*): String = input(key, args)
-    def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
+    def apply(key: List[String],args: Any*): String = input(key, args:_*)
+    def apply(key: String,args: Any*): String = input(key, args:_*)
+    def get(key: String, args: Any*): Option[String] = if (input.isDefinedAt(key))
       input.messages(key, args:_*).some
     else
       none[String]
+
+    def get(key: List[String], args: Any*): Option[String] =
+      key.foldLeft(none[String]){
+        case (None,b) => get(b,args:_*)
+        case (a,_) => a
+      }
 
     def list(key: String,args: Any*): List[String] = {
       @annotation.tailrec

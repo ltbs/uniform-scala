@@ -87,7 +87,7 @@ object JsInterpreter {
                 state <- get[U, DB]
                 breadcrumbs <- get[U, List[String]]
                 va <- {
-
+                  val lastPage = breadcrumbs.headOption
                   val dbData: Option[Either[ErrorTree,X]] =
                     state.get(key).map{d => form.decode(d).map(_.asInstanceOf[X]).flatMap{
                       validationToErrorTree(validation)
@@ -118,8 +118,8 @@ object JsInterpreter {
                         body = form.render(key, None, Tree.empty).some,
                         breadcrumbs=breadcrumbs
                       ))
-                    case (Submit(requestedPage),Some(Right(x))) =>
-                      put[U, List[String]](key :: breadcrumbs) >> right[U, Page, X](x)
+                    case (Submit(requestedPage),Some(Right(x))) if Some(requestedPage) != lastPage =>
+                        put[U, List[String]](key :: breadcrumbs) >> right[U, Page, X](x)
                     case (Submit(requestedPage),Some(Left(e))) =>                      
                       left[U, Page, X](
                         Page(
@@ -128,7 +128,7 @@ object JsInterpreter {
                           errors=e,
                           breadcrumbs=breadcrumbs
                         ))
-                    case (Back(`key`),_) | (Back(_),None) | (Back(_), Some(Left(_))) =>
+                    case (Back(`key`),_) | (Back(_),None) | (Back(_), Some(Left(_))) | (Submit(_),Some(Right(_))) =>
                       val err = dbData match {
                         case Some(Left(e)) => e
                         case _ => Tree.empty[String, String]

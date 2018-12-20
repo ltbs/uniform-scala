@@ -7,11 +7,11 @@
 
 <div class="govuk-form-group @if(errors.definedAtPath(path.drop(1):_*)) {govuk-form-group--error}">
   <label class="govuk-label" for="@key">
-    @messages(s"$key.heading")
+    @messages.decompose(s"$key.heading")
   </label>
   @errors.atPath(path.drop(1):_*).map { error => 
     <span id="@key-error" class="govuk-error-message">
-      @messages(List(s"$key.$error", error))
+      @messages.decompose(s"$key.$error")
     </span>
   }
   @messages.get(s"$key.hint").map { hint => 

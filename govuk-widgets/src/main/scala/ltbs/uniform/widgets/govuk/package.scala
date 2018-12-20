@@ -46,7 +46,6 @@ package object govuk extends InferForm {
         )
   }
 
-
   implicit val stringHtml = new HtmlField[String] {
     def render(key: String, values: Input, errors: Error, messages: Messages) =
         html.string(
@@ -87,9 +86,7 @@ package object govuk extends InferForm {
       val path = key.split("[.]").filter(_.nonEmpty)
       val existing: Option[List[String]] = values.atPath(path:_*)
 
-      html.standardfield(key, errors, messages)(
-        html.checkboxes(key, options.map{_.toString}, existing, errors, messages)
-      )
+      html.checkboxes(key, options.map{_.toString}, existing, errors, messages)
     }
   }
 

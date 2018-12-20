@@ -7,7 +7,7 @@
     <div class="govuk-radios__item" data-target="@keyNoDots">
       <input class="govuk-radios__input" id="@keyNoDots-@num" name="@key" type="radio" value="@opt" aria-describedby="@keyNoDots-@num-item-hint" @if(existing.exists(_ == opt)){ checked } @if(conditional.isDefinedAt(opt)) {aria-controls="ting" aria-expanded="true"}>
       <label class="govuk-label govuk-radios__label govuk-label--s" for="@keyNoDots-@num">
-        @messages(List(s"$key.$opt", opt))
+        @messages.decompose(s"$key.$opt.option")
       </label>
       @messages.get(s"$key.$opt.hint").map { hint => 
         <span id="@keyNoDots-@opt-item-hint" class="govuk-hint govuk-checkboxes__hint">

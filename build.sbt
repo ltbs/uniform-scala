@@ -136,6 +136,7 @@ lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
       "com.github.mpilquist" %%% "simulacrum" % "0.14.0",
       "com.typesafe.play" %%% "twirl-api" % "1.3.15",
       "com.beachape" %%% "enumeratum" % "1.5.13",
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.1",
       "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
     )
   )
@@ -235,7 +236,10 @@ lazy val `example-js` = project
     scalaVersion := "2.12.7",
     crossScalaVersions := Seq("2.11.12", "2.12.7"),
     scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
+    libraryDependencies ++= Seq(
+      "org.querki" %%% "jquery-facade" % "1.2",
+      "org.scala-js" %%% "scalajs-java-time" % "0.2.5"
+    )
   )
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(`interpreter-js`, exampleProgramsJS, govukWidgetsJS)

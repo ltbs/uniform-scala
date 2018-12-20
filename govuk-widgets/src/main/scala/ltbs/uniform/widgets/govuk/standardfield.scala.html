@@ -10,7 +10,7 @@
   <fieldset class="govuk-fieldset" aria-describedby="@key-hint">
     <legend class="govuk-fieldset__legend govuk-fieldset__legend--xl">
       <h1 class="govuk-fieldset__heading">
-        @messages(s"$key.heading")
+        @messages.decompose(s"$key.heading")
       </h1>
     </legend>
     @messages.get(s"$key.hint").map { hint => 
