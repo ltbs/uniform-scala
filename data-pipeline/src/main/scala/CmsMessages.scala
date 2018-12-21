@@ -15,6 +15,11 @@ case class CmsMessages(underlying: Messages[String]) extends Messages[Html] {
     underlying.get(key, args:_*).map(wrap(key.mkString(","), args)(_))
 
   def list(key: String, args: Any*): List[Html] =
-    underlying.list(key, args:_*).map(wrap(key, args)(_))
+    (underlying.list(key, args:_*) :+ "add").map(wrap(key, args)(_))
+
+  def keyValuePair(key: String, args: Any*): List[(Html,Html)] =
+    underlying.keyValuePair(key, args:_*).map{
+      case (k,v) => (Html(k),Html(v))
+    }
 
 }

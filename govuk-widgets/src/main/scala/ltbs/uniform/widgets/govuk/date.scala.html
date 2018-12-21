@@ -1,6 +1,6 @@
 @import cats.implicits._
 
-@(key: String, values: Input, errors: Error, messages: Messages)
+@(key: String, values: Input, errors: Error, messages: Messages[Html])
 
 @path=@{key.split("[.]").filter(_.nonEmpty)}
 
@@ -9,7 +9,7 @@
     <div class="govuk-date-input__item">
       <div class="govuk-form-group">
         <label class="govuk-label govuk-date-input__label" for="@key-@field">
-          @messages(List(s"$key.$field",field))
+          @messages.decompose(s"$key.$field.heading")
         </label>
         <input
 	  class="govuk-input govuk-date-input__input govuk-input--width-@if(field=="year"){4}else{2}"

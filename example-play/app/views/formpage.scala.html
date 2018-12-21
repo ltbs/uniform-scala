@@ -1,4 +1,4 @@
-@(key: String, form: Form[_])(content: Html)(implicit request: Request[_], messages: ltbs.uniform.datapipeline.Messages)
+@(key: String, form: Form[_])(content: Html)(implicit request: Request[_], messages: ltbs.uniform.datapipeline.Messages[Html])
 @main(key) {
 
     @if(form.hasErrors) {

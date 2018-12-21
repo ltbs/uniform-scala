@@ -58,7 +58,7 @@ package object playframework {
   (implicit
      parser: DataParser[A],
     html: HtmlForm[A],
-    messages: Messages
+    messages: Messages[Html]
   ): WebMonadForm[A] = new WebMonadForm[A] {
 
     def fromRequest(key: String,request: Request[AnyContent]): Either[ErrorTree,A] = {

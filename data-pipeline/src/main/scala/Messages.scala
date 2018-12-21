@@ -23,6 +23,8 @@ abstract class Messages[A: Read] {
   def decomposeOpt(key: String, args: Any*): Option[A] =
     get(Messages.decompositionList(key), args:_*)
 
+  def keyValuePair(key: String, args: Any*): List[(A,A)]
+
   /** splitCamel is unsupported with JS - need to re-write with parser combinators */    
   // def decomposeOrBestGuess(key: String, args: Any*): A =
   //   decomposeOpt(key, args:_*) getOrElse {
@@ -31,6 +33,18 @@ abstract class Messages[A: Read] {
   //       case _ => key
   //     }
   //   }
+
+  def map[B: Read](f: A => B): Messages[B] = {
+    val orig = this
+    new Messages[B] {
+      def get(key: String, args: Any*): Option[B] = orig.get(key, args:_*).map(f)
+      def get(key: List[String], args: Any*): Option[B] = orig.get(key, args:_*).map(f)
+      def list(key: String, args: Any*): List[B] = orig.list(key, args:_*).map(f)
+      def keyValuePair(key: String, args: Any*): List[(B,B)] = orig.keyValuePair(key, args:_*).map{
+        case (k,v) => (f(k),f(v))
+      }
+    }
+  }
 
 }
 
@@ -56,6 +70,7 @@ object Messages {
     def get(key: String, args: Any*): Option[A] = None
     def get(key: List[String], args: Any*): Option[A] = None    
     def list(key: String, args: Any*): List[A] = Nil
+    def keyValuePair(key: String, args: Any*): List[(A,A)] = Nil
   }
 
   def fromPlayFormat(input: String): Messages[String] = {
@@ -131,6 +146,13 @@ object Messages {
     def list(key: String, args: Any*): List[String] =
       underlying.getOrElse(key,Nil).map{ x =>
         replaceArgs(x,args.toList.map(_.toString))
+      }
+
+    def keyValuePair(key: String, args: Any*): List[(String,String)] =
+      list(key,args:_*) collect {
+        case x if x.contains("|") =>
+          val (k::v::Nil) = x.split("[|]").toList
+          (k,v)
       }
   }
 }

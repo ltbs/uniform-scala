@@ -1,6 +1,6 @@
 @import cats.implicits._
 
-@(key: String, errors: Error, messages: Messages)(content: Html)
+@(key: String, errors: Error, messages: Messages[Html])(content: Html)
 
 @path=@{key.split("[.]").filter(_.nonEmpty)}
 @fieldErrors=@{errors.atPath(path:_*)}
@@ -24,7 +24,7 @@
 </div>
 
 
-  @for((k::v::_) <- messages.list(s"$key.details").collect{ case x if x.contains("|") => x.split("[|]").toList}) {
+  @for((k,v) <- messages.keyValuePair(s"$key.details")) {
 <details class="govuk-details">
     <summary class="govuk-details__summary">
       <span class="govuk-details__summary-text">@k</span>

@@ -11,7 +11,7 @@ object JsImplementations {
     (implicit
       parser: dpl.DataParser[A],
       html: dpl.HtmlForm[A],
-      messages: dpl.Messages
+      messages: dpl.Messages[play.twirl.api.Html]
     ): Form[A] = new Form[A] {
 
     def decode(out: Encoded): Either[ErrorTree,A] = {

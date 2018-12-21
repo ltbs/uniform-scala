@@ -14,12 +14,17 @@ import play.api._
 import play.api.mvc._
 import org.atnos.eff.syntax.future._
 import ltbs.uniform.datapipeline._
+import Messages._
 
 trait PlayInterpreter extends Compatibility.PlayController {
 
-  implicit def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
-    def apply(key: List[String],args: Any*): String = input(key, args:_*)
-    def apply(key: String,args: Any*): String = input(key, args:_*)
+  implicit def convertMessages(implicit input: i18n.Messages): Messages[Html] = {
+    convertStringMessages(input).map(Html(_))
+  }
+
+  def convertStringMessages(implicit input: i18n.Messages): Messages[String] = new Messages[String]{
+    override def apply(key: List[String],args: Any*): String = input(key, args:_*)
+    override def apply(key: String,args: Any*): String = input(key, args:_*)
     def get(key: String, args: Any*): Option[String] = if (input.isDefinedAt(key))
       input.messages(key, args:_*).some
     else
@@ -41,6 +46,14 @@ trait PlayInterpreter extends Compatibility.PlayController {
 
       List(key, s"$key.1").map(get(_, args)).flatten ++ inner().reverse
     }
+
+    def keyValuePair(key: String, args: Any*): List[(String,String)] =
+      list(key,args:_*) collect {
+        case x if x.contains("|") =>
+          val (k::v::Nil) = x.split("[|]").toList
+          (k,v)
+      }
+    
   }
 
   val log: Logger = Logger("uniform")

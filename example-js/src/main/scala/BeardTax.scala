@@ -12,8 +12,9 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 import cats.Monoid
 import ltbs.uniform.datapipeline._
 import ltbs.uniform.widgets.govuk._
-
+import play.twirl.api.Html
 import InferParser._
+import Messages._
 
 object PrototypeApp {
 
@@ -60,10 +61,8 @@ object PrototypeApp {
   var state: DB = implicitly[Monoid[DB]].empty
   var breadcrumbs: List[String] = Nil
 
-  implicit val cmsMessages = CmsMessages.fromText{
+  implicit val cmsMessages = CmsMessages(Messages.fromPlayFormat{
     """
-
-# https://www.playframework.com/documentation/latest/ScalaI18N
 crown-copyright=Crown Copyright
 new.service=This is a new service, your
 help.improve=will help us to improve it
@@ -72,7 +71,7 @@ ogl3=OGL3
 except-where-otherwise-stated= except where otherwise stated.
 
 is-public.heading=Are you a member of the public?
-is-public.outer.FALSE=No, I’m King Henry VIII.
+is-public.outer.FALSE.option=No, I’m King Henry VIII.
 is-public.details=What happens if I make a claim to the throne?|Making \
   a false claim to the throne is punishable by hanging and \
   excommunication on a second offense.
@@ -90,14 +89,17 @@ beard-length-mm._2.heading=Length at longest point
 beard-length-mm._2.hint=Please give length in mm
 beard-length-mm.details=Details
 
-TRUE=Yes
-FALSE=No
+TRUE.option=Yes
+FALSE.option=No
 
 there.is.a.problem=There is a problem
 required=This field is mandatory
 nonnumericformat=Please enter a number
-back=back
-  """}
+
+day.heading=Day
+month.heading=Month
+year.heading=Year
+  """})
 
   @JSExportTopLevel("back")
   def back(page: String) = journey(Back(page))
@@ -140,6 +142,11 @@ back=back
     ()
   }
 
+  def makeEditable(): Unit = {
+    $("span.uniform-cms").css("text-decoration", "underline wavy green")
+    $(".uniform-cms").attr("contentEditable",true)
+  }
+
   def setPage(page: Page): Unit = {
     page.title.map { title =>
       breadcrumbs = title :: breadcrumbs
@@ -175,6 +182,7 @@ back=back
         }
     }
     updateDataTargets()
+    makeEditable()
   }
 
 

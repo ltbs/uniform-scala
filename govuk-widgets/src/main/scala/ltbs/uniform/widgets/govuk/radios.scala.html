@@ -1,4 +1,4 @@
-@(key: String, options: Set[String], existing: Option[String], errors: Error, messages: Messages, conditional: PartialFunction[String,Html] = PartialFunction.empty )
+@(key: String, options: Set[String], existing: Option[String], errors: Error, messages: Messages[Html], conditional: PartialFunction[String,Html] = PartialFunction.empty )
 
 @keyNoDots=@{key.replace(".","-")}
 
