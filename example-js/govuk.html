@@ -4,17 +4,14 @@
     <meta charset="utf-8" />
     <title>Uniform JS :: Example Service</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <!--[if gt IE 8]><!--><link href="govuk-frontend-ie8-2.4.0.min.css" media="screen" rel="stylesheet" type="text/css"><!--<![endif]-->
     <link rel="stylesheet" type="text/css" href="govuk-frontend-2.4.0.min.css">
-    
+    <link href="./xedit/css/jqueryui-editable.css" rel="stylesheet"/>
+    <link href="./jquery-ui-1.10.4.custom/css/base/jquery-ui-1.10.4.custom.min.css" rel="stylesheet"/>    
     <meta name="theme-color" content="#0b0c0c" /> 
-
-      <link rel="shortcut icon" sizes="16x16 32x32 48x48" href="assets/images/favicon.ico" type="image/x-icon" />
-      <link rel="mask-icon" href="assets/images/govuk-mask-icon.svg" color="#0b0c0c"> 
-
-  <meta name="robots" content="noindex, nofollow">
-        
+    <link rel="shortcut icon" sizes="16x16 32x32 48x48" href="assets/images/favicon.ico" type="image/x-icon" />
+    <link rel="mask-icon" href="assets/images/govuk-mask-icon.svg" color="#0b0c0c"> 
+    <meta name="robots" content="noindex, nofollow">
     <meta property="og:image" content="assets/images/govuk-opengraph-image.png">
   </head>
   <body class="govuk-template__body ">
@@ -66,7 +63,7 @@
 <div class="govuk-width-container">		    
  <div class="govuk-phase-banner">
     <p class="govuk-phase-banner__content">
-        <strong class="govuk-tag govuk-phase-banner__content__tag " >
+        <strong class="govuk-tag govuk-phase-banner__content__tag " data-type="text" data-pk="1" data-url="/post" data-title="Enter username">
             design prototype
         </strong>
         <span class="govuk-phase-banner__text">
@@ -110,7 +107,10 @@
             class="govuk-footer__link"
             href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
             rel="license"
-          >Open Government Licence v3.0</a>, except where otherwise stated
+            >Open Government Licence v3.0</a>, except where otherwise stated
+
+
+	      <a href="#" id="username" data-type="text" data-pk="1" data-url="http://localhost:9000/username" data-title="Enter username">superuser</a>
         </span>
       </div>
       <div class="govuk-footer__meta-item">
@@ -123,10 +123,18 @@
   </div>
 </footer>
 
-      <script type="text/javascript" src="./jquery-ui/external/jquery/jquery.js"></script>      
-      <script type="text/javascript" src="./jquery-ui/jquery-ui.min.js" ></script>
+      <script type="text/javascript" src="./jquery-ui-1.10.4.custom/js/jquery-1.10.2.js"></script>      
+      <script type="text/javascript" src="./jquery-ui-1.10.4.custom/js/jquery-ui-1.10.4.custom.min.js" ></script>
       <script type="text/javascript" src="./govuk-frontend-2.4.0.min.js"></script>
-      <script type="text/javascript" src="./show-hide-content.js"></script>      
-      <script type="text/javascript" src="./target/scala-2.12/example-js-fastopt.js"></script>      
+      <script type="text/javascript" src="./xedit/js/jqueryui-editable.min.js"></script>
+      <script type="text/javascript" src="./target/scala-2.12/example-js-fastopt.js"></script>
+
+
+      <script>
+	$(document).ready(function() {
+          $('#username').editable();
+        });
+
+      </script>
   </body>
 </html>

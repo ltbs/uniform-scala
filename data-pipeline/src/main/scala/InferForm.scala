@@ -20,11 +20,6 @@ trait InferForm {
   def soloField(key: String, values: Input, errors: Error, messages: Messages[Html])(inner: Html): Html
   def compoundField(key: String, values: Input, errors: Error, messages: Messages[Html])(inner: Html): Html
 
-  implicit val htmlMonoidInstance = new Monoid[Html] {
-    def empty: Html = Html("")
-    def combine(a: Html, b: Html):Html = Html(a.toString ++ b.toString)
-  }
-
   implicit val hnilField = new HtmlField[HNil] {
     def render(key: String, values: Input, errors: Error, messages: Messages[Html]): Html =
       Monoid[Html].empty

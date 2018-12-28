@@ -1,0 +1,2 @@
+GET         /*id                                    controllers.CmsController.lookup(id)
+POST        /:id                                    controllers.CmsController.update(id)

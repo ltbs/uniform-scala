@@ -216,7 +216,7 @@ lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .settings(
     scalaVersion := "2.12.7",
     crossScalaVersions := Seq("2.11.12", "2.12.7"),
-    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"      
+    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"
   )
 
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
@@ -268,6 +268,16 @@ lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
 lazy val govukWidgetsJVM = `govuk-widgets`.jvm.dependsOn(dataPipelineJVM)
 lazy val govukWidgetsJS = `govuk-widgets`.js.dependsOn(dataPipelineJS)
 
+lazy val `cmsserver` = project
+  .settings(commonSettings)
+  .enablePlugins(PlayScala)
+  .dependsOn(dataPipelineJVM)
+  .settings(
+    scalaVersion := "2.12.7",
+    crossScalaVersions := Seq("2.11.12", "2.12.7"),
+    libraryDependencies ++= Seq(filters,guice)
+  )
+
 lazy val docs = project
   .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)
   .aggregate(`interpreter-js`)
@@ -309,3 +319,4 @@ lazy val docs = project
       "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
     )
   )
+

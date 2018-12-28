@@ -27,6 +27,7 @@ Next you will need to extend your controller using `PlayController`.
 
 ```tut:silent
 import ltbs.uniform.interpreters.playframework._
+import ltbs.uniform.datapipeline._
 
 import cats.Monoid
 import cats.data.Validated
@@ -52,19 +53,13 @@ following structure -
 
 ```
 trait WebMonadForm[T] {
-  def encode(in: T): Encoded
-  def decode(out: Encoded): T
+
+  def fromRequest(key: String,request: Request[AnyContent]): Either[ErrorTree,Boolean] = ???
+  def render(key: String,existing: Input,errors: ErrorTree, breadcrumbs: List[String]): Html = ???
+  def toTree(in: Boolean): ltbs.uniform.datapipeline.Input = ???
   
-  def playForm(
-    key: String, 
-    validation: T => Validated[ValidationError, T]
-  ): Form[T]
-  
-  def render(
-    key: String, 
-    existing: ValidatedData[T], 
-    request: Request[AnyContent]
-  ): Html
+  def bind(in: Input): Either[Error,Boolean] = ???
+  def unbind(a: Boolean): ltbs.uniform.datapipeline.Input = ???
 }
 ```
 
@@ -83,7 +78,7 @@ class ExampleController2 extends Controller with PlayInterpreter {
   
   val booleanForm = new WebMonadForm[Boolean] {
   
-    def decode(out: Encoded): Boolean = out == "true"
+    def decode(out: Encoded): Either[ErrorTree,Boolean] = (out == "true").asRight
     def encode(in: Boolean): Encoded = in.toString
     
     def playForm(

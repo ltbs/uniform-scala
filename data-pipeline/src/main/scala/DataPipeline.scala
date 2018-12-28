@@ -6,6 +6,7 @@ import java.net.URLEncoder.{encode => urlencode}
 import java.net.URLDecoder.{decode => urldecode}
 import java.time.LocalDate
 import enumeratum._
+import play.twirl.api.Html
 
 package object datapipeline {
 
@@ -13,6 +14,11 @@ package object datapipeline {
   type ErrorTree = Tree[String,String]
   type Input = Tree[String, List[String]]
   type Error = Tree[String, String]
+
+  implicit val htmlMonoidInstance = new Monoid[Html] {
+    def empty: Html = Html("")
+    def combine(a: Html, b: Html):Html = Html(a.toString ++ b.toString)
+  }
 
   implicit def treeMonoid[K, V: Monoid] = new Monoid[Tree[K,V]] {
     def empty: Tree[K,V] = Tree(Monoid[V].empty)
