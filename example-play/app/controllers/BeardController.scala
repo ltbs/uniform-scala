@@ -18,7 +18,7 @@ import scala.concurrent._
 import InferParser._
 
 @Singleton
-class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayInterpreter with I18nSupport {
+class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayAnnotatingInterpreter with I18nSupport {
 
 
   val persistence = new Persistence {
