@@ -3,7 +3,6 @@ package ltbs.uniform.common.web
 import cats.implicits._
 import ltbs.uniform.datapipeline._
 import play.twirl.api.Html
-import java.net.URLEncoder.{encode => urlencode}
 import java.net.URLDecoder.{decode => urldecode}
 
 class InputHtmlForm[A](
@@ -43,15 +42,7 @@ class InputHtmlForm[A](
         (key, value)
       }
 
-  private def encodeUrlString(input: FormUrlEncoded): String =
-    input.toList.flatMap{
-      case (f,vs) => vs.map{v =>
-        val encoded = urlencode(v, "UTF-8")
-        s"$f=$encoded"
-      }
-    }.mkString("&")
-
-  private def formToInput(in: FormUrlEncoded): Input = {
+  protected[web] def formToInput(in: FormUrlEncoded): Input = {
 
     val depth: List[(List[String], Seq[String])] =
       in.toList.map{
@@ -80,6 +71,4 @@ class InputHtmlForm[A](
     }
     makeTree(grouped(depth))
   }
-
-
 }

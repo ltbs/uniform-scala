@@ -11,7 +11,7 @@ import ltbs.uniform.common.web.SimpleInteractionForm
 
 package object playframework {
 
-  type PlayForm[A] = SimpleInteractionForm[Request[AnyContent],A,Html] 
+  type PlayForm[A] = SimpleInteractionForm[Request[AnyContent],A,Html]
 
   type Encoded = String
   type DB = Map[String,Encoded]
