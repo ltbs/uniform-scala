@@ -2,9 +2,10 @@ package ltbs.uniform.interpreters.playframework
 
 import cats.data.Validated
 import play.twirl.api.Html
-import play.api.data.Form
+import play.api.data.{Form,Mapping}
 import play.api.mvc.{ Request, AnyContent }
 import ltbs.uniform.datapipeline._
+import ltbs.uniform.common.web._
 
 trait WebMonadForm[T] {
   def render(key: String, existing: Input, errors: ErrorTree, breadcrumbs: List[String]): Html

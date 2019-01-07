@@ -7,8 +7,11 @@ import play.api.data.Form
 import play.api.mvc.{ Request, AnyContent }
 import play.twirl.api.Html
 import ltbs.uniform.datapipeline._
+import ltbs.uniform.common.web.SimpleInteractionForm
 
 package object playframework {
+
+  type PlayForm[A] = SimpleInteractionForm[Request[AnyContent],A,Html] 
 
   type Encoded = String
   type DB = Map[String,Encoded]

@@ -14,8 +14,8 @@ lazy val root = project.in(file("."))
     `interpreter-js`,
     exampleProgramsJS,
     exampleProgramsJVM, 
-    dataPipelineJS,
-    dataPipelineJVM,
+    commonWebJS,
+    commonWebJVM,
     govukWidgetsJS,
     govukWidgetsJVM
   )
@@ -126,7 +126,7 @@ lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
 
-lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
+lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
@@ -140,8 +140,8 @@ lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
     )
   )
 
-lazy val dataPipelineJVM = `data-pipeline`.jvm.dependsOn(coreJVM)
-lazy val dataPipelineJS = `data-pipeline`.js.dependsOn(coreJS)
+lazy val commonWebJVM = `common-web`.jvm.dependsOn(coreJVM)
+lazy val commonWebJS = `common-web`.js.dependsOn(coreJS)
 
 
 lazy val `interpreter-cli` = project
@@ -189,11 +189,11 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
       name := "interpreter-play26"
     ))
 
-lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
-  .dependsOn(dataPipelineJVM)
+// lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
+//   .dependsOn(commonWebJVM)
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
-  .dependsOn(dataPipelineJVM)
+  .dependsOn(commonWebJVM)
 
 lazy val `interpreter-js` = project
   .settings(commonSettings)
@@ -207,7 +207,7 @@ lazy val `interpreter-js` = project
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(dataPipelineJS, exampleProgramsJS % "tut")
+  .dependsOn(commonWebJS, exampleProgramsJS % "tut")
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -223,7 +223,7 @@ lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
 
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(`interpreter-play26`, exampleProgramsJVM, dataPipelineJVM, govukWidgetsJVM)
+  .dependsOn(`interpreter-play26`, exampleProgramsJVM, commonWebJVM, govukWidgetsJVM)
   .dependsOn(interpreterLogictableJVM % "test")
   .settings(
     libraryDependencies ++= Seq(filters,guice)
@@ -261,8 +261,8 @@ lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
   )
   .enablePlugins(SbtTwirl)
 
-lazy val govukWidgetsJVM = `govuk-widgets`.jvm.dependsOn(dataPipelineJVM)
-lazy val govukWidgetsJS = `govuk-widgets`.js.dependsOn(dataPipelineJS)
+lazy val govukWidgetsJVM = `govuk-widgets`.jvm.dependsOn(commonWebJVM)
+lazy val govukWidgetsJS = `govuk-widgets`.js.dependsOn(commonWebJS)
 
 lazy val docs = project
   .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)
