@@ -1,4 +1,4 @@
-package ltbs.uniform.datapipeline
+package ltbs.uniform.web
 
 trait Messages {
   def apply(key: String, args: Any*): String

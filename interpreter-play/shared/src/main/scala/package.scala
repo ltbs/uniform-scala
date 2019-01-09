@@ -6,8 +6,8 @@ import cats.Invariant
 import play.api.data.Form
 import play.api.mvc.{ Request, AnyContent }
 import play.twirl.api.Html
-import ltbs.uniform.datapipeline._
-import ltbs.uniform.common.web.SimpleInteractionForm
+import ltbs.uniform._
+import ltbs.uniform.web._
 
 package object playframework {
 
@@ -35,7 +35,7 @@ package object playframework {
       def decode(out: Encoded): Either[ErrorTree,B] = fa.decode(out).map(f)
       def toTree(in: B): Input = fa.toTree(g(in))
 
-      def bind(in: Input): Either[Error,B] = fa.bind(in).map(f)
+      def bind(in: Input): Either[ErrorTree,B] = fa.bind(in).map(f)
       def unbind(a: B): Input = fa.unbind(g(a))
     }
   }
@@ -83,7 +83,7 @@ package object playframework {
     def encode(in: A): Encoded =
       encodeInput("root", parser.unbind(in))
 
-    def bind(in: Input): Either[Error,A] = parser.bind(in)
+    def bind(in: Input): Either[ErrorTree,A] = parser.bind(in)
     def unbind(a:A): Input = parser.unbind(a)
 
   }

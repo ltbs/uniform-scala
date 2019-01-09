@@ -1,13 +1,14 @@
-package ltbs.uniform.datapipeline
+package ltbs.uniform.web
 
 import shapeless._
 import shapeless.labelled._
 import cats.implicits._ // needed for monadic either in 2.11
+import ltbs.uniform.{Tree,ErrorTree}
 
 object InferParser {
 
   implicit val parserHNil: DataParser[HNil] = new DataParser[HNil] {
-    def bind(in: Input): Either[Error,HNil] = Right(HNil)
+    def bind(in: Input): Either[ErrorTree,HNil] = Right(HNil)
     def unbind(a: HNil): Input = Tree(Nil)
   }
 
@@ -21,7 +22,7 @@ object InferParser {
 
     new DataParser[FieldType[K,H] :: T] {
 
-      def bind(in: Input): Either[Error,FieldType[K,H] :: T] = {
+      def bind(in: Input): Either[ErrorTree,FieldType[K,H] :: T] = {
         val tailV = tParser.bind(in)
         val headV = in.get(fieldName) flatMap hParser.value.bind
 
@@ -48,7 +49,7 @@ object InferParser {
     ): DataParser[A] = new DataParser[A]
   {
 
-    def bind(in: Input): Either[Error,A] =
+    def bind(in: Input): Either[ErrorTree,A] =
       hGenParser.value.bind(in).map(generic.from)
 
     def unbind(a:A): Input =

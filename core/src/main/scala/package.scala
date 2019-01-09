@@ -8,6 +8,9 @@ import cats.Monoid
 
 package object uniform {
 
+  type Encoded = String
+  type ErrorTree = Tree[String,String]  
+
   type _uniform[V,R] = UniformAsk[V,?] |= R
   type _uniformSelect[V,R] = UniformSelect[V,?] |= R
 
@@ -53,8 +56,21 @@ package object uniform {
   def when[R, A](b: => Boolean)(wm: Eff[R, A]): Eff[R,Option[A]] =
     if(b) wm.map{_.some} else Eff.pure[R,Option[A]](none[A])
 
-}
+  implicit def treeMonoid[K, V: Monoid] = new Monoid[Tree[K,V]] {
+    def empty: Tree[K,V] = Tree(Monoid[V].empty)
 
-package uniform {
-	object UniformEffect {} 
+    def combine(x: Tree[K,V], y: Tree[K,V]): Tree[K,V] = {
+      val value = x.value |+| y.value
+
+      // crude 'unionwith'
+      val xkeys = x.children.keys.toList
+      val ykeys = y.children.keys.toList
+      val shared = xkeys.intersect(ykeys)
+      val xonly = xkeys.map{v => v -> x.children(v)}
+      val yonly = ykeys.map{v => v -> y.children(v)}
+      val merged = shared.map{v => v -> combine(x.children(v), y.children(v))}
+
+      Tree(value, Map({xonly ++ yonly ++ merged}:_*))
+    }
+  }
 }

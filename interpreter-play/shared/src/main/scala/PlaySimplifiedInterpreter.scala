@@ -13,12 +13,21 @@ import play.api._
 import play.api.mvc._
 import play.twirl.api.Html
 import org.atnos.eff.syntax.future._
-import ltbs.uniform.datapipeline._
-import ltbs.uniform.common.web._
+import ltbs.uniform._
+import ltbs.uniform.web._
 
 trait PlaySimplifiedInterpreter extends Compatibility.PlayController {
 
-  def renderForm(form: Html, breadcrumbs: List[String]): Html 
+  def messages(request: Request[AnyContent]): Messages
+
+  def renderForm(
+    key: String,
+    errors: ErrorTree,
+    form: Html,
+    breadcrumbs: List[String],
+    request: Request[AnyContent],
+    messages: Messages
+  ): Html
 
   implicit def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
     def apply(key: List[String],args: Any*): String = input(key, args)
@@ -65,37 +74,49 @@ trait PlaySimplifiedInterpreter extends Compatibility.PlayController {
       dbM: _db[U],
       breadcrumbsM: _breadcrumbs[U],
       eitherM: _either[U]
+    ): Eff[U, A] = useFormMap(_ => wmFormC)
+
+    def useFormMap[C, U](
+      wmFormC: String => PlayForm[C]
+    )(
+      implicit member: Member.Aux[UniformAsk[C,?], R, U],
+      readStage: _readStage[U],
+      readRequest: _readRequest[U],
+      dbM: _db[U],
+      breadcrumbsM: _breadcrumbs[U],
+      eitherM: _either[U]
     ): Eff[U, A] = e.translate(
       new Translate[UniformAsk[C,?], U] {
         def apply[X](ax: UniformAsk[C,X]): Eff[U, X] = {
-          val wmForm: PlayForm[X] = wmFormC.imap(_.asInstanceOf[X])(_.asInstanceOf[C])
+          val wmForm: PlayForm[X] = wmFormC(ax.key).imap(_.asInstanceOf[X])(_.asInstanceOf[C])
 
-          (ax.key, ax.validation) match {
-            case (id, validation) =>
+          ax match {
+            case UniformAsk(id, validation) =>
 
               for {
                 request <- ask[U, Request[AnyContent]]
                 targetId <- ask[U, String]
                 method = request.method.toLowerCase
                 state <- get[U, DB]
-                dbrecord = state.get(id).map(wmForm.decode(_).flatMap(validation(_).toEither))
+                dbObject: Option[X] = state.get(id).flatMap(wmForm.decode(_).flatMap(validation(_).toEither).toOption)
                 breadcrumbs <- get[U, List[String]]
-                ret <- (method, dbrecord, targetId) match {
+                ret <- (method, dbObject, targetId) match {
                   case ("get", None, `id`) =>
                     log.info("nothing in database, step in URI, render empty form")
-                    left[U, Result, X](Ok(renderForm(
+                    left[U, Result, X](Ok(renderForm(id, Tree.empty,
                       wmForm.render(id, None, request),
-                      breadcrumbs
+                      breadcrumbs, request, messages(request)
                     )))
 
-                  case ("get", Some(Right(o)), `id`) =>
+                  case ("get", Some(o), `id`) =>
                     log.info("something in database, step in URI, user revisiting old page, render filled in form")
-                    left[U, Result, X](Ok(renderForm(
+                    log.info("  data:" + o)                    
+                    left[U, Result, X](Ok(renderForm(id, Tree.empty,
                       wmForm.render(id, Some(wmForm.encode(o)), request),
-                      breadcrumbs
+                      breadcrumbs, request, messages(request)
                     )))
 
-                  case ("get", Some(Right(data)), _) =>
+                  case ("get", Some(data), _) =>
                     log.info("something in database, not step in URI, pass through")
                     put[U, List[String]](id :: breadcrumbs) >>
                     Eff.pure[U, X](data.asInstanceOf[X])
@@ -106,9 +127,11 @@ trait PlaySimplifiedInterpreter extends Compatibility.PlayController {
                     wmForm.decode(data) match {
                       case Left(errors) =>
                         log.info("form submitted, step in URI, validation failure")
-                        left[U, Result, X](BadRequest(renderForm(
+                        log.info(s"  errors: $errors")
+                        log.info(s"  data: $data")                                                
+                        left[U, Result, X](BadRequest(renderForm(id, errors,
                           wmForm.render(id, Some(data), request, errors),
-                          breadcrumbs
+                          breadcrumbs, request, messages(request)
                         )))
                       case Right(o) =>
                         log.info("form submitted, step in URI, validation pass")

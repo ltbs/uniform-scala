@@ -29,8 +29,8 @@ lazy val root = project.in(file("."))
 enablePlugins(GitVersioning)
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.7",
-  crossScalaVersions := Seq("2.11.12", "2.12.7"),
+  scalaVersion := "2.12.8",
+  crossScalaVersions := Seq("2.11.12", "2.12.8"),
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
@@ -116,8 +116,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7"),
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies += "org.atnos" %%% "eff" % "5.2.0",
     scalaJSUseMainModuleInitializer := true
   )
@@ -147,16 +147,16 @@ lazy val commonWebJS = `common-web`.js.dependsOn(coreJS)
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8")
   )
   .dependsOn(coreJVM)
 
 lazy val `interpreter-gui` = project
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8")
   )
   .dependsOn(coreJVM)
 
@@ -164,8 +164,8 @@ lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8")
   )
 
 lazy val interpreterLogictableJS = `interpreter-logictable`.js
@@ -199,8 +199,8 @@ lazy val `interpreter-js` = project
   .settings(commonSettings)
   .enablePlugins(TutPlugin)
   .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8")
   )
   .settings(
     scalaJSUseMainModuleInitializer := true,
@@ -213,8 +213,8 @@ lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7"),
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"      
   )
 
@@ -232,8 +232,8 @@ lazy val `example-play` = project.settings(commonSettings)
 lazy val `example-js` = project
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7"),
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
@@ -244,8 +244,8 @@ lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7"),
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.beachape" %%% "enumeratum" % "1.5.13",
@@ -253,11 +253,18 @@ lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
     ),
     sourceDirectories in (Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value,
     TwirlKeys.templateImports ++= Seq(
-      "ltbs.uniform.datapipeline._",
+      "ltbs.uniform.web._",
+      "ltbs.uniform._",      
       "ltbs.uniform.widgets.govuk._"
     ),
     initialCommands in console := "import ltbs.uniform._;import ltbs.uniform.widgets.govuk._;import ltbs.uniform.datapipeline._",
-    scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings", "-Ywarn-unused") // little we can do about twirl throwing warnings
+    scalacOptions --= Seq(
+      "-Ywarn-unused:imports",
+      "-Ywarn-unused-imports",      
+      "-Xfatal-warnings",
+      "-Ywarn-unused",
+      "-Ywarn-unused:params"
+    ) // little we can do about twirl throwing warnings
   )
   .enablePlugins(SbtTwirl)
 
@@ -270,7 +277,7 @@ lazy val docs = project
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
+    scalaVersion := "2.12.8",
     fork in Test := true,
     micrositeName           := "uniform-scala",
     micrositeDescription    := "Purely functional user-interaction",

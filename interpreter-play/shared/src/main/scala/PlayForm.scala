@@ -1,16 +1,25 @@
 package ltbs.uniform.interpreters.playframework
 
-import ltbs.uniform.common.web._
-import ltbs.uniform.datapipeline._
+import ltbs.uniform.web._
 
 object PlayForm {
-  def automatic[A](
+  def automatic[A]( implicit
     parser: DataParser[A],
     html: HtmlForm[A],
     messages: Messages
   ): PlayForm[A] = 
     sifProfunctor.lmap(
       UrlEncodedHtmlForm[A](parser, html, messages)
-    )(_.body.asFormUrlEncoded.getOrElse(Map.empty))
+    ){ request =>
+
+      val urlEncodedData = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+      println("urlEncodedData: " + urlEncodedData)
+      val (first: String,_) = urlEncodedData.find(_._1 != "csrfToken").getOrElse(("",""))
+      val key = first.takeWhile(_ != '.')
+      println("key: " + key)
+      request.body.asFormUrlEncoded.getOrElse(Map.empty).map { case (k,v) => 
+        (k.replaceFirst(key,""),v)
+      }
+    }
 
 }

@@ -1,6 +1,6 @@
 @import cats.implicits._
 
-@(key: String, values: Input, errors: Error, messages: Messages)
+@(key: String, values: Input, errors: ErrorTree, messages: Messages)
 
 @if(errors.nonEmpty) { 
 

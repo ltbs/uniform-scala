@@ -2,10 +2,10 @@ package ltbs.uniform.interpreters.playframework
 
 import cats.data.Validated
 import play.twirl.api.Html
-import play.api.data.{Form,Mapping}
+import play.api.data.Form
 import play.api.mvc.{ Request, AnyContent }
-import ltbs.uniform.datapipeline._
-import ltbs.uniform.common.web._
+import ltbs.uniform._
+import ltbs.uniform.web._
 
 trait WebMonadForm[T] {
   def render(key: String, existing: Input, errors: ErrorTree, breadcrumbs: List[String]): Html
@@ -14,7 +14,7 @@ trait WebMonadForm[T] {
   def decode(out: Encoded): Either[ErrorTree,T]
   def toTree(in: T): Input
 
-  def bind(in: Input): Either[Error,T]
+  def bind(in: Input): Either[ErrorTree,T]
   def unbind(a:T): Input
 }
 

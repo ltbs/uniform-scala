@@ -1,4 +1,4 @@
-package ltbs.uniform.datapipeline
+package ltbs.uniform
 
 import cats.implicits._
 import cats.Monoid
@@ -7,8 +7,8 @@ case class Tree[K,V](
   value: V,
   children: Map[K,Tree[K,V]] = Map.empty[K,Tree[K,V]]
 ) {
-  def get(key: K): Either[Error,Tree[K,V]] = children.get(key) match {
-    case Some(x) => x.asRight[Error]
+  def get(key: K): Either[ErrorTree,Tree[K,V]] = children.get(key) match {
+    case Some(x) => x.asRight[ErrorTree]
     case None    => Tree("", Map(key.toString -> Tree[String,String]("required"))).asLeft[Tree[K,V]]
   }
 

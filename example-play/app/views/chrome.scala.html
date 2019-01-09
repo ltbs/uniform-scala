@@ -1,6 +1,6 @@
 @import ltbs.uniform.widgets.govuk.html._
 
-@(key: String, errors: Any, content: Html, breadcrumbs: List[String] = Nil)(implicit messages: ltbs.uniform.datapipeline.Messages, requeest: Request[AnyContent])
+@(key: String, errors: Any, content: Html, breadcrumbs: List[String] = Nil)(implicit messages: ltbs.uniform.web.Messages, request: Request[AnyContent])
 <!DOCTYPE html>
 <html lang="en" class="govuk-template js-enabled">
   <head>

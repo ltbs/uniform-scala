@@ -1,12 +1,6 @@
-package ltbs.uniform.common.web
-
-import play.twirl.api.Html
+package ltbs.uniform
 
 import cats.implicits._
-import ltbs.uniform.datapipeline._
-
-trait Dom
-trait Response
 
 trait SimpleInteractionForm[IN,A,OUT] {
   def render(key: String, existing: Option[Encoded], data: IN, errors: ErrorTree): OUT
@@ -31,12 +25,3 @@ trait SimpleInteractionForm[IN,A,OUT] {
   def validating(f: A => Either[ErrorTree,A]): SimpleInteractionForm[IN,A,OUT] =
     transform(f)(identity)
 }
-
-trait JsForm[A] extends SimpleInteractionForm[Dom,A,Html] {
-  override def render(key: String, existing: Option[Encoded], data: Dom, errors: ErrorTree): Html
-  override def receiveInput(request: Dom): Encoded
-  override def encode(in: A): Encoded
-  override def decode(out: Encoded): Either[ErrorTree,A]
-}
-
-

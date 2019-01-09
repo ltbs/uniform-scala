@@ -1,7 +1,7 @@
-package ltbs.uniform.common.web
+package ltbs.uniform.web
 
 import cats.implicits._
-import ltbs.uniform.datapipeline._
+import ltbs.uniform._
 import play.twirl.api.Html
 import java.net.URLDecoder.{decode => urldecode}
 
@@ -13,7 +13,7 @@ class InputHtmlForm[A](
 
   def decode(out: Encoded): Either[ErrorTree,A] = {
     val urlEncoded = decodeUrlString(out)
-    parser.bind(formToInput(urlEncoded))
+    parser.bind(formToInput(urlEncoded).forestAtPath("root").getOrElse(Tree.empty))
   }
 
   def encode(in: A): Encoded = receiveInput(parser.unbind(in))
