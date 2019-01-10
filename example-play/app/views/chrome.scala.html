@@ -27,8 +27,7 @@
     <div class="govuk-width-container">
       <main class="govuk-main-wrapper " id="main-content" role="main">
         <div id="mainBody">
-
-	  @for(back <- breadcrumbs.lastOption) {
+	  @for(back <- breadcrumbs.headOption) {
             <a href="@back" class="govuk-back-link">@messages(List(s"back-to-$back","back"))</a>
           }
 	  

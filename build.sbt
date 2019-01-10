@@ -109,7 +109,10 @@ lazy val commonSettings = Seq(
     else None
   },
   useGpg := true,
-  licenses += ("GPL-3", url("https://www.gnu.org/licenses/gpl-3.0.en.html"))
+  licenses += ("GPL-3", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
+  libraryDependencies ++= Seq(
+    "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+  )
 )
 
 lazy val core = crossProject(JSPlatform, JVMPlatform)
@@ -218,7 +221,7 @@ lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .settings(
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
-    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"      
+    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"
   )
 
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
@@ -229,7 +232,14 @@ lazy val `example-play` = project.settings(commonSettings)
   .dependsOn(`interpreter-play26`, exampleProgramsJVM, commonWebJVM, govukWidgetsJVM)
   .dependsOn(interpreterLogictableJVM % "test")
   .settings(
-    libraryDependencies ++= Seq(filters,guice)
+    libraryDependencies ++= Seq(
+      filters,
+      guice
+    ),
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
+    initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.web._; import ltbs.uniform.web.parser._; import ltbs.uniform.interpreters.playframework._; import ltbs.uniform.sampleprograms.BeardTax._; import ltbs.uniform.widgets.govuk._; implicit val messages: Messages = NoopMessages",
+
+    initialCommands in consoleQuick := """import cats.implicits._;"""
   )
 
 lazy val `example-js` = project

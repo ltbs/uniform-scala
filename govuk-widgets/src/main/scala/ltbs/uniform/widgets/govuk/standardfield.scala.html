@@ -2,7 +2,7 @@
 
 @(key: String, errors: ErrorTree, messages: Messages)(content: Html)
 
-@path=@{key.split("[.]").filter(_.nonEmpty)}
+@path=@{key.split("[.]").filter(_.nonEmpty).tail}
 @fieldErrors=@{errors.atPath(path:_*)}
 
 

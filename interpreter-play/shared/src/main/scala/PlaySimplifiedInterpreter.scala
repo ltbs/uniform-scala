@@ -118,11 +118,13 @@ trait PlaySimplifiedInterpreter extends Compatibility.PlayController {
                     )))
 
                   case ("get", Some(o), `id`) =>
-                    val encoded = FormUrlEncoded.readString(wmForm.encode(o)).prefix(id).writeString
+                    val encoded = wmForm.encode(o) // FormUrlEncoded.readString(wmForm.encode(o)).prefix(id).writeString
                     log.info(s"""|$id - something in database, step in URI, user revisiting old page, render filled in form
                                  |\t\t data: $o
                                  |\t\t encoded: $encoded """.stripMargin)
-                    left[U, Result, X](Ok(renderForm(id, Tree.empty,
+                    left[U, Result, X](Ok(
+
+                      renderForm(id, Tree.empty,
                       wmForm.render(id, Some(encoded), request),
                       breadcrumbs, request, messages(request)
                     )))
@@ -156,6 +158,11 @@ trait PlaySimplifiedInterpreter extends Compatibility.PlayController {
                     log.info(s"$id - something in database, previous page submitted")
                     put[U, List[String]](id :: breadcrumbs) >>
                     left[U, Result, X](Redirect(s"./$id"))
+
+                  case ("post", Some(data), _) =>
+                    log.info(s"$id - something in database, posting, not step in URI nor previous page -> pass through")
+                    put[U, List[String]](id :: breadcrumbs) >>
+                      Eff.pure[U,X](data.asInstanceOf[X])
 
                   case ("post", _, _) | ("get", _, _) =>
                     log.warn(

@@ -2,7 +2,7 @@ package ltbs.uniform
 
 import cats.implicits._
 import cats.arrow.Profunctor
-import cats.Invariant
+import cats.{Invariant,Monoid}
 import play.twirl.api.Html
 import scala.language.implicitConversions
 
@@ -10,6 +10,11 @@ package object web {
 
   type FormUrlEncoded = Map[String, Seq[String]]
   type Input = Tree[String, List[String]]
+
+  implicit val htmlMonoidInstance = new Monoid[Html] {
+    def empty: Html = Html("")
+    def combine(a: Html, b: Html):Html = Html(a.toString ++ b.toString)
+  }
 
   implicit def richFormUrlEncoded(in: FormUrlEncoded): FormUrlEncoded.RichFormUrlEncoded =
     new FormUrlEncoded.RichFormUrlEncoded(in)

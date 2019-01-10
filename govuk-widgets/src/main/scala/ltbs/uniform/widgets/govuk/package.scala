@@ -20,7 +20,7 @@ package object govuk extends InferForm {
       html.radios(
         key,
         Set("TRUE","FALSE"),
-        values.children.get(key).flatMap(_.value.headOption),
+        values.value.headOption,
         errors,
         messages
       )
@@ -75,7 +75,7 @@ package object govuk extends InferForm {
   implicit def enumeratumHtml[A <: EnumEntry](implicit enum: Enum[A]) = new HtmlField[A] {
     def render(key: String, values: Input, errors: ErrorTree, messages: Messages) = {
       val options: Set[A] = enum.values.toSet
-      val path = key.split("[.]").filter(_.nonEmpty)
+      val path = key.split("[.]").filter(_.nonEmpty).tail
       val existing: Option[String] = values.atPath(path:_*).flatMap{_.headOption}
       html.radios(key, options.map{_.toString}, existing, errors, messages)
     }
@@ -84,7 +84,7 @@ package object govuk extends InferForm {
   implicit def enumeratumSetHtml[A <: EnumEntry](implicit enum: Enum[A]) = new HtmlField[Set[A]] {
     def render(key: String, values: Input, errors: ErrorTree, messages: Messages) = {
       val options: Set[A] = enum.values.toSet
-      val path = key.split("[.]").filter(_.nonEmpty)
+      val path = key.split("[.]").filter(_.nonEmpty).tail
       val existing: Option[List[String]] = values.atPath(path:_*)
 
       html.standardfield(key, errors, messages)(
