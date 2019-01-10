@@ -98,35 +98,47 @@ trait PlaySimplifiedInterpreter extends Compatibility.PlayController {
                 targetId <- ask[U, String]
                 method = request.method.toLowerCase
                 state <- get[U, DB]
-                dbObject: Option[X] = state.get(id).flatMap(wmForm.decode(_).flatMap(validation(_).toEither).toOption)
+                
+                dbObject: Option[X] = {
+                  val o = state.get(id).flatMap(wmForm.decode(_).flatMap(validation(_).toEither) match {
+                    case Left(e) =>
+                      log.warn(s"$id - serialised data present, but failed validation - $e")
+                      None
+                    case Right(r) => Some(r)
+                  })
+                  o
+                }
                 breadcrumbs <- get[U, List[String]]
                 ret <- (method, dbObject, targetId) match {
                   case ("get", None, `id`) =>
-                    log.info("nothing in database, step in URI, render empty form")
+                    log.info(s"$id - nothing in database, step in URI, render empty form")
                     left[U, Result, X](Ok(renderForm(id, Tree.empty,
                       wmForm.render(id, None, request),
                       breadcrumbs, request, messages(request)
                     )))
 
                   case ("get", Some(o), `id`) =>
-                    log.info("something in database, step in URI, user revisiting old page, render filled in form")
-                    log.info("  data:" + o)                    
+                    val encoded = FormUrlEncoded.readString(wmForm.encode(o)).prefix(id).writeString
+                    log.info(s"""|$id - something in database, step in URI, user revisiting old page, render filled in form
+                                 |\t\t data: $o
+                                 |\t\t encoded: $encoded """.stripMargin)
                     left[U, Result, X](Ok(renderForm(id, Tree.empty,
-                      wmForm.render(id, Some(wmForm.encode(o)), request),
+                      wmForm.render(id, Some(encoded), request),
                       breadcrumbs, request, messages(request)
                     )))
 
                   case ("get", Some(data), _) =>
-                    log.info("something in database, not step in URI, pass through")
+                    log.info(s"$id - something in database, not step in URI, pass through")
                     put[U, List[String]](id :: breadcrumbs) >>
                     Eff.pure[U, X](data.asInstanceOf[X])
 
                   case ("post", _, `id`) =>
-                    val data: Encoded = wmForm.receiveInput(request)
+                    val data: Encoded =
+                      wmForm.receiveInput(request)
                     
                     wmForm.decode(data) match {
                       case Left(errors) =>
-                        log.info("form submitted, step in URI, validation failure")
+                        log.info(s"$id - form submitted, step in URI, validation failure")
                         log.info(s"  errors: $errors")
                         log.info(s"  data: $data")                                                
                         left[U, Result, X](BadRequest(renderForm(id, errors,
@@ -134,19 +146,24 @@ trait PlaySimplifiedInterpreter extends Compatibility.PlayController {
                           breadcrumbs, request, messages(request)
                         )))
                       case Right(o) =>
-                        log.info("form submitted, step in URI, validation pass")
+                        log.info(s"$id - form submitted, step in URI, validation pass")
                         put[U, List[String]](id :: breadcrumbs) >>
                         put[U, DB](state + (id -> wmForm.encode(o))) >>
                         Eff.pure[U, X](o)
                     }
 
                   case ("post", Some(_), _) if breadcrumbs.contains(targetId) =>
-                    log.info("something in database, previous page submitted")
+                    log.info(s"$id - something in database, previous page submitted")
                     put[U, List[String]](id :: breadcrumbs) >>
                     left[U, Result, X](Redirect(s"./$id"))
 
                   case ("post", _, _) | ("get", _, _) =>
-                    log.info("nothing else seems applicable. maybe this should be a 404?")
+                    log.warn(
+                      s"""|$id - nothing else seems applicable. maybe this should be a 404?
+                          |\t\t method:$method
+                          |\t\t dbObject:$dbObject
+                          |\t\t targetId:$targetId""".stripMargin)
+                    
                     left[U, Result, X](Redirect(s"./$id"))
                 }
               } yield ret

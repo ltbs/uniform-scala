@@ -44,6 +44,14 @@ case class Tree[K,V](
     this == Tree(monoid.empty)
 
   def nonEmpty(implicit monoid: Monoid[V]): Boolean = !isEmpty
+
+  def prefix(k: K)(implicit monoid: Monoid[V]): Tree[K,V] = {
+    if (isEmpty)
+      this
+    else 
+      Tree(monoid.empty, Map(k -> this))
+  }
+
 }
 
 object Tree {
