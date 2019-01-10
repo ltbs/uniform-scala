@@ -48,10 +48,23 @@
           *****************************************@
 	  
       @helper.form(action = play.api.mvc.Call("post", key)) {
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
         @helper.CSRF.formField 
         @content
-            <button type="submit" class="govuk-button">Save and Continue</button>
-	    <div id="annotations" />
+        <button type="submit" class="govuk-button">Save and Continue</button>
+      </div>
+
+      <div class="govuk-grid-column-one-third">
+        <h3 class="govuk-heading-m">Administrator Controls</h3>
+	<div id="annotations" />	
+      </div>
+    </div>
+
+
+	    
+
       }
         </div>
       </main>

@@ -243,9 +243,17 @@ trait PlayAnnotatingInterpreter extends Compatibility.PlayController {
                   |>${a.getOrElse("")}</textarea>
                   |""".stripMargin
             case (ReadWriteAnnotations, a) =>
-              s"""|<textarea name="${key}__annotations" rows="4" cols="50"
-                  |>${a.getOrElse("")}</textarea>
-                  |""".stripMargin
+
+              s"""|<div class="govuk-form-group">
+                  |  <label class="govuk-label" for="${key}__annotations">
+                  |    Do you have any annotations?
+                  |  </label>
+                  |  <span id="${key}__annotations-hint" class="govuk-hint">
+                  |    Any comments added will be presented to the user as requiring further action.
+                  |  </span>
+                  |  <textarea class="govuk-textarea" id="${key}__annotations" name="${key}__annotations" rows="4" cols="50" aria-describedby="more-detail-hint">${a.getOrElse("")}</textarea>
+                  |</div>""".stripMargin
+
           }
 
           Html(wmFormC.render(key,input,error,breadcrumbs).toString.replace("""<div id="annotations" />""", annotationsControl))
