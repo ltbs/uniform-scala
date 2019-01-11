@@ -21,7 +21,7 @@ import play.twirl.api.Html
 import InferParser._
 
 @Singleton
-class SimplifiedBeardController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlaySimplifiedInterpreter with I18nSupport {
+class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayInterpreter with I18nSupport {
 
   def messages(request: Request[AnyContent]): Messages = convertMessages(messagesApi.preferred(request))
 

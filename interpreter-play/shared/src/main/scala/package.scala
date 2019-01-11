@@ -1,13 +1,11 @@
 package ltbs.uniform.interpreters
 
 import cats.data._
-import cats.implicits._
 import cats.Invariant
 import play.api.data.Form
 import play.api.mvc.{ Request, AnyContent }
 import play.twirl.api.Html
 import ltbs.uniform._
-import ltbs.uniform.web._
 
 package object playframework {
 

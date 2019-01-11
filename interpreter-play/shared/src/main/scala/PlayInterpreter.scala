@@ -16,7 +16,7 @@ import org.atnos.eff.syntax.future._
 import ltbs.uniform._
 import ltbs.uniform.web._
 
-trait PlaySimplifiedInterpreter extends Compatibility.PlayController {
+trait PlayInterpreter extends Compatibility.PlayController {
 
   def messages(request: Request[AnyContent]): Messages
 
