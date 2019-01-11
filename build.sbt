@@ -131,9 +131,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
-
 lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
+  .crossType(CrossType.Full)
   .settings(commonSettings)
   .settings(
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
@@ -148,7 +147,6 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
 
 lazy val commonWebJVM = `common-web`.jvm.dependsOn(coreJVM)
 lazy val commonWebJS = `common-web`.js.dependsOn(coreJS)
-
 
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
@@ -213,7 +211,7 @@ lazy val `interpreter-js` = project
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(commonWebJS, exampleProgramsJS % "tut")
+  .dependsOn(commonWebJS)
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -248,7 +246,10 @@ lazy val `example-js` = project
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
     scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
+    libraryDependencies ++= Seq(
+      "org.querki" %%% "jquery-facade" % "1.2",
+      "org.scala-js" %%% "scalajs-java-time" % "0.2.5"
+    )
   )
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(`interpreter-js`, exampleProgramsJS, govukWidgetsJS)

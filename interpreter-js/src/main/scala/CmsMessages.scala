@@ -1,6 +1,6 @@
 package ltbs.uniform.prototype
 
-import ltbs.uniform.datapipeline.Messages
+import ltbs.uniform.web.Messages
 
 case class CmsMessages(
   underlying: Map[String, List[String]]

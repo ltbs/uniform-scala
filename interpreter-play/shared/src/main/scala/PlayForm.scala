@@ -12,13 +12,10 @@ object PlayForm {
       UrlEncodedHtmlForm[A](parser, html, messages)
     ){ request =>
 
-      def a: FormUrlEncoded = FormUrlEncoded.readString(
-        request.body.asText.getOrElse("")
-      )
-      def b: FormUrlEncoded =
+      val urlEncodedData =
         request.body.asFormUrlEncoded.getOrElse(Map.empty)
-      val urlEncodedData = b
-      val (first: String,_) = urlEncodedData.find(_._1 != "csrfToken").getOrElse(("",""))
+      val (first: String,_) =
+        urlEncodedData.find(_._1 != "csrfToken").getOrElse(("",""))
       val key = first.takeWhile(_ != '.')
       urlEncodedData.forestAtPath(key)
     }

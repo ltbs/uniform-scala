@@ -10,7 +10,8 @@ import JsInterpreter._
 import JsImplementations._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import cats.Monoid
-import ltbs.uniform.datapipeline._
+import ltbs.uniform.web._
+import ltbs.uniform.web.parser._
 import ltbs.uniform.widgets.govuk._
 
 import InferParser._
