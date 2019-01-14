@@ -211,7 +211,7 @@ lazy val `interpreter-js` = project
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(commonWebJS)
+  .dependsOn(commonWebJS, `exampleProgramsJS` % Tut)
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -236,7 +236,6 @@ lazy val `example-play` = project.settings(commonSettings)
     ),
     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
     initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.web._; import ltbs.uniform.web.parser._; import ltbs.uniform.interpreters.playframework._; import ltbs.uniform.sampleprograms.BeardTax._; import ltbs.uniform.widgets.govuk._; implicit val messages: Messages = NoopMessages",
-
     initialCommands in consoleQuick := """import cats.implicits._;"""
   )
 

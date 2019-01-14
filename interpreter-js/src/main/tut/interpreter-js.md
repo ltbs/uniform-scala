@@ -32,7 +32,7 @@ var state: DB = Monoid[DB].empty
 We need to combine the stacks for the JS Interpreter and our program -
 
 ```tut:silent
-import ltbs.uniform.sampleprograms.LitreageTest._
+import ltbs.uniform.sampleprograms.BeardTax._
 
 type CombinedStack = FxAppend[TestProgramStack, JsStack]
 ```
@@ -40,51 +40,46 @@ type CombinedStack = FxAppend[TestProgramStack, JsStack]
 We need to define how to handle the data-types we are interested
 in. This is similar to what we did with the play interpreter, but
 before whereas we needed to write code to extract the data from the
-POST request we now need to define how to remove the values from the
+POST request we now need to define how to get the values from the
 DOM. 
 
 ```tut:silent
-import ltbs.uniform.datapipeline.Tree
+import ltbs.uniform._
 import org.querki.jquery.JQuery 
 
-val booleanForm = new Form[Boolean] {
+val beardLengthForm = new Form[BeardLength] {
 
-    def render(
-      key: String,
-      existing: Option[Tree[String,List[String]]],
-      errors: ErrorTree
-    ): String = ???
+  // How should we produce the HTML form?
+  // we could call twirl or scalatags from here.
+  def render(
+    key: String,
+    existing: Option[Tree[String,List[String]]],
+    errors: ErrorTree
+  ): String = ???
 
-    def fromNode(
-      key: String,
-      fieldSet: JQuery
-    ): Either[ErrorTree, Boolean] = ???
+  // How to extract the values from the DOM
+  // we might call $("myForm").serialize() to 
+  // get the data
+  def fromNode(
+    key: String,
+    fieldSet: JQuery
+  ): Either[ErrorTree, BeardLength] = ???
 
-    def encode(in: Boolean): Encoded = ??? 
+  // How do we serialise BeardLength? 
+  // (Encoded is an alias for String)
+  def encode(in: BeardLength): Encoded = ??? 
 
-    def decode(out: Encoded): Either[ErrorTree,Boolean] = ???
+  // How do we turn BeardLength back into a String again? 
+  def decode(out: Encoded): Either[ErrorTree,BeardLength] = ???
 
-    def toDataTree(in: Boolean): Tree[String,List[String]] = ???
-  }
+  // How do we decompose BeardLength into a set of values? 
+  // this is used before rendering.
+  def toDataTree(in: BeardLength): Tree[String,List[String]] = ???
+}
   
-val litresForm = new Form[Litres] { 
-    def render(
-      key: String,
-      existing: Option[Tree[String,List[String]]],
-      errors: ErrorTree
-    ): String = ???
+lazy val beardStyleForm: Form[BeardStyle] = ???
+lazy val memberOfPublicForm: Form[Option[MemberOfPublic]] = ???
 
-    def fromNode(
-      key: String,
-      fieldSet: JQuery
-    ): Either[ErrorTree, Litres] = ???
-
-    def encode(in: Litres): Encoded = ??? 
-
-    def decode(out: Encoded): Either[ErrorTree,Litres] = ???
-
-    def toDataTree(in: Litres): Tree[String,List[String]] = ???
-  }
 ```
 
 Here the `render` method defines the HTML that is to be swapped in for a
@@ -103,8 +98,9 @@ We can now execute our program and write the state back -
 def runProgram(action: Action): Unit = {
   val ((result,newState),newBreadcrumbs) = 
     program[FxAppend[TestProgramStack, JsStack]] 
-      .useForm(booleanForm)
-      .useForm(litresForm)
+      .useForm(memberOfPublicForm)
+      .useForm(beardStyleForm)
+      .useForm(beardLengthForm)
       .runReader(action)
       .runEither
       .runState(state)
@@ -112,7 +108,7 @@ def runProgram(action: Action): Unit = {
       .runEval
       .run
 	
-//  state = newState	
+  state = newState	
   result match { 
 	case Left(htmlPage) => 
 	  // the user is still in journey - update the page 
@@ -129,3 +125,5 @@ Each time the user submits a page `runProgram(Submit(pageId))` should
 be called, and if the user clicks back (or on a breadcrumb) then
 `runProgram(Back(oldPageId))` should be run. 
 
+Typically we would handle the `Left` outcome by dynamically replacing
+the main content in the DOM.

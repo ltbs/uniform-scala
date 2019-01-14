@@ -124,7 +124,7 @@ object JsInterpreter {
                           errors=e,
                           breadcrumbs=breadcrumbs
                         ))
-                    case (Back(`key`),_) | (Back(_),None) | (Back(_), Some(Left(_))) | (Submit(_),Some(Right(_)))=>
+                    case (Back(`key`),_) | (Back(_),None | Some(Left(_))) | (Submit(_),Some(Right(_)))=>
                       val err = dbData match {
                         case Some(Left(e)) => e
                         case _ => Tree.empty[String, String]
