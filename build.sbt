@@ -1,4 +1,5 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import microsites.ExtraMdFileConfig
 
 lazy val root = project.in(file("."))
   .aggregate(
@@ -8,14 +9,13 @@ lazy val root = project.in(file("."))
     `interpreter-gui`,
     interpreterLogictableJS,
     interpreterLogictableJVM,
-    `interpreter-play25`,
+//    `interpreter-play25`,
     `interpreter-play26`,
     `interpreter-js`,
     exampleProgramsJS,
     exampleProgramsJVM, 
-    `sbt-uniform-parser-xsd`,
-    dataPipelineJS,
-    dataPipelineJVM,
+    commonWebJS,
+    commonWebJVM,
     govukWidgetsJS,
     govukWidgetsJVM
   )
@@ -29,8 +29,8 @@ lazy val root = project.in(file("."))
 enablePlugins(GitVersioning)
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.7",
-  crossScalaVersions := Seq("2.11.12", "2.12.7"),
+  scalaVersion := "2.12.8",
+  crossScalaVersions := Seq("2.11.12", "2.12.8"),
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
@@ -109,183 +109,30 @@ lazy val commonSettings = Seq(
     else None
   },
   useGpg := true,
-  licenses += ("GPL-3", url("https://www.gnu.org/licenses/gpl-3.0.en.html"))
+  licenses += ("GPL-3", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
+  libraryDependencies ++= Seq(
+    "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+  )
 )
 
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7"),
-    libraryDependencies += "org.atnos" %%% "eff" % "5.2.0",
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
+    libraryDependencies ++= Seq(
+      "org.atnos" %%% "eff" % "5.2.0",
+      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+    ),
     scalaJSUseMainModuleInitializer := true
   )
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
-lazy val `interpreter-cli` = project
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
-  )
-  .dependsOn(coreJVM)
-
-lazy val `interpreter-gui` = project
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
-  )
-  .dependsOn(coreJVM)
-
-lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
-  )
-
-lazy val interpreterLogictableJS = `interpreter-logictable`.js
-  .dependsOn(coreJS)
-  .dependsOn(exampleProgramsJS % "test")
-lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
-  .dependsOn(coreJVM)
-  .dependsOn(exampleProgramsJVM % "test")
-
-lazy val html = crossProject(JSPlatform, JVMPlatform)
+lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
-  )
-  .settings(libraryDependencies ++= Seq(
-              "com.lihaoyi" %%% "scalatags" % "0.6.7",
-              "com.chuusai" %%% "shapeless" % "2.3.3"))
-
-lazy val htmlJS = html.js.dependsOn(coreJS)
-lazy val htmlJVM = html.jvm.dependsOn(coreJVM)
-
-lazy val `interpreter-play`: sbtcrossproject.CrossProject = crossProject(Play25, Play26)
-  .crossType(CrossType.Full)
-  .settings(commonSettings)
-
-lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
-  .dependsOn(coreJVM, dataPipelineJVM)
-  .settings(
-    name := "interpreter-play25",
-    scalaVersion := "2.11.12",
-    crossScalaVersions := Seq("2.11.12")
-  )
-
-lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
-  .dependsOn(coreJVM, dataPipelineJVM)
-  .settings(
-    name := "interpreter-play26"
-  )
-
-lazy val `interpreter-js` = project
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
-  )
-  .settings(
-    scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
-  )
-  .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS, dataPipelineJS)
-
-lazy val `gforms-parser` = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
-  .settings(commonSettings)
-  .settings(
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
-    libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.9.2" % "compile",
-    libraryDependencies += "com.github.pureconfig" %% "pureconfig-enumeratum" % "0.9.2" % "compile",
-    libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1" % "compile",
-    libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13"
-  )
-
-lazy val gformsParserJS = `gforms-parser`.js.dependsOn(coreJS)
-lazy val gformsParserJVM = `gforms-parser`.jvm.dependsOn(coreJVM)
-
-lazy val `sbt-uniform-parser-xsd` = project.settings(commonSettings)
-  .enablePlugins(SbtPlugin)
-  .settings(crossScalaVersions := Seq(scalaVersion.value))
-  .dependsOn(coreJVM)
-
-lazy val `ofsted-uipack` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
-
-lazy val ofstedUiPackJS = `ofsted-uipack`.js.dependsOn(coreJS)
-lazy val ofstedUiPackJVM = `ofsted-uipack`.jvm.dependsOn(coreJVM)
-
-lazy val `ofsted-program` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
-  .settings(libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13")
-
-lazy val `ofsted-prototype` = project.settings(commonSettings)
-  .settings(
-    scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
-  )
-  .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS)
-  .dependsOn(gformsParserJS)
-  .dependsOn(ofstedProgramJS)
-
-lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7")
-  )
-
-lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
-lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
-
-lazy val `example-play` = project.settings(commonSettings)
-  .enablePlugins(PlayScala)
-  .dependsOn(coreJVM, `interpreter-play26`, exampleProgramsJVM, dataPipelineJVM, govukWidgetsJVM)
-  .dependsOn(interpreterLogictableJVM % "test")
-  .settings(
-    libraryDependencies ++= Seq(filters,guice)
-  )
-
-lazy val `example-js` = project
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7"),
-    scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
-  )
-  .enablePlugins(ScalaJSPlugin)
-  .dependsOn(coreJS, `interpreter-js`, exampleProgramsJS, govukWidgetsJS)
-
-lazy val `ofsted-play` = project
-  .dependsOn(`interpreter-play26`, ofstedProgramJVM)
-  .settings(commonSettings)
-  .enablePlugins(PlayScala)
-  .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.12.7"),
-    libraryDependencies ++= Seq(filters,guice)
-  )
-
-lazy val ofstedProgramJS = `ofsted-program`.js.dependsOn(gformsParserJS)
-lazy val ofstedProgramJVM = `ofsted-program`.jvm.dependsOn(gformsParserJVM)
-
-lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
@@ -298,15 +145,120 @@ lazy val `data-pipeline` = crossProject(JSPlatform, JVMPlatform)
     )
   )
 
-lazy val dataPipelineJVM = `data-pipeline`.jvm.dependsOn(coreJVM)
-lazy val dataPipelineJS = `data-pipeline`.js.dependsOn(coreJS)
+lazy val commonWebJVM = `common-web`.jvm.dependsOn(coreJVM)
+lazy val commonWebJS = `common-web`.js.dependsOn(coreJS)
+
+lazy val `interpreter-cli` = project
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8")
+  )
+  .dependsOn(coreJVM)
+
+lazy val `interpreter-gui` = project
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8")
+  )
+  .dependsOn(coreJVM)
+
+lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8")
+  )
+
+lazy val interpreterLogictableJS = `interpreter-logictable`.js
+  .dependsOn(coreJS)
+  .dependsOn(exampleProgramsJS % "test")
+
+lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
+  .dependsOn(coreJVM)
+  .dependsOn(exampleProgramsJVM % "test")
+
+lazy val `interpreter-play`: sbtcrossproject.CrossProject =
+  crossProject(Play25, Play26)
+    .crossType(CrossType.Full)
+    .settings(commonSettings)
+    .configurePlatform(Play25)(_.settings(
+      name := "interpreter-play25",
+      scalaVersion := "2.11.12",
+      crossScalaVersions := Seq("2.11.12")
+    ))
+    .configurePlatform(Play26)(_.settings(
+      name := "interpreter-play26"
+    ))
+
+// lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
+//   .dependsOn(commonWebJVM)
+
+lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
+  .dependsOn(commonWebJVM)
+
+lazy val `interpreter-js` = project
+  .settings(commonSettings)
+  .enablePlugins(TutPlugin)
+  .settings(
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8")
+  )
+  .settings(
+    scalaJSUseMainModuleInitializer := true,
+    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
+  )
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(commonWebJS, `exampleProgramsJS` % Tut)
+
+lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
+    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"
+  )
+
+lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
+lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
+
+lazy val `example-play` = project.settings(commonSettings)
+  .enablePlugins(PlayScala)
+  .dependsOn(`interpreter-play26`, exampleProgramsJVM, commonWebJVM, govukWidgetsJVM)
+  .dependsOn(interpreterLogictableJVM % "test")
+  .settings(
+    libraryDependencies ++= Seq(
+      filters,
+      guice
+    ),
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
+    initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.web._; import ltbs.uniform.web.parser._; import ltbs.uniform.interpreters.playframework._; import ltbs.uniform.sampleprograms.BeardTax._; import ltbs.uniform.widgets.govuk._; implicit val messages: Messages = NoopMessages",
+    initialCommands in consoleQuick := """import cats.implicits._;"""
+  )
+
+lazy val `example-js` = project
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
+    scalaJSUseMainModuleInitializer := true,
+    libraryDependencies ++= Seq(
+      "org.querki" %%% "jquery-facade" % "1.2",
+      "org.scala-js" %%% "scalajs-java-time" % "0.2.5"
+    )
+  )
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(`interpreter-js`, exampleProgramsJS, govukWidgetsJS)
 
 lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7"),
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.beachape" %%% "enumeratum" % "1.5.13",
@@ -314,22 +266,31 @@ lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
     ),
     sourceDirectories in (Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value,
     TwirlKeys.templateImports ++= Seq(
-      "ltbs.uniform.datapipeline._",
+      "ltbs.uniform.web._",
+      "ltbs.uniform._",      
       "ltbs.uniform.widgets.govuk._"
     ),
-    initialCommands in console := "import ltbs.uniform._;import ltbs.uniform.widgets.govuk._;import ltbs.uniform.datapipeline._"
+    initialCommands in console := "import ltbs.uniform._;import ltbs.uniform.widgets.govuk._;import ltbs.uniform.datapipeline._",
+    scalacOptions --= Seq(
+      "-Ywarn-unused:imports",
+      "-Ywarn-unused-imports",      
+      "-Xfatal-warnings",
+      "-Ywarn-unused",
+      "-Ywarn-unused:params"
+    ) // little we can do about twirl throwing warnings
   )
   .enablePlugins(SbtTwirl)
 
-lazy val govukWidgetsJVM = `govuk-widgets`.jvm.dependsOn(dataPipelineJVM)
-lazy val govukWidgetsJS = `govuk-widgets`.js.dependsOn(dataPipelineJS)
+lazy val govukWidgetsJVM = `govuk-widgets`.jvm.dependsOn(commonWebJVM)
+lazy val govukWidgetsJS = `govuk-widgets`.js.dependsOn(commonWebJS)
 
 lazy val docs = project
   .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)
+  .aggregate(`interpreter-js`)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.7",
+    scalaVersion := "2.12.8",
     fork in Test := true,
     micrositeName           := "uniform-scala",
     micrositeDescription    := "Purely functional user-interaction",
@@ -351,7 +312,12 @@ lazy val docs = project
       "gray-light"      -> "#E2E3E3",
       "gray-lighter"    -> "#F3F4F4",
       "white-color"     -> "#FFFFFF"),
-    micrositeExtraMdFiles := Map(),
+    micrositeExtraMdFiles := Map(
+      file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") -> ExtraMdFileConfig(
+        "interpreter-js.md",
+        "docs"
+      )
+    ),
     scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
 //    scalacOptions in Tut += "-Xfatal-warnings", // play controller scuppers this
     libraryDependencies ++= Seq(

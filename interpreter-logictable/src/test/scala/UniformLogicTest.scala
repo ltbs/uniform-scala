@@ -15,7 +15,8 @@ object UniformLogicTest {
       for {
         lower <- (0L to 4L).toList.map(_ * 500000)
         higher <- (0L to 4L).toList.map(_ * 500000)
-      } yield ((lower,higher)))
+      } yield (lower,higher).some
+    )
     .runEither
     .runWriter
     .runList

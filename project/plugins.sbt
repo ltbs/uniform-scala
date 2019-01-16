@@ -6,9 +6,9 @@ addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
 
-addSbtPlugin("com.47deg"  % "sbt-microsites" % "0.7.24")
+addSbtPlugin("com.47deg"  % "sbt-microsites" % "0.7.27")
 
-addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.5.2")
+addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.6.10")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.2")
 

@@ -27,6 +27,8 @@ Next you will need to extend your controller using `PlayController`.
 
 ```tut:silent
 import ltbs.uniform.interpreters.playframework._
+import ltbs.uniform.web._
+import ltbs.uniform._
 
 import cats.Monoid
 import cats.data.Validated
@@ -39,11 +41,48 @@ import play.twirl.api.Html
 
 class ExampleController extends Controller with PlayInterpreter {
 
+  def messages(request: Request[AnyContent]): Messages = 
+    convertMessages(messagesApi.preferred(request))
+  
+  def renderForm(
+    key: String,
+	errors: ErrorTree, 
+	form: Html, 
+	breadcrumbs: List[String], 
+	request: Request[AnyContent], 
+	messages: Messages
+  ): Html = ???
+
 }
 ```
 
-This makes the common play interpreter available. But you will still need to
-tell it how to ask the user any questions you need asked. These are contained in
+This makes the common play interpreter available. 
+
+The `messages` method is used for internationalisation, if you are
+using the play messages you can convert them using the
+`convertMessages` function. It is also possible to use `NoopMessages`
+which simply returns the message key - this is rarely useful however as
+even with monolingual you will likely want to supply titles, content
+and error messages rather than use the text generated from uniform
+(for example if you have a field called `userAge` it will literally
+label the field with that).
+
+`renderForm` is used for the 'chrome' around the form - i.e. all the
+other HTML. Typically this will be a call to the main template view. 
+
+Once these are in place you will need to tell uniform how to ask the
+user for all the datatypes you have in the program stack. For this you
+need to supply an instance of the `PlayForm` trait. For example if we 
+wanted to handle allowing the user to input a `String` you can enter
+the following - 
+
+```tut:silent
+val myForm = new PlayForm[String] {
+	
+}
+```
+
+These are contained in
 the `WebMonadForm` class. If we use the
 `GreasySpoon` program from the examples we need to be able to ask the user for
 an `Int` and for a `Boolean` and as such we must provide an instance of

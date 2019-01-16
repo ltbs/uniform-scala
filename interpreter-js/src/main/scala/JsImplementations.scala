@@ -1,6 +1,7 @@
 package ltbs.uniform.prototype
 
-import ltbs.uniform.{datapipeline => dpl}
+import ltbs.uniform._
+import ltbs.uniform.web._
 import org.querki.jquery._
 import JsInterpreter._
 import cats.implicits._ // needed for monadic either in 2.11
@@ -9,35 +10,35 @@ object JsImplementations {
 
   def inferJsForm[A]
     (implicit
-      parser: dpl.DataParser[A],
-      html: dpl.HtmlForm[A]
+      parser: DataParser[A],
+      html: HtmlForm[A],
+      messages: Messages
     ): Form[A] = new Form[A] {
 
     def decode(out: Encoded): Either[ErrorTree,A] = {
-      val a = dpl.decodeInput(out)
-      val b = a.get("root")
-      b.flatMap{parser.bind(_)}
+      val a = FormUrlEncoded.readString(out).toInputTree
+      parser.bind(a)
     }
 
     def encode(in: A): Encoded =
-      dpl.encodeInput("root", parser.unbind(in))
-
-    def fromDataTree(key: String, datatree: dpl.Tree[String,List[String]]): Either[ErrorTree, A] = {
-      datatree.get(key).flatMap(parser.bind)
-    }
+      FormUrlEncoded.fromInputTree(parser.unbind(in)).writeString
 
     def fromNode(key: String, fieldSet: JQuery): Either[ErrorTree,A] = {
-      val fields = $("fieldset").serialize()
-      val decoded=dpl.decodeUrlString(fields)
-      val input = dpl.formToInput(decoded)
-      parser.bind(input.children.getOrElse(key,dpl.Tree(Nil): dpl.Input))
+      val fields = $("fieldset.uniform").serialize()
+      println(s"raw data: $fields")
+      val decoded=FormUrlEncoded.readString(fields)
+      val input = decoded.toInputTree
+      parser.bind(input.children.getOrElse(key,Tree(Nil): Input))
     }
 
-    def render(key: String, existing: Option[dpl.Input], errors: ErrorTree): String = {
-      val values: dpl.Input = existing.getOrElse(dpl.Tree(Nil))
+    def toDataTree(in: A): Input =
+      parser.unbind(in)
 
-      s"""<fieldset id="$key" class="form-field-group">""" ++
-      html.render(key, values, errors, dpl.NoopMessages).toString ++
+    def render(key: String, existing: Option[Input], errors: ErrorTree): String = {
+      val values: Input = existing.getOrElse(Tree(Nil))
+
+      s"""<fieldset id="uniform" class="uniform" style="border: 0px white; padding: 0px;">""" ++
+      html.render(key, values, errors, messages).toString ++
       "</fieldset>"
     }
   }

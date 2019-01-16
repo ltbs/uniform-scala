@@ -1,8 +1,5 @@
-@(key: String, values: Input, errors: Error, messages: Messages, inner: (String, Input, Error, Messages) => Html)
+@(key: String, values: Input, errors: ErrorTree, messages: Messages, inner: (String, Input, ErrorTree, Messages) => Html)
 
-@path=@{key.split("[.]").toList.filter(_.nonEmpty): List[String]}
+@path=@{key.split("[.]").toList.filter(_.nonEmpty).tail: List[String]}
 
-@radios(s"${key}.outer", Set("TRUE","FALSE"), values.atPath({path :+ "outer"}:_*).flatMap(_.headOption), errors, messages)
-
-@inner(s"${key}.inner", values, errors, messages)
-
+@radios(s"${key}.outer", Set("TRUE","FALSE"), values.atPath({path :+ "outer"}:_*).flatMap(_.headOption), errors, messages, {case "TRUE" => inner(s"${key}.inner", values, errors, messages)})

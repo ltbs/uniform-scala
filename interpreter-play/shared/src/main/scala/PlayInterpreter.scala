@@ -4,18 +4,50 @@ import cats.Monoid
 import cats.data._
 import cats.implicits._
 import org.atnos.eff._
-import org.atnos.eff.all._
+import org.atnos.eff.all.{none => _, _}
 import org.atnos.eff.syntax.all._
 import play.api.data.Form
-import play.twirl.api.Html
 import scala.concurrent.{ ExecutionContext, Future }
 import ltbs.uniform._
 import play.api._
 import play.api.mvc._
+import play.twirl.api.Html
 import org.atnos.eff.syntax.future._
-import ltbs.uniform.datapipeline._
+import ltbs.uniform._
+import ltbs.uniform.web._
 
 trait PlayInterpreter extends Compatibility.PlayController {
+
+  def messages(request: Request[AnyContent]): Messages
+
+  def renderForm(
+    key: String,
+    errors: ErrorTree,
+    form: Html,
+    breadcrumbs: List[String],
+    request: Request[AnyContent],
+    messages: Messages
+  ): Html
+
+  implicit def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
+    def apply(key: List[String],args: Any*): String = input(key, args)
+    def apply(key: String,args: Any*): String = input(key, args)
+    def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
+      input.messages(key, args:_*).some
+    else
+      none[String]
+
+    def list(key: String,args: Any*): List[String] = {
+      @annotation.tailrec
+      def inner(cnt: Int = 2, acc: List[String] = Nil): List[String] =
+        get(s"$key.$cnt", args:_*) match {
+          case Some(m) => inner(cnt+1, m :: acc)
+          case None    => acc
+        }
+
+      List(key, s"$key.1").map(get(_, args)).flatten ++ inner().reverse
+    }
+  }
 
   val log: Logger = Logger("uniform")
 
@@ -33,148 +65,115 @@ trait PlayInterpreter extends Compatibility.PlayController {
     type _timedFuture[Q]  = TimedFuture[?] |= Q
     type _either[Q] = Either[Result,?] |= Q
 
-    private def pageLogic[S: _readRequest: _readStage: _db: _breadcrumbs: _timedFuture: _either,B](
-      id: String,
-      render: (String, Input, ErrorTree) => Html,
-      decode: Encoded => Either[ErrorTree,B],
-      encode: B => Encoded,
-      validation: B => Either[ErrorTree,B],
-      toTree: B => Input,
-      bind: Input => Either[ErrorTree,B],
-      unbind: B => Input
-    ): Eff[S,B] ={
-
-      for {
-        request <- ask[S, Request[AnyContent]]
-        targetId <- ask[S, String]
-        method = request.method.toLowerCase
-        state <- get[S, DB]
-        dbrecord = state.get(id).map(decode(_).flatMap(validation))
-        breadcrumbs <- get[S, List[String]]
-        ret <- (method, dbrecord, targetId) match {
-          case ("get", None, `id`) =>
-            log.info("nothing in database, step in URI, render empty form")
-            left[S, Result, B](Ok(render(id, Tree.empty, Tree.empty)))
-
-          case ("get", Some(Right(o)), `id`) =>
-            log.info("something in database, step in URI, user revisiting old page, render filled in form")
-            left[S, Result, B](Ok(render(id, toTree(o), Tree.empty)))
-
-          // TODO: Check validation too
-          case ("get", Some(Right(data)), _) =>
-            log.info("something in database, not step in URI, pass through")
-            put[S, List[String]](id :: breadcrumbs) >>
-              Eff.pure[S, B](data.asInstanceOf[B])
-
-          case ("post", _, `id`) =>
-
-            val inputText = encodeUrlString(
-              request.body.asFormUrlEncoded.getOrElse(Map.empty)
-            )
-
-            val input: Input = formToInput(decodeUrlString(inputText))
-            val data: Either[ErrorTree, B] = bind(input.children.getOrElse(targetId, Tree.empty)).flatMap(validation)
-
-            data match {
-              case Left(errors) =>
-                log.info("form submitted, step in URI, validation failure")
-                left[S, Result, B](BadRequest(render(id, input, errors)))
-              case Right(o) => 
-                log.info("form submitted, step in URI, validation pass")
-                put[S, List[String]](id :: breadcrumbs) >>
-                  put[S, DB](state + (id -> encode(o))) >>
-                  Eff.pure[S, B](o)
-
-            }
-          case ("post", Some(_), _) if breadcrumbs.contains(targetId) =>
-            log.info("something in database, previous page submitted")
-            put[S, List[String]](id :: breadcrumbs) >>
-              left[S, Result, B](Redirect(s"./$id"))
-
-          // TODO: Check validation too
-          case ("post", Some(Right(data)), _) =>
-            log.info("something in database, posting, not step in URI nor previous page -> pass through")
-            put[S, List[String]](id :: breadcrumbs) >>
-              Eff.pure[S, B](data.asInstanceOf[B])
-
-          case ("post", _, _) | ("get", _, _) =>
-            log.info("nothing else seems applicable. maybe this should be a 404?")
-            left[S, Result, B](Redirect(s"./$id"))
-        }
-      } yield ret
-    }
-
-
-    // def useSelectPage[C,U](
-    //   wmFormC: WebMonadSelectPage[C]
-    // )(
-    //   implicit member: Member.Aux[UniformSelect[C,?], R, U],
-    //   readStage: _readStage[U],
-    //   readRequest: _readRequest[U],
-    //   dbM: _db[U],
-    //   breadcrumbsM: _breadcrumbs[U],
-    //   futureM: _timedFuture[U],
-    //   eitherM: _either[U]
-    // ): Eff[U, A] = e.translate(
-    //   new Translate[UniformSelect[C,?], U] {
-    //     def apply[X](ax: UniformSelect[C,X]): Eff[U, X] = {
-    //       val wmForm: WebMonadSelectPage[X] = wmFormC.imap(_.asInstanceOf[X])(_.asInstanceOf[C])
-
-    //       ax match {
-    //         case a: UniformSelectOne[U,X] =>
-    //           val i: Eff[U,X] = pageLogic[U,X](
-    //             a.key,
-    //             wmForm.renderOne(_,a.options, _, _),
-    //             wmForm.decode,
-    //             wmForm.encode,
-    //             wmForm.playFormOne(a.key, a.validation(_))
-    //           )
-    //           i
-
-    //         case a: UniformSelectMany[U,X] =>
-    //           val i: Eff[U,Set[X]] = pageLogic[U,Set[X]](
-    //             a.key,
-    //             wmForm.renderMany(_,a.options, _, _),
-    //             (x => x.split(",").filter(_.nonEmpty).map(wmForm.decode).toSet),
-    //             (x => x.map(wmForm.encode).mkString(",")),
-    //             wmForm.playFormMany(a.key, a.validation(_))
-    //           )
-    //           i
-    //       }
-    //     }
-    //   }
-    // )
-
-
     def useForm[C, U](
-      wmFormC: WebMonadForm[C]
+      wmFormC: PlayForm[C]
     )(
       implicit member: Member.Aux[UniformAsk[C,?], R, U],
       readStage: _readStage[U],
       readRequest: _readRequest[U],
       dbM: _db[U],
       breadcrumbsM: _breadcrumbs[U],
-      futureM: _timedFuture[U],
+      eitherM: _either[U]
+    ): Eff[U, A] = useFormMap(_ => wmFormC)
+
+    def useFormMap[C, U](
+      wmFormC: String => PlayForm[C]
+    )(
+      implicit member: Member.Aux[UniformAsk[C,?], R, U],
+      readStage: _readStage[U],
+      readRequest: _readRequest[U],
+      dbM: _db[U],
+      breadcrumbsM: _breadcrumbs[U],
       eitherM: _either[U]
     ): Eff[U, A] = e.translate(
       new Translate[UniformAsk[C,?], U] {
         def apply[X](ax: UniformAsk[C,X]): Eff[U, X] = {
-          val wmForm: WebMonadForm[X] = wmFormC.imap(_.asInstanceOf[X])(_.asInstanceOf[C])
+          val wmForm: PlayForm[X] = wmFormC(ax.key).imap(_.asInstanceOf[X])(_.asInstanceOf[C])
 
-          (ax.key, ax.validation) match {
-            case (id, validation) =>
+          ax match {
+            case UniformAsk(id, validation) =>
 
-              val i: Eff[U,X] = pageLogic[U,X](
-                id,
-                wmForm.render,
-                wmForm.decode,
-                wmForm.encode,
-                validation.map{_.toEither.leftMap(Tree(_))},
-                wmForm.toTree,
-                wmForm.bind,
-                wmForm.unbind
-              )
-              i
+              for {
+                request <- ask[U, Request[AnyContent]]
+                targetId <- ask[U, String]
+                method = request.method.toLowerCase
+                state <- get[U, DB]
+                
+                dbObject: Option[X] = {
+                  val o = state.get(id).flatMap(wmForm.decode(_).flatMap(validation(_).toEither) match {
+                    case Left(e) =>
+                      log.warn(s"$id - serialised data present, but failed validation - $e")
+                      None
+                    case Right(r) => Some(r)
+                  })
+                  o
+                }
+                breadcrumbs <- get[U, List[String]]
+                ret <- (method, dbObject, targetId) match {
+                  case ("get", None, `id`) =>
+                    log.info(s"$id - nothing in database, step in URI, render empty form")
+                    left[U, Result, X](Ok(renderForm(id, Tree.empty,
+                      wmForm.render(id, None, request),
+                      breadcrumbs, request, messages(request)
+                    )))
+
+                  case ("get", Some(o), `id`) =>
+                    val encoded = wmForm.encode(o) // FormUrlEncoded.readString(wmForm.encode(o)).prefix(id).writeString
+                    log.info(s"""|$id - something in database, step in URI, user revisiting old page, render filled in form
+                                 |\t\t data: $o
+                                 |\t\t encoded: $encoded """.stripMargin)
+                    left[U, Result, X](Ok(
+
+                      renderForm(id, Tree.empty,
+                      wmForm.render(id, Some(encoded), request),
+                      breadcrumbs, request, messages(request)
+                    )))
+
+                  case ("get", Some(data), _) =>
+                    log.info(s"$id - something in database, not step in URI, pass through")
+                    put[U, List[String]](id :: breadcrumbs) >>
+                    Eff.pure[U, X](data.asInstanceOf[X])
+
+                  case ("post", _, `id`) =>
+                    val data: Encoded =
+                      wmForm.receiveInput(request)
+                    
+                    wmForm.decode(data) match {
+                      case Left(errors) =>
+                        log.info(s"$id - form submitted, step in URI, validation failure")
+                        log.info(s"  errors: $errors")
+                        log.info(s"  data: $data")                                                
+                        left[U, Result, X](BadRequest(renderForm(id, errors,
+                          wmForm.render(id, Some(data), request, errors),
+                          breadcrumbs, request, messages(request)
+                        )))
+                      case Right(o) =>
+                        log.info(s"$id - form submitted, step in URI, validation pass")
+                        put[U, List[String]](id :: breadcrumbs) >>
+                        put[U, DB](state + (id -> wmForm.encode(o))) >>
+                        Eff.pure[U, X](o)
+                    }
+
+                  case ("post", Some(_), _) if breadcrumbs.contains(targetId) =>
+                    log.info(s"$id - something in database, previous page submitted")
+                    put[U, List[String]](id :: breadcrumbs) >>
+                    left[U, Result, X](Redirect(s"./$id"))
+
+                  case ("post", Some(data), _) =>
+                    log.info(s"$id - something in database, posting, not step in URI nor previous page -> pass through")
+                    put[U, List[String]](id :: breadcrumbs) >>
+                      Eff.pure[U,X](data.asInstanceOf[X])
+
+                  case ("post", _, _) | ("get", _, _) =>
+                    log.warn(
+                      s"""|$id - nothing else seems applicable. maybe this should be a 404?
+                          |\t\t method:$method
+                          |\t\t dbObject:$dbObject
+                          |\t\t targetId:$targetId""".stripMargin)
+                    
+                    left[U, Result, X](Redirect(s"./$id"))
+                }
+              } yield ret
           }
         }
       }

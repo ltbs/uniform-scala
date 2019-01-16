@@ -1,12 +1,20 @@
-@(key: String, options: Set[String], existing: Option[List[String]], errors: Error, messages: Messages)
+@(key: String, options: Set[String], existing: Option[List[String]], errors: ErrorTree, messages: Messages)
 @standardfield(key, errors, messages) {
 
-  <fieldset id="@key" class="form-field-group">
-  @for(opt <- options) {
-    <div class="multiple-choice">
-      <input id="@key-@opt" name="@{key}[]" value="@opt" type="checkbox" @{ existing.filter(_ == opt).map{ _ => "selected" } } />
-      <label for="@key-@opt" class="block-label less-padding">@opt</label>
+<div class="govuk-checkboxes">
+
+  @for((opt,num) <- options.zipWithIndex) {
+    <div class="govuk-checkboxes__item">
+      <input class="govuk-checkboxes__input" id="@key-@num" name="@{key}[]" type="checkbox" value="@opt" @{ existing.filter(_ == opt).map{ _ => "selected" } }>
+      <label class="govuk-label govuk-checkboxes__label" for="@key-@num">
+	@messages(List(s"$key.$opt", opt))
+      </label>
+      @messages.get(s"$key.$opt.hint").map { hint => 
+      <span id="@key-@opt-item-hint" class="govuk-hint govuk-checkboxes__hint">
+        @hint
+      </span>
+      }
     </div>
   }
-  </fieldset>
-}
+</div>
+}		  
