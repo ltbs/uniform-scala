@@ -1,6 +1,5 @@
 package ltbs.uniform.prototype
 
-import cats.Eval
 import cats.data._
 import org.atnos.eff._
 import cats.implicits._
@@ -53,13 +52,11 @@ object JsInterpreter {
     def toDataTree(in: T): Tree[String,List[String]]
   }
 
-  type JsStack = Fx.fx5[Reader[Action, ?], Eval, State[DB, ?], State[List[String],?] , Either[Page, ?]]
+  type JsStack = Fx.fx2[State[(DB,List[String]), ?], Either[Page, ?]]
 
   implicit class JsEffectOps[R, A](e: Eff[R, A]) {
-    type _state[Q]  = State[DB,?] |= Q
+    type _state[Q]  = State[(DB,List[String]),?] |= Q
     type _either[Q] = Either[Page,?] |= Q
-    type _readStage[Q] = Reader[Action,?] |= Q
-    type _breadcrumbs[Q]  = State[List[String],?] |= Q
 
     def validationToErrorTree[V](f: V => Validated[String,V]): V => Either[ErrorTree,V] = {
       x => f(x).toEither.leftMap(Tree(_))
@@ -70,22 +67,20 @@ object JsInterpreter {
     )(
       implicit member: Member.Aux[UniformAsk[C,?], R, U],
       stateM: _state[U],
-      breadcrumbsM: _breadcrumbs[U],
       eitherM: _either[U],
-      readStage: _readStage[U]
+      action: Action
     ): Eff[U, A] = e.translate(
       new Translate[UniformAsk[C,?], U] {
         def apply[X](ax: UniformAsk[C,X]): Eff[U, X] = {
           ax match {
             case UniformAsk(key, validation) =>
               val i: Eff[U,X] = for {
-                action <- ask[U, Action]
-                state <- get[U, DB]
-                breadcrumbs <- get[U, List[String]]
+                state <- get[U, (DB,List[String])]
+                (db,breadcrumbs) = state
                 va <- {
 
                   val dbData: Option[Either[ErrorTree,X]] =
-                    state.get(key).map{d => form.decode(d).map(_.asInstanceOf[X]).flatMap{
+                    db.get(key).map{d => form.decode(d).map(_.asInstanceOf[X]).flatMap{
                       validationToErrorTree(validation)
                     }}
                   println(s"dbdata: $dbData")
@@ -95,7 +90,7 @@ object JsInterpreter {
                       val dataTree: Tree[String, List[String]] = action match {
                         case Submit(_) =>
                           extractData($("#content"))
-                        case Back(_) => state.get(key).map(FormUrlEncoded.readString(_).toInputTree).getOrElse(Tree.empty[String, List[String]])
+                        case Back(_) => db.get(key).map(FormUrlEncoded.readString(_).toInputTree).getOrElse(Tree.empty[String, List[String]])
                       }
 
                   (action,dbData) match {
@@ -104,8 +99,7 @@ object JsInterpreter {
                         case Left(e) =>
                           left[U, Page, X](Page(body = form.render(key, dataTree.forestAtPath(key), e).some, errors = e, breadcrumbs = breadcrumbs))
                         case Right(x) =>
-                          put[U, List[String]](key :: breadcrumbs) >>
-                          put[U, DB](state + (key -> form.encode(x.asInstanceOf[C]))) >>
+                          put[U, (DB,List[String])]((db + (key -> form.encode(x.asInstanceOf[C])), key :: breadcrumbs)) >>
                           right[U, Page, X](x)
                       }
                     case (Submit(requestedPage),None) => left[U, Page, X](
@@ -115,7 +109,7 @@ object JsInterpreter {
                         breadcrumbs=breadcrumbs
                       ))
                     case (Submit(requestedPage),Some(Right(x))) if !breadcrumbs.contains(requestedPage) =>
-                      put[U, List[String]](key :: breadcrumbs) >> right[U, Page, X](x)
+                      put[U, (DB,List[String])]((db,key :: breadcrumbs)) >> right[U, Page, X](x)
                     case (Submit(requestedPage),Some(Left(e))) =>                      
                       left[U, Page, X](
                         Page(
@@ -143,7 +137,7 @@ object JsInterpreter {
                           breadcrumbs=breadcrumbs
                         ))
                     case (Back(_),Some(Right(x))) =>                      
-                      put[U, List[String]](key :: breadcrumbs) >> right[U, Page, X](x)
+                      put[U, (DB,List[String])]((db,key :: breadcrumbs)) >> right[U, Page, X](x)
                   }
                 }
               } yield va
