@@ -213,6 +213,14 @@ lazy val `interpreter-js` = project
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(commonWebJS, `exampleProgramsJS` % Tut)
 
+lazy val `interpreter-selenium` = project
+  .settings(commonSettings)
+  .enablePlugins(TutPlugin)
+  .settings(
+    libraryDependencies += "org.seleniumhq.selenium" % "selenium-firefox-driver" % "3.8.1"
+  )
+  .dependsOn(commonWebJS, `exampleProgramsJS` % Tut)
+
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
@@ -228,7 +236,7 @@ lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
   .dependsOn(`interpreter-play26`, exampleProgramsJVM, commonWebJVM, govukWidgetsJVM)
-  .dependsOn(interpreterLogictableJVM % "test")
+  .dependsOn(interpreterLogictableJVM % "test", `interpreter-selenium` % "test")
   .settings(
     libraryDependencies ++= Seq(
       filters,
@@ -321,7 +329,7 @@ lazy val docs = project
     scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
 //    scalacOptions in Tut += "-Xfatal-warnings", // play controller scuppers this
     libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
+      "com.typesafe.play" %% "play" % "2.6.21", // used for the play interpreter demo
       "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
     )
   )
