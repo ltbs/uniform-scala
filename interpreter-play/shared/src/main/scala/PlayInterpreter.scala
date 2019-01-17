@@ -29,12 +29,16 @@ trait PlayInterpreter extends Compatibility.PlayController {
   ): Html
 
   implicit def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
-    def apply(key: List[String],args: Any*): String = input(key, args)
-    def apply(key: String,args: Any*): String = input(key, args)
+    override def apply(key: List[String],args: Any*): String = input(key, args)
+    override def apply(key: String,args: Any*): String = input(key, args)
     def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
       input.messages(key, args:_*).some
     else
       none[String]
+
+    def get(key: List[String],args: Any*): Option[String] = key collectFirst {
+      case k if input.isDefinedAt(k) => input.messages(k, args:_*)
+    }
 
     def list(key: String,args: Any*): List[String] = {
       @annotation.tailrec
