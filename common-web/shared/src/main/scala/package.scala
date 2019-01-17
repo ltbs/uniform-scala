@@ -16,8 +16,8 @@ package object web {
     def combine(a: Html, b: Html):Html = Html(a.toString ++ b.toString)
   }
 
-  implicit def richFormUrlEncoded(in: FormUrlEncoded): FormUrlEncoded.RichFormUrlEncoded =
-    new FormUrlEncoded.RichFormUrlEncoded(in)
+  implicit def richFormUrlEncoded(in: FormUrlEncoded): RichFormUrlEncoded =
+    new RichFormUrlEncoded(in)
 
   implicit def sifProfunctor[T] = new Profunctor[SimpleInteractionForm[?,T,?]] {
     def dimap[A, B, C, D](fab: SimpleInteractionForm[A,T,B])(f: C => A)(g: B => D) =

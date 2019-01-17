@@ -2,4 +2,4 @@
 
 @path=@{key.split("[.]").toList.filter(_.nonEmpty).tail: List[String]}
 
-@radios(s"${key}.outer", Set("TRUE","FALSE"), values.atPath({path :+ "outer"}:_*).flatMap(_.headOption), errors, messages, {case "TRUE" => inner(s"${key}.inner", values, errors, messages)})
+@radios(s"${key}.outer", Seq("TRUE","FALSE"), values.atPath({path :+ "outer"}:_*).flatMap(_.headOption), errors, messages, {case "TRUE" => inner(s"${key}.inner", values, errors, messages)})

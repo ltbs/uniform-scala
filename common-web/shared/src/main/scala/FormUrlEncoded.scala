@@ -4,59 +4,59 @@ import ltbs.uniform.Tree
 import java.net.URLEncoder.{encode => urlencode}
 import java.net.URLDecoder.{decode => urldecode}
 
-object FormUrlEncoded {
+class RichFormUrlEncoded(input: FormUrlEncoded) {
+  def writeString: String = input.toList.flatMap{
+    case (f,v::Nil) => List(
+      s"$f=${urlencode(v, "UTF-8")}"
+    )
+    case (f,vs) => vs.map{v =>
+      val encoded = urlencode(v, "UTF-8")
+      s"$f[]=$encoded"
+    }
+  }.mkString("&")
 
-  protected[web] class RichFormUrlEncoded(input: FormUrlEncoded) {
-    def writeString: String = input.toList.flatMap{
-      case (f,v::Nil) => List(
-        s"$f=${urlencode(v, "UTF-8")}"
-      )
-      case (f,vs) => vs.map{v =>
-        val encoded = urlencode(v, "UTF-8")
-        s"$f[]=$encoded"
-      }
-    }.mkString("&")
+  def toInputTree: Input = {
 
-    def toInputTree: Input = {
-
-      val depth: List[(List[String], Seq[String])] =
-        input.toList.map{
-          case (k,v) => (k.split("[.]").toList.filter(_.nonEmpty),v)
-        }
-
-      def peel(
-        input: List[(List[String], Seq[String])]
-      ): List[(List[String], Seq[String])] = input collect {
-        case (_::xs, v) => (xs,v)
+    val depth: List[(List[String], Seq[String])] =
+      input.toList.map{
+        case (k,v) => (k.split("[.]").toList.filter(_.nonEmpty),v)
       }
 
-      def grouped(
-        input: List[(List[String], Seq[String])]
-      ): Map[Option[String],List[(List[String], Seq[String])]] =
-        input.groupBy(_._1.headOption)
-
-      def makeTree(input: Map[Option[String],List[(List[String], Seq[String])]]): Input = {
-        val root = input.get(None).toList.flatMap(_.flatMap(_._2))
-        val children = input collect {
-          case (Some(k), other) =>
-            val otherGrouped: Map[Option[String],List[(List[String], Seq[String])]] = grouped(peel(other))
-            (k,makeTree(otherGrouped))
-        }
-        Tree(root, children.toMap)
-      }
-      makeTree(grouped(depth))
+    def peel(
+      input: List[(List[String], Seq[String])]
+    ): List[(List[String], Seq[String])] = input collect {
+      case (_::xs, v) => (xs,v)
     }
 
-    def forestAtPath(path: String*): FormUrlEncoded = 
-      input.toInputTree.forestAtPath(path:_*)
-        .fold(Map.empty[String,Seq[String]])(fromInputTree)
+    def grouped(
+      input: List[(List[String], Seq[String])]
+    ): Map[Option[String],List[(List[String], Seq[String])]] =
+      input.groupBy(_._1.headOption)
 
-    def prefix(prefix: String): FormUrlEncoded =
-      input.toList.map{case (k,v) =>
-        s"$prefix.$k" -> v
-      }.toMap
-
+    def makeTree(input: Map[Option[String],List[(List[String], Seq[String])]]): Input = {
+      val root = input.get(None).toList.flatMap(_.flatMap(_._2))
+      val children = input collect {
+        case (Some(k), other) =>
+          val otherGrouped: Map[Option[String],List[(List[String], Seq[String])]] = grouped(peel(other))
+          (k,makeTree(otherGrouped))
+      }
+      Tree(root, children.toMap)
+    }
+    makeTree(grouped(depth))
   }
+
+  def forestAtPath(path: String*): FormUrlEncoded =
+    input.toInputTree.forestAtPath(path:_*)
+      .fold(Map.empty[String,Seq[String]])(FormUrlEncoded.fromInputTree)
+
+  def prefix(prefix: String): FormUrlEncoded =
+    input.toList.map{case (k,v) =>
+      s"$prefix.$k" -> v
+    }.toMap
+
+}
+
+object FormUrlEncoded {
 
   def readString(input: String): FormUrlEncoded =
     input.split("&")
