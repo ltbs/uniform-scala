@@ -104,21 +104,17 @@ back=back
   def back(page: String) = journey(Back(page))
 
 
-  def journey(action: Action) = {
-    val output: ((Either[Page, Int], DB), List[String]) =
+  def journey(implicit action: Action) = {
+    val (result,(newState,newBreadcrumbs)) = {
       program[FxAppend[TestProgramStack, JsStack]]
         .useForm(inferJsForm[Option[MemberOfPublic]])
         .useForm(inferJsForm[BeardStyle])
         .useForm(inferJsForm[BeardLength])    
-        .runReader(action)    
         .runEither
-        .runState(state)
-        .runState(List.empty[String])    
-        .runEval
+        .runState((state, List.empty[String]))
         .run
+    }
 
-    val ((result,newState),newBreadcrumbs) = output
-    println(s"breadcrumbs: $breadcrumbs")
     breadcrumbs = newBreadcrumbs
     state = newState
     result match {
@@ -177,6 +173,5 @@ back=back
     }
     updateDataTargets()
   }
-
 
 }
