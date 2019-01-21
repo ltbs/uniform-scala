@@ -7,14 +7,13 @@ import org.atnos.eff._
 import org.atnos.eff.all.{none => _, _}
 import org.atnos.eff.syntax.all._
 import play.api.data.Form
-import scala.concurrent.{ ExecutionContext, Future }
 import ltbs.uniform._
 import play.api._
 import play.api.mvc._
 import play.twirl.api.Html
-import org.atnos.eff.syntax.future._
 import ltbs.uniform._
 import ltbs.uniform.web._
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait PlayInterpreter extends Compatibility.PlayController {
 
@@ -30,12 +29,16 @@ trait PlayInterpreter extends Compatibility.PlayController {
   ): Html
 
   implicit def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
-    def apply(key: List[String],args: Any*): String = input(key, args)
-    def apply(key: String,args: Any*): String = input(key, args)
+    override def apply(key: List[String],args: Any*): String = input(key, args)
+    override def apply(key: String,args: Any*): String = input(key, args)
     def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
       input.messages(key, args:_*).some
     else
       none[String]
+
+    def get(key: List[String],args: Any*): Option[String] = key collectFirst {
+      case k if input.isDefinedAt(k) => input.messages(k, args:_*)
+    }
 
     def list(key: String,args: Any*): List[String] = {
       @annotation.tailrec
@@ -55,36 +58,30 @@ trait PlayInterpreter extends Compatibility.PlayController {
     if (!f.hasErrors) f.value.map{_.valid}
     else Some(f.errors.head.message.invalid)
 
-  type PlayStack = Fx.fx6[Reader[String, ?], Reader[Request[AnyContent], ?], State[DB, ?], State[List[String],?], Either[Result, ?], TimedFuture]
+  type PlayStack = Fx.fx2[State[(DB,List[String]), ?], Either[Result, ?]]
 
   implicit class PlayEffectOps[R, A](e: Eff[R, A]) {
-    type _readStage[Q] = Reader[String,?] |= Q
-    type _readRequest[Q] = Reader[Request[AnyContent],?] |= Q
-    type _db[Q]  = State[DB,?] |= Q
-    type _breadcrumbs[Q]  = State[List[String],?] |= Q
-    type _timedFuture[Q]  = TimedFuture[?] |= Q
+    type _state[Q]  = State[(DB, List[String]),?] |= Q
     type _either[Q] = Either[Result,?] |= Q
 
     def useForm[C, U](
       wmFormC: PlayForm[C]
     )(
       implicit member: Member.Aux[UniformAsk[C,?], R, U],
-      readStage: _readStage[U],
-      readRequest: _readRequest[U],
-      dbM: _db[U],
-      breadcrumbsM: _breadcrumbs[U],
-      eitherM: _either[U]
+      state: _state[U],
+      eitherM: _either[U],
+      request: Request[AnyContent],
+      targetId: String
     ): Eff[U, A] = useFormMap(_ => wmFormC)
 
     def useFormMap[C, U](
       wmFormC: String => PlayForm[C]
     )(
       implicit member: Member.Aux[UniformAsk[C,?], R, U],
-      readStage: _readStage[U],
-      readRequest: _readRequest[U],
-      dbM: _db[U],
-      breadcrumbsM: _breadcrumbs[U],
-      eitherM: _either[U]
+      stateM: _state[U],
+      eitherM: _either[U],
+      request: Request[AnyContent],
+      targetId: String
     ): Eff[U, A] = e.translate(
       new Translate[UniformAsk[C,?], U] {
         def apply[X](ax: UniformAsk[C,X]): Eff[U, X] = {
@@ -94,11 +91,9 @@ trait PlayInterpreter extends Compatibility.PlayController {
             case UniformAsk(id, validation) =>
 
               for {
-                request <- ask[U, Request[AnyContent]]
-                targetId <- ask[U, String]
+                g <- get[U, (DB, List[String])]                
                 method = request.method.toLowerCase
-                state <- get[U, DB]
-                
+                (state, breadcrumbs) = g
                 dbObject: Option[X] = {
                   val o = state.get(id).flatMap(wmForm.decode(_).flatMap(validation(_).toEither) match {
                     case Left(e) =>
@@ -108,7 +103,6 @@ trait PlayInterpreter extends Compatibility.PlayController {
                   })
                   o
                 }
-                breadcrumbs <- get[U, List[String]]
                 ret <- (method, dbObject, targetId) match {
                   case ("get", None, `id`) =>
                     log.info(s"$id - nothing in database, step in URI, render empty form")
@@ -131,7 +125,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
 
                   case ("get", Some(data), _) =>
                     log.info(s"$id - something in database, not step in URI, pass through")
-                    put[U, List[String]](id :: breadcrumbs) >>
+                    put[U, (DB,List[String])]((state, id :: breadcrumbs)) >>
                     Eff.pure[U, X](data.asInstanceOf[X])
 
                   case ("post", _, `id`) =>
@@ -149,19 +143,18 @@ trait PlayInterpreter extends Compatibility.PlayController {
                         )))
                       case Right(o) =>
                         log.info(s"$id - form submitted, step in URI, validation pass")
-                        put[U, List[String]](id :: breadcrumbs) >>
-                        put[U, DB](state + (id -> wmForm.encode(o))) >>
+                        put[U, (DB,List[String])]((state + (id -> wmForm.encode(o)), id :: breadcrumbs)) >>
                         Eff.pure[U, X](o)
                     }
 
                   case ("post", Some(_), _) if breadcrumbs.contains(targetId) =>
                     log.info(s"$id - something in database, previous page submitted")
-                    put[U, List[String]](id :: breadcrumbs) >>
+                    put[U, (DB, List[String])]((state, id :: breadcrumbs)) >>
                     left[U, Result, X](Redirect(s"./$id"))
 
                   case ("post", Some(data), _) =>
                     log.info(s"$id - something in database, posting, not step in URI nor previous page -> pass through")
-                    put[U, List[String]](id :: breadcrumbs) >>
+                    put[U, (DB,List[String])]((state, id :: breadcrumbs)) >>
                       Eff.pure[U,X](data.asInstanceOf[X])
 
                   case ("post", _, _) | ("get", _, _) =>
@@ -184,25 +177,21 @@ trait PlayInterpreter extends Compatibility.PlayController {
 
   def runWeb[A](
     program: Eff[PlayStack, A],
-    key: String,
-    request: Request[AnyContent],
     persistence: Persistence,
     purgeJourneyOnCompletion: Boolean = true
   )(
     terminalFold: A => Future[Result]
   )(implicit ec: ExecutionContext): Future[Result] =
-    persistence.dataGet >>= {
-      data => program.runReader(key)
-        .runReader(request)
+    persistence.dataGet.map{
+      data => program
         .runEither
-        .runState(data)
-        .runState(List.empty[String])
-        .runSequential
+        .runState((data, List.empty[String]))
+        .run
     } >>= {
       _ match {
-        case ((Left(result), db), _) =>
+        case (Left(result), (db, _)) =>
           persistence.dataPut(db).map(_ => result)
-        case ((Right(a), db), _) =>
+        case (Right(a), (db, _)) =>
           val newDb: DB = if (purgeJourneyOnCompletion) (Monoid[DB].empty) else db
           persistence.dataPut(newDb) >> terminalFold(a)
       }

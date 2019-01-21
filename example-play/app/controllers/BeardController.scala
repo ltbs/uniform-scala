@@ -36,17 +36,14 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
       Future(data = dataIn).map{_ => ()}
   }
 
-  def beardAction(key: String) = {
+  def beardAction(implicit key: String) = {
 
     Action.async { implicit request =>
-
       runWeb(
         program = program[FxAppend[TestProgramStack, PlayStack]]
           .useForm(PlayForm.automatic[Option[MemberOfPublic]])
           .useForm(PlayForm.automatic[BeardStyle])
           .useForm(PlayForm.automatic[BeardLength]),
-        key,
-        request,
         persistence
       )(
         a => Future.successful(Ok(s"You have £$a to pay"))
