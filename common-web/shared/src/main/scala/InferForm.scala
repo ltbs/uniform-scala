@@ -20,6 +20,14 @@ trait InferForm {
   def errorSummary(key: String, values: Input, errors: ErrorTree, messages: Messages): Html  
   def soloField(key: String, values: Input, errors: ErrorTree, messages: Messages)(inner: Html): Html
   def compoundField(key: String, values: Input, errors: ErrorTree, messages: Messages)(inner: Html): Html
+  def selectionOfFields(
+    inner: List[(String, (String, Input, ErrorTree, Messages) => Html)]
+  )(
+    key: String,
+    values: Input,
+    errors: ErrorTree,
+    messages: Messages
+  ): Html
 
   implicit val hnilField = new HtmlField[HNil] {
     def render(key: String, values: Input, errors: ErrorTree, messages: Messages): Html =
@@ -50,6 +58,28 @@ trait InferForm {
     def render(key: String, values: Input, errors: ErrorTree, messages: Messages): Html =
       hGenParser.value.render(key, values, errors, messages)
   }
+
+  // COPRODUCTS
+
+  case class CoproductFieldList[A](
+    inner: List[(String, (String, Input, ErrorTree, Messages) => Html)]
+  )
+  implicit val cnilField: CoproductFieldList[CNil] = CoproductFieldList(List.empty)
+
+  implicit def coproductFieldList[K <: Symbol, H, T <: Coproduct](
+    implicit
+      witness: Witness.Aux[K],
+    hField: HtmlField[H],
+    tFields: CoproductFieldList[T]
+  ): CoproductFieldList[FieldType[K, H] :+: T] = CoproductFieldList (
+    (witness.value.name, hField.render _) :: tFields.inner
+  )
+
+  implicit def coproductField[A](implicit coproductFields: CoproductFieldList[A]) =
+    new HtmlField[A] {
+      def render(key: String, values: Input, errors: ErrorTree, messages: Messages): Html =
+        selectionOfFields(coproductFields.inner)(key,values,errors,messages)
+    }
 
   implicit def simpleForm[A](implicit field: HtmlField[A]): HtmlForm[A] = new HtmlForm[A] {
     def render(key: String, values: Input, errors: ErrorTree, messages: Messages): Html =

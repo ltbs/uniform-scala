@@ -42,6 +42,42 @@ object InferParser {
     }
   }
 
+  implicit val cnilParser: DataParser[CNil] =
+    new DataParser[CNil] {
+      def bind(in: Input): Either[ErrorTree,CNil] =
+        Left(Tree.empty)
+      def unbind(a: CNil): Input = Tree.empty
+    }
+
+  implicit def coproductParser[K <: Symbol, H, T <: Coproduct](
+    implicit
+      witness: Witness.Aux[K],
+    hparser: DataParser[H],
+    tparser: DataParser[T]
+  ): DataParser[FieldType[K, H] :+: T] =
+    new DataParser[FieldType[K, H] :+: T] {
+
+      val fname = witness.value.name
+
+      def bind(in: Input): Either[ErrorTree,FieldType[K, H] :+: T] = {
+        if (in.value.headOption == Some(fname)) {
+          hparser.bind(
+            in.forestAtPath(fname).getOrElse(Tree.empty)
+          ).map(x => Inl(field[K](x)))
+        } else {
+          tparser.bind(in).map(x => Inr(x))
+        }
+      }
+
+      def unbind(a: FieldType[K, H] :+: T): Input = a match {
+        case Inl(l) =>
+
+          Tree(List(fname), Map(fname -> hparser.unbind(l)))
+        case Inr(r) => tparser.unbind(r)
+      }
+    }
+
+
   implicit def genericParser[A, H, T]
     (implicit
        generic: LabelledGeneric.Aux[A,T],

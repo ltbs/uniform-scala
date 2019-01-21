@@ -15,6 +15,26 @@ package object govuk extends InferForm {
   def soloField(key: String, values: Input,errors: ErrorTree,messages: Messages)(inner: Html): Html =
     html.standardfield(key, errors, messages)(inner)
 
+  def selectionOfFields(
+    inner: List[(String, (String, Input, ErrorTree, Messages) => Html)]
+  )(
+    key: String,
+    values: Input,
+    errors: ErrorTree,
+    messages: Messages
+  ): Html = html.radios(
+    key,
+    inner.map{_._1},
+    values.value.headOption,
+    errors,
+    messages,
+    inner.map{
+      case(subkey,f) => subkey -> f(s"$key.$subkey", values, errors, messages)
+    }.filter(_._2.toString.trim.nonEmpty).toMap
+  )
+
+
+
   implicit val booleanField = new HtmlField[Boolean] {
     def render(key: String, values: Input, errors: ErrorTree, messages: Messages) =
       html.radios(
