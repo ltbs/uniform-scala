@@ -10,3 +10,5 @@ example-play/logs
 .metals
 logs
 **/*.log
+
+.idea
