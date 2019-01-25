@@ -28,6 +28,13 @@ trait PlayInterpreter extends Compatibility.PlayController {
     messages: Messages
   ): Html
 
+  def listingPage[A : Htmlable](
+    key: String,
+    errors: ErrorTree,
+    elements: List[A],
+    messages: Messages
+  ): Html
+
   implicit def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
     override def apply(key: List[String],args: Any*): String = input(key, args)
     override def apply(key: String,args: Any*): String = input(key, args)
@@ -74,7 +81,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
       targetId: String
     ): Eff[U, A] = useFormMap(_ => wmFormC)
 
-    def useFormListMap[C, U](
+    def useFormListMap[C: Htmlable, U](
       wmForm: String => PlayForm[C]
     )(
       implicit member: Member.Aux[UniformAskList[C,?], R, U],
@@ -113,22 +120,39 @@ trait PlayInterpreter extends Compatibility.PlayController {
                 o
               }
 
+//              def editId: Int = ???
+
               ret <- (method, dbObject, targetId) match {
                 case ("get", elements, `listingId`) =>
                   log.info(s"$id - listing page")
-                  ???
+                  left[U, Result, List[C]](Ok(renderForm(id, Tree.empty,
+                    listingPage(id, Tree.empty, elements, messages(request)),
+                    breadcrumbs, request, messages(request)
+                  )))
                 case ("get", elements, `addId`) =>
                   log.info(s"$id - add page")
-                  ???
+                  left[U, Result, List[C]](Ok(renderForm(id, Tree.empty,
+                    wmForm(id).render(id, None, request, Tree.empty),
+                    breadcrumbs, request, messages(request)
+                  )))
+                case ("post", elements, `addId`) =>
+                  log.info(s"$id - add page")
+                  ???                  
                 case ("get", elements, `editId`) =>
                   log.info(s"$id - edit page")
-                  ???                  
+                  left[U, Result, List[C]](Ok(renderForm(id, Tree.empty,
+                    wmForm(id).render(id, None, request, Tree.empty),
+                    breadcrumbs, request, messages(request)
+                  )))
+                case ("post", elements, `editId`) =>
+                  log.info(s"$id - edit page")
+                  ???                                    
                 case ("get", elements, `deleteId`) =>
                   log.info(s"$id - delete page")
                   ???                                    
                 case _ => ???
               }
-            } yield (???)
+            } yield (ret)
           }
 
           // eff loses the type safety, but X = List[C]
