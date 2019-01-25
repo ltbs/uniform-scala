@@ -42,5 +42,40 @@ package object cli {
                 )
             }
         })
+
+
+    def usingList[C, U](
+      f: String => C
+    )(
+      implicit member: Member.Aux[UniformAskList[C,?], R, U],
+      evalM:_eval[U]
+    ): Eff[U, A] =
+      e.translate(
+        new Translate[UniformAskList[C,?], U] {
+          def apply[X](ax: UniformAskList[C,X]): Eff[U, X] =
+            ax match {
+              case UniformAskList(key,min,max,vElement,vList) =>
+                send(
+                  Eval.later{
+                    @annotation.tailrec 
+                    def read(): X = {
+                      print(s"$key (comma separated): ")
+
+                      val s = readLine().split(",").toList.map( x => 
+                        Try(f(x)).toEither.leftMap { _.getLocalizedMessage }
+                      ).sequence
+                      s match {
+                        case Left(err) =>
+                          println("Error: " ++ err.toString)
+                          read()
+                        case Right(value) => value.asInstanceOf[X]
+                      }
+                    }
+
+                    read
+                  }
+                )
+            }
+        })
   }
 }

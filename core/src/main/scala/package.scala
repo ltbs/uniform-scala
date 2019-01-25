@@ -12,10 +12,20 @@ package object uniform {
   type ErrorTree = Tree[String,String]  
 
   type _uniform[V,R] = UniformAsk[V,?] |= R
+  type _uniformList[V,R] = UniformAskList[V,?] |= R  
   type _uniformSelect[V,R] = UniformSelect[V,?] |= R
 
   def uask[R, T](key: String, validation: T => Validated[String,T] = {v:T => v.valid})(implicit member: UniformAsk[T, ?] |= R): Eff[R, T] =
     send[UniformAsk[T, ?], R, T](UniformAsk(key, validation))
+
+  def uaskList[R, T](
+    key: String,
+    min: Int = 0,
+    max: Int = Int.MaxValue
+  )(implicit member: UniformAskList[T, ?] |= R): Eff[R, List[T]] =
+    send[UniformAskList[T, ?], R, List[T]](
+      UniformAskList(key, min, max)
+    )
 
   def uaskOneOf[R, T](key: String, options: Set[T], validation: T => Validated[String,T] = {v:T => v.valid})(implicit member: UniformSelect[T, ?] |= R): Eff[R, T] =
     send[UniformSelect[T, ?], R, T](UniformSelectOne(key, options, validation))

@@ -156,6 +156,7 @@ lazy val `interpreter-cli` = project
     crossScalaVersions := Seq("2.11.12", "2.12.8")
   )
   .dependsOn(coreJVM)
+  .dependsOn(exampleProgramsJS % "test")
 
 lazy val `interpreter-gui` = project
   .settings(commonSettings)

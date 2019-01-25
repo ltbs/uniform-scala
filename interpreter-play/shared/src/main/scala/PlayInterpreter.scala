@@ -74,6 +74,70 @@ trait PlayInterpreter extends Compatibility.PlayController {
       targetId: String
     ): Eff[U, A] = useFormMap(_ => wmFormC)
 
+    def useFormListMap[C, U](
+      wmForm: String => PlayForm[C]
+    )(
+      implicit member: Member.Aux[UniformAskList[C,?], R, U],
+      stateM: _state[U],
+      eitherM: _either[U],
+      request: Request[AnyContent],
+      targetId: String
+    ): Eff[U, A] = e.translate(
+      new Translate[UniformAskList[C,?], U] {
+        
+        def apply[X](ax: UniformAskList[C,X]): Eff[U, X] = {
+
+          def real: Eff[U,List[C]] = {
+            val UniformAskList(id,min,max,vElement,vList) = ax
+
+            val listingId = id
+            val addId = id + "-add"
+            val deleteId = id + "-delete"
+            val editId = id + "-edit"
+
+            def massDecode(in: Encoded): Either[ErrorTree,List[C]] = {
+              in.split("|||").toList.map{wmForm(id).decode}.sequence
+            }
+
+            for {
+              g <- get[U, (DB, List[String])]
+              method = request.method.toLowerCase
+              (state, breadcrumbs) = g
+              dbObject: List[C] = {
+                val o = state.get(id).toList.flatMap(massDecode(_) match {
+                  case Left(e) =>
+                    log.warn(s"$id - serialised data present, but failed validation - $e")
+                    Nil
+                  case Right(r) => r
+                })
+                o
+              }
+
+              ret <- (method, dbObject, targetId) match {
+                case ("get", elements, `listingId`) =>
+                  log.info(s"$id - listing page")
+                  ???
+                case ("get", elements, `addId`) =>
+                  log.info(s"$id - add page")
+                  ???
+                case ("get", elements, `editId`) =>
+                  log.info(s"$id - edit page")
+                  ???                  
+                case ("get", elements, `deleteId`) =>
+                  log.info(s"$id - delete page")
+                  ???                                    
+                case _ => ???
+              }
+            } yield (???)
+          }
+
+          // eff loses the type safety, but X = List[C]
+          real.map{_.asInstanceOf[X]}
+        }
+      }
+    )
+
+
     def useFormMap[C, U](
       wmFormC: String => PlayForm[C]
     )(

@@ -14,6 +14,14 @@ case class UniformAsk[L, V](
   validation: V => Validated[String,V] = {v:V => v.valid}
 )
 
+case class UniformAskList[L, V](
+  key: String,
+  min: Int = 0,
+  max: Int = Int.MaxValue,
+  validationElement: V => Validated[String,V] = {v:V => v.valid},
+  validationList: List[V] => Validated[String,List[V]] = {v:List[V] => v.valid}    
+)
+
 case class UniformSubjourney[L, V](
   key: String,
   components: Eff[L,V]
