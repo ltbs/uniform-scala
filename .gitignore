@@ -5,3 +5,8 @@
 target
 **~
 ensime.sbt
+example-play/logs
+.bloop
+.metals
+logs
+**/*.log

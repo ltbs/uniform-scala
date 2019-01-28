@@ -1,0 +1,59 @@
+@import ltbs.uniform.widgets.govuk.html._
+
+@(key: String, errors: Any, content: Html, breadcrumbs: List[String] = Nil)(implicit messages: ltbs.uniform.web.Messages, request: Request[AnyContent])
+<!DOCTYPE html>
+<html lang="en" class="govuk-template js-enabled">
+  <head>
+    <meta charset="utf-8" />
+    <title>Uniform Play :: Example Service</title>    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--[if gt IE 8]><!--><link href="/assets/govuk-frontend-ie8-2.4.0.min.css" media="screen" rel="stylesheet" type="text/css"><!--<![endif]-->
+    <link rel="stylesheet" type="text/css" href="/assets/govuk-frontend-2.4.0.min.css">
+    <script type="text/javascript" src="/assets/jquery-3.3.1.min.js" ></script>    
+    <script type="text/javascript" src="/assets/govuk-frontend-2.4.0.min.js" ></script>
+    <script type="text/javascript" src="/assets/show-hide-content.js" ></script>    
+    <meta name="theme-color" content="#0b0c0c" /> 
+    <link rel="shortcut icon" sizes="16x16 32x32 48x48" href="/assets/images/favicon.ico" type="image/x-icon" />
+    <link rel="mask-icon" href="/assets/images/govuk-mask-icon.svg" color="#0b0c0c" /> 
+    <meta name="robots" content="noindex, nofollow" />
+    <meta property="og:image" content="/assets/images/govuk-opengraph-image.png" />
+  </head>
+  <body class="govuk-template__body ">
+
+
+    <a href="#main-content" class="govuk-skip-link">Skip to main content</a>
+    
+    @header(Some("Uniform Play Interpreter Example"), Nil, None, Some("EXPERIMENTAL"))
+    <div class="govuk-width-container">
+      <main class="govuk-main-wrapper " id="main-content" role="main">
+        <div id="mainBody">
+	  @for(back <- breadcrumbs.headOption) {
+            <a href="@back" class="govuk-back-link">@messages(List(s"back-to-$back","back"))</a>
+          }
+	  
+	  @*****************************************
+	  *   Uncomment to enable breadcrumbs
+	  ******************************************
+	    <div class="govuk-breadcrumbs">
+              <ol class="govuk-breadcrumbs__list">
+		@for(crumb <- breadcrumbs) { 
+                <li class="govuk-breadcrumbs__list-item">
+                  <a class="govuk-breadcrumbs__link" href="@crumb">@messages(List(s"$crumb.breadcrumb", s"$crumb.heading"))</a>
+                </li>
+		}
+                <li class="govuk-breadcrumbs__list-item" aria-current="page">@messages(List(s"$key.breadcrumb", s"$key.heading"))</li>
+              </ol>
+	    </div>
+          *****************************************@
+	  
+      @helper.form(action = play.api.mvc.Call("post", key)) {
+        @helper.CSRF.formField 
+        @content
+            <button type="submit" class="govuk-button">Save and Continue</button>
+      }
+        </div>
+      </main>
+    </div>  
+    @footer(Nil,Nil)
+  </body>
+  </html>
