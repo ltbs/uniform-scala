@@ -1,7 +1,7 @@
 ---
 layout: docs
 title: Writing a program
-position: 1
+position: 2
 ---
 
 # Imports 
