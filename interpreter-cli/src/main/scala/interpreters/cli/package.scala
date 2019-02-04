@@ -22,18 +22,18 @@ package object cli {
         new Translate[UniformAsk[C,?], U] {
           def apply[X](ax: UniformAsk[C,X]): Eff[U, X] =
             ax match {
-              case UniformAsk(key,v) =>
+              case UniformAsk(key,default,v) =>
                 send(
                   Eval.later{
                     @annotation.tailrec 
                     def read(): X = {
                       print(s"$key: ")
                       val s = Try(f(readLine())).toEither.leftMap { _.getLocalizedMessage }
-                      s.flatMap{x => v(x.asInstanceOf[X]).toEither} match {
+                      s.flatMap{x => v(x.asInstanceOf[C]).toEither} match {
                         case Left(err) =>
                           println("Error: " ++ err.toString)
                           read()
-                        case Right(value) => value
+                        case Right(value) => value.asInstanceOf[X]
                       }
                     }
 

@@ -161,29 +161,28 @@ trait PlayInterpreter extends Compatibility.PlayController {
       }
     )
 
-
-    def useFormMap[C, U](
-      wmFormC: String => PlayForm[C]
+    def useFormMap[IN, OUT, U](
+      wmFormOUT: String => PlayForm[OUT]
     )(
-      implicit member: Member.Aux[UniformAsk[C,?], R, U],
+      implicit member: Member.Aux[Uniform[IN,OUT,?], R, U],
       stateM: _state[U],
       eitherM: _either[U],
       request: Request[AnyContent],
       targetId: String
     ): Eff[U, A] = e.translate(
-      new Translate[UniformAsk[C,?], U] {
-        def apply[X](ax: UniformAsk[C,X]): Eff[U, X] = {
-          val wmForm: PlayForm[X] = wmFormC(ax.key).imap(_.asInstanceOf[X])(_.asInstanceOf[C])
+      new Translate[Uniform[IN, OUT,?], U] {
+        def apply[X](ax: Uniform[IN, OUT,X]): Eff[U, X] = {
+          val wmForm: PlayForm[X] = wmFormOUT(ax.key).imap(_.asInstanceOf[X])(_.asInstanceOf[OUT])
 
           ax match {
-            case UniformAsk(id, validation) =>
+            case Uniform(id, tell, default, validation) =>
 
               for {
                 g <- get[U, (DB, List[String])]                
                 method = request.method.toLowerCase
                 (state, breadcrumbs) = g
-                dbObject: Option[X] = {
-                  val o = state.get(id).flatMap(wmForm.decode(_).flatMap(validation(_).toEither) match {
+                dbObject: Option[OUT] = {
+                  val o = state.get(id).flatMap(wmFormOUT(id).decode(_).flatMap(validation(_).toEither) match {
                     case Left(e) =>
                       log.warn(s"$id - serialised data present, but failed validation - $e")
                       None
@@ -200,7 +199,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
                     )))
 
                   case ("get", Some(o), `id`) =>
-                    val encoded = wmForm.encode(o) // FormUrlEncoded.readString(wmForm.encode(o)).prefix(id).writeString
+                    val encoded = wmForm.encode(o.asInstanceOf[X]) // FormUrlEncoded.readString(wmForm.encode(o)).prefix(id).writeString
                     log.info(s"""|$id - something in database, step in URI, user revisiting old page, render filled in form
                                  |\t\t data: $o
                                  |\t\t encoded: $encoded """.stripMargin)

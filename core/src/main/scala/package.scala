@@ -8,15 +8,39 @@ import cats.Monoid
 
 package object uniform {
 
+  type UniformAsk[OUT,A] = Uniform[Unit,OUT,A]
+  type UniformTell[IN,A] = Uniform[IN,Unit,A]
+
+  type _uniform[IN, OUT, R] = Uniform[IN,OUT,?] |= R
+  type _uniformAsk[OUT, R] = UniformAsk[OUT,?] |= R
+  type _uniformTell[IN, R] = UniformTell[IN,?] |= R
+
   type Encoded = String
   type ErrorTree = Tree[String,String]  
 
-  type _uniform[V,R] = UniformAsk[V,?] |= R
-  type _uniformList[V,R] = UniformAskList[V,?] |= R  
-  type _uniformSelect[V,R] = UniformSelect[V,?] |= R
+  type _uniformList[STACK,SUB] = UniformAskList[SUB,?] |= STACK
+  type _uniformSelect[STACK,SUB] = UniformSelect[SUB,?] |= STACK
 
-  def uask[R, T](key: String, validation: T => Validated[String,T] = {v:T => v.valid})(implicit member: UniformAsk[T, ?] |= R): Eff[R, T] =
-    send[UniformAsk[T, ?], R, T](UniformAsk(key, validation))
+  def uniform[IN,OUT,R :_uniform[IN, OUT, ?]](
+    key: String,
+    tell: IN,
+    default: Option[OUT] = None,
+    validation: OUT => Validated[String,OUT] = {v:OUT => v.valid}
+  ): Eff[R, OUT] =
+    send[Uniform[IN,OUT,?], R, OUT](Uniform(key,tell,default,validation))
+
+  def uask[OUT,R :_uniformAsk[OUT, ?]](
+    key: String,
+    default: Option[OUT] = None,
+    validation: OUT => Validated[String,OUT] = {v:OUT => v.valid}
+  ): Eff[R, OUT] =
+    send[UniformAsk[OUT,?], R, OUT](Uniform(key,(),default,validation))
+
+  def utell[IN,R :_uniformTell[IN, ?]](
+    key: String,
+    tell: IN
+  ): Eff[R, Unit] =
+    send[UniformTell[IN,?], R, Unit](Uniform(key,tell))
 
   def uaskList[R, T](
     key: String,

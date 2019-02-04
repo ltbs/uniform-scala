@@ -122,7 +122,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
-      "org.atnos" %%% "eff" % "5.2.0",
+      "org.atnos" %%% "eff" % "5.4.1",
       "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
     ),
     scalaJSUseMainModuleInitializer := true

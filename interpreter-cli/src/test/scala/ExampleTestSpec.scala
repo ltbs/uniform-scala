@@ -6,20 +6,13 @@ import org.atnos.eff._, all._, syntax.all._
 
 object ExampleTestApp extends App {
 
-  type UFInt[A] = _uniform[Int,A]
-  type UFIntList[A] = _uniformList[Int,A]
+  type UFInt[A] = _uniformAsk[Int,A]
 
-  def program[R
-      : UFInt
-      : UFIntList
-  ]: Eff[R, (Int,List[Int])] = (
-    uask[R, Int]("single"),
-    uaskList[R, Int]("list")
-  ).tupled
+  def program[R](implicit rint: UniformAsk[Int,?] |= R): Eff[R, Int] = 
+    uask[Int, R]("single")
 
-  val out = program[Fx.fx3[UniformAsk[Int,?], UniformAskList[Int,?], cats.Eval]]
+  val out = program[Fx.fx2[UniformAsk[Int,?], cats.Eval]]
     .using(_.toInt)
-    .usingList(_.toInt)
     .runEval
     .run
 
