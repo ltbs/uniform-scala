@@ -21,11 +21,11 @@ Or if you're using ScalaJS -
 libraryDependencies += "com.luketebbs.uniform" %%% "core" % "{{ site.last-stable-version }}"
 ```
 
-You can save yourself a lot of pain by using the kind projector compiler plugin - 
-
+You can save yourself a lot of pain by using the kind projector compiler plugin
 ```
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3")
 ```
+above line should be placed in sbt [project plugins configuration file - by convention `project/plugins.sbt`][1]
 
 # Adding an interpreter
 
@@ -37,3 +37,4 @@ out-of-the-box for you to experiment with -
 libraryDependencies += "com.luketebbs.uniform" %% "interpreter-play26" % "{{ site.last-stable-version }}"
 ```
 
+[1]: https://www.scala-sbt.org/release/docs/Compiler-Plugins.html
