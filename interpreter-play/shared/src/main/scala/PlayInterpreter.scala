@@ -80,7 +80,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
     type _either[Q] = Either[Result,?] |= Q
 
     def delist[OUT, NEWSTACK, INNER](
-      subJourneyP: Eff[INNER, OUT]
+      subJourneyP: (String, List[OUT], Option[OUT]) => Eff[INNER, OUT]
     )(
       implicit member: Member.Aux[UniformAsk[List[OUT],?], STACK, NEWSTACK],
       stateM: _state[NEWSTACK],
@@ -94,8 +94,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
         val removeConfirmation: (String, List[OUT], OUT) => Eff[NEWSTACK, Boolean] = {alwaysYes[NEWSTACK, OUT] _}
 
         def subJourney(id: String, all: List[OUT], editing: Option[OUT]): Eff[NEWSTACK, OUT] = {
-          val subId = if (editing.isDefined) s"$id-edit" else s"$id-add"
-          subJourneyP.into[NEWSTACK]
+          subJourneyP(id, all, editing).into[NEWSTACK]
         }
 
         def serialise(in: List[OUT]): String = FormUrlEncoded.fromInputTree(parser.unbind(in)).writeString

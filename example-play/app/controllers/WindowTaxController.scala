@@ -72,14 +72,13 @@ class WindowTaxController @Inject()(
       default: Option[Window]
     ): Eff[S,Window] = uask[Window,S](s"add")
 
-    def delistSub2[S: _uniform[Unit,Window,?]]: Eff[S,Window] = uask[Window,S](s"add")
-
-
     Action.async { implicit request =>
-
       runWeb(
         program = program[STACKZ]
-          .delist{ delistSub2 }          
+          .delist{
+            (key: String, existing: List[Window], default: Option[Window]) =>
+            delistSub(key,existing,default)
+          }
           .useForm(fu, PlayForm.automatic[ListControl])
           .useForm(PlayForm.automatic[Window]),
         persistence
