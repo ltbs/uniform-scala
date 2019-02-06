@@ -66,14 +66,20 @@ class WindowTaxController @Inject()(
         Html(lw.zipWithIndex.map(_.toString).mkString("<br />"))
     }
 
-    def delistSub[S: _uniform[Unit,Window,?]]: Eff[S,Window] =
-      uask[Window,S](s"add")
+    def delistSub[S: _uniform[Unit,Window,?]](
+      key: String,
+      existing: List[Window],
+      default: Option[Window]
+    ): Eff[S,Window] = uask[Window,S](s"add")
+
+    def delistSub2[S: _uniform[Unit,Window,?]]: Eff[S,Window] = uask[Window,S](s"add")
+
 
     Action.async { implicit request =>
 
       runWeb(
         program = program[STACKZ]
-          .delist(implicitly[DataParser[List[Window]]])
+          .delist{ delistSub2 }          
           .useForm(fu, PlayForm.automatic[ListControl])
           .useForm(PlayForm.automatic[Window]),
         persistence

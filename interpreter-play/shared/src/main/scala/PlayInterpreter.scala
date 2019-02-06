@@ -79,24 +79,24 @@ trait PlayInterpreter extends Compatibility.PlayController {
     type _state[Q]  = State[(DB, List[String]),?] |= Q
     type _either[Q] = Either[Result,?] |= Q
 
-    def delist[OUT, NEWSTACK](
-      parser: DataParser[List[OUT]]
-      //    subjourney: /*(String, List[OUT], Option[OUT]) => */ Eff[NEWSTACK, OUT]
+    def delist[OUT, NEWSTACK, INNER](
+      subJourneyP: Eff[INNER, OUT]
     )(
       implicit member: Member.Aux[UniformAsk[List[OUT],?], STACK, NEWSTACK],
       stateM: _state[NEWSTACK],
       eitherM: _either[NEWSTACK],
       listingPage: _uniform[List[OUT], ListControl, NEWSTACK],
-      editPage: _uniformAsk[OUT, NEWSTACK]
+      parser: DataParser[List[OUT]],
+      f: IntoPoly[INNER,NEWSTACK]
     ): Eff[NEWSTACK,A] = e.translate(
       new Translate[UniformAsk[List[OUT],?], NEWSTACK] {
 
-        def innerJourney(id: String, all: List[OUT], editing: Option[OUT]): Eff[NEWSTACK, OUT] = {
-          val subId = if (editing.isDefined) s"$id-edit" else s"$id-add"
-          uask[OUT,NEWSTACK](subId, default = editing)
-        }
-
         val removeConfirmation: (String, List[OUT], OUT) => Eff[NEWSTACK, Boolean] = {alwaysYes[NEWSTACK, OUT] _}
+
+        def subJourney(id: String, all: List[OUT], editing: Option[OUT]): Eff[NEWSTACK, OUT] = {
+          val subId = if (editing.isDefined) s"$id-edit" else s"$id-add"
+          subJourneyP.into[NEWSTACK]
+        }
 
         def serialise(in: List[OUT]): String = FormUrlEncoded.fromInputTree(parser.unbind(in)).writeString
         def deserialise(in: String): List[OUT] = parser.bind(FormUrlEncoded.readString(in).toInputTree) match {
@@ -136,11 +136,11 @@ trait PlayInterpreter extends Compatibility.PlayController {
                   case ltbs.uniform.web.Continue => Eff.pure[NEWSTACK,List[OUT]](elements)
 
                   case AddAnother =>
-                    innerJourney(id, elements, None) >>= {x => clear(id) >> clear(s"$id-add") >> write(elements :+ x) >> process(elements :+ x)}
+                    subJourney(id, elements, None) >>= {x => clear(id) >> clear(s"$id-add") >> write(elements :+ x) >> process(elements :+ x)}
                     /*subjourney (id,elements,None)*/
 
                   case Edit(ordinal) =>
-                    innerJourney(id, elements, elements.get(ordinal)) >>= {x => clear(id) >> clear(s"$id-edit-$ordinal") >> write(elements.replace(ordinal, x)) >> process(elements.replace(ordinal, x))}
+                    subJourney(id, elements, elements.get(ordinal)) >>= {x => clear(id) >> clear(s"$id-edit-$ordinal") >> write(elements.replace(ordinal, x)) >> process(elements.replace(ordinal, x))}
                     /*subjourney (id,elements,elements.get(ordinal)) >>= */
 
                   case Delete(ordinal) =>
