@@ -1,6 +1,5 @@
 package controllers
 
-
 import cats.implicits._
 import cats.kernel.Monoid
 import javax.inject._
@@ -8,7 +7,7 @@ import ltbs.uniform._
 import ltbs.uniform.web._
 import ltbs.uniform.web.parser._
 import ltbs.uniform.interpreters.playframework._
-import ltbs.uniform.sampleprograms.BeardTax._
+import ltbs.uniform.sampleprograms.WindowTax._
 import ltbs.uniform.widgets.govuk._
 import org.atnos.eff._
 import play.api._
@@ -21,7 +20,9 @@ import play.twirl.api.Html
 import InferParser._
 
 @Singleton
-class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayInterpreter with I18nSupport {
+class WindowTaxController @Inject()(
+  implicit val messagesApi: MessagesApi
+) extends Controller with PlayInterpreter with I18nSupport {
 
   def messages(request: Request[AnyContent]): Messages =
     convertMessages(messagesApi.preferred(request))
@@ -52,14 +53,29 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
       Future(data = dataIn).map{_ => ()}
   }
 
-  def beardAction(implicit key: String) = {
+  def daylightRobbery(implicit key: String) = {
+
+    type STACKZ = FxAppend[
+      Fx.fx3[Uniform[List[Window],ListControl,?], Uniform[Unit,Window,?], UniformAsk[List[Window],?]],
+      PlayStack
+    ]
+
+    def fu : List[Window] => Html = fu2.toHtml _
+    def fu2 : Htmlable[List[Window]] = new Htmlable[List[Window]] {
+      def toHtml(lw: List[Window]): Html =
+        Html(lw.zipWithIndex.map(_.toString).mkString("<br />"))
+    }
+
+    def delistSub[S: _uniform[Unit,Window,?]]: Eff[S,Window] =
+      uask[Window,S](s"add")
 
     Action.async { implicit request =>
+
       runWeb(
-        program = program[FxAppend[TestProgramStack, PlayStack]]
-          .useForm(PlayForm.automatic[Option[MemberOfPublic]])
-          .useForm(PlayForm.automatic[BeardStyle])
-          .useForm(PlayForm.automatic[BeardLength]),
+        program = program[STACKZ]
+          .delist(implicitly[DataParser[List[Window]]])
+          .useForm(fu, PlayForm.automatic[ListControl])
+          .useForm(PlayForm.automatic[Window]),
         persistence
       )(
         a => Future.successful(Ok(s"You have £$a to pay"))
