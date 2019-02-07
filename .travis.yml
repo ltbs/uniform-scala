@@ -3,10 +3,9 @@ scala:
   - 2.11.11
   - 2.12.8
 
-
 jobs:
   include:
     - stage: test
-    - script: sbt ++$TRAVIS_SCALA_VERSION test
+      script: sbt ++$TRAVIS_SCALA_VERSION test
     - stage: docs
-    - script: sbt ++$TRAVIS_SCALA_VERSION tut
+      script: sbt ++$TRAVIS_SCALA_VERSION tut
