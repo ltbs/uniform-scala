@@ -1,11 +1,13 @@
 language: scala
-scala:
-  - 2.11.11
-  - 2.12.8
 
 jobs:
   include:
-    - stage: test
-      script: sbt ++$TRAVIS_SCALA_VERSION test
+    - script: sbt ++$TRAVIS_SCALA_VERSION test
+      scala:
+        - 2.11.11
+        - 2.12.8
     - stage: docs
       script: sbt ++$TRAVIS_SCALA_VERSION tut
+      scala:
+        - 2.11.11
+        - 2.12.8
