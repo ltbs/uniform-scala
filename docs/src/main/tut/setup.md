@@ -27,6 +27,12 @@ You can save yourself a lot of pain by using the kind projector compiler plugin 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3")
 ```
 
+You will also need partial unification enabled - 
+
+```
+scalacOptions += "-Ypartial-unification"
+```
+
 # Adding an interpreter
 
 A program by itself is not much use without an interpreter to execute

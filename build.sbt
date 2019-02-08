@@ -194,11 +194,13 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
       name := "interpreter-play26"
     ))
 
-// lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
-//   .dependsOn(commonWebJVM)
+lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
+  .dependsOn(commonWebJVM)
+  .dependsOn(exampleProgramsJVM % "test")
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
   .dependsOn(commonWebJVM)
+  .dependsOn(exampleProgramsJVM % "test")
 
 lazy val `interpreter-js` = project
   .settings(commonSettings)
