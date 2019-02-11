@@ -56,8 +56,22 @@ class WindowTaxController @Inject()(
   def daylightRobbery(implicit key: String) = {
 
     type STACKZ = FxAppend[
-      Fx.fx3[Uniform[List[Window],ListControl,?], Uniform[Unit,Window,?], UniformAsk[List[Window],?]],
+      Fx.fx6[
+        UniformAsk[List[Window],?],
+        Uniform[List[Window],ListControl,?],
+        UniformAsk[Int,?],
+        UniformAsk[(Int,Int),?],
+        UniformAsk[Orientation,?],
+        UniformAsk[Boolean,?]
+      ],
       PlayStack
+    ]
+
+    type STACKY = Fx.fx4[
+      UniformAsk[Int,?],
+      UniformAsk[(Int,Int),?],
+      UniformAsk[Orientation,?],
+      UniformAsk[Boolean,?]
     ]
 
     def fu : List[Window] => Html = fu2.toHtml _
@@ -77,10 +91,13 @@ class WindowTaxController @Inject()(
         program = program[STACKZ]
           .delist{
             (key: String, existing: List[Window], default: Option[Window]) =>
-            delistSub(key,existing,default)
+            singleWindowProgram[STACKY](key,existing,default)
           }
           .useForm(fu, PlayForm.automatic[ListControl])
-          .useForm(PlayForm.automatic[Window]),
+          .useForm(PlayForm.automatic[Int])
+          .useForm(PlayForm.automatic[(Int,Int)])
+          .useForm(PlayForm.automatic[Orientation])
+          .useForm(PlayForm.automatic[Boolean]),
         persistence
       )(
         a => Future.successful(Ok(s"You have £$a to pay"))

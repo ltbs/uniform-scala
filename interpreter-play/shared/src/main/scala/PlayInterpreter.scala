@@ -76,8 +76,6 @@ trait PlayInterpreter extends Compatibility.PlayController {
     Eff.pure[NEWSTACK,Boolean](true)
 
   implicit class PlayEffectOps[STACK, A](e: Eff[STACK, A]) {
-    type _state[Q]  = State[(DB, List[String]),?] |= Q
-    type _either[Q] = Either[Result,?] |= Q
 
     def delist[OUT, NEWSTACK, INNER](
       subJourneyP: (String, List[OUT], Option[OUT]) => Eff[INNER, OUT]

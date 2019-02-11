@@ -21,6 +21,8 @@ package object uniform {
   type _uniformList[STACK,SUB] = UniformAskList[SUB,?] |= STACK
   type _uniformSelect[STACK,SUB] = UniformSelect[SUB,?] |= STACK
 
+  type DB = Map[String,Encoded]
+
   def uniform[IN,OUT,R :_uniform[IN, OUT, ?]](
     key: String,
     tell: IN,

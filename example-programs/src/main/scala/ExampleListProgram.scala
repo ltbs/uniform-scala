@@ -24,8 +24,11 @@ object WindowTax {
     orientation: Orientation
   )
 
-  type WindowsTaxStack = Fx1[
-    Uniform[Unit,List[Window], ?]
+  type WindowsTaxStack = Fx.fx4[
+    UniformAsk[List[Window], ?],
+    UniformAsk[Int, ?],
+    UniformAsk[(Int,Int), ?],
+    UniformAsk[Orientation, ?]
   ]
 
   def program[R
@@ -34,5 +37,22 @@ object WindowTax {
     for {
       windows <- uask[List[Window], R]("windows")
     } yield windows.size
+
+  def singleWindowProgram[R
+      : _uniformAsk[Int, ?]
+      : _uniformAsk[(Int,Int), ?]
+      : _uniformAsk[Orientation, ?]
+      : _uniformAsk[Boolean, ?]
+  ](
+    key: String,
+    existing: List[Window],
+    default: Option[Window]
+  ): Eff[R, Window] = 
+    (
+      uask[Int,R]("floor"),
+      uask[(Int,Int),R]("dimensions"),
+      uask[Int,R]("yearsInPlace") emptyUnless uask[Boolean,R]("existing"),
+      uask[Orientation,R]("orientation")
+    ).mapN(Window)
 
 }
