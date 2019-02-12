@@ -12,7 +12,7 @@ package object playframework {
   type PlayForm[OUT] = SimpleInteractionForm[Request[AnyContent],OUT,Html]
 
   type Encoded = String
-  type DB = Map[String,Encoded]
+
   type ValidationError = String
   type ValidatedData[A] = Option[Validated[ValidationError, A]]
 

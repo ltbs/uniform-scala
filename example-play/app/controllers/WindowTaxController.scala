@@ -7,7 +7,7 @@ import ltbs.uniform._
 import ltbs.uniform.web._
 import ltbs.uniform.web.parser._
 import ltbs.uniform.interpreters.playframework._
-import ltbs.uniform.sampleprograms.WindowTax._
+import ltbs.uniform.sampleprograms.WindowTax2._
 import ltbs.uniform.widgets.govuk._
 import org.atnos.eff._
 import play.api._
@@ -22,13 +22,13 @@ import InferParser._
 @Singleton
 class WindowTaxController @Inject()(
   implicit val messagesApi: MessagesApi
-) extends Controller with PlayInterpreter with I18nSupport {
+) extends Controller with PlayInterpreter2 with I18nSupport {
 
   def messages(request: Request[AnyContent]): Messages =
     convertMessages(messagesApi.preferred(request))
 
   def renderForm(
-    key: String,
+    key: List[String],
     errors: ErrorTree,
     tell: Html,
     form: Html,
@@ -36,11 +36,11 @@ class WindowTaxController @Inject()(
     request: Request[AnyContent],
     messagesIn: Messages
   ): Html = {
-    views.html.chrome(key, errors, tell |+| form, breadcrumbs)(messagesIn, request)
+    views.html.chrome(key.last, errors, tell |+| form, breadcrumbs)(messagesIn, request)
   }
 
   def listingPage[A](
-    key: String,
+    key: List[String],
     errors: ErrorTree,
     elements: List[A],
     messages: Messages
@@ -53,7 +53,9 @@ class WindowTaxController @Inject()(
       Future(data = dataIn).map{_ => ()}
   }
 
-  def daylightRobbery(implicit key: String) = {
+  def daylightRobbery(key: String) = {
+
+    implicit val keys: List[String] = key.split("/").toList    
 
     type STACKZ = FxAppend[
       Fx.fx6[
@@ -67,7 +69,8 @@ class WindowTaxController @Inject()(
       PlayStack
     ]
 
-    type STACKY = Fx.fx4[
+    type STACKY = Fx.fx5[
+      cats.data.State[UniformCore,?],
       UniformAsk[Int,?],
       UniformAsk[(Int,Int),?],
       UniformAsk[Orientation,?],
@@ -90,8 +93,8 @@ class WindowTaxController @Inject()(
       runWeb(
         program = program[STACKZ]
           .delist{
-            (key: String, existing: List[Window], default: Option[Window]) =>
-            singleWindowProgram[STACKY](key,existing,default)
+            (existing: List[Window], default: Option[Window]) =>
+            singleWindowProgram[STACKY](existing,default)
           }
           .useForm(fu, PlayForm.automatic[ListControl])
           .useForm(PlayForm.automatic[Int])

@@ -73,7 +73,7 @@ object JsInterpreter {
       new Translate[UniformAsk[C,?], U] {
         def apply[X](ax: UniformAsk[C,X]): Eff[U, X] = {
           ax match {
-            case UniformAsk(key, validation) =>
+            case UniformAsk((key::kx), default, validation) =>
               val i: Eff[U,X] = for {
                 state <- get[U, (DB,List[String])]
                 (db,breadcrumbs) = state

@@ -6,7 +6,7 @@ import org.atnos.eff._
 import ltbs.uniform._
 import enumeratum._
 
-object WindowTax {
+object WindowTax2 {
 
   sealed trait Orientation extends EnumEntry
   object Orientation extends Enum[Orientation] {
@@ -32,27 +32,38 @@ object WindowTax {
   ]
 
   def program[R
+      : _uniformCore    
       : _uniformAsk[List[Window],?]
   ]: Eff[R, Int] =
     for {
-      windows <- uask[List[Window], R]("windows")
+      windows <- ask[List[Window]]("windows")
     } yield windows.size
 
   def singleWindowProgram[R
+      : _uniformCore
       : _uniformAsk[Int, ?]
       : _uniformAsk[(Int,Int), ?]
       : _uniformAsk[Orientation, ?]
       : _uniformAsk[Boolean, ?]
   ](
-    key: List[String],
     existing: List[Window],
     default: Option[Window]
   ): Eff[R, Window] = 
     (
-      uaskP[Int,R](key :+ "floor"),
-      uaskP[(Int,Int),R](key :+ "dimensions"),
-      uaskP[Int,R](key :+ "yearsInPlace") emptyUnless uaskP[Boolean,R](key :+ "existing"),
-      uaskP[Orientation,R](key :+ "orientation")
+      ask[Int]("floor")
+        .defaultOpt(default.map(_.floor)).in[R],
+
+      ask[(Int,Int)]("dimensions")
+        .defaultOpt(default.map(_.dimensions)).in[R],
+
+      ask[Int]("yearsInPlace")
+        .defaultOpt(default.map(_.yearsInPlace)) emptyUnless
+        ask[Boolean]("existing")
+        .defaultOpt(default.map(_.yearsInPlace != 0)),
+
+      ask[Orientation]("orientation")
+        .defaultOpt(default.map(_.orientation)).in[R]
+
     ).mapN(Window)
 
 }

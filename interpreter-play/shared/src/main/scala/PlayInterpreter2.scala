@@ -14,9 +14,8 @@ import play.twirl.api.Html
 import ltbs.uniform._
 import ltbs.uniform.web._
 import scala.concurrent.{ ExecutionContext, Future }
-import ltbs.uniform.DB._
 
-trait PlayInterpreter extends Compatibility.PlayController {
+trait PlayInterpreter2 extends Compatibility.PlayController {
 
   def messages(request: Request[AnyContent]): Messages
 
@@ -67,9 +66,9 @@ trait PlayInterpreter extends Compatibility.PlayController {
     if (!f.hasErrors) f.value.map{_.valid}
     else Some(f.errors.head.message.invalid)
 
-  type PlayStack = Fx.fx2[State[(DB,List[List[String]]), ?], Either[Result, ?]]
+  type PlayStack = Fx.fx2[State[UniformCore, ?], Either[Result, ?]]
 
-  type _state[Q]  = State[(DB, List[List[String]]),?] |= Q
+  type _core[Q]  = State[UniformCore,?] |= Q
   type _either[Q] = Either[Result,?] |= Q
 
   // for some reason the compiler isn't letting me inline this as a lambda within delist
@@ -82,7 +81,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
       wmFormC: PlayForm[OUT]
     )(
       implicit member: Member.Aux[UniformAsk[OUT,?], STACK, NEWSTACK],
-      state: _state[NEWSTACK],
+      state: _core[NEWSTACK],
       eitherM: _either[NEWSTACK],
       request: Request[AnyContent],
       targetId: List[String]
@@ -93,7 +92,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
       wmFormOUT: List[String] => PlayForm[OUT]      
     )(
       implicit member: Member.Aux[UniformAsk[OUT,?], STACK, NEWSTACK],
-      state: _state[NEWSTACK],
+      state: _core[NEWSTACK],
       eitherM: _either[NEWSTACK],
       request: Request[AnyContent],
       targetId: List[String]
@@ -105,7 +104,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
       wmFormC: PlayForm[OUT]
     )(
       implicit member: Member.Aux[Uniform[IN,OUT,?], STACK, NEWSTACK],
-      state: _state[NEWSTACK],
+      state: _core[NEWSTACK],
       eitherM: _either[NEWSTACK],
       request: Request[AnyContent],
       targetId: List[String]
@@ -116,7 +115,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
       wmFormOUT: List[String] => PlayForm[OUT]
     )(
       implicit member: Member.Aux[Uniform[IN,OUT,?], STACK, NEWSTACK],
-      stateM: _state[NEWSTACK],
+      stateM: _core[NEWSTACK],
       eitherM: _either[NEWSTACK],
       request: Request[AnyContent],
       targetId: List[String]
@@ -134,9 +133,9 @@ trait PlayInterpreter extends Compatibility.PlayController {
             case Uniform(id, tell, default, validation) =>
 
               for {
-                g <- get[NEWSTACK, (DB, List[List[String]])]                
+                g <- core
                 method = request.method.toLowerCase
-                (state, breadcrumbs) = g
+                UniformCore(state, breadcrumbs, _) = g
                 dbObject: Option[OUT] = {
                   val o = state.get(id).flatMap(wmFormOUT(id).decode(_).flatMap(validation(_).toEither) match {
                     case Left(e) =>
@@ -168,7 +167,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
 
                   case ("get", Some(data), _) =>
                     log.info(s"$id - something in database, not step in URI, pass through")
-                    put[NEWSTACK, (DB,List[List[String]])]((state, id :: breadcrumbs)) >>
+                    crumbPush(id) >>
                     Eff.pure[NEWSTACK, X](data.asInstanceOf[X])
 
                   case ("post", _, `id`) =>
@@ -187,18 +186,20 @@ trait PlayInterpreter extends Compatibility.PlayController {
                         )))
                       case Right(o) =>
                         log.info(s"$id - form submitted, step in URI, validation pass")
-                        put[NEWSTACK, (DB,List[List[String]])]((state + (id -> wmForm.encode(o)), id :: breadcrumbs)) >>
+                        (db.encoded(id) = wmForm.encode(o)) >>
+                        crumbPush(id) >>
                         Eff.pure[NEWSTACK, X](o)
+
                     }
 
                   case ("post", Some(_), _) if breadcrumbs.contains(targetId) =>
                     log.info(s"$id - something in database, previous page submitted")
-                    put[NEWSTACK, (DB, List[List[String]])]((state, id :: breadcrumbs)) >>
+                    crumbPush(id) >>
                     left[NEWSTACK, Result, X](Redirect(s"${baseUrl}${id.mkString("/")}"))
 
                   case ("post", Some(data), _) =>
                     log.info(s"$id - something in database, posting, not step in URI nor previous page -> pass through")
-                    put[NEWSTACK, (DB,List[List[String]])]((state, id :: breadcrumbs)) >>
+                    crumbPush(id) >>
                       Eff.pure[NEWSTACK,X](data.asInstanceOf[X])
 
                   case ("post", _, _) | ("get", _, _) =>
@@ -216,12 +217,11 @@ trait PlayInterpreter extends Compatibility.PlayController {
       }
     )
 
-
-def delist[OUT, NEWSTACK, INNER](
-      subJourneyP: (List[String], List[OUT], Option[OUT]) => Eff[INNER, OUT]
+    def delist[OUT, NEWSTACK, INNER](
+      subJourneyP: (List[OUT], Option[OUT]) => Eff[INNER, OUT]
     )(
       implicit member: Member.Aux[UniformAsk[List[OUT],?], STACK, NEWSTACK],
-      stateM: _state[NEWSTACK],
+      stateM: _core[NEWSTACK],
       eitherM: _either[NEWSTACK],
       listingPage: _uniform[List[OUT], ListControl, NEWSTACK],
       parser: DataParser[List[OUT]],
@@ -230,10 +230,6 @@ def delist[OUT, NEWSTACK, INNER](
       new Translate[UniformAsk[List[OUT],?], NEWSTACK] {
 
         val removeConfirmation: (List[String], List[OUT], OUT) => Eff[NEWSTACK, Boolean] = {alwaysYes[NEWSTACK, OUT] _}
-
-        def subJourney(id: List[String], all: List[OUT], editing: Option[OUT]): Eff[NEWSTACK, OUT] = {
-          subJourneyP(id, all, editing).into[NEWSTACK]
-        }
 
         def serialise(in: List[OUT]): String = FormUrlEncoded.fromInputTree(parser.unbind(in)).writeString
         def deserialise(in: String): List[OUT] = parser.bind(FormUrlEncoded.readString(in).toInputTree) match {
@@ -248,16 +244,10 @@ def delist[OUT, NEWSTACK, INNER](
             case Uniform(id, tell, default, validation) =>
 
               def read: Eff[NEWSTACK, Option[List[OUT]]] =
-                get[NEWSTACK, (DB, List[List[String]])].map {
-                  _._1.get("__data" :: id).map(deserialise)
-                }
+                db.encoded.get(id :+ "__data").map(_.map(deserialise))
 
-              def write(in: List[OUT]): Eff[NEWSTACK, Unit] = for {
-                existing    <- get[NEWSTACK, (DB, List[List[String]])]
-                (dbSerialised, bread) = existing
-                dbUpdated = dbSerialised + ({"__data" :: id} -> serialise(in))
-                _           <- put[NEWSTACK, (DB, List[List[String]])]((dbUpdated, bread))
-              } yield (())
+              def write(in: List[OUT]): Eff[NEWSTACK, Unit] =
+                db.encoded(id :+ "__data") = serialise(in)
 
               def process(elements: List[OUT]): Eff[NEWSTACK,List[OUT]] = {
                 uniformP[List[OUT],ListControl,NEWSTACK](id, elements) >>=
@@ -265,23 +255,27 @@ def delist[OUT, NEWSTACK, INNER](
                   case ltbs.uniform.web.Continue => Eff.pure[NEWSTACK,List[OUT]](elements)
 
                   case AddAnother =>
-                    subJourney(id :+ "add", elements, None) >>= {x =>
-                      clear(id) >>
-                      clearRecursive(id :+ "add") >>
+                    subjourney("add") { 
+                      subJourneyP(elements, None).into[NEWSTACK]
+                    } >>= {x =>
+                      db.remove(id) >>
+                      db.removeRecursive(id.dropRight(1) :+ "add") >>
                       write(elements :+ x) >>
                       process(elements :+ x)}
 
                   case Edit(ordinal) =>
-                    subJourney(id :+ "edit", elements, elements.get(ordinal)) >>= {x =>
-                      clear(id) >>
-                      clearRecursive(id :+ "edit") >>
+                    subjourney("edit") { 
+                      subJourneyP(elements, elements.get(ordinal)).into[NEWSTACK]
+                    } >>= {x =>
+                      db.remove(id) >>
+                      db.removeRecursive(id.dropRight(1) :+ "edit") >>
                       write(elements.replace(ordinal, x)) >>
                       process(elements.replace(ordinal, x))}
 
                   case Delete(ordinal) =>
                     removeConfirmation(id, elements, elements(ordinal)) >>= {
                       if (_) { 
-                        clear(id) >>
+                        db.remove(id) >>
                         write(elements.delete(ordinal)) >>
                         left[NEWSTACK, Result, List[OUT]](Redirect(".."))
                       } else
@@ -309,16 +303,16 @@ def delist[OUT, NEWSTACK, INNER](
   )(
     terminalFold: A => Future[Result]
   )(implicit ec: ExecutionContext): Future[Result] =
-    persistence.dataGet.map{
+    persistence.dataGet.map {
       data => program
         .runEither
-        .runState((data, List.empty[List[String]]))
+        .runState(UniformCore(state = data))
         .run
     } >>= {
       _ match {
-        case (Left(result), (db, _)) =>
+        case (Left(result), UniformCore(db, _, _)) =>
           persistence.dataPut(db).map(_ => result)
-        case (Right(a), (db, _)) =>
+        case (Right(a), UniformCore(db, _, _)) =>
           val newDb: DB = if (purgeJourneyOnCompletion) (Monoid[DB].empty) else db
           persistence.dataPut(newDb) >> terminalFold(a)
       }

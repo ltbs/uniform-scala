@@ -35,7 +35,7 @@ package object logictable {
             ax match {
               case Uniform(key,_,_,v) =>
                 val i: Eff[U,X] = for {
-                  a <- ListEffect.values(reader(key):_*)
+                  a <- ListEffect.values(reader(key.mkString("/")):_*)
                   _ <- WriterEffect.tell(s"$key:$a")
                   va <- send(v(a).toEither.map{_.asInstanceOf[X]})
                 } yield (va)
@@ -77,7 +77,7 @@ package object logictable {
         def apply[X](ax: UniformSelect[C,X]): Eff[U, X] =
           ax match {
             case UniformSelectOne(key,opts,v) =>
-              val selections = reader(key).flatten
+              val selections = reader(key.mkString("/")).flatten
 
               val i: Eff[U,X] = for {
                 a <- ListEffect.values(selections:_*)
@@ -89,7 +89,7 @@ package object logictable {
 
             case UniformSelectMany(key,opts,min,max,v) =>
               val i: Eff[U,X] = for {
-                a <- ListEffect.values(reader(key):_*)
+                a <- ListEffect.values(reader(key.mkString("/")):_*)
                 vu = a.asInstanceOf[X]
                 _ <- WriterEffect.tell(s"$key:$vu")
                 va <- send(v(vu).toEither)

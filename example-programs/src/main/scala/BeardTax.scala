@@ -4,6 +4,7 @@ import cats.implicits._
 import org.atnos.eff._
 import ltbs.uniform._
 import enumeratum._
+import java.time.{LocalDate => Date}
 
 object BeardTax { 
 
@@ -13,7 +14,7 @@ object BeardTax {
   case class MemberOfPublic(
     forename: String,
     surname: String,
-    age: java.time.LocalDate
+    age: Date
   )
 
   sealed trait BeardStyle extends EnumEntry
@@ -45,7 +46,8 @@ object BeardTax {
       : _uniformAsk[BeardLength,?]
   ]: Eff[R, Int] =
     for {
-      memberOfPublic <- uask[Option[MemberOfPublic], R]("is-public")
+      memberOfPublic <- Uniform.ask[Option[MemberOfPublic], R]("is-public")
+        .validating("born-in-future", _.map{_.age.isBefore(Date.now)}.getOrElse(true))
       beardStyle     <- uask[BeardStyle, R]("beard-style")            
       beardLength    <- uask[BeardLength, R]("beard-length-mm", validation = {
         case a@(l,h) => if (l > h) "lower-exceeds-higher".invalid else a.valid

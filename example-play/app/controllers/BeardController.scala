@@ -27,7 +27,7 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
     convertMessages(messagesApi.preferred(request))
 
   def renderForm(
-    key: String,
+    key: List[String],
     errors: ErrorTree,
     tell: Html,
     form: Html,
@@ -35,11 +35,11 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
     request: Request[AnyContent],
     messagesIn: Messages
   ): Html = {
-    views.html.chrome(key, errors, tell |+| form, breadcrumbs)(messagesIn, request)
+    views.html.chrome(key.last, errors, tell |+| form, breadcrumbs)(messagesIn, request)
   }
 
   def listingPage[A](
-    key: String,
+    key: List[String],
     errors: ErrorTree,
     elements: List[A],
     messages: Messages
@@ -52,8 +52,8 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
       Future(data = dataIn).map{_ => ()}
   }
 
-  def beardAction(implicit key: String) = {
-
+  def beardAction(key: String) = {
+    implicit val keys: List[String] = key.split("/").toList
     Action.async { implicit request =>
       runWeb(
         program = program[FxAppend[TestProgramStack, PlayStack]]
