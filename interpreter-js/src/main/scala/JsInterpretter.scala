@@ -32,8 +32,6 @@ object JsInterpreter {
     errors: ErrorTree = Tree.empty
   )
 
-  type DB = Map[String,Encoded]
-
   trait Form[T] {
     def render(
       key: String,
@@ -53,7 +51,7 @@ object JsInterpreter {
     def toDataTree(in: T): Tree[String,List[String]]
   }
 
-  type JsStack = Fx.fx2[State[(DB,List[String]), ?], Either[Page, ?]]
+  type JsStack = Fx.fx2[State[UniformCore, ?], Either[Page, ?]]
 
   implicit class JsEffectOps[R, A](e: Eff[R, A]) {
     type _state[Q]  = State[(DB,List[String]),?] |= Q
@@ -137,8 +135,8 @@ object JsInterpreter {
                           errors = e,
                           breadcrumbs = breadcrumbs))
                     case Right(x) =>
-
-                      //put[U, (DB,List[String])]((db + (key -> form.encode(x.asInstanceOf[C])), key :: breadcrumbs)) >>
+                      (db.encoded(keys) = form.encode(x)) >>
+                      crumbPush(keys) >>
                       right[NEWSTACK, Page, OUT](x)
                   }
                 case (Submit(requestedPage),None) => left[NEWSTACK, Page, OUT](
@@ -176,8 +174,9 @@ object JsInterpreter {
                           body = form.render(singleKey, dataTree.forestAtPath(singleKey), err).some,
                           breadcrumbs=breadcrumbs
                         ))
-                    case (Back(_),Some(Right(x))) => crumbPush(keys) >> right[NEWSTACK, Page, OUT](x)
-                  }
+                case (Back(_),Some(Right(x))) =>
+                  crumbPush(keys) >> right[NEWSTACK, Page, OUT](x)
+              }
             } yield (va)
           }
 

@@ -10,6 +10,7 @@ import JsInterpreter._
 import JsImplementations._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import cats.Monoid
+import ltbs.uniform.{DB,UniformCore}
 import ltbs.uniform.web._
 import ltbs.uniform.web.parser._
 import ltbs.uniform.widgets.govuk._
@@ -41,7 +42,7 @@ object PrototypeApp {
 
   @JSExportTopLevel("saveAndContinue")
   def saveAndContinue(pageId: String): Unit = {
-    journey(Submit(pageId))
+    journey(Submit(pageId.split("[.]").toList))
     println(s"state: $state")
   }
 
@@ -54,12 +55,12 @@ object PrototypeApp {
   }
 
   def main(args: Array[String]): Unit = {
-    journey(Back(""))
+    journey(Back(Nil))
     ()
   }
 
   var state: DB = implicitly[Monoid[DB]].empty
-  var breadcrumbs: List[String] = Nil
+  var breadcrumbs: List[List[String]] = Nil
 
   implicit val cmsMessages = CmsMessages.fromText{
     """
@@ -101,20 +102,19 @@ back=back
   """}
 
   @JSExportTopLevel("back")
-  def back(page: String) = journey(Back(page))
-
+  def back(page: String) = journey(Back(page.split("[.]").toList))
 
   def journey(implicit action: Action) = {
-    val (result,(newState,newBreadcrumbs)) = {
+    val (result,UniformCore(newState,newBreadcrumbs,_)) = {
       program[FxAppend[TestProgramStack, JsStack]]
         .useForm(inferJsForm[Option[MemberOfPublic]])
         .useForm(inferJsForm[BeardStyle])
         .useForm(inferJsForm[BeardLength])    
         .runEither
-        .runState((state, List.empty[String]))
+        .runState(UniformCore(state))
         .run
     }
-
+    println("BREADCRUMBS UPDATE:" ++ newBreadcrumbs.toString)
     breadcrumbs = newBreadcrumbs
     state = newState
     result match {
@@ -139,7 +139,7 @@ back=back
 
   def setPage(page: Page): Unit = {
     page.title.map { title =>
-      breadcrumbs = title :: breadcrumbs
+//      breadcrumbs = title.split("[.]").toList :: breadcrumbs
       $("#title").html(messages.span(s"heading.$title"))
       $("#backlink").html(messages.span(s"heading.$title"))      
       $("#continue-button").replaceWith(
@@ -149,9 +149,9 @@ back=back
             |</button>""".stripMargin)
     }
 
-    val backlink = { page.breadcrumbs.headOption match {
+    val backlink = { breadcrumbs.lastOption match {
       case Some(back) =>
-        s"""<a href="#" onclick="back('$back');" class="govuk-back-link">${messages.getMessage(List(s"back-to-$back","back"))}</a>"""
+        s"""<a href="#" onclick="back('${back.mkString(".")}');" class="govuk-back-link">${messages.getMessage(List(s"back-to-${back.mkString(".")}","back"))}</a>"""
       case None => ""
     }}
 
