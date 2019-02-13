@@ -6,11 +6,11 @@ import ltbs.uniform._
 import org.atnos.eff._
 import org.atnos.eff.all._
 import org.atnos.eff.syntax.all._
-import cats.data.Writer
+import cats.data.{Writer,State}
 
 package object logictable {
 
-  type LogicTableStack = Fx.fx3[Either[String,?], Writer[String,?], List]
+  type LogicTableStack = Fx.fx4[State[UniformCore, ?], Either[String,?], Writer[String,?], List]
 
   type Examples[T] = Function[String, List[T]]
 

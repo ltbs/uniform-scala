@@ -20,9 +20,9 @@ case class UniformB[IN, OUT] private (
   def defaultTo(out: OUT): UniformB[IN, OUT] =
     UniformB(key,tell,Some(out), validation)
 
-  // def emptyUnless[R :_uniform[IN, OUT, ?]  : _uniformCore](b: => Boolean)(implicit monoid: cats.Monoid[OUT]): Eff[R, OUT] = {
-  //   if(b) (uniformBToStack(this)) else Eff.pure[R,OUT](monoid.empty)
-  // }
+  def emptyUnlessPred[R :_uniform[IN, OUT, ?]  : _uniformCore](b: => Boolean)(implicit monoid: cats.Monoid[OUT]): Eff[R, OUT] = {
+    if(b) (uniformBToStack(this)) else Eff.pure[R,OUT](monoid.empty)
+  }
 
   def emptyUnless[R :_uniform[IN, OUT, ?]  : _uniformCore](eb: Eff[R,Boolean])(implicit monoid: cats.Monoid[OUT]): Eff[R,OUT] = for {
     opt <- eb
@@ -31,11 +31,6 @@ case class UniformB[IN, OUT] private (
 
   def in[R :_uniform[IN, OUT, ?]  : _uniformCore]: Eff[R,OUT] = uniformBToStack(this)
 } 
-
-object UniformB {
-  def ask[OUT](key: String) =
-    UniformB[Unit,OUT](key, (), None, {v:OUT => v.valid})
-}
 
 case class Uniform[IN, OUT, STACK] private (
   key: List[String],

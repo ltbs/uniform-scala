@@ -41,17 +41,18 @@ object BeardTax {
     }
 
   def program[R
+      : _uniformCore
       : _uniformAsk[Option[MemberOfPublic],?]
       : _uniformAsk[BeardStyle,?]
       : _uniformAsk[BeardLength,?]
   ]: Eff[R, Int] =
     for {
-      memberOfPublic <- Uniform.ask[Option[MemberOfPublic], R]("is-public")
+      memberOfPublic <- ask[Option[MemberOfPublic]]("is-public")
         .validating("born-in-future", _.map{_.age.isBefore(Date.now)}.getOrElse(true))
-      beardStyle     <- uask[BeardStyle, R]("beard-style")            
-      beardLength    <- uask[BeardLength, R]("beard-length-mm", validation = {
-        case a@(l,h) => if (l > h) "lower-exceeds-higher".invalid else a.valid
-      }) emptyUnless (memberOfPublic.isDefined)
+      beardStyle     <- ask[BeardStyle]("beard-style")            
+      beardLength    <- ask[BeardLength]("beard-length-mm")
+        .validating("lower-exceeds-higher", {case (l,h) => l < h })
+        .emptyUnlessPred(memberOfPublic.isDefined)
     } yield costOfBeard(beardStyle, beardLength)
 
 }

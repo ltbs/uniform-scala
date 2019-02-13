@@ -8,10 +8,14 @@ object SingleAndList {
   type UFInt[A] = UniformAsk[Int,A]
   type UFIntString[A] = Uniform[Int,String,A]
 
-  def program[R: _uniformAsk[Int,?] : _uniform[Int,String,?]]: Eff[R, String] =
+  def program[R
+      : _uniformCore
+      : _uniformAsk[Int,?]
+      : _uniform[Int,String,?]
+  ]: Eff[R, String] =
     for {
-      a <- uask[Int, R]("single")
-      i <- uniform[Int, String, R]("i", a)
+      a <- ask[Int]("single")
+      i <- dialogue[Int, String]("i")(a)
     } yield (i)
 
 }

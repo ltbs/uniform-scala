@@ -10,14 +10,15 @@ import ltbs.uniform._
 import cats.data.State
 import ltbs.uniform.{Tree}
 import ltbs.uniform.web._
+import play.twirl.api.Html
 
 object JsInterpreter {
 
   sealed trait Action {
-    def key: String
+    def key: List[String]
   }
-  case class Back(key: String) extends Action
-  case class Submit(key: String) extends Action
+  case class Back(key: List[String]) extends Action
+  case class Submit(key: List[String]) extends Action
 
   def extractData(fieldSet: JQuery): Tree[String,List[String]] = {
     val fields = $("fieldset.uniform").serialize()
@@ -26,7 +27,7 @@ object JsInterpreter {
 
   case class Page(
     title: Option[String] = None,
-    breadcrumbs: List[String],
+    breadcrumbs: List[List[String]],
     body: Option[String] = None,
     errors: ErrorTree = Tree.empty
   )
@@ -62,89 +63,128 @@ object JsInterpreter {
       x => f(x).toEither.leftMap(Tree(_))
     }
 
-    def useForm[C, U](
-      form: Form[C]
+    def useForm[OUT, NEWSTACK](
+      form: Form[OUT]
     )(
-      implicit member: Member.Aux[UniformAsk[C,?], R, U],
-      stateM: _state[U],
-      eitherM: _either[U],
-      action: Action
-    ): Eff[U, A] = e.translate(
-      new Translate[UniformAsk[C,?], U] {
-        def apply[X](ax: UniformAsk[C,X]): Eff[U, X] = {
-          ax match {
-            case UniformAsk((key::kx), default, validation) =>
-              val i: Eff[U,X] = for {
-                state <- get[U, (DB,List[String])]
-                (db,breadcrumbs) = state
-                va <- {
+      implicit member: Member.Aux[UniformAsk[OUT,?], R, NEWSTACK],
+      stateM: _uniformCore[NEWSTACK],
+      eitherM: _either[NEWSTACK],
+      action: Action        
+    ): Eff[NEWSTACK, A] =
+      useForm[Unit,OUT, NEWSTACK]({_ => Html("")}, form)
 
-                  val dbData: Option[Either[ErrorTree,X]] =
-                    db.get(key).map{d => form.decode(d).map(_.asInstanceOf[X]).flatMap{
-                      validationToErrorTree(validation)
-                    }}
-                  println(s"dbdata: $dbData")
-                  val formData: Either[ErrorTree,X] = form.fromNode(key, $("fieldset.uniform")) map {_.asInstanceOf[X]}
+    def useForm[IN, OUT, NEWSTACK](
+      renderTell: IN => Html,
+      form: Form[OUT]
+    )(
+      implicit member: Member.Aux[Uniform[IN,OUT,?], R, NEWSTACK],
+      stateM: _uniformCore[NEWSTACK],
+      eitherM: _either[NEWSTACK],
+      action: Action        
+    ): Eff[NEWSTACK, A] = useFormMap(renderTell, _ => form)
 
+    def useFormMap[OUT, NEWSTACK](
+      forms: List[String] => Form[OUT]
+    )(
+      implicit member: Member.Aux[UniformAsk[OUT,?], R, NEWSTACK],
+      stateM: _uniformCore[NEWSTACK],
+      eitherM: _either[NEWSTACK],
+      action: Action        
+    ): Eff[NEWSTACK, A] = 
+      useFormMap[Unit,OUT,NEWSTACK]({_ => Html("")}, forms)
 
-                      val dataTree: Tree[String, List[String]] = action match {
-                        case Submit(_) =>
-                          extractData($("#content"))
-                        case Back(_) => db.get(key).map(FormUrlEncoded.readString(_).toInputTree).getOrElse(Tree.empty[String, List[String]])
-                      }
+    def useFormMap[IN, OUT, NEWSTACK](
+      renderTell: IN => Html,
+      forms: List[String] => Form[OUT]
+    )(
+      implicit member: Member.Aux[Uniform[IN,OUT,?], R, NEWSTACK],
+      stateM: _uniformCore[NEWSTACK],
+      eitherM: _either[NEWSTACK],
+      action: Action        
+    ): Eff[NEWSTACK, A] = e.translate(
+      new Translate[Uniform[IN, OUT,?], NEWSTACK] {
+        def apply[X](ax: Uniform[IN, OUT,X]): Eff[NEWSTACK, X] = {
 
-                  (action,dbData) match {
-                    case (Submit(`key`),_) =>
-                      formData >>= validationToErrorTree(validation) match {
-                        case Left(e) =>
-                          left[U, Page, X](Page(body = form.render(key, dataTree.forestAtPath(key), e).some, errors = e, breadcrumbs = breadcrumbs))
-                        case Right(x) =>
-                          put[U, (DB,List[String])]((db + (key -> form.encode(x.asInstanceOf[C])), key :: breadcrumbs)) >>
-                          right[U, Page, X](x)
-                      }
-                    case (Submit(requestedPage),None) => left[U, Page, X](
-                      Page(
-                        title = key.some,
-                        body = form.render(key, None, Tree.empty).some,
-                        breadcrumbs=breadcrumbs
-                      ))
-                    case (Submit(requestedPage),Some(Right(x))) if !breadcrumbs.contains(requestedPage) =>
-                      put[U, (DB,List[String])]((db,key :: breadcrumbs)) >> right[U, Page, X](x)
-                    case (Submit(requestedPage),Some(Left(e))) =>                      
-                      left[U, Page, X](
+          def real: Eff[NEWSTACK,OUT] = {
+            val Uniform(keys, tell, default, validation) = ax
+            val form = forms(keys)
+            val singleKey = keys.mkString(".")
+            val formData: Either[ErrorTree,OUT] =
+              form.fromNode(keys.last, $("fieldset.uniform"))
+
+            def toTree(input: Option[Encoded]): Tree[String, List[String]] = action match {
+              case Submit(_) =>
+                extractData($("#content"))
+              case Back(_) =>
+                input.map(FormUrlEncoded.readString(_).toInputTree).getOrElse(Tree.empty)
+            }
+
+            def toDbEntry(input: Option[Encoded]): Option[Either[ErrorTree,OUT]] =
+              input.map{d => form.decode(d).flatMap{validationToErrorTree(validation)}}
+
+            for {
+              encodedData <- db.encoded.get(keys)
+              dataTree = toTree(encodedData)
+              dbData = toDbEntry(encodedData)
+              breadcrumbs <- breadcrumbs
+              va <- (action,dbData) match {
+                case (Submit(`keys`),_) =>
+                  formData >>= validationToErrorTree(validation) match {
+                    case Left(e) =>
+                      left[NEWSTACK, Page, OUT](
                         Page(
-                          title = key.some,
-                          body = form.render(key, None, e).some,
-                          errors=e,
-                          breadcrumbs=breadcrumbs
-                        ))
-                    case (Back(`key`),_) | (Back(_),None | Some(Left(_))) | (Submit(_),Some(Right(_)))=>
+                          body = form.render(singleKey, dataTree.forestAtPath(keys.last), e).some,
+                          errors = e,
+                          breadcrumbs = breadcrumbs))
+                    case Right(x) =>
+
+                      //put[U, (DB,List[String])]((db + (key -> form.encode(x.asInstanceOf[C])), key :: breadcrumbs)) >>
+                      right[NEWSTACK, Page, OUT](x)
+                  }
+                case (Submit(requestedPage),None) => left[NEWSTACK, Page, OUT](
+                  Page(
+                    title = singleKey.some,
+                    body = form.render(singleKey, None, Tree.empty).some,
+                    breadcrumbs=breadcrumbs
+                  ))
+                case (Submit(requestedPage),Some(Right(x))) if !breadcrumbs.contains(requestedPage) =>
+                  crumbPush(keys) >> 
+                  right[NEWSTACK, Page, OUT](x)
+                case (Submit(requestedPage),Some(Left(e))) =>
+                  left[NEWSTACK, Page, OUT](
+                    Page(
+                      title = singleKey.some,
+                      body = form.render(singleKey, None, e).some,
+                      errors=e,
+                      breadcrumbs=breadcrumbs
+                    ))
+                    case (Back(`keys`),_) | (Back(_),None | Some(Left(_))) | (Submit(_),Some(Right(_)))=>
                       val err = dbData match {
                         case Some(Left(e)) => e
                         case _ => Tree.empty[String, String]
                       }
 
                       val dataTree: Tree[String, List[String]] = dbData match {
-                        case Some(Right(x)) => Tree(Nil, Map(key -> form.toDataTree(x.asInstanceOf[C])))
+                        case Some(Right(x)) => Tree(Nil, Map(singleKey -> form.toDataTree(x)))
                         case _              => Tree.empty
                       }
-                      println(s"dataTree: ${dataTree.forestAtPath(key)}")
-                      left[U, Page, X](
+                      println(s"dataTree: ${dataTree.forestAtPath(singleKey)}")
+                      left[NEWSTACK, Page, OUT](
                         Page(
-                          title = key.some,
+                          title = singleKey.some,
                           errors = err,
-                          body = form.render(key, dataTree.forestAtPath(key), err).some,
+                          body = form.render(singleKey, dataTree.forestAtPath(singleKey), err).some,
                           breadcrumbs=breadcrumbs
                         ))
-                    case (Back(_),Some(Right(x))) =>                      
-                      put[U, (DB,List[String])]((db,key :: breadcrumbs)) >> right[U, Page, X](x)
+                    case (Back(_),Some(Right(x))) => crumbPush(keys) >> right[NEWSTACK, Page, OUT](x)
                   }
-                }
-              } yield va
-              i
+            } yield (va)
           }
+
+          real.map(_.asInstanceOf[X])
         }
       }
     )
+
   }
 }

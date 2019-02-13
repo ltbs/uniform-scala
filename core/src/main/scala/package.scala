@@ -27,12 +27,6 @@ package object uniform {
 
   type DB = Map[List[String],Encoded]
 
-  implicit def uniformToStack[IN,OUT,R :_uniform[IN, OUT, ?]](inner: Uniform[IN,OUT,R]): Eff[R,OUT] =
-    inner match {
-      case Uniform(key,tell,default,validation) =>
-            send[Uniform[IN,OUT,?], R, OUT](Uniform(key,tell,default,validation))
-    }
-
   implicit def uniformBToStack[IN,OUT,R :_uniform[IN, OUT, ?] : _uniformCore](
     inner: UniformB[IN,OUT]
   ): Eff[R,OUT] =
@@ -97,29 +91,6 @@ package object uniform {
     _ <- pathPop
   } yield (a)
 
-  def uniformP[IN,OUT,R :_uniform[IN, OUT, ?]](
-    key: List[String],
-    tell: IN,
-    default: Option[OUT] = None,
-    validation: OUT => Validated[String,OUT] = {v:OUT => v.valid}
-  ): Eff[R, OUT] =
-    send[Uniform[IN,OUT,?], R, OUT](Uniform(key,tell,default,validation))
-
-  def uniform[IN,OUT,R :_uniform[IN, OUT, ?]](
-    key: String,
-    tell: IN,
-    default: Option[OUT] = None,
-    validation: OUT => Validated[String,OUT] = {v:OUT => v.valid}
-  ): Eff[R, OUT] =
-    uniformP(List(key),tell,default,validation)
-
-  def uaskP[OUT,R :_uniformAsk[OUT, ?]](
-    key: List[String],
-    default: Option[OUT] = None,
-    validation: OUT => Validated[String,OUT] = {v:OUT => v.valid}
-  ): Eff[R, OUT] =
-    send[UniformAsk[OUT,?], R, OUT](Uniform(key,(),default,validation))
-
   def ask[OUT](key: String) =
     UniformB[Unit,OUT](key, (), None, {v:OUT => v.valid})
 
@@ -132,41 +103,13 @@ package object uniform {
   def end[IN](key: String)(value: IN) =
     UniformB[IN,Unit](key, value, None, {_:Unit => "journey.end".invalid})
 
-  def uask[OUT,R :_uniformAsk[OUT, ?]](
-    key: String,
+  def uniformP[IN,OUT,R :_uniform[IN, OUT, ?]](
+    key: List[String],
+    tell: IN,
     default: Option[OUT] = None,
     validation: OUT => Validated[String,OUT] = {v:OUT => v.valid}
   ): Eff[R, OUT] =
-    send[UniformAsk[OUT,?], R, OUT](Uniform(List(key),(),default,validation))
-
-  def utell[IN,R :_uniformTell[IN, ?]](
-    key: String,
-    tell: IN
-  ): Eff[R, Unit] =
-    send[UniformTell[IN,?], R, Unit](Uniform(List(key),tell, None, {v:Unit => v.valid}))
-
-  def uaskList[R, T](
-    key: String,
-    min: Int = 0,
-    max: Int = Int.MaxValue
-  )(implicit member: UniformAskList[T, ?] |= R): Eff[R, List[T]] =
-    send[UniformAskList[T, ?], R, List[T]](
-      UniformAskList(List(key), min, max)
-    )
-
-  def uaskOneOf[R, T](key: String, options: Set[T], validation: T => Validated[String,T] = {v:T => v.valid})(implicit member: UniformSelect[T, ?] |= R): Eff[R, T] =
-    send[UniformSelect[T, ?], R, T](UniformSelectOne(List(key), options, validation))
-
-  def uaskNOf[R, T](
-    key: List[String],
-    options: Set[T],
-    min: Int = 0,
-    max: Int = Int.MaxValue,
-    validation: Set[T] => Validated[String,Set[T]] = {v:Set[T] => v.valid}
-  )(implicit member: UniformSelect[T, ?] |= R): Eff[R, Set[T]] =
-    send[UniformSelect[T, ?], R, Set[T]](
-      UniformSelectMany(key, options, min, Math.min(max, options.size), validation)
-    )
+    send[Uniform[IN,OUT,?], R, OUT](Uniform(key,tell,default,validation))
 
   implicit class RichMonoidOps[R, A](e: Eff[R, A])(implicit monoid: Monoid[A]) {
     
