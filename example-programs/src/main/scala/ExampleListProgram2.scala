@@ -24,11 +24,12 @@ object WindowTax2 {
     orientation: Orientation
   )
 
-  type WindowsTaxStack = Fx.fx4[
-    UniformAsk[List[Window], ?],
-    UniformAsk[Int, ?],
-    UniformAsk[(Int,Int), ?],
-    UniformAsk[Orientation, ?]
+  type WindowsTaxStack = Fx.fx5[
+    UniformAsk[List[Window],?],
+    UniformAsk[Int,?],
+    UniformAsk[(Int,Int),?],
+    UniformAsk[Orientation,?],
+    UniformAsk[Boolean,?]
   ]
 
   def program[R
@@ -38,6 +39,14 @@ object WindowTax2 {
     for {
       windows <- ask[List[Window]]("windows")
     } yield windows.size
+
+  type SingleWindowStack = Fx.fx5[
+      cats.data.State[UniformCore,?],
+      UniformAsk[Int,?],
+      UniformAsk[(Int,Int),?],
+      UniformAsk[Orientation,?],
+      UniformAsk[Boolean,?]
+  ]
 
   def singleWindowProgram[R
       : _uniformCore
@@ -53,17 +62,17 @@ object WindowTax2 {
       ask[Int]("floor")
         .defaultOpt(default.map(_.floor)).in[R],
 
-      ask[(Int,Int)]("dimensions")
-        .defaultOpt(default.map(_.dimensions)).in[R],
+      // ask[(Int,Int)]("dimensions")
+      //   .defaultOpt(default.map(_.dimensions)).in[R],
 
-      ask[Int]("yearsInPlace")
-        .defaultOpt(default.map(_.yearsInPlace)) emptyUnless
-        ask[Boolean]("existing")
-        .defaultOpt(default.map(_.yearsInPlace != 0)),
+      // ask[Int]("yearsInPlace")
+      //   .defaultOpt(default.map(_.yearsInPlace)) emptyUnless
+      //   ask[Boolean]("existing")
+      //   .defaultOpt(default.map(_.yearsInPlace != 0)),
 
       ask[Orientation]("orientation")
-        .defaultOpt(default.map(_.orientation)).in[R]
+         .defaultOpt(default.map(_.orientation)).in[R]
 
-    ).mapN(Window)
+    ).mapN(Window(_,(1,1),0, _))
 
 }

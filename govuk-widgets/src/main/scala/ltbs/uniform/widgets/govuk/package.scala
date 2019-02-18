@@ -3,6 +3,7 @@ package ltbs.uniform.widgets
 import ltbs.uniform._, web._
 import enumeratum._
 import play.twirl.api.Html
+import cats.implicits._
 
 package object govuk extends InferForm {
 
@@ -12,8 +13,8 @@ package object govuk extends InferForm {
   def compoundField(key: String, values: Input, errors: ErrorTree, messages: Messages)(inner: Html): Html = 
     html.compoundfield(key, errors, messages)(inner)
 
-  def soloField(key: String, values: Input,errors: ErrorTree,messages: Messages)(inner: Html): Html =
-    html.standardfield(key, errors, messages)(inner)
+  def soloField(key: String, values: Input,errors: ErrorTree,messages: Messages)(ask: Html)(tell: Html): Html =
+    html.standardfield(key, errors, messages)(ask)(tell)
 
   def selectionOfFields(
     inner: List[(String, (String, Input, ErrorTree, Messages) => Html)]
@@ -107,6 +108,38 @@ package object govuk extends InferForm {
       val path = key.split("[.]").filter(_.nonEmpty).tail
       val existing: List[String] = values.atPath(path:_*).getOrElse(Nil)
       html.checkboxes(key, options.map{_.toString}, existing, errors, messages)
+    }
+  }
+
+  val jsListControlHtmlField = new ltbs.uniform.web.HtmlField[ListControl] {
+    def render(key: String, values: Input, errors: ErrorTree, messages: Messages) = {
+      val path = key.split("[.]").filter(_.nonEmpty).tail
+      val existing: Option[String] = values.atPath(path:_*).flatMap{_.headOption}
+
+      val visibleRadios: Html = {
+        val options: Seq[ListControl] = Seq(AddAnother, Continue)
+        html.radios(key, options.map{_.toString}, existing, errors, messages)
+      }
+
+      val hiddenFields = Html {
+        s"""|<input name="$key" value="Delete" type="radio" style="display:none;" />
+            |<input type="hidden" name="$key.Delete.ordinal" value="" />
+            |<input name="$key" value="Edit" type="radio" style="display:none;" />
+            |<input type="hidden" name="$key.Edit.ordinal" value="" />
+            |""".stripMargin
+      }
+
+      visibleRadios |+| hiddenFields
+    }
+  }
+
+  val jdkListControlHtmlField = new ltbs.uniform.web.HtmlField[ListControl] {
+    def render(key: String, values: Input, errors: ErrorTree, messages: Messages) = {
+      val path = key.split("[.]").filter(_.nonEmpty).tail
+      val existing: Option[String] = values.atPath(path:_*).flatMap{_.headOption}
+
+      val options: Seq[ListControl] = Seq(AddAnother, Continue)
+      html.radios(key, options.map{_.toString}, existing, errors, messages)
     }
   }
 

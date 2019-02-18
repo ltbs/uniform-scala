@@ -1,6 +1,6 @@
 @import ltbs.uniform.widgets.govuk.html._
 
-@(key: String, errors: Any, content: Html, breadcrumbs: List[String] = Nil)(implicit messages: ltbs.uniform.web.Messages, request: Request[AnyContent])
+@(key: String, errors: Any, form: Html, tell: Html, breadcrumbs: List[String] = Nil)(implicit messages: ltbs.uniform.web.Messages, request: Request[AnyContent])
 <!DOCTYPE html>
 <html lang="en" class="govuk-template js-enabled">
   <head>
@@ -9,6 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!--[if gt IE 8]><!--><link href="/assets/govuk-frontend-ie8-2.4.0.min.css" media="screen" rel="stylesheet" type="text/css"><!--<![endif]-->
     <link rel="stylesheet" type="text/css" href="/assets/govuk-frontend-2.4.0.min.css">
+    <link rel="stylesheet" type="text/css" href="/assets/uniform-link-buttons.css">    
     <script type="text/javascript" src="/assets/jquery-3.3.1.min.js" ></script>    
     <script type="text/javascript" src="/assets/govuk-frontend-2.4.0.min.js" ></script>
     <script type="text/javascript" src="/assets/show-hide-content.js" ></script>    
@@ -45,10 +46,11 @@
               </ol>
 	    </div>
           *****************************************@
-	  
+      @tell
+
       @helper.form(action = play.api.mvc.Call("post", key)) {
         @helper.CSRF.formField 
-        @content
+        @form
             <button type="submit" class="govuk-button">Save and Continue</button>
       }
         </div>

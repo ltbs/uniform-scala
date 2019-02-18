@@ -35,7 +35,7 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
     request: Request[AnyContent],
     messagesIn: Messages
   ): Html = {
-    views.html.chrome(key.last, errors, tell |+| form, breadcrumbs)(messagesIn, request)
+    views.html.chrome(key.last, errors, form, tell, breadcrumbs)(messagesIn, request)
   }
 
   def listingPage[A](

@@ -34,11 +34,11 @@ object JsImplementations {
     def toDataTree(in: A): Input =
       parser.unbind(in)
 
-    def render(key: String, existing: Option[Input], errors: ErrorTree): String = {
+    def render(key: String, existing: Option[Input], errors: ErrorTree, tell: play.twirl.api.Html): String = {
       val values: Input = existing.getOrElse(Tree(Nil))
 
       s"""<fieldset id="uniform" class="uniform" style="border: 0px white; padding: 0px;">""" ++
-      html.render(key, values, errors, messages).toString ++
+      html.render(key, values, errors, messages, tell).toString ++
       "</fieldset>"
     }
   }

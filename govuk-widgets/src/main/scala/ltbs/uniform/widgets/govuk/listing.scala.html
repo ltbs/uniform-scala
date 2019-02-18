@@ -1,32 +1,37 @@
 @import cats.implicits._
 
-@(key: String, items: List[Html], errors: ErrorTree, showEdit: Boolean, min: Int, max: Int, messages: Messages)
+@(key: String, items: List[(Html, Option[Html], Option[Html])], min: Int, max: Int, messages: Messages)
 
 @if(items.nonEmpty) {
-    <table class="margin-bottom-30">
-    @for((item, id) <- items.zipWithIndex) {
-        <tr>
-            <td>
+<table class="govuk-table">
+  <caption class="govuk-table__caption">Caption</caption>
+
+  <thead class="govuk-table__head">
+    <tr class="govuk-table__row">
+      <th class="govuk-table__header" scope="col">Item</th>
+      <th class="govuk-table__header" scope="col">Delete</th>
+      <th class="govuk-table__header" scope="col">Edit</th>      
+    </tr>
+  </thead>
+
+  <tbody class="govuk-table__body">
+    @for(((item, editLink, deleteLink), id) <- items.zipWithIndex) {
+        <tr class="govuk-table__row">
+	  <td class="govuk-table__cell">
             @item
-            </td>
-            @if(items.length > min) {
-                <td class="@if(showEdit) {align-centre} else {align-right}">
-                    <button name="@key" value="Delete.@id" class="link-button no-shadow">@messages(List(s"$key.delete", "delete"))</button>
-                </td>
-            } else {
-                <td/>
-            }
-            @if(showEdit) {
-                <td class="align-right">
-                    <button name="@key" value="Edit.@id" class="link-button no-shadow">@messages(List(s"$key.edit", "Change"))</button>
-                </td>
-            } else {
-                <td/>
-            }
+	  </td>
+          <td class="govuk-table__cell align-centre">
+	    @if(items.length > min) {
+              @deleteLink
+	    } 
+          </td>
+
+          <td class="govuk-table__cell align-right">
+            @editLink
+          </td>
 
         </tr>
     }
-    </table>
+  </tbody>
+</table>
 }
-
-@radios(key, Seq(s"$key.addAnother",s"$key.continue"), None, Tree.empty[String,String], messages)

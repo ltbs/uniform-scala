@@ -36,7 +36,7 @@ class WindowTaxController @Inject()(
     request: Request[AnyContent],
     messagesIn: Messages
   ): Html = {
-    views.html.chrome(key.last, errors, tell |+| form, breadcrumbs)(messagesIn, request)
+    views.html.chrome(key.last, errors, form, tell, breadcrumbs)(messagesIn, request)
   }
 
   def listingPage[A](
@@ -58,30 +58,29 @@ class WindowTaxController @Inject()(
     implicit val keys: List[String] = key.split("/").toList    
 
     type STACKZ = FxAppend[
-      Fx.fx6[
+      Fx.fx7[
         UniformAsk[List[Window],?],
         Uniform[List[Window],ListControl,?],
         UniformAsk[Int,?],
         UniformAsk[(Int,Int),?],
         UniformAsk[Orientation,?],
-        UniformAsk[Boolean,?]
+        UniformAsk[Boolean,?],
+        Uniform[Window,Boolean,?]
       ],
       PlayStack
     ]
 
-    type STACKY = Fx.fx5[
+    type STACKY = Fx.fx6[
       cats.data.State[UniformCore,?],
       UniformAsk[Int,?],
       UniformAsk[(Int,Int),?],
       UniformAsk[Orientation,?],
-      UniformAsk[Boolean,?]
+      UniformAsk[Boolean,?],
+      Uniform[Window,Boolean,?]
     ]
 
-    def fu : List[Window] => Html = fu2.toHtml _
-    def fu2 : Htmlable[List[Window]] = new Htmlable[List[Window]] {
-      def toHtml(lw: List[Window]): Html =
-        Html(lw.zipWithIndex.map(_.toString).mkString("<br />"))
-    }
+
+    def fr(i:Window): Html = Html(i.toString)
 
     def delistSub[S: _uniform[Unit,Window,?] : _uniformCore](
       key: String,
@@ -89,18 +88,31 @@ class WindowTaxController @Inject()(
       default: Option[Window]
     ): Eff[S,Window] = ask[Window](s"add")
 
+    implicit val listControlHtmlField = jdkListControlHtmlField
+
     Action.async { implicit request =>
+
+      val csrf = _root_.views.html.helper.CSRF.formField
+      def fu3(messages: Messages): List[Window] => Html = listingTable(csrf)(
+        "windows",
+        {ltbs.uniform.widgets.govuk.html.listing(_,_,_,_,_)},
+        fr,
+        messages
+      )(_)
+
+
       runWeb(
         program = program[STACKZ]
           .delist{
             (existing: List[Window], default: Option[Window]) =>
             singleWindowProgram[STACKY](existing,default)
           }
-          .useForm(fu, PlayForm.automatic[ListControl])
+          .useForm(fu3(messages(request)), PlayForm.automatic[ListControl])
           .useForm(PlayForm.automatic[Int])
           .useForm(PlayForm.automatic[(Int,Int)])
           .useForm(PlayForm.automatic[Orientation])
-          .useForm(PlayForm.automatic[Boolean]),
+          .useForm(PlayForm.automatic[Boolean])
+          .useForm(fr, PlayForm.automatic[Boolean]),
         persistence
       )(
         a => Future.successful(Ok(s"You have £$a to pay"))
