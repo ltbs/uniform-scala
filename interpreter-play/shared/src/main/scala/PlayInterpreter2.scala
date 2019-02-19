@@ -22,7 +22,6 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
   def renderForm(
     key: List[String],
     errors: ErrorTree,
-    tell: Html,
     form: Html,
     breadcrumbs: List[String],
     request: Request[AnyContent],
@@ -77,42 +76,18 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
 
   implicit class PlayEffectOps[STACK, A](e: Eff[STACK, A]) {
 
-    def useForm[OUT, NEWSTACK](
-      wmFormC: PlayForm[OUT]
-    )(
-      implicit member: Member.Aux[UniformAsk[OUT,?], STACK, NEWSTACK],
-      state: _core[NEWSTACK],
-      eitherM: _either[NEWSTACK],
-      request: Request[AnyContent],
-      targetId: List[String]
-    ): Eff[NEWSTACK, A] =
-      useFormMap[Unit,OUT,NEWSTACK]({_ => Html("")}, _ => wmFormC)
-
-    def useFormMap[OUT, NEWSTACK](
-      wmFormOUT: List[String] => PlayForm[OUT]      
-    )(
-      implicit member: Member.Aux[UniformAsk[OUT,?], STACK, NEWSTACK],
-      state: _core[NEWSTACK],
-      eitherM: _either[NEWSTACK],
-      request: Request[AnyContent],
-      targetId: List[String]
-    ): Eff[NEWSTACK, A] =
-      useFormMap[Unit,OUT,NEWSTACK]({_ => Html("")}, wmFormOUT)
-
     def useForm[IN, OUT, NEWSTACK](
-      renderTell: IN => Html,      
-      wmFormC: PlayForm[OUT]
+      wmFormC: PlayForm[IN,OUT]
     )(
       implicit member: Member.Aux[Uniform[IN,OUT,?], STACK, NEWSTACK],
       state: _core[NEWSTACK],
       eitherM: _either[NEWSTACK],
       request: Request[AnyContent],
       targetId: List[String]
-    ): Eff[NEWSTACK, A] = useFormMap(renderTell, _ => wmFormC)
+    ): Eff[NEWSTACK, A] = useFormMap(_ => wmFormC)
 
     def useFormMap[IN, OUT, NEWSTACK](
-      renderTell: IN => Html,
-      wmFormOUT: List[String] => PlayForm[OUT]
+      wmFormOUT: List[String] => PlayForm[IN,OUT]
     )(
       implicit member: Member.Aux[Uniform[IN,OUT,?], STACK, NEWSTACK],
       stateM: _core[NEWSTACK],
@@ -122,7 +97,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
     ): Eff[NEWSTACK, A] = e.translate(
       new Translate[Uniform[IN, OUT,?], NEWSTACK] {
         def apply[X](ax: Uniform[IN, OUT,X]): Eff[NEWSTACK, X] = {
-          val wmForm: PlayForm[X] = wmFormOUT(ax.key).imap(_.asInstanceOf[X])(_.asInstanceOf[OUT])
+          val wmForm: PlayForm[IN,X] = wmFormOUT(ax.key).imap(_.asInstanceOf[X])(_.asInstanceOf[OUT])
 
           val baseUrl = request.target.path.replaceFirst(targetId.mkString("/") + "$", "")
 
@@ -150,7 +125,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
                   case ("get", None, `id`) =>
                     log.info(s"$id - nothing in database, step in URI, render empty form")
                     left[NEWSTACK, Result, X](Ok(renderForm(id, Tree.empty,
-                      renderTell(tell), wmForm.render(id.last, None, request),
+                      wmForm.render(id.last, tell, None, request),
                       breadcrumbsToUrl(breadcrumbs), request, messages(request)
                     )))
 
@@ -161,7 +136,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
                                  |\t\t encoded: $encoded """.stripMargin)
                     left[NEWSTACK, Result, X](Ok(
                       renderForm(id, Tree.empty,
-                      renderTell(tell), wmForm.render(id.last, Some(encoded), request),
+                      wmForm.render(id.last, tell, Some(encoded), request),
                       breadcrumbsToUrl(breadcrumbs), request, messages(request)
                     )))
 
@@ -180,8 +155,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
                         log.info(s"  errors: $errors")
                         log.info(s"  data: $data")                                                
                         left[NEWSTACK, Result, X](BadRequest(renderForm(id, errors,
-                          renderTell(tell),
-                          wmForm.render(id.last, Some(data), request, errors),
+                          wmForm.render(id.last, tell, Some(data), request, errors),
                           breadcrumbsToUrl(breadcrumbs), request, messages(request)
                         )))
                       case Right(o) =>

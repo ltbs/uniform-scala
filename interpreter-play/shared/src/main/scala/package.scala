@@ -9,7 +9,7 @@ import ltbs.uniform._
 
 package object playframework {
 
-  type PlayForm[OUT] = SimpleInteractionForm[Request[AnyContent],OUT,Html]
+  type PlayForm[TELL,ASK] = SimpleInteractionForm[Request[AnyContent],TELL,ASK,Html]
 
   type Encoded = String
 

@@ -24,18 +24,17 @@ import InferParser._
 class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayInterpreter2 with I18nSupport {
 
   def messages(request: Request[AnyContent]): Messages =
-    convertMessages(messagesApi.preferred(request))
+    BestGuessMessages(convertMessages(messagesApi.preferred(request)))
 
   def renderForm(
     key: List[String],
     errors: ErrorTree,
-    tell: Html,
     form: Html,
     breadcrumbs: List[String],
     request: Request[AnyContent],
     messagesIn: Messages
   ): Html = {
-    views.html.chrome(key.last, errors, form, tell, breadcrumbs)(messagesIn, request)
+    views.html.chrome(key.last, errors, form, breadcrumbs)(messagesIn, request)
   }
 
   def listingPage[A](
@@ -52,14 +51,16 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
       Future(data = dataIn).map{_ => ()}
   }
 
+  implicit def renderTell: (Unit, String) => Html = {case _ => Html("")}
+
   def beardAction(key: String) = {
     implicit val keys: List[String] = key.split("/").toList
     Action.async { implicit request =>
       runWeb(
         program = program[FxAppend[TestProgramStack, PlayStack]]
-          .useForm(PlayForm.automatic[Option[MemberOfPublic]])
-          .useForm(PlayForm.automatic[BeardStyle])
-          .useForm(PlayForm.automatic[BeardLength]),
+          .useForm(PlayForm.automatic[Unit, Option[MemberOfPublic]])
+          .useForm(PlayForm.automatic[Unit, BeardStyle])
+          .useForm(PlayForm.automatic[Unit, BeardLength]),
         persistence
       )(
         a => Future.successful(Ok(s"You have £$a to pay"))

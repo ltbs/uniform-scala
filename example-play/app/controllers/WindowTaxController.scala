@@ -25,18 +25,17 @@ class WindowTaxController @Inject()(
 ) extends Controller with PlayInterpreter2 with I18nSupport {
 
   def messages(request: Request[AnyContent]): Messages =
-    convertMessages(messagesApi.preferred(request))
+    BestGuessMessages(convertMessages(messagesApi.preferred(request)))
 
   def renderForm(
     key: List[String],
     errors: ErrorTree,
-    tell: Html,
     form: Html,
     breadcrumbs: List[String],
     request: Request[AnyContent],
     messagesIn: Messages
   ): Html = {
-    views.html.chrome(key.last, errors, form, tell, breadcrumbs)(messagesIn, request)
+    views.html.chrome(key.last, errors, form, breadcrumbs)(messagesIn, request)
   }
 
   def listingPage[A](
@@ -100,6 +99,11 @@ class WindowTaxController @Inject()(
         messages
       )(_)
 
+      implicit def renderTellUnit: (Unit, String) => Html = {case _ => Html("")}
+      implicit def renderTellWindows: (List[Window], String) => Html =
+        {case (v,_) => fu3(messages(request))(v) }
+      implicit def renderTellWindow: (Window, String) => Html =
+        {case (v,_) => fr(v) }
 
       runWeb(
         program = program[STACKZ]
@@ -107,12 +111,12 @@ class WindowTaxController @Inject()(
             (existing: List[Window], default: Option[Window]) =>
             singleWindowProgram[STACKY](existing,default)
           }
-          .useForm(fu3(messages(request)), PlayForm.automatic[ListControl])
-          .useForm(PlayForm.automatic[Int])
-          .useForm(PlayForm.automatic[(Int,Int)])
-          .useForm(PlayForm.automatic[Orientation])
-          .useForm(PlayForm.automatic[Boolean])
-          .useForm(fr, PlayForm.automatic[Boolean]),
+          .useForm(PlayForm.automatic[List[Window],ListControl])
+          .useForm(PlayForm.automatic[Unit, Int])
+          .useForm(PlayForm.automatic[Unit, (Int,Int)])
+          .useForm(PlayForm.automatic[Unit, Orientation])
+          .useForm(PlayForm.automatic[Unit, Boolean])
+          .useForm(PlayForm.automatic[Window, Boolean]),
         persistence
       )(
         a => Future.successful(Ok(s"You have £$a to pay"))

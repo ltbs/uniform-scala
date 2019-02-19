@@ -2,26 +2,26 @@ package ltbs.uniform
 
 import cats.implicits._
 
-trait SimpleInteractionForm[IN,A,OUT] {
-  def render(key: String, existing: Option[Encoded], data: IN, errors: ErrorTree): OUT
-  def render(key: String, existing: Option[Encoded], data: IN): OUT =
-    render(key, existing, data, Tree.empty)
+trait SimpleInteractionForm[IN,TELL,ASK,OUT] {
+  def render(key: String, tell: TELL, existing: Option[Encoded], data: IN, errors: ErrorTree): OUT
+  def render(key: String, tell: TELL, existing: Option[Encoded], data: IN): OUT =
+    render(key, tell, existing, data, Tree.empty)
   def receiveInput(data: IN): Encoded
-  def decodeInput(data: IN): Either[ErrorTree,A] = decode(receiveInput(data))
-  def encode(in: A): Encoded
-  def decode(out: Encoded): Either[ErrorTree,A]
+  def decodeInput(data: IN): Either[ErrorTree,ASK] = decode(receiveInput(data))
+  def encode(in: ASK): Encoded
+  def decode(out: Encoded): Either[ErrorTree,ASK]
   
-  def transform[B](f: A => Either[ErrorTree,B])(g: B => A) = {
+  def transform[ASKB](f: ASK => Either[ErrorTree,ASKB])(g: ASKB => ASK) = {
     val fa = this
-    new SimpleInteractionForm[IN,B,OUT] {
-      def decode(out: Encoded): Either[ErrorTree,B] = fa.decode(out).flatMap(f)
+    new SimpleInteractionForm[IN,TELL,ASKB,OUT] {
+      def decode(out: Encoded): Either[ErrorTree,ASKB] = fa.decode(out).flatMap(f)
       def receiveInput(data: IN): Encoded = fa.receiveInput(data)
-      def encode(in: B): Encoded = fa.encode(g(in))
-      def render(key: String, existing: Option[Encoded], data: IN, errors: ErrorTree): OUT =
-        fa.render(key,existing,data, errors)
+      def encode(in: ASKB): Encoded = fa.encode(g(in))
+      def render(key: String, tell: TELL, existing: Option[Encoded], data: IN, errors: ErrorTree): OUT =
+        fa.render(key,tell, existing,data, errors)
     }
   }
 
-  def validating(f: A => Either[ErrorTree,A]): SimpleInteractionForm[IN,A,OUT] =
+  def validating(f: ASK => Either[ErrorTree,ASK]): SimpleInteractionForm[IN,TELL,ASK,OUT] =
     transform(f)(identity)
 }
