@@ -70,10 +70,6 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
   type _core[Q]  = State[UniformCore,?] |= Q
   type _either[Q] = Either[Result,?] |= Q
 
-  // for some reason the compiler isn't letting me inline this as a lambda within delist
-  private def alwaysYes[NEWSTACK,OUT](a: List[String], b: List[OUT], c:OUT): Eff[NEWSTACK, Boolean] =
-    Eff.pure[NEWSTACK,Boolean](true)
-
   implicit class PlayEffectOps[STACK, A](e: Eff[STACK, A]) {
 
     def useForm[IN, OUT, NEWSTACK](
@@ -161,7 +157,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
                       case Left(errors) =>
                         log.info(s"$id - form submitted, step in URI, validation failure")
                         log.info(s"  errors: $errors")
-                        log.info(s"  data: $data")                                                
+                        log.info(s"  data: $data")
                         left[NEWSTACK, Result, X](BadRequest(renderForm(id, errors,
                           wmForm.render(id.last, tell, Some(data), request, errors),
                           breadcrumbsToUrl(breadcrumbs), request, messages(request)
@@ -190,7 +186,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
                           |\t\t method:$method
                           |\t\t dbObject:$dbObject
                           |\t\t targetId:$targetId""".stripMargin)
-                    
+
                     left[NEWSTACK, Result, X](Redirect(s"${baseUrl}${id.mkString("/")}"))
                 }
               } yield ret
@@ -205,7 +201,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
       implicit member: Member.Aux[UniformAsk[List[OUT],?], STACK, NEWSTACK],
       stateM: _uniformCore[NEWSTACK],
       listingPage: _uniform[List[OUT], ListControl, NEWSTACK],
-      confirmationPage: _uniform[OUT, Boolean, INNER],      
+      confirmationPage: _uniform[OUT, Boolean, INNER],
       parser: DataParser[List[OUT]],
       f: IntoPoly[INNER,NEWSTACK]
     ): Eff[NEWSTACK,A] = {
@@ -256,7 +252,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
                     Eff.pure[NEWSTACK,List[OUT]](elements)
 
                   case AddAnother =>
-                    subjourney("add") { 
+                    subjourney("add") {
                       subJourneyP(elements, None).into[NEWSTACK]
                     } >>= {x =>
                       db.remove(id) >>
@@ -265,7 +261,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
                       process(elements :+ x)}
 
                   case Edit(ordinal) =>
-                    subjourney("edit") { 
+                    subjourney("edit") {
                       subJourneyP(elements, elements.get(ordinal)).into[NEWSTACK]
                     } >>= {x =>
                       db.remove(id) >>
@@ -278,14 +274,14 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
                       removeConfirmation(elements, elements(ordinal)).into[NEWSTACK]
                     } >>= {
                       if (_) {
-                        write(elements.delete(ordinal)) >>                        
+                        write(elements.delete(ordinal)) >>
                         db.removeRecursive(id.dropRight(1) :+ "delete") >>
                         db.remove(id) >>
                         process(elements.delete(ordinal))
                       } else
                         db.removeRecursive(id.dropRight(1) :+ "delete") >>
                         db.remove(id) >>
-                        process(elements)                          
+                        process(elements)
 
                     }
                 }}
@@ -337,7 +333,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
   //                 case ltbs.uniform.web.Continue => Eff.pure[NEWSTACK,List[OUT]](elements)
 
   //                 case AddAnother =>
-  //                   subjourney("add") { 
+  //                   subjourney("add") {
   //                     subJourneyP(elements, None).into[NEWSTACK]
   //                   } >>= {x =>
   //                     db.remove(id) >>
@@ -346,7 +342,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
   //                     process(elements :+ x)}
 
   //                 case Edit(ordinal) =>
-  //                   subjourney("edit") { 
+  //                   subjourney("edit") {
   //                     subJourneyP(elements, elements.get(ordinal)).into[NEWSTACK]
   //                   } >>= {x =>
   //                     db.remove(id) >>
@@ -356,7 +352,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
 
   //                 case Delete(ordinal) =>
   //                   removeConfirmation(id, elements, elements(ordinal)) >>= {
-  //                     if (_) { 
+  //                     if (_) {
   //                       db.remove(id) >>
   //                       write(elements.delete(ordinal)) >>
   //                       left[NEWSTACK, Result, List[OUT]](Redirect(".."))
@@ -411,7 +407,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
       s"""|<form action="$key" method="post"> $csrf
           |  <input type="hidden" name="$key.Edit.ordinal" value="$i" />
           |    <button type="submit" name="$key" value="Edit" class="link-button">
-          |      Edit   
+          |      Edit
           |    </button>
           |</form>
           |""".stripMargin
@@ -421,7 +417,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
       s"""|<form action="$key" method="post"> $csrf
           |  <input type="hidden" name="$key.Delete.ordinal" value="$i" />
           |    <button type="submit" name="$key" value="Delete" class="link-button">
-          |      Delete   
+          |      Delete
           |    </button>
           |</form>
           |""".stripMargin
@@ -430,6 +426,6 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
     render(key, elements.zipWithIndex.map{
       case (x,i) => (elementToHtml(x), Some(edit(i)), Some(delete(i)))
     }, 0, Int.MaxValue, messages)
-    
+
   }
 }

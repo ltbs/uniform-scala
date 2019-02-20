@@ -10,7 +10,7 @@ package object govuk extends InferForm {
   def errorSummary(key: String, values: Input, errors: ErrorTree, messages: Messages): Html =
     html.errorsummary(key, values, errors, messages)
 
-  def compoundField(key: String, values: Input, errors: ErrorTree, messages: Messages)(inner: Html): Html = 
+  def compoundField(key: String, values: Input, errors: ErrorTree, messages: Messages)(inner: Html): Html =
     html.compoundfield(key, errors, messages)(inner)
 
   def soloField(key: String, values: Input,errors: ErrorTree,messages: Messages)(ask: Html)(tell: Html): Html =
