@@ -196,7 +196,7 @@ object JsInterpreter {
     )
 
     def delist[OUT, NEWSTACK, INNER: _uniformCore](
-      subJourneyP: (List[OUT], Option[OUT]) => Eff[INNER, OUT],
+      subJourneyP: (List[OUT], Option[OUT]) => Eff[INNER, OUT]
     )(
       implicit member: Member.Aux[UniformAsk[List[OUT],?], STACK, NEWSTACK],
       stateM: _uniformCore[NEWSTACK],

@@ -7,6 +7,7 @@ import org.atnos.eff._
 import org.atnos.eff.all._
 import org.atnos.eff.syntax.all._
 import cats.data.{Writer,State}
+import cats.implicits._ // needed for scala 2.11 either flatMap
 
 package object logictable {
 
