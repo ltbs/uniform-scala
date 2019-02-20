@@ -12,11 +12,16 @@ class SyntaxSpec extends FlatSpec with Matchers {
 
   "A program" should "be compilable and executable with asks, tells and interacts" in {
 
-    def program[R : _uniform[String,Int,?] : _uniformAsk[Option[String],?] : _uniformTell[Option[String],?]]: Eff[R,(Int, Option[String])] = for {
-      a <- uniform[String,Int,R]("hiya","in")
-      b <- uniform[String,Int,R]("hiya2","in")
-      c <- uask[Option[String],R]("c")
-      _ <- utell[Option[String],R]("_",c)
+    def program[R
+        : _uniformCore
+        : _uniform[String,Int,?]
+        : _uniformAsk[Option[String],?]
+        : _uniformTell[Option[String],?]
+    ]: Eff[R,(Int, Option[String])] = for {
+      a <- dialogue[String,Int]("hiya")("in")
+      b <- dialogue[String,Int]("hiya2")("in")
+      c <- ask[Option[String]]("c")
+      _ <- tell[Option[String]]("_")(c)
     } yield ((a + b,c))
 
     implicit class ZeroOps[R, A](e: Eff[R, A]) {
@@ -37,17 +42,19 @@ class SyntaxSpec extends FlatSpec with Matchers {
           })
     }
 
-    type STACK = Fx.fx4[
+    type STACK = Fx.fx5[
+      cats.data.State[UniformCore,?],
       Uniform[String,Int,?],
       UniformTell[Option[String],?],
       UniformAsk[Option[String],?],
       Eval
     ]
 
-    val output = program[STACK]
+    val (output,_) = program[STACK]
       .fromMonoid(SillyEmpty[String,Int])
       .fromMonoid(SillyEmpty[Unit,Option[String]])
       .fromMonoid(SillyEmpty[Option[String],Unit])
+      .runState(UniformCore())
       .runEval
       .run
     output should be ((0,None))

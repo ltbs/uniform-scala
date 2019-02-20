@@ -6,7 +6,7 @@ import ltbs.uniform._
 import enumeratum._
 import java.time.{LocalDate => Date}
 
-object BeardTax { 
+object BeardTax {
 
   type Name        = (String, String)
   type BeardLength = (Int, Int)
@@ -25,7 +25,7 @@ object BeardTax {
     case object Gunslinger       extends BeardStyle
     case object MuttonChops      extends BeardStyle
     case object SoulPatch        extends BeardStyle
-    case object LaughingCavalier extends BeardStyle            
+    case object LaughingCavalier extends BeardStyle
   }
 
   type TestProgramStack = Fx3[
@@ -37,7 +37,7 @@ object BeardTax {
   def costOfBeard(beardStyle: BeardStyle, length: BeardLength): Int =
     beardStyle match {
       case BeardStyle.SoulPatch => length._2 / 10
-      case _                    => length._1 + (length._2 - length._1) / 2        
+      case _                    => length._1 + (length._2 - length._1) / 2
     }
 
   def program[R
@@ -49,7 +49,7 @@ object BeardTax {
     for {
       memberOfPublic <- ask[Option[MemberOfPublic]]("is-public")
         .validating("born-in-future", _.map{_.age.isBefore(Date.now)}.getOrElse(true))
-      beardStyle     <- ask[BeardStyle]("beard-style")            
+      beardStyle     <- ask[BeardStyle]("beard-style")
       beardLength    <- ask[BeardLength]("beard-length-mm")
         .validating("lower-exceeds-higher", {case (l,h) => l < h })
         .emptyUnlessPred(memberOfPublic.isDefined)

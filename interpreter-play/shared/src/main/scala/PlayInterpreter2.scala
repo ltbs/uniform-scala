@@ -148,8 +148,16 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
                   case ("post", _, `id`) =>
                     val data: Encoded =
                       wmForm.receiveInput(request)
-                    
-                    wmForm.decode(data) match {
+
+                    def validationToErrorTree[V](f: V => Validated[String,V]): V => Either[ErrorTree,V] = {
+                      x => f(x).toEither.leftMap(Tree(_))
+                    }
+
+                    def v(in: X): Either[ErrorTree, X] = {
+                      validationToErrorTree(validation)(in.asInstanceOf[OUT]).map{_.asInstanceOf[X]}
+                    }
+
+                    wmForm.decode(data).flatMap(v) match {
                       case Left(errors) =>
                         log.info(s"$id - form submitted, step in URI, validation failure")
                         log.info(s"  errors: $errors")
@@ -192,7 +200,7 @@ trait PlayInterpreter2 extends Compatibility.PlayController {
     )
 
     def delist[OUT, NEWSTACK, INNER: _uniformCore](
-      subJourneyP: (List[OUT], Option[OUT]) => Eff[INNER, OUT],
+      subJourneyP: (List[OUT], Option[OUT]) => Eff[INNER, OUT]
     )(
       implicit member: Member.Aux[UniformAsk[List[OUT],?], STACK, NEWSTACK],
       stateM: _uniformCore[NEWSTACK],

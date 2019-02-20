@@ -4,7 +4,7 @@ title: Writing a program
 position: 1
 ---
 
-# Imports 
+# Imports
 
 Uniform is built upon *monad stacks*, and uses the [Eff Monad
 Library](https://github.com/atnos-org/eff) to do the heavy
@@ -30,7 +30,7 @@ gets to decide how to represent the questions.
 ## Ask function (`uask`)
 
 The most basic interaction with the user is the `uask` function - it
-needs a name and a data type - 
+needs a name and a data type -
 
 ```
 uask[Stack,Int]("favouriteNumber")
@@ -44,24 +44,24 @@ uask[Stack,Int]("favouriteNumber")
 
 In order to run our program must be
 applied to a monad stack. And this
-stack must know about every data-type you will ask the users. 
+stack must know about every data-type you will ask the users.
 
 ```tut:silent
-def intOnlyProgram[Stack : _uniform[Int,?]] = 
-  uask[Stack,Int]("favouriteNumber")
+def intOnlyProgram[Stack : _uniformCore : _uniformAsk[Int,?]] =
+  ask[Int]("favouriteNumber")
 ```
 
 This represents prompting the user for a value - in this case an
-`Int`. 
+`Int`.
 
-Optional fields are treated as you would expect, as are lists - 
+Optional fields are treated as you would expect, as are lists -
 
 ```tut:silent
-def intListProgram[S : _uniform[List[Int],?]] = 
-  uask[S,List[Int]]("favouriteNumbers")
+def intListProgram[S : _uniformCore : _uniformAsk[List[Int],?]] =
+  ask[List[Int]]("favouriteNumbers")
 
-def stringOptProgram[S : _uniform[Option[String],?]] = 
-  uask[S,Option[String]]("optionalDescription")
+def stringOptProgram[S : _uniformCore : _uniformAsk[Option[String],?]] =
+  ask[Option[String]]("optionalDescription")
 ```
 
 ## Composition
@@ -78,13 +78,17 @@ case class Pizza(size: Int, toppings: Iterable[String], base: Int)
 
 We could then write a program to collect the values, it has a return
 type of `Eff[S, Pizza]`. We must however be careful to include *all*
-the values you want to include in the stack - 
+the values you want to include in the stack -
 
 ```tut:fail
-def pizzaProgram[S : _uniform[Int, ?]]: Eff[S, Pizza] = for {
-  size     <- uask[S,Int]("size")
-  toppings <- uask[S,List[String]]("toppings")
-  base     <- uask[S,Int]("base")
+def pizzaProgram[S
+      : _uniformCore
+	  : _uniformAsk[Int]
+    ]: Eff[S, Pizza] = for
+{
+  size     <- ask[Int]("size")
+  toppings <- ask[List[String]]("toppings")
+  base     <- ask[Int]("base")
 } yield Pizza(size, toppings, base)
 ```
 
@@ -96,47 +100,53 @@ this cannot work, so we must add `_uniform[List[String], ?]` to our
 stack -
 
 ```tut:silent
-def pizzaProgram[S : _uniform[Int, ?] : _uniform[List[String], ?]]: Eff[S, Pizza] = for {
-  size     <- uask[S,Int]("size")
-  toppings <- uask[S,List[String]]("toppings")
-  base     <- uask[S,Int]("base")
+def pizzaProgram[S
+      : _uniformCore
+	  : _uniformAsk[Int,?]
+	  : _uniformAsk[List[String],?]
+    ]: Eff[S, Pizza] = for
+{
+  size     <- ask[Int]("size")
+  toppings <- ask[List[String]]("toppings")
+  base     <- ask[Int]("base")
 } yield Pizza(size, toppings, base)
 ```
 
 Alternatively we can use the [Cats](https://typelevel.org/cats/)
 library and take advantage of the applicative syntax for something a
-bit terser -
+bit terser. You will however need to modify the syntax slightly, the following
+will not work -
+
+```tut:fail
+def pizzaProgram2[S
+  : _uniformCore
+  : _uniformAsk[Int, ?]
+  : _uniformAsk[List[String], ?]
+]: Eff[S, Pizza] = (
+  ask[Int]("size"),
+  ask[List[String]]("toppings"),
+  ask[Int]("base")
+).mapN(Pizza)
+```
+
+In this case because we are constructing a tuple first
+of all the scala type inference does not know what stack you want the uniform
+interactions to be part of. You can help it by calling `.in[MYSTACK]` on
+the uniform instruction -
 
 ```tut:silent
 import cats.implicits._
 
-def pizzaProgram2[S : _uniform[Int, ?] : _uniform[List[String], ?]]: Eff[S, Pizza] = 
-(
-  uask[S,Int]("size"), 
-  uask[S,List[String]]("toppings"),
-  uask[S,Int]("base")
+def pizzaProgram2[S
+  : _uniformCore
+  : _uniformAsk[Int, ?]
+  : _uniformAsk[List[String], ?]
+]: Eff[S, Pizza] = (
+  ask[Int]("size").in[S],
+  ask[List[String]]("toppings").in[S],
+  ask[Int]("base").in[S]
 ).mapN(Pizza)
 ```
-
-## Selection functions (`uaskOneOf` and `uaskNOf`)
-
-Sometimes we only want to offer the user a subset of the possible
-values contained within a datatype to choose from. For this we have
-two dedicated functions -
-
-```tut:silent
-def pizzaProgram3[S : _uniformSelect[Int, ?] : _uniformSelect[String, ?] : _uniform[Int,?]]: Eff[S, Pizza] = 
-(
-  uaskOneOf[S,Int]("size", Set(1,2,3)), 
-  uaskNOf[S, String]("toppings", Set("olives", "capers", "pineapple")).map(_.toList),
-  uask[S,Int]("base")
-).mapN(Pizza)
-```
-
-Notice that we have a separate `_uniform[Int,?]` and
-`_uniformSelect[Int,?]` in the type signature - they are not the same 
-thing because the interpreter will probably want to ask the user for
-these values in a different way.
 
 ## Branching Logic
 
@@ -146,10 +156,13 @@ statements
 -
 
 ```tut:silent
-def conditionalProgram[S : _uniformSelect[Int, ?] : _uniform[String, ?]]: Eff[S, (Int,String)] =
-for {
-  size     <- uaskOneOf[S,Int]("size", Set(1,2,3))
-  discount <- if (size == 3) uask[S,String]("discountCode")
+def conditionalProgram[S
+  : _uniformCore
+  : _uniformAsk[Int, ?]
+  : _uniformAsk[String, ?]
+]: Eff[S, (Int,String)] = for {
+  size     <- ask[Int]("size")
+  discount <- if (size >= 3) ask[String]("discountCode").in[S]
               else           Eff.pure[S,String]("")
 } yield (size, discount)
 ```
@@ -164,10 +177,13 @@ There are two functions you can use to simplify this. The first is
 `when` and is used as follows -
 
 ```tut
-def conditionalProgram2[S : _uniformSelect[Int, ?] : _uniform[String, ?]]: Eff[S, (Int,Option[String])] =
-for {
-  size     <- uaskOneOf[S,Int]("size", Set(1,2,3))
-  discount <- uask[S,String]("discountCode") when (size == 3)
+def conditionalProgram2[S
+  : _uniformCore
+  : _uniformAsk[Int, ?]
+  : _uniformAsk[String, ?]
+]: Eff[S, (Int,Option[String])] = for {
+  size     <- ask[Int]("size")
+  discount <- ask[String]("discountCode").in[S] when (size >= 3)
 } yield (size, discount)
 ```
 
@@ -179,8 +195,12 @@ user if they have a discount code and then only if they say yes to
 prompt them for the code itself -
 
 ```tut
-def discountProgram[S : _uniform[Boolean, ?] : _uniform[String, ?]]: Eff[S, Option[String]] =
-  uask[S,String]("discountCode") when uask[S,Boolean]("haveDiscountCode")
+def discountProgram[S
+  : _uniformCore
+  : _uniformAsk[Boolean, ?]
+  : _uniformAsk[String, ?]
+]: Eff[S, Option[String]] =
+  ask[String]("discountCode").in[S] when ask[Boolean]("haveDiscountCode")
 ```
 
 ## Monoid fields (`emptyUnless`)
@@ -191,8 +211,12 @@ likewise a number of ways we can achieve this. A clumbsy option would be to use
 the `map` function -
 
 ```
-def discountProgram2[S : _uniform[Boolean, ?] : _uniform[String, ?]]: Eff[S, String] =
-  (uask[S,String]("discountCode") when uask[S,Boolean]("haveDiscountCode"))
+def discountProgram2[S
+  : _uniformCore
+  : _uniformAsk[Boolean, ?]
+  : _uniformAsk[String, ?]
+]: Eff[S, String] =
+  (ask[String]("discountCode") when ask[Boolean]("haveDiscountCode"))
     .map(_.getOrElse(""))
 ```
 
@@ -206,10 +230,13 @@ However there is a convenience method for this too. If you have a
 `emptyUnless` function.
 
 ```tut
-def discountProgram3[S : _uniform[Boolean, ?] : _uniform[String, ?]]: Eff[S, String] =
-  uask[S,String]("discountCode") emptyUnless uask[S,Boolean]("haveDiscountCode")
+def discountProgram3[S
+  : _uniformCore
+  : _uniformAsk[Boolean, ?]
+  : _uniformAsk[String, ?]
+]: Eff[S, String] =
+  ask[String]("discountCode") emptyUnless ask[Boolean]("haveDiscountCode")
 ```
 
 Otherwise `emptyUnless` works identically to `when` except that it
 returns an `A` rather than an `Option[A]`.
-
