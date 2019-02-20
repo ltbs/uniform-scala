@@ -15,7 +15,7 @@ import ltbs.uniform._
 import ltbs.uniform.web._
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait PlayInterpreter2 extends Compatibility.PlayController {
+trait PlayInterpreter extends Compatibility.PlayController {
 
   def messages(request: Request[AnyContent]): Messages
 
