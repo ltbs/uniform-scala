@@ -23,11 +23,26 @@ import InferParser._
 @Singleton
 class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayInterpreter with I18nSupport {
 
-  def messages(request: Request[AnyContent]): Messages = convertMessages(messagesApi.preferred(request))
+  def messages(request: Request[AnyContent]): Messages =
+    BestGuessMessages(convertMessages(messagesApi.preferred(request)))
 
-  def renderForm(key: String, errors: ErrorTree, form: Html, breadcrumbs: List[String], request: Request[AnyContent], messagesIn: Messages): Html = {
-    views.html.chrome(key, errors, form, breadcrumbs)(messagesIn, request)
+  def renderForm(
+    key: List[String],
+    errors: ErrorTree,
+    form: Html,
+    breadcrumbs: List[String],
+    request: Request[AnyContent],
+    messagesIn: Messages
+  ): Html = {
+    views.html.chrome(key.last, errors, form, breadcrumbs)(messagesIn, request)
   }
+
+  def listingPage[A](
+    key: List[String],
+    errors: ErrorTree,
+    elements: List[A],
+    messages: Messages
+  )(implicit evidence$1: Htmlable[A]): Html = ???
 
   val persistence = new Persistence {
     private var data: DB = Monoid[DB].empty
@@ -36,14 +51,16 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
       Future(data = dataIn).map{_ => ()}
   }
 
-  def beardAction(implicit key: String) = {
+  implicit def renderTell: (Unit, String) => Html = {case _ => Html("")}
 
+  def beardAction(key: String) = {
+    implicit val keys: List[String] = key.split("/").toList
     Action.async { implicit request =>
       runWeb(
         program = program[FxAppend[TestProgramStack, PlayStack]]
-          .useForm(PlayForm.automatic[Option[MemberOfPublic]])
-          .useForm(PlayForm.automatic[BeardStyle])
-          .useForm(PlayForm.automatic[BeardLength]),
+          .useForm(PlayForm.automatic[Unit, Option[MemberOfPublic]])
+          .useForm(PlayForm.automatic[Unit, BeardStyle])
+          .useForm(PlayForm.automatic[Unit, BeardLength]),
         persistence
       )(
         a => Future.successful(Ok(s"You have £$a to pay"))

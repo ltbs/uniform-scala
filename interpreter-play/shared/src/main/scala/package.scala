@@ -9,10 +9,10 @@ import ltbs.uniform._
 
 package object playframework {
 
-  type PlayForm[A] = SimpleInteractionForm[Request[AnyContent],A,Html]
+  type PlayForm[TELL,ASK] = SimpleInteractionForm[Request[AnyContent],TELL,ASK,Html]
 
   type Encoded = String
-  type DB = Map[String,Encoded]
+
   type ValidationError = String
   type ValidatedData[A] = Option[Validated[ValidationError, A]]
 
@@ -20,4 +20,19 @@ package object playframework {
     def imap[A, B](fa: Form[A])(f: A => B)(g: B => A): Form[B] =
       new Form[B](fa.mapping.transform(f, g), fa.data, fa.errors, fa.value.map(f))
   }
+
+  implicit class RichList[ELEM](inner: List[ELEM]) {
+    def replace(ordinal: Int, elem: ELEM): List[ELEM] = 
+      if (ordinal >= 0 && ordinal < inner.size) 
+        inner.take(ordinal) ++ {elem :: inner.drop(ordinal + 1)}
+      else
+        throw new IndexOutOfBoundsException
+
+    def delete(ordinal: Int): List[ELEM] =
+      if (ordinal >= 0 && ordinal < inner.size) 
+        inner.take(ordinal) ++ inner.drop(ordinal + 1)
+      else
+        throw new IndexOutOfBoundsException
+  }
+  
 }

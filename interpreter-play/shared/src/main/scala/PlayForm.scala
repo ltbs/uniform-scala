@@ -1,15 +1,17 @@
 package ltbs.uniform.interpreters.playframework
 
 import ltbs.uniform.web._
+import play.twirl.api.Html
 
 object PlayForm {
-  def automatic[A]( implicit
-    parser: DataParser[A],
-    html: HtmlForm[A],
-    messages: Messages
-  ): PlayForm[A] = 
+  def automatic[TELL,ASK]( implicit
+    parser: DataParser[ASK],
+    html: HtmlForm[ASK],
+    messages: Messages,
+    renderTell: (TELL, String) => Html
+  ): PlayForm[TELL,ASK] = 
     sifProfunctor.lmap(
-      UrlEncodedHtmlForm[A](parser, html, messages)
+      UrlEncodedHtmlForm[TELL,ASK](parser, html, renderTell, messages)
     ){ request =>
 
       val urlEncodedData =

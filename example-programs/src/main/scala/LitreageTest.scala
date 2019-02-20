@@ -16,16 +16,21 @@ object LitreageTest {
       Either.cond(pred(a), a, error)
   }
 
-  type TestProgramStack = Fx2[UniformAsk[Litres,?], UniformAsk[Boolean,?]]
+  type TestProgramStack = Fx2[Uniform[Unit,Litres,?], Uniform[Unit,Boolean,?]]
 
-  def program[R : _uniform[Litres,?] : _uniform[Boolean,?]]: Eff[R, String] = for {
-    n <- uask[R, Litres]("litresProduced", validation = {
-      case a@Some((l,h)) => if (l > h) "lower cannot be more than higher".invalid else a.valid
-      case a => a.valid
-    })
-    s <- uask[R, Boolean]("imports")
-    t <- uask[R, Boolean]("copacksForOthers")
-    i <- uask[R, Litres]("copackedByOtherUk")
+  def program[R
+      : _uniformCore
+      : _uniformAsk[Litres,?]
+      : _uniformAsk[Boolean,?]
+  ]: Eff[R, String] = for {
+    n <- ask[Litres]("litresProduced")
+           .validating("lower cannot be more than higher", {
+              case Some((l,h)) => l <= h
+              case None        => true
+           })
+    s <- ask[Boolean]("imports")
+    t <- ask[Boolean]("copacksForOthers")
+    i <- ask[Litres]("copackedByOtherUk")
   } yield (s"$s AND $n")
 
 }

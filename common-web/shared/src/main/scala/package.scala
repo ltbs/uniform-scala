@@ -19,29 +19,30 @@ package object web {
   implicit def richFormUrlEncoded(in: FormUrlEncoded): RichFormUrlEncoded =
     new RichFormUrlEncoded(in)
 
-  implicit def sifProfunctor[T] = new Profunctor[SimpleInteractionForm[?,T,?]] {
-    def dimap[A, B, C, D](fab: SimpleInteractionForm[A,T,B])(f: C => A)(g: B => D) =
-      new SimpleInteractionForm[C,T,D] {
-        def decode(out: Encoded): Either[ErrorTree,T] = fab.decode(out)
+  implicit def sifProfunctor[TELL,ASK] = new Profunctor[SimpleInteractionForm[?,TELL,ASK,?]] {
+    def dimap[A, B, C, D](fab: SimpleInteractionForm[A,TELL,ASK,B])(f: C => A)(g: B => D) =
+      new SimpleInteractionForm[C,TELL,ASK,D] {
+        def decode(out: Encoded): Either[ErrorTree,ASK] = fab.decode(out)
         def receiveInput(data: C): Encoded = fab.receiveInput(f(data))
-        def encode(in: T): Encoded = fab.encode(in)
-        def render(key: String,existing: Option[Encoded], data: C, errors: ErrorTree): D =
-          g(fab.render(key,existing,f(data), errors))
+        def encode(in: ASK): Encoded = fab.encode(in)
+        def render(key: String, tell: TELL, existing: Option[Encoded], data: C, errors: ErrorTree): D =
+          g(fab.render(key, tell, existing,f(data), errors))
       }
   }
 
-  implicit def sifInvariant[IN,OUT] = new Invariant[SimpleInteractionForm[IN,?,OUT]] {
-    def imap[A, B](fa: SimpleInteractionForm[IN,A,OUT])(f: A => B)(g: B => A) =
+  implicit def sifInvariant[IN,OUT,TELL] = new Invariant[SimpleInteractionForm[IN,TELL,?,OUT]] {
+    def imap[A, B](fa: SimpleInteractionForm[IN,TELL,A,OUT])(f: A => B)(g: B => A) =
       fa.transform(f map (_.asRight))(g)
   }
 
-  def UrlEncodedHtmlForm[A](
-    parser: DataParser[A],
-    html: HtmlForm[A],
+  def UrlEncodedHtmlForm[TELL,ASK](
+    parser: DataParser[ASK],
+    html: HtmlForm[ASK],
+    renderTell: (TELL, String) => Html,
     messages: Messages
-  ): SimpleInteractionForm[FormUrlEncoded,A,Html] = { 
-    val underlying = new InputHtmlForm(parser, html, messages)
-    sifProfunctor[A].lmap(underlying)(_.toInputTree)
+  ): SimpleInteractionForm[FormUrlEncoded,TELL,ASK,Html] = { 
+    val underlying = new InputHtmlForm(parser, html, renderTell, messages)
+    sifProfunctor[TELL,ASK].lmap(underlying)(_.toInputTree)
   }
 
   protected[web] val required = "required"

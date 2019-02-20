@@ -23,9 +23,12 @@ First of all you need a program. Lets start with a simple greeting application -
 import org.atnos.eff._
 import ltbs.uniform._
 
-def helloProgram[S : _uniform[String,?]] : Eff[S,String] = for {
-  forename <- uask[S,String]("forename")
-  surname  <- uask[S,String]("surname")
+def helloProgram[S
+  : _uniformCore
+  : _uniformAsk[String,?]
+] : Eff[S,String] = for {
+  forename <- ask[String]("forename")
+  surname  <- ask[String]("surname")
 } yield s"Hello $forename $surname"
 ```
 
@@ -46,7 +49,7 @@ libraryDependencies +=
   "com.luketebbs.uniform" %% "interpreter-cli" % "{{ site.last-stable-version }}"
 ```
 
-## Running the program 
+## Running the program
 
 We need to import the interpreter -
 
@@ -60,16 +63,21 @@ possibly some other monads that the interpreter itself needs. Our CLI
 interpreter uses the `Eval` monad from the cats library.
 
 ```tut:silent
-type Stack = Fx.fx2[UniformAsk[String,?], cats.Eval]
+type Stack = Fx.fx3[
+  UniformAsk[String,?],
+  cats.Eval,
+  cats.data.State[UniformCore,?]
+]
 ```
 
-The program can now be executed using the interpreter. 
+The program can now be executed using the interpreter.
 
 ```tut
 import org.atnos.eff.syntax.all._ // provides runEval and run
 
 def runHelloProgram = helloProgram[Stack].
   using(identity). // String => String
+  runState(UniformCore()).
   runEval.
   run
 ```
@@ -83,30 +91,40 @@ then a surname and then give the expected greeting.
 We'll update our program to include a new field type -
 
 ```tut:silent
-def helloProgram2[S : _uniform[String,?] : _uniform[Boolean,?]] : Eff[S,String] = for {
-  forename <- uask[S,String]("forename")
-  surname  <- uask[S,String]("surname")
-  cheese  <- uask[S,Boolean]("likeCheese")  
+def helloProgram2[S
+  : _uniformCore
+  : _uniformAsk[String,?]
+  : _uniformAsk[Boolean,?]
+] : Eff[S,String] = for {
+  forename <- ask[String]("forename")
+  surname  <- ask[String]("surname")
+  cheese  <- ask[Boolean]("likeCheese")
 } yield {
-  if (cheese) 
+  if (cheese)
     s"Here $forename $surname, have some stilton!"
   else
-    s"Hello $forename $surname"  
+    s"Hello $forename $surname"
 }
 ```
 
 And add a new stack -
 
 ```tut:silent
-type Stack2 = Fx.fx3[UniformAsk[Boolean,?], UniformAsk[String,?], cats.Eval]
+type Stack2 = Fx.fx4[
+  UniformAsk[Boolean,?],
+  UniformAsk[String,?],
+  cats.Eval,
+  cats.data.State[UniformCore, ?]
+]
 ```
 
 The program is perfectly valid, but our interpreter doesn't know how
-to handle a boolean -  
+to handle a boolean -
 
 ```tut:fail
 def runHelloProgram2 = helloProgram2[Stack2].
   using(identity). // String => String
+  runState(UniformCore()).
   runEval.
   run
 ```
@@ -118,7 +136,8 @@ input (a `String`) and convert it into a valid `Boolean`.
 ```tut
 def runHelloProgram2 = helloProgram2[Stack2].
   using(identity).			// String => String
-  using(_.toLowerCase.startsWith("y")). // Boolean => String  
+  using(_.toLowerCase.startsWith("y")). // Boolean => String
+  runState(UniformCore()).
   runEval.
   run
 ```

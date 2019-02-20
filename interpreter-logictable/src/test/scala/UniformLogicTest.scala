@@ -10,6 +10,7 @@ import sampleprograms.LitreageTest._
 object UniformLogicTest {
 
   val output = program[FxAppend[TestProgramStack, LogicTableStack]]
+    .runState(UniformCore())
     .giveExamples(List(true,false))
     .giveExamples(
       for {

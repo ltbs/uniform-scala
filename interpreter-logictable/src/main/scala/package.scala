@@ -6,11 +6,11 @@ import ltbs.uniform._
 import org.atnos.eff._
 import org.atnos.eff.all._
 import org.atnos.eff.syntax.all._
-import cats.data.Writer
+import cats.data.{Writer,State}
 
 package object logictable {
 
-  type LogicTableStack = Fx.fx3[Either[String,?], Writer[String,?], List]
+  type LogicTableStack = Fx.fx4[State[UniformCore, ?], Either[String,?], Writer[String,?], List]
 
   type Examples[T] = Function[String, List[T]]
 
@@ -21,27 +21,49 @@ package object logictable {
     type _either[Q] = Either[String,?] |= Q
     type _writer[Q] = Writer[String,?] |= Q
 
-    def giveExamples[C, U](
-      reader: Examples[C]
+    def giveExamples[IN,OUT, U](
+      reader: Examples[OUT]      
     )(
-      implicit member: Member.Aux[UniformAsk[C,?], R, U],
+      implicit member: Member.Aux[Uniform[IN,OUT,?], R, U],
       eitherM: _either[U],
       writerM:_writer[U],
       listM:_list[U]
-    ): Eff[U, A] = e.translate(
-      new Translate[UniformAsk[C,?], U] {
-        def apply[X](ax: UniformAsk[C,X]): Eff[U, X] =
-          ax match {
-            case UniformAsk(key,v) =>
-              val i: Eff[U,X] = for {
-                a <- ListEffect.values(reader(key):_*)
-                vu = a.asInstanceOf[X]
-                _ <- WriterEffect.tell(s"$key:$vu")
-                va <- send(v(vu).toEither)
-              } yield va
-              i
-          }
-      })
+    ): Eff[U, A] =
+      e.translate(
+        new Translate[Uniform[IN,OUT,?], U] {
+          def apply[X](ax: Uniform[IN,OUT,X]): Eff[U, X] =
+            ax match {
+              case Uniform(key,_,_,v) =>
+                val i: Eff[U,X] = for {
+                  a <- ListEffect.values(reader(key.mkString("/")):_*)
+                  _ <- WriterEffect.tell(s"$key:$a")
+                  va <- send(v(a).toEither.map{_.asInstanceOf[X]})
+                } yield (va)
+                i
+            }
+        })
+
+    // def giveExamples[C, U](
+    //   reader: Examples[C]
+    // )(
+    //   implicit member: Member.Aux[UniformAsk[C,?], R, U],
+    //   eitherM: _either[U],
+    //   writerM:_writer[U],
+    //   listM:_list[U]
+    // ): Eff[U, A] = e.translate(
+    //   new Translate[UniformAsk[C,?], U] {
+    //     def apply[X](ax: UniformAsk[C,X]): Eff[U, C] =
+    //       ax match {
+    //         case UniformAsk(key,default,v) =>
+    //           val i: Eff[U,C] = for {
+    //             a <- ListEffect.values(reader(key):_*)
+    //             vu = a.asInstanceOf[C]
+    //             _ <- WriterEffect.tell(s"$key:$vu")
+    //             va <- send(v(vu).toEither)
+    //           } yield va
+    //           i
+    //       }
+    //   })
 
     def giveSelectionExamples[C, U](
       reader: Examples[Set[C]]
@@ -55,7 +77,7 @@ package object logictable {
         def apply[X](ax: UniformSelect[C,X]): Eff[U, X] =
           ax match {
             case UniformSelectOne(key,opts,v) =>
-              val selections = reader(key).flatten
+              val selections = reader(key.mkString("/")).flatten
 
               val i: Eff[U,X] = for {
                 a <- ListEffect.values(selections:_*)
@@ -67,7 +89,7 @@ package object logictable {
 
             case UniformSelectMany(key,opts,min,max,v) =>
               val i: Eff[U,X] = for {
-                a <- ListEffect.values(reader(key):_*)
+                a <- ListEffect.values(reader(key.mkString("/")):_*)
                 vu = a.asInstanceOf[X]
                 _ <- WriterEffect.tell(s"$key:$vu")
                 va <- send(v(vu).toEither)

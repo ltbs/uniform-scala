@@ -4,20 +4,21 @@ import cats.implicits._
 import org.atnos.eff._
 import org.atnos.eff.syntax.all._
 import org.querki.jquery._
-import ltbs.uniform.sampleprograms.BeardTax._
+import ltbs.uniform.sampleprograms.WindowTax2._
 
 import JsInterpreter._
 import JsImplementations._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import cats.Monoid
-import ltbs.uniform.{DB,UniformCore}
+import ltbs.uniform.{DB,UniformCore,Uniform}
 import ltbs.uniform.web._
 import ltbs.uniform.web.parser._
 import ltbs.uniform.widgets.govuk._
+import play.twirl.api.Html
 
 import InferParser._
 
-object PrototypeApp {
+object WindowTax {
 
   implicit val messages = new MessagesProvider {
     reload()
@@ -64,52 +65,47 @@ object PrototypeApp {
 
   implicit val cmsMessages = CmsMessages.fromText{
     """
-
-# https://www.playframework.com/documentation/latest/ScalaI18N
-crown-copyright=Crown Copyright
-new.service=This is a new service, your
-help.improve=will help us to improve it
-all-content-available=All content is available under
-ogl3=OGL3
-except-where-otherwise-stated= except where otherwise stated.
-
-is-public.heading=Are you a member of the public?
-is-public.outer.FALSE=No, I’m King Henry VIII.
-is-public.details=What happens if I make a claim to the throne?|Making \
-  a false claim to the throne is punishable by hanging and \
-  excommunication on a second offense.
-
-is-public.inner.forename.heading=Forenames
-is-public.inner.surname.heading=Surname
-is-public.inner.age.heading=Age
-
-beard-style.heading=Beard Style
-
-beard-length-mm.heading=Beard Length
-beard-length-mm._1.heading=Length at shortest point
-beard-length-mm._1.hint=Please give length in mm
-beard-length-mm._2.heading=Length at longest point
-beard-length-mm._2.hint=Please give length in mm
-beard-length-mm.details=Details
-
-TRUE=Yes
-FALSE=No
-
-there.is.a.problem=There is a problem
-required=This field is mandatory
-nonnumericformat=Please enter a number
-back=back
-  """}
+  """
+  }
 
   @JSExportTopLevel("back")
   def back(page: String) = journey(Back(page.split("[.]").toList))
 
+  type STACKZ = Fx.append[
+    Fx.fx2[
+      Uniform[List[Window],ListControl,?],
+      Uniform[Window,Boolean,?]
+    ],
+    WindowsTaxStack
+  ]
+
+  type STACKY = Fx.prepend[
+    Uniform[Window,Boolean,?],
+    SingleWindowStack
+  ]
+
+  val fu3: List[Window] => Html = listingTable(
+    "windows",
+    {ltbs.uniform.widgets.govuk.html.listing(_,_,_,_,_)}, 
+    fr,
+    cmsMessages
+  )(_)
+
+  def fr(i:Window): Html = Html(i.toString)
+
   def journey(implicit action: Action) = {
     val (result,UniformCore(newState,newBreadcrumbs,_)) = {
-      program[FxAppend[TestProgramStack, JsStack]]
-        .useForm(inferJsForm[Option[MemberOfPublic]])
-        .useForm(inferJsForm[BeardStyle])
-        .useForm(inferJsForm[BeardLength])
+      program[FxAppend[STACKZ, JsStack]]
+        .delist{
+            (existing: List[Window], default: Option[Window]) =>
+            singleWindowProgram[STACKY](existing,default)
+        }
+        .useForm(fu3, inferJsForm[ListControl])
+        .useForm(fr, inferJsForm[Boolean])      
+        .useForm(inferJsForm[Int])
+        .useForm(inferJsForm[(Int,Int)])
+        .useForm(inferJsForm[Orientation])
+        .useForm(inferJsForm[Boolean])
         .runEither
         .runState(UniformCore(state))
         .run
@@ -126,7 +122,7 @@ back=back
   def updateDataTargets(): Unit = {
     val i = $("""[data-target] > input[type="radio"]""")
     i.change{ e: org.scalajs.dom.Element =>
-
+      
       val radioValue=$(e).value
       val dataTarget=$(e).parent("[data-target]").attr("data-target")
 	$(".conditional-" + dataTarget).removeClass("govuk-radios__conditional")
@@ -141,7 +137,7 @@ back=back
     page.title.map { title =>
 //      breadcrumbs = title.split("[.]").toList :: breadcrumbs
       $("#title").html(messages.span(s"heading.$title"))
-      $("#backlink").html(messages.span(s"heading.$title"))
+      $("#backlink").html(messages.span(s"heading.$title"))      
       $("#continue-button").replaceWith(
         s"""|<button class="govuk-button" type="submit" id="continue-button"
             |  onclick="saveAndContinue('$title')">

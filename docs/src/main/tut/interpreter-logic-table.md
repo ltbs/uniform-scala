@@ -25,16 +25,20 @@ import org.atnos.eff._
 import ltbs.uniform._
 import cats.implicits._
 
-type Money = Int 
+type Money = Int
 
-def greasySpoon[S : _uniform[Int,?] : _uniform[Boolean,?]] : Eff[S,Money] = for {
-  age   <- uask[S,Int]("age")
-  food  <- uask[S,Boolean]("wantFood")
-  tea   <- uask[S,Boolean]("wantTea")  
-  baconCost <- uask[S,Int]("bacon").map(_ * 12) emptyUnless food
-  eggsCost  <- uask[S,Int]("eggs").map(_ * 24) emptyUnless food
+def greasySpoon[S
+  : _uniformCore
+  : _uniformAsk[Int,?]
+  : _uniformAsk[Boolean,?]
+] : Eff[S,Money] = for {
+  age   <- ask[Int]("age")
+  food  <- ask[Boolean]("wantFood")
+  tea   <- ask[Boolean]("wantTea")
+  baconCost <- ask[Int]("bacon").map(_ * 12) emptyUnless food
+  eggsCost  <- ask[Int]("eggs").map(_ * 24) emptyUnless food
   foodCost = baconCost + eggsCost
-  teaCost <- uask[S,Int]("sugar").map(_ * 10 + 50) emptyUnless tea
+  teaCost <- ask[Int]("sugar").map(_ * 10 + 50) emptyUnless tea
   youngDiscount = if (age < 16)
                     teaCost / 10
 		  else 0
@@ -61,7 +65,7 @@ We want to test -
 Obviously this is rather silly - normally we would extract the
 calculation logic out into a function, but for the sake of
 illustrating the testing we will leave the financial code tangled into
-our user-interaction program. 
+our user-interaction program.
 
 ## Setup
 
@@ -72,7 +76,7 @@ libraryDependencies +=
   "com.luketebbs.uniform" %% "interpreter-logictable" % "{{ site.last-stable-version }}"
 ```
 
-And we need to import 
+And we need to import
 
 ```tut:silent
 import ltbs.uniform.interpreters.logictable._
@@ -99,5 +103,6 @@ val output = greasySpoon[FullStack].
     case "age" => List(10,50,100)
     case _     => List(1,2,3)
   }.
+  runState(UniformCore()).
   runEither.runWriter.runList.run
 ```
