@@ -22,7 +22,7 @@ import InferParser._
 @Singleton
 class WindowTaxController @Inject()(
   implicit val messagesApi: MessagesApi
-) extends Controller with PlayInterpreter2 with I18nSupport {
+) extends Controller with PlayInterpreter with I18nSupport {
 
   def messages(request: Request[AnyContent]): Messages =
     BestGuessMessages(convertMessages(messagesApi.preferred(request)))
@@ -54,7 +54,7 @@ class WindowTaxController @Inject()(
 
   def daylightRobbery(key: String) = {
 
-    implicit val keys: List[String] = key.split("/").toList    
+    implicit val keys: List[String] = key.split("/").toList
 
     type STACKZ = FxAppend[
       Fx.fx7[
