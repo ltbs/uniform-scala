@@ -68,7 +68,7 @@ object JsInterpreter {
       implicit member: Member.Aux[UniformAsk[OUT,?], STACK, NEWSTACK],
       stateM: _uniformCore[NEWSTACK],
       eitherM: _either[NEWSTACK],
-      action: Action        
+      action: Action
     ): Eff[NEWSTACK, A] =
       useForm[Unit,OUT, NEWSTACK]({_ => Html("")}, form)
 
@@ -79,7 +79,7 @@ object JsInterpreter {
       implicit member: Member.Aux[Uniform[IN,OUT,?], STACK, NEWSTACK],
       stateM: _uniformCore[NEWSTACK],
       eitherM: _either[NEWSTACK],
-      action: Action        
+      action: Action
     ): Eff[NEWSTACK, A] = useFormMap(renderTell, _ => form)
 
     def useFormMap[OUT, NEWSTACK](
@@ -88,8 +88,8 @@ object JsInterpreter {
       implicit member: Member.Aux[UniformAsk[OUT,?], STACK, NEWSTACK],
       stateM: _uniformCore[NEWSTACK],
       eitherM: _either[NEWSTACK],
-      action: Action        
-    ): Eff[NEWSTACK, A] = 
+      action: Action
+    ): Eff[NEWSTACK, A] =
       useFormMap[Unit,OUT,NEWSTACK]({_ => Html("")}, forms)
 
     def useFormMap[IN, OUT, NEWSTACK](
@@ -99,7 +99,7 @@ object JsInterpreter {
       implicit member: Member.Aux[Uniform[IN,OUT,?], STACK, NEWSTACK],
       stateM: _uniformCore[NEWSTACK],
       eitherM: _either[NEWSTACK],
-      action: Action        
+      action: Action
     ): Eff[NEWSTACK, A] = e.translate(
       new Translate[Uniform[IN, OUT,?], NEWSTACK] {
         def apply[X](ax: Uniform[IN, OUT,X]): Eff[NEWSTACK, X] = {
@@ -152,7 +152,7 @@ object JsInterpreter {
                     breadcrumbs=breadcrumbs
                   ))
                 case (Submit(requestedPage),Some(Right(x))) if !breadcrumbs.contains(requestedPage) =>
-                  crumbPush(keys) >> 
+                  crumbPush(keys) >>
                   right[NEWSTACK, Page, OUT](x)
                 case (Submit(requestedPage),Some(Left(e))) =>
                   left[NEWSTACK, Page, OUT](
@@ -201,7 +201,7 @@ object JsInterpreter {
       implicit member: Member.Aux[UniformAsk[List[OUT],?], STACK, NEWSTACK],
       stateM: _uniformCore[NEWSTACK],
       listingPage: _uniform[List[OUT], ListControl, NEWSTACK],
-      confirmationPage: _uniform[OUT, Boolean, INNER],      
+      confirmationPage: _uniform[OUT, Boolean, INNER],
       parser: DataParser[List[OUT]],
       f: IntoPoly[INNER,NEWSTACK]
     ): Eff[NEWSTACK,A] = {
@@ -252,7 +252,7 @@ object JsInterpreter {
                     Eff.pure[NEWSTACK,List[OUT]](elements)
 
                   case AddAnother =>
-                    subjourney("add") { 
+                    subjourney("add") {
                       subJourneyP(elements, None).into[NEWSTACK]
                     } >>= {x =>
                       db.remove(id) >>
@@ -261,7 +261,7 @@ object JsInterpreter {
                       process(elements :+ x)}
 
                   case Edit(ordinal) =>
-                    subjourney("edit") { 
+                    subjourney("edit") {
                       subJourneyP(elements, elements.get(ordinal)).into[NEWSTACK]
                     } >>= {x =>
                       db.remove(id) >>
@@ -274,14 +274,14 @@ object JsInterpreter {
                       removeConfirmation(elements, elements(ordinal)).into[NEWSTACK]
                     } >>= {
                       if (_) {
-                        write(elements.delete(ordinal)) >>                        
+                        write(elements.delete(ordinal)) >>
                         db.removeRecursive(id.dropRight(1) :+ "delete") >>
                         db.remove(id) >>
                         process(elements.delete(ordinal))
                       } else
                         db.removeRecursive(id.dropRight(1) :+ "delete") >>
                         db.remove(id) >>
-                        process(elements)                          
+                        process(elements)
 
                     }
                 }}
@@ -293,7 +293,7 @@ object JsInterpreter {
           real.map{_.asInstanceOf[X]}
         }
       }
-    )    
+    )
 
   }
 
@@ -325,6 +325,6 @@ object JsInterpreter {
     render(key, elements.zipWithIndex.map{
       case (x,i) => (elementToHtml(x), Some(edit(i)), Some(delete(i)))
     }, 0, Int.MaxValue, messages)
-    
+
   }
 }

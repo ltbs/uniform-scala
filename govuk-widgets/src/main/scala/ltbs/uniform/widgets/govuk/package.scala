@@ -10,7 +10,7 @@ package object govuk extends InferForm {
   def errorSummary(key: String, values: Input, errors: ErrorTree, messages: Messages): Html =
     html.errorsummary(key, values, errors, messages)
 
-  def compoundField(key: String, values: Input, errors: ErrorTree, messages: Messages)(inner: Html): Html = 
+  def compoundField(key: String, values: Input, errors: ErrorTree, messages: Messages)(inner: Html): Html =
     html.compoundfield(key, errors, messages)(inner)
 
   def soloField(key: String, values: Input,errors: ErrorTree,messages: Messages)(ask: Html)(tell: Html): Html =
@@ -33,8 +33,6 @@ package object govuk extends InferForm {
       case(subkey,f) => subkey -> f(s"$key.$subkey", values, errors, messages)
     }.filter(_._2.toString.trim.nonEmpty).toMap
   )
-
-
 
   implicit val booleanField = new HtmlField[Boolean] {
     def render(key: String, values: Input, errors: ErrorTree, messages: Messages) =
@@ -66,7 +64,6 @@ package object govuk extends InferForm {
           messages
         )
   }
-
 
   implicit val stringHtml = new HtmlField[String] {
     def render(key: String, values: Input, errors: ErrorTree, messages: Messages) =

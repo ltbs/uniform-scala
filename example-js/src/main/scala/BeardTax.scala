@@ -109,7 +109,7 @@ back=back
       program[FxAppend[TestProgramStack, JsStack]]
         .useForm(inferJsForm[Option[MemberOfPublic]])
         .useForm(inferJsForm[BeardStyle])
-        .useForm(inferJsForm[BeardLength])    
+        .useForm(inferJsForm[BeardLength])
         .runEither
         .runState(UniformCore(state))
         .run
@@ -126,13 +126,13 @@ back=back
   def updateDataTargets(): Unit = {
     val i = $("""[data-target] > input[type="radio"]""")
     i.change{ e: org.scalajs.dom.Element =>
-      
+
       val radioValue=$(e).value
       val dataTarget=$(e).parent("[data-target]").attr("data-target")
 	$(".conditional-" + dataTarget).removeClass("govuk-radios__conditional")
 	$(".conditional-" + dataTarget).addClass("govuk-radios__conditional--hidden")
 	$("#conditional-" + dataTarget + "-" + radioValue).removeClass("govuk-radios__conditional--hidden")
-	$("#conditional-" + dataTarget + "-" + radioValue).addClass("govuk-radios__conditional")	      
+	$("#conditional-" + dataTarget + "-" + radioValue).addClass("govuk-radios__conditional")
     }
     ()
   }
@@ -141,7 +141,7 @@ back=back
     page.title.map { title =>
 //      breadcrumbs = title.split("[.]").toList :: breadcrumbs
       $("#title").html(messages.span(s"heading.$title"))
-      $("#backlink").html(messages.span(s"heading.$title"))      
+      $("#backlink").html(messages.span(s"heading.$title"))
       $("#continue-button").replaceWith(
         s"""|<button class="govuk-button" type="submit" id="continue-button"
             |  onclick="saveAndContinue('$title')">

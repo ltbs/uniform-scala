@@ -3,6 +3,9 @@ options:
     url: index.html
     section: intro
 
+  - title: Setup
+    url: setup.html
+
   - title: Writing a program
     url: writing-a-program.html
 
