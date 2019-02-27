@@ -1,6 +1,9 @@
 package ltbs.uniform
 
 package object gformsparser {
+
+  type URL = String
+
   implicit class RichFieldList(val fl: List[Field]) extends AnyVal {
     def flattenGroups: List[Field] = fl.flatMap { f =>
       f match {

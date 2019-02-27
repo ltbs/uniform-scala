@@ -13,7 +13,7 @@ lazy val root = project.in(file("."))
     `interpreter-play26`,
     `interpreter-js`,
     exampleProgramsJS,
-    exampleProgramsJVM, 
+    exampleProgramsJVM,
     commonWebJS,
     commonWebJVM,
     govukWidgetsJS,
@@ -271,13 +271,13 @@ lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
     sourceDirectories in (Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value,
     TwirlKeys.templateImports ++= Seq(
       "ltbs.uniform.web._",
-      "ltbs.uniform._",      
+      "ltbs.uniform._",
       "ltbs.uniform.widgets.govuk._"
     ),
     initialCommands in console := "import ltbs.uniform._;import ltbs.uniform.widgets.govuk._;import ltbs.uniform.datapipeline._",
     scalacOptions --= Seq(
       "-Ywarn-unused:imports",
-      "-Ywarn-unused-imports",      
+      "-Ywarn-unused-imports",
       "-Xfatal-warnings",
       "-Ywarn-unused",
       "-Ywarn-unused:params"
@@ -329,3 +329,17 @@ lazy val docs = project
       "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
     )
   )
+
+ lazy val `gforms-parser` = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
+   .settings(commonSettings)
+   .settings(
+     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
+     libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.9.2" % "compile",
+     libraryDependencies += "com.github.pureconfig" %% "pureconfig-enumeratum" % "0.9.2" % "compile",
+     libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1" % "compile",
+     libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13",
+     libraryDependencies += "org.atnos" %%% "eff" % "5.4.1"
+   )
+
+lazy val `gforms-parserJVM` = `gforms-parser`.jvm.dependsOn(coreJVM)
+lazy val `gforms-parserJS` = `gforms-parser`.js.dependsOn(coreJS)

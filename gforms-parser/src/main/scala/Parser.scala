@@ -19,6 +19,15 @@ object Parser {
   def parse_impl(c: Context)(file: c.Expr[String]): c.universe.Tree = {
     import c.universe._
 
+    // def sectionDataType(s: Section): Option[Tree] = {
+    //   val nonInfoFields = s.fields.filter {
+    //     case i: InfoField => false
+    //     case _ => true
+    //   }
+    //   s.fields.filter match {
+    //   case
+    // }
+
     def fieldToType(f: Field): Tree = {
       val inner = f match {
         case f: TextField    => f.format match {
@@ -41,9 +50,9 @@ object Parser {
     }
 
     val pinner = fields.map{
-        case f if fieldToType(f) == TypeName("Unit") => fq"""_ <- uask[R, Unit](${f.id}) """
-        case c: ChoiceField      => fq"""${TermName(nameEncode(c.id))} <- uaskOneOf[R, ${fieldToType(c)}](${c.id}, ${c.choices})"""
-        case other               => fq"""${TermName(nameEncode(other.id))} <- uask[R, ${fieldToType(other)}](${other.id})"""
+        case f if fieldToType(f) == TypeName("Unit") => fq"""_ <- ask[Unit](${f.id}).in[R] """
+//        case c: ChoiceField      => fq"""${TermName(nameEncode(c.id))} <- uaskOneOf[R, ${fieldToType(c)}](${c.id}, ${c.choices})"""
+        case other               => fq"""${TermName(nameEncode(other.id))} <- ask[${fieldToType(other)}](${other.id}).in[R]"""
     }
 
     fields.flatMap(_.validIf).map(x => throw new Exception(x))
@@ -52,7 +61,7 @@ object Parser {
       s"${f.id}.label" -> f.label
     }.toMap
 
-    q"""
+    val r = q"""
 new {
   import org.atnos.eff._
   import ltbs.uniform._
@@ -62,25 +71,27 @@ new {
 
   type UniformAskString[A] = UniformAsk[String, A]
   type UniformAskOptionString[A] = UniformAsk[Option[String], A]
-  type UniformChooseString[A] = UniformSelect[String, A]
+//  type UniformChooseString[A] = UniformSelect[String, A]
   type UniformAskDate[A] = UniformAsk[java.time.LocalDate, A]
   type UniformAskFile[A] = UniformAsk[java.io.File, A]
   type UniformAskUnit[A] = UniformAsk[Unit, A]
   type UniformAskAddress[A] = UniformAsk[Address, A]
 
-  type Stack = Fx.fx7[UniformAskString,UniformAskDate,UniformAskFile,UniformAskUnit,UniformAskAddress,UniformChooseString,UniformAskOptionString]
+  type Stack = Fx.fx6[UniformAskString,UniformAskDate,UniformAskFile,UniformAskUnit,UniformAskAddress,UniformAskOptionString]
   type _ufString[R] = UniformAskString |= R
   type _ufOptString[R] = UniformAskOptionString |= R
   type _ufDate[R] = UniformAskDate |= R
   type _ufFile[R] = UniformAskFile |= R
   type _ufUnit[R] = UniformAskUnit |= R
   type _ufAddress[R] = UniformAskAddress |= R
-  type _ufChoose[R] = UniformChooseString |= R
-  def program[R : _ufString : _ufDate : _ufFile : _ufUnit : _ufAddress : _ufChoose : _ufOptString]: Eff[R, Unit] =
+//  type _ufChoose[R] = UniformChooseString |= R
+  def program[R : _uniformCore : _ufString : _ufDate : _ufFile : _ufUnit : _ufAddress : _ufOptString]: Eff[R, Unit] =
     for (..$pinner) yield (())
 
   val messages = Map("default" -> $enMessages)
 }"""
+//    println(r)
+    r
   }
 
   def gformExpr(expr: String): Any = macro gformExpr_impl
@@ -114,6 +125,5 @@ new {
     val Literal(Constant(expra: String)) = expr.tree
     parseGform(c)(expra, Nil)
   }
-  val doofus=4
 
 }
