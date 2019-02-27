@@ -43,7 +43,7 @@ case class ChoiceField(
 ) extends Field{
   def updateId(f: String => String) = this.copy(id = f(id))
 
-  def isDisguisedBooleanFalse: Boolean = choices.size == 2
+  def isDisguisedBoolean: Boolean = choices.size == 2
 }
 
 case class DateField(

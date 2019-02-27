@@ -62,6 +62,10 @@ case class DmsSubmission (
 trait Section {
   def title : String
   def fields: List[Field]
+
+  def id = title
+    .replace(" ","-")
+    .filter{x => x.isLetter || x.isDigit || x == '-'}
 }
 
 case class StandardSection(

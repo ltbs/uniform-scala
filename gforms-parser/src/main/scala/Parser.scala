@@ -19,16 +19,35 @@ object Parser {
   def parse_impl(c: Context)(file: c.Expr[String]): c.universe.Tree = {
     import c.universe._
 
-    // def sectionDataType(s: Section): Option[Tree] = {
-    //   val nonInfoFields = s.fields.filter {
-    //     case i: InfoField => false
-    //     case _ => true
-    //   }
-    //   s.fields.filter match {
-    //   case
-    // }
+    def sectionDataType(s: Section): (Tree,Tree) = {
+      val (tellsRaw,asksRaw) = s.fields.partition {
+        case i: InfoField    => true
+        case _               => false
+      }
 
-    def fieldToType(f: Field): Tree = {
+      val tell = if (tellsRaw.isEmpty) tq"Unit" else tq"String"
+
+      val asks: List[Tree] = asksRaw.flatMap{ _ match {
+        case g: GroupField => g.fields
+        case x => List(x)
+      }}.flatMap{f =>
+        val inner = f match {
+          case f: TextField    => f.format match {
+            case _             => List(tq"String") }
+          case i: InfoField    => List(tq"Unit")
+          case c: ChoiceField  => List(tq"String")
+          case d: DateField    => List(tq"LocalDate")
+          case f: FileField    => List(tq"File")
+          case a: AddressField => List(tq"Address")
+          case o               => throw new IllegalArgumentException(s"Don't know how to handle: $o")
+        }
+        if (f.mandatory) inner else inner.map(x => tq"Option[$x]")
+      }
+      val ask = tq"(..$asks)"
+      (tell,ask)
+    }
+
+    def fieldToType(f: Field): c.universe.Tree = {
       val inner = f match {
         case f: TextField    => f.format match {
           case _             => tq"String" }
@@ -49,10 +68,27 @@ object Parser {
       case Left(l) => throw new Exception(l.toString)
     }
 
-    val pinner = fields.map{
-        case f if fieldToType(f) == TypeName("Unit") => fq"""_ <- ask[Unit](${f.id}).in[R] """
-//        case c: ChoiceField      => fq"""${TermName(nameEncode(c.id))} <- uaskOneOf[R, ${fieldToType(c)}](${c.id}, ${c.choices})"""
-        case other               => fq"""${TermName(nameEncode(other.id))} <- ask[${fieldToType(other)}](${other.id}).in[R]"""
+    val sections: List[Section] = template match {
+      case Right(x) => x.allSections
+      case Left(l) => throw new Exception(l.toString)
+    }
+
+//     val pinner = fields.map{
+//         case f if fieldToType(f) == TypeName("Unit") => fq"""_ <- ask[Unit](${f.id}).in[R] """
+// //        case c: ChoiceField      => fq"""${TermName(nameEncode(c.id))} <- uaskOneOf[R, ${fieldToType(c)}](${c.id}, ${c.choices})"""
+//         case other               => fq"""${TermName(nameEncode(other.id))} <- ask[${fieldToType(other)}](${other.id}).in[R]"""
+//     }
+
+    val pinner = sections.map{ sec => 
+      val (tellType, askType) = sectionDataType(sec)
+
+      if (tellType == tq"Unit") {
+        fq"""${TermName(sec.id)} <- ask[$askType](${sec.id}).in[R]"""
+      } else if (askType == tq"Unit") {
+        fq"""${TermName(sec.id)} <- tell[$tellType](${sec.id})("").in[R]"""
+      } else {
+        fq"""${TermName(sec.id)} <- dialogue[$tellType,$askType](${sec.id})("").in[R]"""
+      }
     }
 
     fields.flatMap(_.validIf).map(x => throw new Exception(x))
@@ -61,6 +97,29 @@ object Parser {
       s"${f.id}.label" -> f.label
     }.toMap
 
+    val typeDeclarations = sections.map{ case sec =>
+      val (tellType, askType) = sectionDataType(sec)
+      (tellType, askType)
+    }.groupBy(_.toString).values.map(_.head)
+      .zipWithIndex.flatMap
+    { case ((tellType, askType),i) =>
+      val fieldName = TypeName(s"UniformType$i")
+      val fieldNameB = TypeName(s"_uniformType$i")
+        
+      List(
+        q"type $fieldName[A] = Uniform[$tellType, $askType,A]",
+        q"type $fieldNameB[R] = $fieldName |= R"
+      )
+    }
+
+    val typeCount: Int = typeDeclarations.size / 2
+
+    val evidence = {1 to typeCount}.map{ c =>
+      val i = c - 1
+      q"${TermName(s"ufevidence$$${c}")}: ${TypeName(s"_uniformType$i")}[R]"
+    }
+
+    typeDeclarations.map(println)
     val r = q"""
 new {
   import org.atnos.eff._
@@ -69,23 +128,11 @@ new {
   import java.time.LocalDate
   import java.io.File
 
-  type UniformAskString[A] = UniformAsk[String, A]
-  type UniformAskOptionString[A] = UniformAsk[Option[String], A]
-//  type UniformChooseString[A] = UniformSelect[String, A]
-  type UniformAskDate[A] = UniformAsk[java.time.LocalDate, A]
-  type UniformAskFile[A] = UniformAsk[java.io.File, A]
-  type UniformAskUnit[A] = UniformAsk[Unit, A]
-  type UniformAskAddress[A] = UniformAsk[Address, A]
+  ..$typeDeclarations
 
-  type Stack = Fx.fx6[UniformAskString,UniformAskDate,UniformAskFile,UniformAskUnit,UniformAskAddress,UniformAskOptionString]
-  type _ufString[R] = UniformAskString |= R
-  type _ufOptString[R] = UniformAskOptionString |= R
-  type _ufDate[R] = UniformAskDate |= R
-  type _ufFile[R] = UniformAskFile |= R
-  type _ufUnit[R] = UniformAskUnit |= R
-  type _ufAddress[R] = UniformAskAddress |= R
-//  type _ufChoose[R] = UniformChooseString |= R
-  def program[R : _uniformCore : _ufString : _ufDate : _ufFile : _ufUnit : _ufAddress : _ufOptString]: Eff[R, Unit] =
+  //type Stack = Fx.fx6[UniformAskString,UniformAskDate,UniformAskFile,UniformAskUnit,UniformAskAddress,UniformAskOptionString]
+
+  def program[R: _uniformCore](implicit ..$evidence): Eff[R, Unit] =
     for (..$pinner) yield (())
 
   val messages = Map("default" -> $enMessages)
