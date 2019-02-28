@@ -50,6 +50,14 @@ case class GformTemplate(
 ) {
   def allSections: List[Section] =
     sections ++ List(acknowledgementSection, declarationSection)
+
+  def deduplicatedSectionId(section: Section): String = {
+    val letters = ('A' to 'Z').toList
+    allSections.filter(_.id == section.id) match {
+      case `section` :: Nil => section.id
+      case others => section.id :+ letters(others.indexOf(section))
+    }
+  }
 }
 
 case class DmsSubmission (
@@ -62,23 +70,62 @@ case class DmsSubmission (
 trait Section {
   def title : String
   def fields: List[Field]
+  def repeatsMin: Option[String]
+  def repeatsMax: Option[String]
+  def includeIf: Option[String]
 
-  def id = title
-    .replace(" ","-")
-    .filter{x => x.isLetter || x.isDigit || x == '-'}
+  def isList: Boolean = repeatsMax.isDefined || repeatsMin.isDefined
+
+  private def titleCase(word: String) = word match {
+    case "" => ""
+    case a => a.head.toUpper + a.tail
+  }
+
+  /** As a last resort we could take the title, however this is
+    * probably very long and possibly not unique
+    */
+  private def desperateId: String = {
+    val ignoredWords = List("details", "of", "your", "tell", "us", "about", "what", "this", "the", "who", "is", "are")
+    val (h::t) = title
+      .trim
+      .filter{x => x.isLetter || x.isDigit || x == ' '}
+      .split(" ")
+      .filterNot{w => ignoredWords.contains(w.toLowerCase)}
+      .toList
+
+    (h.map(_.toLower) :: t.map(titleCase)).mkString
+  }
+
+  /** If there is only a single field with a sane Id, use that field
+    * id as the id for the section
+    */
+  private def firstFieldId: Option[String] =
+    fields.filterNot(_.isInstanceOf[InfoField])
+      .flatMap(_.saneId.toList) match {
+        case x :: Nil => Some(x)
+        case _ => None
+      }
+
+  def id: String = firstFieldId getOrElse desperateId
 }
 
 case class StandardSection(
   title: String,
   fields: List[Field],
-  includeIf: Option[String]
+  includeIf: Option[String],
+  repeatsMin: Option[String] = None,
+  repeatsMax: Option[String] = None
 ) extends Section
 
 case class EndSection(
   title: String,
   shortName: Option[String],
-  fields: List[Field]
-) extends Section
+  fields: List[Field],
+  repeatsMin: Option[String] = None,
+  repeatsMax: Option[String] = None
+) extends Section {
+  def includeIf: Option[String] = None
+}
 
 
 case class AuthConfig(
@@ -86,5 +133,7 @@ case class AuthConfig(
   confidenceLevel: Int = 50,
   permittedAffinityGroups: List[String] = List("Organisation"),
   serviceId: Option[String],
-  regimeId: Option[String]
+  regimeId: Option[String],
+  repeatsMin: Option[String] = None,
+  repeatsMax: Option[String] = None
 )

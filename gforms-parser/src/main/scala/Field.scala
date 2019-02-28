@@ -7,6 +7,9 @@ sealed trait Field {
   def validIf: Option[String]
   def includeIf: Option[String]
   def updateId(f: String => String): Field
+
+  /** will only be defined for a non-generated Id */
+  def saneId: Option[String] = Some(id).filterNot(_.startsWith("generatedId_"))
 }
 
 case class TextField(
