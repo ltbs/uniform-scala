@@ -21,7 +21,6 @@ class ParserSpec extends FunSpec with Matchers {
   describe("Parser") {
 
     val pwd = System.getenv("PWD")
-    println(pwd)
     it(s"should compile gforms-parser/src/test/resources/ofsted-sc1.json") {
       """Parser.parseGform("gforms-parser/src/test/resources/ofsted-sc1.json")""" should compile
     }

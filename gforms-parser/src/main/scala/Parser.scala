@@ -18,10 +18,7 @@ object Parser {
 
   def sectionDataType(c: Context)(s: Section): (c.universe.Tree,c.universe.Tree) = {
     import c.universe._
-      val (tellsRaw,asksRaw) = s.fields.partition {
-        case i: InfoField    => true
-        case _               => false
-      }
+      val (tellsRaw,asksRaw) = s.fields.partition { _.isInstanceOf[InfoField]}
 
       // we probably only need to use a tell if we have an expression
       // inside an info, otherwise we can just control the content using
@@ -182,6 +179,18 @@ object Parser {
       }
     }
 
+    def fieldId(id: String): (String, Option[String]) = {
+      findQuestion(id) map { case (section,field) => 
+        val secId = section.id
+        val nonInfoFields = section.fields.filterNot(_.isInstanceOf[InfoField])
+        val projection = nonInfoFields match {
+          case `field` :: Nil => None
+          case fs => Some("_" ++ {fs.indexOf(field)+1}.toString)
+        }
+        (secId, projection)
+      } getOrElse ((id,None))
+    }
+
     object HorribleParser extends RegexParsers {
       def identifier: Parser[String] = """[a-zA-Z][a-zA-Z0-9]+""".r
 
@@ -198,21 +207,40 @@ object Parser {
           val path = mapPath(i)
           val value = {
             findQuestion(i) match {
-              case Some((section,field: ChoiceField)) if field.isDisguisedBoolean => v.toInt match {
+              case Some((_,field: ChoiceField)) if field.isDisguisedBoolean => v.toInt match {
                 case 1 => Constant(false)
                 case 0 => Constant(true)
               }
+              case Some((_,field: ChoiceField)) => Constant(v.toString)
               case _ => Constant(v.toInt)
             }
           }
-          Apply(Select(Ident(TermName(path)), o), List(Literal(value)))
+
+          def isOpt: Boolean = findQuestion(i).map{
+            case (sec,ques) => !ques.mandatory || sec.includeIf.isDefined
+          }.getOrElse(false)
+
+          val identS = (isOpt,fieldId(i)) match {
+            case (false,(sec,Some(proj))) => Select(Ident(TermName(sec)), TermName(proj))
+            case (true,(sec,Some(proj))) =>
+              val projIdent: TermName = TermName(proj)
+              val projFunc: Function = q"_.$projIdent"
+              q"${TermName(sec)}.map($projFunc)"
+            case (_,(sec,None)) => Ident(TermName(sec))
+          }
+
+          val valueS = if (isOpt) {
+            List(Apply(Ident(TermName("Some")), List(Literal(value))))
+          } else {
+            List(Literal(value))
+          }
+
+          Apply(Select(identS, o), valueS)
       }
     }
 
     HorribleParser.parse(HorribleParser.condition,in) match {
-      case HorribleParser.Success(x,_) =>
-        println(showRaw(x))
-        x
+      case HorribleParser.Success(x,_) => x
       case e => throw new RuntimeException(e.toString())
     }
   }

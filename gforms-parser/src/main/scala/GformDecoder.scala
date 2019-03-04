@@ -58,6 +58,10 @@ case class GformTemplate(
       case others => section.id :+ letters(others.indexOf(section))
     }
   }
+
+  def findSection(f:Field): Option[Section] = {
+    allSections.find(_.fields.contains(f))
+  }  
 }
 
 case class DmsSubmission (
