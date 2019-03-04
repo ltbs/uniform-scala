@@ -1,6 +1,6 @@
 package ltbs.uniform
 
-package object gformsparser {
+package object gformsparser extends gformsparser.GformsInflector {
 
   type URL = String
 
@@ -12,4 +12,13 @@ package object gformsparser {
       }
     }
   }
+
+}
+
+package gformsparser {
+
+  trait GformsInflector extends StringInflector {
+    val badWords: List[String] = List("details", "of", "your", "tell", "us", "about", "what", "this", "the", "who", "is", "are")
+  }
+
 }

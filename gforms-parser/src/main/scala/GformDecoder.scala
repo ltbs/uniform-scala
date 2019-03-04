@@ -80,25 +80,11 @@ trait Section {
 
   def isList: Boolean = repeatsMax.isDefined || repeatsMin.isDefined
 
-  private def titleCase(word: String) = word match {
-    case "" => ""
-    case a => a.head.toUpper + a.tail
-  }
-
   /** As a last resort we could take the title, however this is
     * probably very long and possibly not unique
     */
-  private def desperateId: String = {
-    val ignoredWords = List("details", "of", "your", "tell", "us", "about", "what", "this", "the", "who", "is", "are")
-    val (h::t) = title
-      .trim
-      .filter{x => x.isLetter || x.isDigit || x == ' '}
-      .split(" ")
-      .filterNot{w => ignoredWords.contains(w.toLowerCase)}
-      .toList
-
-    (h.map(_.toLower) :: t.map(titleCase)).mkString
-  }
+  private def desperateId: String =
+    title.trim.split(" ").toList.lowerCamel
 
   /** If there is only a single field with a sane Id, use that field
     * id as the id for the section

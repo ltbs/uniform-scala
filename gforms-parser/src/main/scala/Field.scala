@@ -41,6 +41,7 @@ case class ChoiceField(
   label: String,
   choices: Set[String] = Set.empty,
   mandatory: Boolean = true,
+  multivalue: Boolean = false,
   validIf: Option[String],
   includeIf: Option[String]
 ) extends Field{

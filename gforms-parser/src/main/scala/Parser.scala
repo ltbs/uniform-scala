@@ -16,55 +16,68 @@ object Parser {
 
   def parseGform(file: String): AnyRef = macro parse_impl
 
-  def sectionDataType(c: Context)(s: Section): (c.universe.Tree,c.universe.Tree) = {
+  def dataConstruct(c: Context)(cf: ChoiceField): List[c.universe.Tree] = {
     import c.universe._
-      val (tellsRaw,asksRaw) = s.fields.partition { _.isInstanceOf[InfoField]}
 
-      // we probably only need to use a tell if we have an expression
-      // inside an info, otherwise we can just control the content using
-      // the messages file
-      val tell = tq"Unit"  // if (tellsRaw.isEmpty) tq"Unit" else tq"String"
+    val nameString = cf.id.trim.split(" ").toList.camel
+    val name = TypeName(nameString)
+    val opts : List[Tree] = cf.choices.map { option =>
+      val optionIdent = TermName(option.trim.split(" ").toList.camel)
+      q"case object $optionIdent extends $name"
+    }.toList 
+    List(
+      q"sealed trait $name",
+      q"object ${TermName(nameString)} { ..$opts }",
+      q"""implicit val ${TermName("eq" ++ nameString)} = cats.kernel.Eq.fromUniversalEquals[${TypeName(nameString)}]"""
+    )
+  }
 
-      val asks: List[Tree] = asksRaw.flatMap{ _ match {
-        case g: GroupField => g.fields
-        case x => List(x)
-      }}.flatMap{f =>
-        val inner = f match {
-          case f: TextField    => f.format match {
-            case Some(s) if s.startsWith("number") => List(tq"Int") // TODO: Properly parse the formats
-            case _             => List(tq"String")
-          }
-          case i: InfoField    => List(tq"Unit")
-          case c: ChoiceField if c.isDisguisedBoolean  => List(tq"Boolean")            
-          case c: ChoiceField  => List(tq"String")
-          case d: DateField    => List(tq"LocalDate")
-          case f: FileField    => List(tq"File")
-          case a: AddressField => List(tq"Address")
-          case o               => throw new IllegalArgumentException(s"Don't know how to handle: $o")
+  def sectionDataType(c: Context)(s: Section): (c.universe.Tree, c.universe.Tree, List[c.universe.Tree]) = {
+    import c.universe._
+    val (tellsRaw,asksRaw) = s.fields.partition { _.isInstanceOf[InfoField]}
+
+    // we probably only need to use a tell if we have an expression
+    // inside an info, otherwise we can just control the content using
+    // the messages file
+    val tell = tq"Unit"  // if (tellsRaw.isEmpty) tq"Unit" else tq"String"
+
+    val asks: List[Tree] = asksRaw.flatMap{ _ match {
+      case g: GroupField => g.fields
+      case x => List(x)
+    }}.flatMap{ f =>
+      val inner = f match {
+        case f: TextField    => f.format match {
+          case Some(s) if s.startsWith("number") => List(tq"Int") // TODO: Properly parse the formats
+          case _             => List(tq"String")
         }
-        if (f.mandatory) inner else inner.map(x => tq"Option[$x]")
+        case i: InfoField    => List(tq"Unit")
+        case c: ChoiceField if c.isDisguisedBoolean  => List(tq"Boolean")
+        case c: ChoiceField if c.multivalue =>
+          List(AppliedTypeTree(Ident(TypeName("Set")), List(Ident(TypeName(c.id.trim.split(" ").toList.camel)))))
+        case c: ChoiceField  => List(Ident(TypeName(c.id.trim.split(" ").toList.camel)))
+        case d: DateField    => List(tq"LocalDate")
+        case f: FileField    => List(tq"File")
+        case a: AddressField => List(tq"Address")
+        case o               => throw new IllegalArgumentException(s"Don't know how to handle: $o")
       }
-      
-      val ask = if (s.isList) tq"List[(..$asks)]" else tq"(..$asks)"
-      (tell,ask)
+      if (f.mandatory) inner else inner.map(x => tq"Option[$x]")
     }
+
+    val newConstructs: List[Tree] = asksRaw.flatMap{ _ match {
+      case g: GroupField => g.fields
+      case x => List(x)
+    }}.flatMap {
+      case cf: ChoiceField if !cf.isDisguisedBoolean =>
+        dataConstruct(c)(cf)
+      case _ => Nil
+    }
+
+    val ask = if (s.isList) tq"List[(..$asks)]" else tq"(..$asks)"
+    (tell,ask,newConstructs)
+  }
 
   def parse_impl(c: Context)(file: c.Expr[String]): c.universe.Tree = {
     import c.universe._
-
-    def fieldToType(f: Field): c.universe.Tree = {
-      val inner = f match {
-        case f: TextField    => f.format match {
-          case _             => tq"String" }
-        case i: InfoField    => tq"Unit"
-        case c: ChoiceField  => tq"String"
-        case d: DateField    => tq"LocalDate"
-        case f: FileField    => tq"File"
-        case a: AddressField => tq"Address"
-        case o               => throw new IllegalArgumentException(s"Don't know how to handle: $o")
-      }
-      if (f.mandatory) inner else (tq"Option[$inner]")
-    }
 
     val Literal(Constant(fileInner: String)) = file.tree
     val template = GformDecoder(fileInner) match {
@@ -77,7 +90,7 @@ object Parser {
     def id(sec: Section) = template.deduplicatedSectionId(sec)
 
     val pinner = sections.map{ sec => 
-      val (tellType, askType) = sectionDataType(c)(sec)
+      val (tellType, askType,_) = sectionDataType(c)(sec)
 
       if (tellType.toString == tq"Unit".toString && askType.toString == tq"Unit".toString) {
         fq"""_ <- ask[$askType](${id(sec)}).in[R]"""
@@ -98,7 +111,7 @@ object Parser {
     }
 
     val outputFields = sections.flatMap{ sec => 
-      val (_, askType) = sectionDataType(c)(sec)
+      val (_, askType,_) = sectionDataType(c)(sec)
       if (askType.toString == tq"Unit".toString)
         Nil
       else {
@@ -110,12 +123,16 @@ object Parser {
       }
     }
 
+    val newConstructs: List[Tree] = sections.flatMap{ sec =>
+      sectionDataType(c)(sec)._3
+    }
+
     val enMessages: Map[String, String] = Map.empty// fields.map{ f =>
     //   s"${f.id}.label" -> f.label
     // }.toMap
 
     val typeDeclarations = sections.map{ case sec =>
-      val (tellType, askType) = sectionDataType(c)(sec)
+      val (tellType, askType,_) = sectionDataType(c)(sec)
       (tellType, askType)
     }.groupBy(_.toString).values.map(_.head)
       .zipWithIndex.flatMap
@@ -149,6 +166,8 @@ object Parser {
   case class JourneyOutput(..$outputFields)
 
   ..$typeDeclarations
+
+  ..$newConstructs
 
   //type Stack = Fx.fx6[UniformAskString,UniformAskDate,UniformAskFile,UniformAskUnit,UniformAskAddress,UniformAskOptionString]
 
@@ -208,11 +227,15 @@ object Parser {
           val value = {
             findQuestion(i) match {
               case Some((_,field: ChoiceField)) if field.isDisguisedBoolean => v.toInt match {
-                case 1 => Constant(false)
-                case 0 => Constant(true)
+                case 1 => Literal(Constant(false))
+                case 0 => Literal(Constant(true))
               }
-              case Some((_,field: ChoiceField)) => Constant(v.toString)
-              case _ => Constant(v.toInt)
+              case Some((_,field: ChoiceField)) =>
+                Select(Ident(
+                  TermName(field.id.trim.split(" ").toList.camel)),
+                  TermName(field.choices.toList(v.toInt).trim.split(" ").toList.camel)
+                )
+              case _ => Literal(Constant(v.toInt))
             }
           }
 
@@ -230,9 +253,9 @@ object Parser {
           }
 
           val valueS = if (isOpt) {
-            List(Apply(Ident(TermName("Some")), List(Literal(value))))
+            List(Apply(Ident(TermName("Some")), List(value)))
           } else {
-            List(Literal(value))
+            List(value)
           }
 
           Apply(Select(identS, o), valueS)
