@@ -7,6 +7,7 @@ sealed trait Field {
   def validIf: Option[String]
   def includeIf: Option[String]
   def updateId(f: String => String): Field
+  def helpText: Option[String]
 
   /** will only be defined for a non-generated Id */
   def saneId: Option[String] = Some(id).filterNot(_.startsWith("generatedId_"))
@@ -34,6 +35,7 @@ case class InfoField(
   includeIf: Option[String]
 ) extends Field{
   def updateId(f: String => String) = this.copy(id = f(id))
+  def helpText: Option[String] = None
 }
 
 case class ChoiceField(
@@ -41,6 +43,7 @@ case class ChoiceField(
   label: String,
   choices: Set[String] = Set.empty,
   mandatory: Boolean = true,
+  helpText: Option[String],  
   multivalue: Boolean = false,
   validIf: Option[String],
   includeIf: Option[String]
@@ -54,6 +57,7 @@ case class DateField(
   id: String,
   label: String,
   mandatory: Boolean = true,
+  helpText: Option[String],  
   validIf: Option[String],
   includeIf: Option[String]
 ) extends Field{
@@ -65,7 +69,8 @@ case class FileField(
   label: String,
   mandatory: Boolean = true,
   validIf: Option[String],
-  includeIf: Option[String]
+  includeIf: Option[String],
+  helpText: Option[String]  
 ) extends Field {
   def updateId(f: String => String) = this.copy(id = f(id))
 }
@@ -76,7 +81,8 @@ case class GroupField(
   fields: List[Field],
   mandatory: Boolean = true,
   validIf: Option[String],
-  includeIf: Option[String]
+  includeIf: Option[String],
+  helpText: Option[String]  
 ) extends Field {
   def updateId(f: String => String) = this.copy(id = f(id))
 }
@@ -86,7 +92,8 @@ case class AddressField(
   label: String,
   mandatory: Boolean = true,
   validIf: Option[String],
-  includeIf: Option[String]
+  includeIf: Option[String],
+  helpText: Option[String]
 ) extends Field {
   def updateId(f: String => String) = this.copy(id = f(id))
 }

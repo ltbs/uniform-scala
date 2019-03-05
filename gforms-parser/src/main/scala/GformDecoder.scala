@@ -46,7 +46,7 @@ case class GformTemplate(
   sections: List[StandardSection],
   acknowledgementSection: EndSection,
   declarationSection: EndSection,
-  draftRetrievalMethod: DraftRetrievalMethod = DraftRetrievalMethod.OnePerUser,
+  draftRetrievalMethod: DraftRetrievalMethod = DraftRetrievalMethod.OnePerUser
 ) {
   def allSections: List[Section] =
     sections ++ List(acknowledgementSection, declarationSection)
@@ -97,6 +97,8 @@ trait Section {
       }
 
   def id: String = firstFieldId getOrElse desperateId
+
+  def infoFields: List[InfoField] = fields.collect{case x: InfoField => x}
 }
 
 case class StandardSection(

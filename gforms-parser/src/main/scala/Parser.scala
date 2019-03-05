@@ -127,9 +127,19 @@ object Parser {
       sectionDataType(c)(sec)._3
     }
 
-    val enMessages: Map[String, String] = Map.empty// fields.map{ f =>
-    //   s"${f.id}.label" -> f.label
-    // }.toMap
+    val enMessages: Map[String, String] = 
+      template.sections.flatMap { case section =>
+        val sectionId = template.deduplicatedSectionId(section)
+        (s"${sectionId}.title" -> section.title) ::
+        section.infoFields.zipWithIndex.map {
+          case (i,index) => (s"${sectionId}.info${index+1}" -> i.infoText)
+        } ++
+        section.fields.flatMap { field => 
+          val helpText = field.helpText.map{t => (s"${sectionId}.${field.id}.hint" -> t)}
+          val label = Some(field.label).filter(_.trim.nonEmpty).map{t => (s"${sectionId}.${field.id}.label" -> t)}
+          List(helpText,label).flatten
+        }
+      }.toMap
 
     val typeDeclarations = sections.map{ case sec =>
       val (tellType, askType,_) = sectionDataType(c)(sec)
@@ -139,7 +149,7 @@ object Parser {
     { case ((tellType, askType),i) =>
       val fieldName = TypeName(s"UniformType$i")
       val fieldNameB = TypeName(s"_uniformType$i")
-        
+      
       List(
         q"type $fieldName[A] = Uniform[$tellType, $askType,A]",
         q"type $fieldNameB[R] = $fieldName |= R"
@@ -153,7 +163,15 @@ object Parser {
       q"${TermName(s"ufevidence$$${c}")}: ${TypeName(s"_uniformType$i")}[R]"
     }
 
+    val stack = {
+      val (headOfStack::tailOfStack) = {0 until typeCount}.toList.map{ i =>
+        TypeName(s"UniformType$i")
+      }
 
+      tailOfStack.foldLeft(tq"Fx.fx1[$headOfStack]"){
+        case (acc,e) => tq"Fx.prepend[$e,$acc]"
+      }
+    }
 
     val r = q"""new {
   import org.atnos.eff._
@@ -169,7 +187,7 @@ object Parser {
 
   ..$newConstructs
 
-  //type Stack = Fx.fx6[UniformAskString,UniformAskDate,UniformAskFile,UniformAskUnit,UniformAskAddress,UniformAskOptionString]
+  type Stack = $stack
 
   def program[R: _uniformCore](implicit ..$evidence): Eff[R, Unit] =
     for (..$pinner) yield (JourneyOutput(..${sections.map(s => TermName(id(s)))}))
