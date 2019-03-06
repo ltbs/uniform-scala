@@ -18,21 +18,25 @@ object Parser {
 
   def dataConstruct(c: Context)(cf: ChoiceField): List[c.universe.Tree] = {
     import c.universe._
-
     val nameString = cf.id.trim.split(" ").toList.camel
     val name = TypeName(nameString)
     val opts : List[Tree] = cf.choices.map { option =>
-      val optionIdent = TermName(option.trim.split(" ").toList.camel)
+      val optionIdent = TermName(nameString + "_" + option.trim.split(" ").toList.camel)
       q"case object $optionIdent extends $name"
     }.toList 
     List(
       q"sealed trait $name",
-      q"object ${TermName(nameString)} { ..$opts }",
-      q"""implicit val ${TermName("eq" ++ nameString)} = cats.kernel.Eq.fromUniversalEquals[${TypeName(nameString)}]"""
-    )
+      q"""lazy implicit val ${TermName("eq" ++ nameString)} = cats.kernel.Eq.fromUniversalEquals[${TypeName(nameString)}]"""
+    ) ++ opts
   }
 
-  def sectionDataType(c: Context)(s: Section): (c.universe.Tree, c.universe.Tree, List[c.universe.Tree]) = {
+  def implicitParser(c: Context)(cf: ChoiceField): c.universe.Tree = {
+    import c.universe._
+    val nameString = cf.id.trim.split(" ").toList.camel
+    q"""lazy implicit val ${TermName(cf.id.trim.split(" ").toList.lowerCamel + "Parser")} = implicitly[DataParser[${TypeName(nameString)}]]"""
+  }
+
+  def sectionDataType(c: Context)(s: Section): (c.universe.Tree, c.universe.Tree, List[c.universe.Tree], List[c.universe.Tree]) = {
     import c.universe._
     val (tellsRaw,asksRaw) = s.fields.partition { _.isInstanceOf[InfoField]}
 
@@ -72,8 +76,16 @@ object Parser {
       case _ => Nil
     }
 
+    val implicitParsers: List[Tree] = asksRaw.flatMap{ _ match {
+      case g: GroupField => g.fields
+      case x => List(x)
+    }} collect {
+      case cf: ChoiceField if !cf.isDisguisedBoolean =>
+        implicitParser(c)(cf)
+    }
+
     val ask = if (s.isList) tq"List[(..$asks)]" else tq"(..$asks)"
-    (tell,ask,newConstructs)
+    (tell,ask,newConstructs,implicitParsers)
   }
 
   def parse_impl(c: Context)(file: c.Expr[String]): c.universe.Tree = {
@@ -90,7 +102,7 @@ object Parser {
     def id(sec: Section) = template.deduplicatedSectionId(sec)
 
     val pinner = sections.map{ sec => 
-      val (tellType, askType,_) = sectionDataType(c)(sec)
+      val (tellType, askType,_,_) = sectionDataType(c)(sec)
 
       if (tellType.toString == tq"Unit".toString && askType.toString == tq"Unit".toString) {
         fq"""_ <- ask[$askType](${id(sec)}).in[R]"""
@@ -111,7 +123,7 @@ object Parser {
     }
 
     val outputFields = sections.flatMap{ sec => 
-      val (_, askType,_) = sectionDataType(c)(sec)
+      val (_, askType,_,_) = sectionDataType(c)(sec)
       if (askType.toString == tq"Unit".toString)
         Nil
       else {
@@ -125,6 +137,10 @@ object Parser {
 
     val newConstructs: List[Tree] = sections.flatMap{ sec =>
       sectionDataType(c)(sec)._3
+    }
+
+    val implicitParserDeclarations: List[Tree] = sections.flatMap{ sec =>
+      sectionDataType(c)(sec)._4
     }
 
     val enMessages: Map[String, String] = 
@@ -142,7 +158,7 @@ object Parser {
       }.toMap
 
     val typeDeclarations = sections.map{ case sec =>
-      val (tellType, askType,_) = sectionDataType(c)(sec)
+      val (tellType, askType,_,_) = sectionDataType(c)(sec)
       (tellType, askType)
     }.groupBy(_.toString).values.map(_.head)
       .zipWithIndex.flatMap
@@ -160,16 +176,22 @@ object Parser {
 
     val evidence = {1 to typeCount}.map{ c =>
       val i = c - 1
-      q"${TermName(s"ufevidence$$${c}")}: ${TypeName(s"_uniformType$i")}[R]"
+      q"${TermName(s"ufevidence${c}")}: ${TypeName(s"_uniformType$i")}[R]"
     }
 
     val stack = {
-      val (headOfStack::tailOfStack) = {0 until typeCount}.toList.map{ i =>
+      val elements = {0 until typeCount}.toList.map{ i =>
         TypeName(s"UniformType$i")
       }
 
-      tailOfStack.foldLeft(tq"Fx.fx1[$headOfStack]"){
-        case (acc,e) => tq"Fx.prepend[$e,$acc]"
+      val (headGroup::tailGroup) = elements.grouped(3).map{
+        case (l::m::r::Nil) => tq"Fx3[$l,$m,$r]"
+        case (l::r::Nil) =>    tq"Fx2[$l,$r]"
+        case (f::Nil) =>       tq"Fx1[$f]"
+      }.toList.reverse
+
+      tailGroup.foldLeft(headGroup){
+        case (acc,e) => tq"FxAppend[$e,$acc]"
       }
     }
 
@@ -180,19 +202,24 @@ object Parser {
   import java.time.LocalDate
   import java.io.File
   import cats.implicits._
+  import ltbs.uniform.web._,parser._,InferParser._
 
   case class JourneyOutput(..$outputFields)
 
   ..$typeDeclarations
 
+  object dataTypes {
   ..$newConstructs
+  }
+
+  ..$implicitParserDeclarations  
 
   type Stack = $stack
 
   def program[R: _uniformCore](implicit ..$evidence): Eff[R, Unit] =
     for (..$pinner) yield (JourneyOutput(..${sections.map(s => TermName(id(s)))}))
 
-  val messages = Map("default" -> $enMessages)
+  lazy val messages = Map("default" -> $enMessages)
 }"""
     println(r)
     r
