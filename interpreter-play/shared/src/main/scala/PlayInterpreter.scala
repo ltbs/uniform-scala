@@ -35,7 +35,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
     messages: Messages
   ): Html
 
-  implicit def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
+  def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
     override def apply(key: List[String],args: Any*): String = input(key, args)
     override def apply(key: String,args: Any*): String = input(key, args)
     def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))

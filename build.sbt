@@ -24,7 +24,6 @@ lazy val root = project.in(file("."))
     publish := {},
     publishArtifact := false
   )
-  .settings(commonSettings)
 
 enablePlugins(GitVersioning)
 
@@ -330,17 +329,32 @@ lazy val docs = project
     )
   )
 
- lazy val `gforms-parser` = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
-   .settings(commonSettings)
-   .settings(
-     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
-     libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.9.2" % "compile",
-     libraryDependencies += "com.github.pureconfig" %% "pureconfig-enumeratum" % "0.9.2" % "compile",
-     libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1" % "compile",
-     libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13",
-     libraryDependencies += "org.atnos" %%% "eff" % "5.4.1",
-     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
-   )
+// older, macro based implementations
+//  lazy val `gforms-parser` = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
+//    .settings(commonSettings)
+//    .settings(
+//      libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
+//      libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.9.2" % "compile",
+//      libraryDependencies += "com.github.pureconfig" %% "pureconfig-enumeratum" % "0.9.2" % "compile",
+//      libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1" % "compile",
+//      libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13",
+//      libraryDependencies += "org.atnos" %%% "eff" % "5.4.1",
+//      addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+//    )
 
-lazy val `gforms-parserJVM` = `gforms-parser`.jvm.dependsOn(coreJVM, commonWebJVM)
-lazy val `gforms-parserJS` = `gforms-parser`.js.dependsOn(coreJS, commonWebJS)
+// lazy val `gforms-parserJVM` = `gforms-parser`.jvm.dependsOn(coreJVM, commonWebJVM)
+// lazy val `gforms-parserJS` = `gforms-parser`.js.dependsOn(coreJS, commonWebJS)
+
+lazy val `sbt-gforms-to-uniform-converter` = project
+  .enablePlugins(SbtPlugin)
+  .settings(
+    libraryDependencies += "org.typelevel" %% "cats-core" % "1.2.0", // last version to support 2.10
+    libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.9.2", // last version to support 2.10
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full), // needed for Scala 2.10
+    scalaCompilerBridgeSource := {
+      val sv = appConfiguration.value.provider.id.version
+        ("org.scala-sbt" % "compiler-interface" % sv % "component").sources
+    }
+  )
+
+crossSbtVersions := Vector("0.13.17", "1.2.8")

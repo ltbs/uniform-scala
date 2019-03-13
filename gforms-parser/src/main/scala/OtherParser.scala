@@ -206,7 +206,7 @@ object gformMacro {
 
 
       q"""
-object $className extends ..$bases { 
+object ${template._id} extends ..$bases { 
   import org.atnos.eff._
   import ltbs.uniform._
   import ltbs.uniform.gformsparser._
@@ -236,3 +236,4 @@ object $className extends ..$bases {
     c.Expr[Any](Block(outputs, Literal(Constant(()))))
   }
 }
+
