@@ -37,21 +37,12 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
     views.html.chrome(key.last, errors, form, breadcrumbs)(messagesIn, request)
   }
 
-  def listingPage[A](
-    key: List[String],
-    errors: ErrorTree,
-    elements: List[A],
-    messages: Messages
-  )(implicit evidence$1: Htmlable[A]): Html = ???
-
   val persistence = new Persistence {
     private var data: DB = Monoid[DB].empty
     def dataGet: Future[DB] = Future.successful(data)
     def dataPut(dataIn: DB): Future[Unit] =
       Future(data = dataIn).map{_ => ()}
   }
-
-  implicit def renderTell: (Unit, String) => Html = {case _ => Html("")}
 
   def beardAction(key: String) = {
     implicit val keys: List[String] = key.split("/").toList

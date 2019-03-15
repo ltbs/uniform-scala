@@ -34,5 +34,7 @@ package object playframework {
       else
         throw new IndexOutOfBoundsException
   }
-  
+
+  implicit def renderTell: (Unit, String) => Html = {case _ => Html("")}
+
 }

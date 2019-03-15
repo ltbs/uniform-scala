@@ -99,7 +99,6 @@ class WindowTaxController @Inject()(
         messages
       )(_)
 
-      implicit def renderTellUnit: (Unit, String) => Html = {case _ => Html("")}
       implicit def renderTellWindows: (List[Window], String) => Html =
         {case (v,_) => fu3(messages(request))(v) }
       implicit def renderTellWindow: (Window, String) => Html =
