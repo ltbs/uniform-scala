@@ -47,4 +47,14 @@ package object web {
 
   protected[web] val required = "required"
 
+
+  implicit val messagesMonoidInstance = new Monoid[Messages] {
+    def empty: Messages = NoopMessages
+    def combine(a: Messages, b: Messages):Messages = new Messages {
+      def get(key: String, args: Any*): Option[String] = a.get(key, args).orElse(b.get(key, args))
+      def get(key: List[String], args: Any*): Option[String] = a.get(key, args).orElse(b.get(key, args))
+      def list(key: String, args: Any*): List[String] = a.list(key, args) |+| b.list(key, args)
+    }
+  }
+
 }

@@ -58,9 +58,9 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
     Action.async { implicit request =>
       runWeb(
         program = program[FxAppend[TestProgramStack, PlayStack]]
-          .useForm(PlayForm.automatic[Unit, Option[MemberOfPublic]])
-          .useForm(PlayForm.automatic[Unit, BeardStyle])
-          .useForm(PlayForm.automatic[Unit, BeardLength]),
+          .useForm(automatic[Unit, Option[MemberOfPublic]])
+          .useForm(automatic[Unit, BeardStyle])
+          .useForm(automatic[Unit, BeardLength]),
         persistence
       )(
         a => Future.successful(Ok(s"You have £$a to pay"))

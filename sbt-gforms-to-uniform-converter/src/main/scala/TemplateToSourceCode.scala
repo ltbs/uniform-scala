@@ -24,7 +24,7 @@ object TemplateToSourceCode {
       }
     }.toMap
 
-  def apply(template: GformTemplate, config: Config): (String, Option[String], Option[String]) = {
+  def apply(template: GformTemplate, config: Config): (String, Option[String], Option[String], String) = {
 
     val sections: List[Section] = template.allSections
     def id(sec: Section) = template.deduplicatedSectionId(sec)
@@ -240,20 +240,22 @@ object ${template._id} {
           }
       )
 
+      val expandedListTypes = dataTypes.flatMap { _ match {
+        case ("Unit", ask) if ask.startsWith("List[") =>
+          val field = ask.drop(5).dropRight(1)
+          List(
+            (s"List[$field]","ListControl"),
+            (field,"Boolean"),
+            ("Unit", field)
+          )
+        case _ => Nil
+      } }
+
       val listedStack: String = balancedStack(
-        List("State[UniformCore, ?]", "Either[Result, ?]") ++ 
-        dataTypes.flatMap { _ match {
-          case ("Unit", ask) if ask.startsWith("List[") =>
-            val field = ask.drop(5).dropRight(1)
-            List(
-              (s"List[$field]","ListControl"),
-              (field,"Boolean"),
-              ("Unit", field)
-            )
-          case _ => Nil
-        } }.map{
-          case (a,t) => s"Uniform[$a, $t,?]"
-        }
+        List("State[UniformCore, ?]", "Either[Result, ?]") ++
+          expandedListTypes.map {
+            case (a,t) => s"Uniform[$a, $t,?]"
+          }
       )
 
       val dataParsers = dataTypes.flatMap{ case (t,a) =>
@@ -265,6 +267,9 @@ object ${template._id} {
       }.distinct.zipWithIndex.map{ case (v,i) => 
           s"i$i: $v"
       }.mkString(",")
+
+      def listFunctionLine(i: Int, a: String): String =
+        s"""def askList${i}[R : _uniformCore : _uniform[Unit,$a,?]](existing: List[$a], default: Option[$a]): Eff[R,$a] = ask[$a]("add").in[R]"""
 
       s"""
 package $packageName
@@ -288,15 +293,28 @@ trait ${template._id}Controller extends PlayInterpreter {
 
   type ListedStack = $listedStack
 
-  def interpretedJourney(finalAction: JourneyOutput => Future[Result])(implicit ec: ExecutionContext, ids: List[String], request: Request[AnyContent], msg: Messages, $dataParsers): Future[Result] = {
+  def interpretedJourney(finalAction: JourneyOutput => Future[Result])(implicit ec: ExecutionContext, ids: List[String], request: Request[AnyContent], $dataParsers): Future[Result] = {
     def listedJourney: Eff[ListedStack, JourneyOutput] = 
-      program[FxAppend[Stack,PlayStack]]
-        ${nonListTypes.map{ case (a,t) => 
-        s".useForm(PlayForm.automatic[$a, $t])"
+      program
+        ${nonListTypes.map{ case (t,a) => 
+        s".useForm(automatic[$t, $a])"
+        }.mkString("\n        ")}
+
+    ${listTypes.zipWithIndex.map{ case ((t,a),i) => 
+      listFunctionLine(i,a)
+    }.mkString("\n        ")}
+
+    def delistedJourney: Eff[PlayStack, JourneyOutput] = 
+      listedJourney
+        ${listTypes.zipWithIndex.map{ case ((t,a),i) => 
+        s".delist(askList$i)"
+        }.mkString("\n        ")}
+        ${expandedListTypes.map{ case (t,a) => 
+        s".useForm(automatic[$t, $a])"
         }.mkString("\n        ")}
 
     runWeb(
-      program = listedJourney,
+      program = delistedJourney,
       persistence(request)
     )(
       finalAction
@@ -313,7 +331,31 @@ trait ${template._id}Controller extends PlayInterpreter {
       case false => None
     }
 
-    (journey,controller,tests)
+    val knownDirectSubclassesBodge = config.knownDirectSubclassesBodge.fold(""){_ =>
+      val objectName = "AAA" ++ template._id ++ "Bodge"
+
+      val values = template.sections.flatMap(_.fields).flatMap {
+        case cf: ChoiceField if !cf.isDisguisedBoolean =>
+          val name = cf.id.trim.split(" ").toList.camel
+          cf.choices.map{ option =>
+          val optName = option.trim.split(" ").toList.camel
+          s"${template._id}.$name.$optName"
+        }
+        case _ => Nil
+      }.zipWithIndex.map{ case (v,i) => 
+        s"  def a$i = $v"
+      }.mkString("\n")
+
+      s"""
+package ${config.journeyPackage}
+
+object $objectName {
+$values
+}
+      """
+    }
+
+    (journey, controller, tests, knownDirectSubclassesBodge)
   }
 }
 

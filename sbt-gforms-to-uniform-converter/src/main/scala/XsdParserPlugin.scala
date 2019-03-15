@@ -13,12 +13,15 @@ object GformToUniformPlugin extends AutoPlugin {
   val gformsControllerPackage = TaskKey[Option[String]]("gforms-controller-package", "package under which play journey controllers are created, if None then they are omitted")
   val gformsLogicTableTests = TaskKey[Boolean]("gforms-logic-table-tests", "If true then unit tests based upon logic tables should be produced")
 
+  val gformsKnownDirectSubclassesBodge = TaskKey[Option[File]]("gforms-known-direct-subclasses-bodge", "Prevent 'knownDirectSubclasses' exceptions upon compilation with scala 2.11 by putting a dummy source code in the path specified")
+
   override lazy val projectSettings = {
     def common = Seq(
       gformsToUniform := gformsToUniformTask.value,
       sourceDirectories in gformsToUniform := Seq(sourceDirectory.value / "gform"),
       sourceGenerators += gformsToUniform.taskValue,
       managedSourceDirectories += (target in gformsToUniform).value,
+      gformsKnownDirectSubclassesBodge := None,
       gformsAddressClass := None,
       gformsJourneyPackage := "gforms",
       gformsControllerPackage := None,       
@@ -59,7 +62,8 @@ object GformToUniformPlugin extends AutoPlugin {
       gformsAddressClass.value,
       gformsJourneyPackage.value,
       gformsControllerPackage.value,
-      gformsLogicTableTests.value
+      gformsLogicTableTests.value,
+      gformsKnownDirectSubclassesBodge.value
     )
 
     def writeOut(sourceMod: Long, target: File, code: String): Unit = {
@@ -87,12 +91,18 @@ object GformToUniformPlugin extends AutoPlugin {
       val modified = target.exists && target.lastModified < input.lastModified
       if (newFile || modified) {
         println(s"${green}GFORMS: processing ${blue}${input}${reset}")
-        val (journeyCode,controllerOpt,testOpt) = TemplateToSourceCode(readFile(input),config)
+        val (journeyCode,controllerOpt,testOpt,knownDirectSubclassesBodge) =
+          TemplateToSourceCode(readFile(input),config)
         writeOut(input.lastModified, target, journeyCode)
 
 
         controllerOpt.map{ controllerCode =>
           writeOut(input.lastModified, controllerTarget, controllerCode)
+        }
+
+        config.knownDirectSubclassesBodge.map { bodgeDir => 
+          val bodgeFile = bodgeDir / ("AAA" + input.getName.replaceFirst("\\.json$","Bodge.scala"))
+          writeOut(input.lastModified, bodgeFile, knownDirectSubclassesBodge)
         }
 
         testOpt.map{ testCode =>

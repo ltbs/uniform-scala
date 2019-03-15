@@ -28,13 +28,6 @@ trait PlayInterpreter extends Compatibility.PlayController {
     messages: Messages
   ): Html
 
-  def listingPage[A : Htmlable](
-    key: List[String],
-    errors: ErrorTree,
-    elements: List[A],
-    messages: Messages
-  ): Html
-
   def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
     override def apply(key: List[String],args: Any*): String = input(key, args)
     override def apply(key: String,args: Any*): String = input(key, args)
@@ -428,4 +421,31 @@ trait PlayInterpreter extends Compatibility.PlayController {
     }, 0, Int.MaxValue, messages)
 
   }
+
+  def automatic[TELL,ASK]( implicit
+    parser: DataParser[ASK],
+    html: HtmlForm[ASK],
+    renderTell: (TELL, String) => Html
+  ): PlayForm[TELL,ASK] = new PlayForm[TELL,ASK] {
+    def inner(m: Messages): PlayForm[TELL,ASK] = {
+      sifProfunctor.lmap(
+        UrlEncodedHtmlForm[TELL,ASK](parser, html, renderTell, m)
+      ){ request =>
+
+        val urlEncodedData =
+          request.body.asFormUrlEncoded.getOrElse(Map.empty)
+        val (first: String,_) =
+          urlEncodedData.find(_._1 != "csrfToken").getOrElse(("",""))
+        val key = first.takeWhile(_ != '.')
+        urlEncodedData.forestAtPath(key)
+      }
+    }
+
+    def decode(out: ltbs.uniform.Encoded): Either[ltbs.uniform.ErrorTree,ASK] = inner(NoopMessages).decode(out)
+    def encode(in: ASK): ltbs.uniform.Encoded = inner(NoopMessages).encode(in)
+    def receiveInput(data: play.api.mvc.Request[play.api.mvc.AnyContent]): ltbs.uniform.Encoded = inner(NoopMessages).receiveInput(data)
+    def render(key: String,tell: TELL,existing: Option[ltbs.uniform.Encoded],data: play.api.mvc.Request[play.api.mvc.AnyContent],errors: ltbs.uniform.ErrorTree): play.twirl.api.Html = inner(messages(data)).render(key,tell,existing,data,errors)
+
+  }
+
 }

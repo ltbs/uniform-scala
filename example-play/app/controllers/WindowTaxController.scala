@@ -111,12 +111,12 @@ class WindowTaxController @Inject()(
             (existing: List[Window], default: Option[Window]) =>
             singleWindowProgram[STACKY](existing,default)
           }
-          .useForm(PlayForm.automatic[List[Window],ListControl])
-          .useForm(PlayForm.automatic[Unit, Int])
-          .useForm(PlayForm.automatic[Unit, (Int,Int)])
-          .useForm(PlayForm.automatic[Unit, Orientation])
-          .useForm(PlayForm.automatic[Unit, Boolean])
-          .useForm(PlayForm.automatic[Window, Boolean]),
+          .useForm(automatic[List[Window],ListControl])
+          .useForm(automatic[Unit, Int])
+          .useForm(automatic[Unit, (Int,Int)])
+          .useForm(automatic[Unit, Orientation])
+          .useForm(automatic[Unit, Boolean])
+          .useForm(automatic[Window, Boolean]),
         persistence
       )(
         a => Future.successful(Ok(s"You have £$a to pay"))
