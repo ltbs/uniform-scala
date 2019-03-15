@@ -1,11 +1,13 @@
 package ltbs.uniform.gformsparser
 
 import org.scalatest._
+import cats.implicits._
 
 class ExampleSpec extends FlatSpec with Matchers {
   import Parser._
 
   val four = 4
+  val fourString = "4"
 
   "gformExpr" should "do sums" in {
     """val i: Int = gformExpr("four+1")""" should compile
@@ -18,6 +20,7 @@ class ExampleSpec extends FlatSpec with Matchers {
     """gformExpr("four")""" shouldNot compile
     """val i: Boolean = gformExpr("four=4")""" should compile
     gformExpr("four=4") shouldBe true
+    """gformExpr("fourString=4")""" shouldNot compile
     gformExpr("four=5") shouldBe false
   }
 

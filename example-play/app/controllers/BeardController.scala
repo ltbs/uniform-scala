@@ -37,13 +37,6 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
     views.html.chrome(key.last, errors, form, breadcrumbs)(messagesIn, request)
   }
 
-  def listingPage[A](
-    key: List[String],
-    errors: ErrorTree,
-    elements: List[A],
-    messages: Messages
-  )(implicit evidence$1: Htmlable[A]): Html = ???
-
   val persistence = new Persistence {
     private var data: DB = Monoid[DB].empty
     def dataGet: Future[DB] = Future.successful(data)
@@ -51,16 +44,14 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
       Future(data = dataIn).map{_ => ()}
   }
 
-  implicit def renderTell: (Unit, String) => Html = {case _ => Html("")}
-
   def beardAction(key: String) = {
     implicit val keys: List[String] = key.split("/").toList
     Action.async { implicit request =>
       runWeb(
         program = program[FxAppend[TestProgramStack, PlayStack]]
-          .useForm(PlayForm.automatic[Unit, Option[MemberOfPublic]])
-          .useForm(PlayForm.automatic[Unit, BeardStyle])
-          .useForm(PlayForm.automatic[Unit, BeardLength]),
+          .useForm(automatic[Unit, Option[MemberOfPublic]])
+          .useForm(automatic[Unit, BeardStyle])
+          .useForm(automatic[Unit, BeardLength]),
         persistence
       )(
         a => Future.successful(Ok(s"You have £$a to pay"))

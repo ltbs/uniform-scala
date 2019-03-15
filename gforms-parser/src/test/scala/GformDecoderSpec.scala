@@ -8,14 +8,25 @@ class GformDecoderSpec extends FunSpec with Matchers {
   describe("GformDecoder") {
 
     for (file <- files) {
-        it(s"should parse $file ") {
-          val decoded = GformDecoder(file.getAbsolutePath)
-          decoded should be ('right)
-        }
+      val decoded = GformDecoder(file.getAbsolutePath)
+      it(s"should parse $file ") {
+        decoded should be ('right)
+      }
     }
-
   }
 }
+
+class ParserSpec extends FunSpec with Matchers {
+  import GformDecoderSpec._
+  describe("Parser") {
+
+    val pwd = System.getenv("PWD")
+    it(s"should compile gforms-parser/src/test/resources/ofsted-sc1.json") {
+      """Parser.parseGform("gforms-parser/src/test/resources/ofsted-sc1.json")""" should compile
+    }
+  }
+}
+
 
 object GformDecoderSpec{
   val files = {
@@ -27,7 +38,7 @@ object GformDecoderSpec{
     base.listFiles.toList.filter(_.getName.endsWith(".json"))
   }
 
-  val data = files.map{ x => 
+  val data = files.map{ x =>
     (GformDecoder(x.getAbsolutePath))
   }
 

@@ -22,22 +22,22 @@ package object logictable {
     type _either[Q] = Either[String,?] |= Q
     type _writer[Q] = Writer[String,?] |= Q
 
-    def giveExamples[IN,OUT, U](
+    def giveExamples[OUT, U](
       reader: Examples[OUT]      
     )(
-      implicit member: Member.Aux[Uniform[IN,OUT,?], R, U],
+      implicit member: Member.Aux[Uniform[Unit,OUT,?], R, U],
       eitherM: _either[U],
       writerM:_writer[U],
       listM:_list[U]
     ): Eff[U, A] =
       e.translate(
-        new Translate[Uniform[IN,OUT,?], U] {
-          def apply[X](ax: Uniform[IN,OUT,X]): Eff[U, X] =
+        new Translate[Uniform[Unit,OUT,?], U] {
+          def apply[X](ax: Uniform[Unit,OUT,X]): Eff[U, X] =
             ax match {
               case Uniform(key,_,_,v) =>
                 val i: Eff[U,X] = for {
                   a <- ListEffect.values(reader(key.mkString("/")):_*)
-                  _ <- WriterEffect.tell(s"$key:$a")
+                  _ <- WriterEffect.tell(s"${key.mkString(".")}:$a")
                   va <- send(v(a).toEither.map{_.asInstanceOf[X]})
                 } yield (va)
                 i

@@ -20,5 +20,4 @@ package gformsparser {
   trait GformsInflector extends StringInflector {
     val badWords: List[String] = List("details", "of", "your", "tell", "us", "about", "what", "this", "the", "who", "is", "are")
   }
-
 }
