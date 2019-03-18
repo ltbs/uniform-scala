@@ -1,0 +1,11 @@
+@import cats.implicits._
+
+@(key: String, values: Input, errors: ErrorTree, messages: Messages)
+
+@path=@{key.split("[.]").filter(_.nonEmpty).tail}
+
+<input class="govuk-input govuk-!-width-two-thirds @if(errors.definedAtPath(path.drop(1):_*)) {govuk-input--error}"
+       id="@key"
+       name="@key"
+       value="@{values.atPath(path:_*)}" />
+

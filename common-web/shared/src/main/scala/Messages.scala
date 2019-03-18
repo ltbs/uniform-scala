@@ -33,6 +33,35 @@ object NoopMessages extends Messages {
   def list(key: String, args: Any*): List[String] = Nil
 }
 
+case class NeverEmptyMessages(inner: Messages) extends Messages {
+
+  override def apply(key: String, args: Any*): String =
+    inner.apply(key, args: _*)
+
+  override def apply(key: List[String], args: Any*): String =
+    inner.apply(key, args: _*)
+
+  def get(key: String, args: Any*): Option[String] = 
+    Some(inner.apply(key, args: _*))
+
+  def get(key: List[String], args: Any*): Option[String] =
+    Some(inner.apply(key, args: _*))
+
+  def list(key: String, args: Any*): List[String] = {
+    inner.list(key, args: _*) match {
+      case Nil => List(key)
+      case xs => xs
+    }
+  }
+
+  override def decomposeOpt(key: String, args: Any*): Option[String] =
+    Some(inner.decompose(key,args:_*))
+
+  override def decompose(key: String, args: Any*): String =
+    inner.decompose(key,args:_*)    
+  
+}
+
 case class BestGuessMessages(inner: Messages) extends RegexParsers with Messages {
 
   override def apply(key: String, args: Any*): String =

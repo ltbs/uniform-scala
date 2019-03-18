@@ -287,6 +287,37 @@ lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
 lazy val govukWidgetsJVM = `govuk-widgets`.jvm.dependsOn(commonWebJVM)
 lazy val govukWidgetsJS = `govuk-widgets`.js.dependsOn(commonWebJS)
 
+lazy val `hmrc-widgets` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+  .settings(
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
+    libraryDependencies ++= Seq(
+      "com.chuusai" %%% "shapeless" % "2.3.3",
+      "com.beachape" %%% "enumeratum" % "1.5.13",
+      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+    ),
+    sourceDirectories in (Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value,
+    TwirlKeys.templateImports ++= Seq(
+      "ltbs.uniform.web._",
+      "ltbs.uniform._",
+      "ltbs.uniform.widgets.hmrc._"
+    ),
+    initialCommands in console := "import ltbs.uniform._;import ltbs.uniform.widgets.hmrc._;import ltbs.uniform.datapipeline._",
+    scalacOptions --= Seq(
+      "-Ywarn-unused:imports",
+      "-Ywarn-unused-imports",
+      "-Xfatal-warnings",
+      "-Ywarn-unused",
+      "-Ywarn-unused:params"
+    ) // little we can do about twirl throwing warnings
+  )
+  .enablePlugins(SbtTwirl)
+
+lazy val hmrcWidgetsJVM = `hmrc-widgets`.jvm.dependsOn(commonWebJVM)
+lazy val hmrcWidgetsJS = `hmrc-widgets`.js.dependsOn(commonWebJS)
+
 lazy val docs = project
   .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)
   .aggregate(`interpreter-js`)
