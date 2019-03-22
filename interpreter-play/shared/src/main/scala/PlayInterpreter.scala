@@ -101,13 +101,14 @@ trait PlayInterpreter extends Compatibility.PlayController {
                 method = request.method.toLowerCase
                 UniformCore(state, breadcrumbs, _) = g
                 dbObject: Option[OUT] = {
-                  val o = state.get(id).flatMap(wmFormOUT(id).decode(_).flatMap(validation(_).toEither) match {
-                    case Left(e) =>
-                      log.warn(s"$id - serialised data present, but failed validation - $e")
-                      None
-                    case Right(r) => Some(r)
-                  })
-                  o
+                  val o = state.get(id).flatMap(
+                    wmFormOUT(id).decode(_).flatMap(validation(_).toEither) match {
+                      case Left(e) =>
+                        log.warn(s"$id - serialised data present, but failed validation - $e")
+                        None
+                      case Right(r) => Some(r)
+                    })
+                  o orElse default
                 }
 
                 ret <- (method, dbObject, targetId) match {
