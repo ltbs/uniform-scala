@@ -94,7 +94,13 @@ trait PlayInterpreter extends Compatibility.PlayController {
             in.map { xs => baseUrl + xs.mkString("/") }
 
           ax match {
-            case Uniform(id, tell, default, validation) =>
+            case Uniform(id, tell, default, validation, customContent) =>
+
+              val hybridMessages: Messages = if (customContent.nonEmpty) {
+                Messages.fromMap(customContent) |+| messages(request)
+              } else {
+                messages(request)
+              }
 
               for {
                 g <- core
@@ -116,7 +122,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
                     log.info(s"$id - nothing in database, step in URI, render empty form")
                     left[NEWSTACK, Result, X](Ok(renderForm(id, Tree.empty,
                       wmForm.render(id.last, tell, None, request),
-                      breadcrumbsToUrl(breadcrumbs), request, messages(request)
+                      breadcrumbsToUrl(breadcrumbs), request, hybridMessages
                     )))
 
                   case ("get", Some(o), `id`) =>
@@ -231,7 +237,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
         def apply[X](ax: UniformAsk[List[OUT],X]): Eff[NEWSTACK, X] = {
 
           def real: Eff[NEWSTACK,List[OUT]] = ax match {
-            case Uniform(id, tell, default, validation) =>
+            case Uniform(id, _, default, _, _) =>
 
               def read: Eff[NEWSTACK, Option[List[OUT]]] =
                 db.encoded.get(id :+ "__data").map(_.map(deserialise))

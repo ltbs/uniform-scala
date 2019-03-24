@@ -31,9 +31,9 @@ package object uniform {
     inner: UniformB[IN,OUT]
   ): Eff[R,OUT] =
     inner match {
-      case UniformB(key,tell,default,validation) => for { 
+      case UniformB(key,tell,default,validation,customContent) => for { 
         predKeys <- core.map{_.path}
-        x <- send[Uniform[IN,OUT,?], R, OUT](Uniform(predKeys :+ key,tell,default,validation))
+        x <- send[Uniform[IN,OUT,?], R, OUT](Uniform(predKeys :+ key,tell,default,validation,customContent))
       } yield (x)
     }
 

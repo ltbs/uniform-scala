@@ -105,7 +105,7 @@ object JsInterpreter {
         def apply[X](ax: Uniform[IN, OUT,X]): Eff[NEWSTACK, X] = {
 
           def real: Eff[NEWSTACK,OUT] = {
-            val Uniform(keys, tell, default, validation) = ax
+            val Uniform(keys, tell, default, validation, customContent) = ax
             val form = forms(keys)
             val singleKey = keys.mkString(".")
             val formData: Either[ErrorTree,OUT] =
@@ -237,7 +237,7 @@ object JsInterpreter {
         def apply[X](ax: UniformAsk[List[OUT],X]): Eff[NEWSTACK, X] = {
 
           def real: Eff[NEWSTACK,List[OUT]] = ax match {
-            case Uniform(id, tell, default, validation) =>
+            case Uniform(id, tell, default, validation, _) =>
 
               def read: Eff[NEWSTACK, Option[List[OUT]]] =
                 db.encoded.get(id :+ "__data").map(_.map(deserialise))
