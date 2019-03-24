@@ -34,7 +34,7 @@ package object logictable {
         new Translate[Uniform[Unit,OUT,?], U] {
           def apply[X](ax: Uniform[Unit,OUT,X]): Eff[U, X] =
             ax match {
-              case Uniform(key,_,_,v) =>
+              case Uniform(key,_,_,v,_) =>
                 val i: Eff[U,X] = for {
                   a <- ListEffect.values(reader(key.mkString("/")):_*)
                   _ <- WriterEffect.tell(s"${key.mkString(".")}:$a")

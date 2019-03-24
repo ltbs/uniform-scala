@@ -8,17 +8,18 @@ case class UniformB[IN, OUT] private (
   key: String,
   tell: IN,
   default: Option[OUT],
-  validation: OUT => Validated[String,OUT]
+  validation: OUT => Validated[String,OUT],
+  customContent: Map[String,String] = Map.empty
 ) {
   def validating(error: String, newValidation: Function[OUT,Boolean]): UniformB[IN, OUT] =
     UniformB(key,tell,default, { v =>
-      (validation(v) andThen {x => Validated.cond(newValidation(x),x,error)}) })
+      (validation(v) andThen {x => Validated.cond(newValidation(x),x,error)}) }, customContent)
 
   def defaultOpt(out: Option[OUT]): UniformB[IN, OUT] =
-    UniformB(key,tell,out, validation)
+    UniformB(key,tell,out, validation, customContent)
 
   def defaultTo(out: OUT): UniformB[IN, OUT] =
-    UniformB(key,tell,Some(out), validation)
+    UniformB(key,tell,Some(out), validation, customContent)
 
   def emptyUnlessPred[R :_uniform[IN, OUT, ?]  : _uniformCore](b: => Boolean)(implicit monoid: cats.Monoid[OUT]): Eff[R, OUT] = {
     if(b) (uniformBToStack(this)) else Eff.pure[R,OUT](monoid.empty)
@@ -29,6 +30,11 @@ case class UniformB[IN, OUT] private (
     ret <- if (opt) (uniformBToStack(this)) else Eff.pure[R,OUT](monoid.empty)
   } yield ret
 
+  def withCustomContent(newCustom: (String,String)*): UniformB[IN, OUT] = {
+    val combinedCustom = {Map(newCustom:_*).mapValues(List(_)) |+| customContent.mapValues(List(_))}.mapValues(_.head)
+    UniformB(key,tell,default, validation, combinedCustom)
+  }
+
   def in[R :_uniform[IN, OUT, ?]  : _uniformCore]: Eff[R,OUT] = uniformBToStack(this)
 } 
 
@@ -36,7 +42,8 @@ case class Uniform[IN, OUT, STACK] private (
   key: List[String],
   tell: IN,
   default: Option[OUT],
-  validation: OUT => Validated[String,OUT]
+  validation: OUT => Validated[String,OUT],
+  customContent: Map[String,String] = Map.empty
 ) {
   def validating(error: String, newValidation: Function[OUT,Boolean]): Uniform[IN, OUT, STACK] =
     Uniform(key,tell,default, { v =>
@@ -62,7 +69,7 @@ object UniformAsk {
     in: Uniform[IN, OUT, STACK]
   ): Option[(List[String], Option[OUT], OUT => Validated[String,OUT])] =
     in match {
-      case Uniform(key, _, default, validation) => Some((key,default, validation))
+      case Uniform(key, _, default, validation, _) => Some((key,default, validation))
     }
 }
 
@@ -71,7 +78,7 @@ object UniformTell {
     in: Uniform[IN, OUT, STACK]
   ): Option[(List[String], IN)] =
     in match {
-      case Uniform(key, tell, _, _) => Some((key,tell))
+      case Uniform(key, tell, _, _, _) => Some((key,tell))
     }
 }
 

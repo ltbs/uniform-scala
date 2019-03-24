@@ -27,6 +27,29 @@ trait Messages {
 
 }
 
+object Messages {
+  def fromMap(msg: Map[String,String]): Messages = SimpleMapMessages(msg)
+  def noop: Messages = NoopMessages
+}
+
+case class SimpleMapMessages(msg: Map[String,String]) extends Messages {
+  def get(key: String, args: Any*): Option[String] = msg.get(key)
+  def get(keys: List[String], args: Any*): Option[String] = {
+    @annotation.tailrec
+    def inner(keys: List[String], args: Seq[Any]): Option[String] = keys match {
+      case Nil     => None
+      case (k::ks) => get(k, args:_*) match {
+        case Some(string) => Some(string)
+        case None         => inner(ks, args)
+      }
+    }
+    inner(keys, args)
+  }
+
+  def list(key: String, args: Any*): List[String] =
+    get(key, args:_*).toList.flatMap{_.split("//")}
+}
+
 object NoopMessages extends Messages {
   def get(key: String, args: Any*): Option[String] = None
   def get(key: List[String], args: Any*): Option[String] = None  
