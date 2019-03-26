@@ -3,9 +3,8 @@ package ltbs
 import org.atnos.eff._
 import cats.data.Validated
 import org.atnos.eff.all.{none => _, _}
-import org.atnos.eff.syntax.all._
 import cats.implicits._
-import cats.Monoid
+import cats.{Monoid,Functor}
 import scala.language.implicitConversions
 
 package object uniform {
@@ -92,16 +91,16 @@ package object uniform {
   } yield (a)
 
   def ask[OUT](key: String) =
-    UniformB[Unit,OUT](key, (), None, {v:OUT => v.valid})
+    UniformB[Unit,OUT](key, (), None, {v:OUT => v.valid}, Map.empty)
 
   def tell[IN](key: String)(value: IN) =
-    UniformB[IN,Unit](key, value, None, {v:Unit => v.valid})
+    UniformB[IN,Unit](key, value, None, {v:Unit => v.valid}, Map.empty)
 
   def dialogue[IN,OUT](key: String)(value: IN) =
-    UniformB[IN,OUT](key, value, None, {v:OUT => v.valid})
+    UniformB[IN,OUT](key, value, None, {v:OUT => v.valid}, Map.empty)
 
   def end[IN](key: String)(value: IN) =
-    UniformB[IN,Unit](key, value, None, {_:Unit => "journey.end".invalid})
+    UniformB[IN,Unit](key, value, None, {_:Unit => "journey.end".invalid}, Map.empty)
 
   def uniformP[IN,OUT,R :_uniform[IN, OUT, ?]](
     key: List[String],
@@ -109,7 +108,7 @@ package object uniform {
     default: Option[OUT] = None,
     validation: OUT => Validated[String,OUT] = {v:OUT => v.valid}
   ): Eff[R, OUT] =
-    send[Uniform[IN,OUT,?], R, OUT](Uniform(key,tell,default,validation))
+    send[Uniform[IN,OUT,?], R, OUT](Uniform(key,tell,default,validation, Map.empty))
 
   implicit class RichMonoidOps[R, A](e: Eff[R, A])(implicit monoid: Monoid[A]) {
     
@@ -153,4 +152,25 @@ package object uniform {
       Tree(value, Map({xonly ++ yonly ++ merged}:_*))
     }
   }
+
+  implicit def contentMonoidInstance[A] = new Monoid[UniformMessages[A]] {
+    def empty: UniformMessages[A] = NoopMessages[A]
+    def combine(a: UniformMessages[A], b: UniformMessages[A]):UniformMessages[A] = new UniformMessages[A] {
+      def get(key: String, args: Any*): Option[A] = a.get(key, args:_*).orElse(b.get(key, args:_*))
+      override def get(key: List[String], args: Any*): Option[A] = a.get(key, args:_*).orElse(b.get(key, args:_*))
+      def list(key: String, args: Any*): List[A] = a.list(key, args:_*) |+| b.list(key, args:_*)
+      override def decompose(key: String, args: Any*): A = a.decomposeOpt(key, args:_*).getOrElse(b.decompose(key, args:_*))
+
+      override def apply(key: String, args: Any*): A = 
+         a.get(key, args:_*).getOrElse(b(key, args:_*))
+
+      override def apply(keys: List[String], args: Any*): A =
+         a.get(keys, args:_*).getOrElse(b(keys, args:_*))        
+    }
+  }
+
+  implicit val contentFunctorInstance = new Functor[UniformMessages] {
+    def map[A,B](fa: UniformMessages[A])(f: A => B): UniformMessages[B] = fa.map(f)
+  }
+
 }

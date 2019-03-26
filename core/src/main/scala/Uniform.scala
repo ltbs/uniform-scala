@@ -9,7 +9,7 @@ case class UniformB[IN, OUT] private (
   tell: IN,
   default: Option[OUT],
   validation: OUT => Validated[String,OUT],
-  customContent: Map[String,String] = Map.empty
+  customContent: Map[String,(String,List[Any])]
 ) {
   def validating(error: String, newValidation: Function[OUT,Boolean]): UniformB[IN, OUT] =
     UniformB(key,tell,default, { v =>
@@ -30,9 +30,14 @@ case class UniformB[IN, OUT] private (
     ret <- if (opt) (uniformBToStack(this)) else Eff.pure[R,OUT](monoid.empty)
   } yield ret
 
-  def withCustomContent(newCustom: (String,String)*): UniformB[IN, OUT] = {
+  def withCustomContentAndArgs(newCustom: (String,(String, List[Any]))*): UniformB[IN, OUT] = {
     val combinedCustom = {Map(newCustom:_*).mapValues(List(_)) |+| customContent.mapValues(List(_))}.mapValues(_.head)
     UniformB(key,tell,default, validation, combinedCustom)
+  }
+
+  def withCustomContent(newCustom: (String,String)*): UniformB[IN, OUT] = {
+    def f(in: (String,String)): (String,(String,List[Any])) = (in._1, (in._2, Nil))
+    withCustomContentAndArgs(newCustom.map(f):_*)
   }
 
   def in[R :_uniform[IN, OUT, ?]  : _uniformCore]: Eff[R,OUT] = uniformBToStack(this)
@@ -43,20 +48,20 @@ case class Uniform[IN, OUT, STACK] private (
   tell: IN,
   default: Option[OUT],
   validation: OUT => Validated[String,OUT],
-  customContent: Map[String,String] = Map.empty
+  customContent: Map[String,(String,List[Any])]  
 ) {
   def validating(error: String, newValidation: Function[OUT,Boolean]): Uniform[IN, OUT, STACK] =
     Uniform(key,tell,default, { v =>
-      (validation(v) andThen {x => Validated.cond(newValidation(x),x,error)}) })
+      (validation(v) andThen {x => Validated.cond(newValidation(x),x,error)}) }, customContent)
 
   def defaultingTo(out: OUT): Uniform[IN, OUT, STACK] =
-    Uniform(key,tell,Some(out), validation)
+    Uniform(key,tell,Some(out), validation, customContent)
   
 }
 
 object Uniform {
   def ask[OUT,STACK](keyH: String, keyT: String*) =
-    Uniform[Unit,OUT,STACK](keyH :: keyT.toList, (), None, {v:OUT => v.valid})
+    Uniform[Unit,OUT,STACK](keyH :: keyT.toList, (), None, {v:OUT => v.valid}, Map.empty)
 }
 
 sealed trait UniformSelect[L,V] {

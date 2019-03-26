@@ -15,7 +15,7 @@ import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import play.twirl.api.Html
+import play.twirl.api.{Html, HtmlFormat}
 
 import InferParser._
 
@@ -24,8 +24,9 @@ class WindowTaxController @Inject()(
   implicit val messagesApi: MessagesApi
 ) extends Controller with PlayInterpreter with I18nSupport {
 
-  def messages(request: Request[AnyContent]): Messages =
-    BestGuessMessages(convertMessages(messagesApi.preferred(request)))
+  def messages(request: Request[AnyContent]): UniformMessages[Html] =
+    convertMessages(messagesApi.preferred(request)) |+|
+      UniformMessages.bestGuess.map(HtmlFormat.escape)
 
   def renderForm(
     key: List[String],
@@ -33,7 +34,7 @@ class WindowTaxController @Inject()(
     form: Html,
     breadcrumbs: List[String],
     request: Request[AnyContent],
-    messagesIn: Messages
+    messagesIn: UniformMessages[Html]
   ): Html = {
     views.html.chrome(key.last, errors, form, breadcrumbs)(messagesIn, request)
   }
@@ -42,7 +43,7 @@ class WindowTaxController @Inject()(
     key: List[String],
     errors: ErrorTree,
     elements: List[A],
-    messages: Messages
+    messages: UniformMessages[Html]
   )(implicit evidence$1: Htmlable[A]): Html = ???
 
   val persistence = new Persistence {
@@ -92,7 +93,7 @@ class WindowTaxController @Inject()(
     Action.async { implicit request =>
 
       val csrf = _root_.views.html.helper.CSRF.formField
-      def fu3(messages: Messages): List[Window] => Html = listingTable(csrf)(
+      def fu3(messages: UniformMessages[Html]): List[Window] => Html = listingTable(csrf)(
         "windows",
         {ltbs.uniform.widgets.govuk.html.listing(_,_,_,_,_)},
         fr,

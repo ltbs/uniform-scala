@@ -8,7 +8,6 @@ import java.time.{LocalDate => Date}
 
 object BeardTax {
 
-  type Name        = (String, String)
   type BeardLength = (Int, Int)
 
   case class MemberOfPublic(
@@ -28,17 +27,17 @@ object BeardTax {
     case object LaughingCavalier extends BeardStyle
   }
 
-  type TestProgramStack = Fx3[
-    UniformAsk[Option[MemberOfPublic], ?],
-    UniformAsk[BeardStyle, ?],
-    UniformAsk[BeardLength, ?]
-  ]
-
   def costOfBeard(beardStyle: BeardStyle, length: BeardLength): Int =
     beardStyle match {
       case BeardStyle.SoulPatch => length._2 / 10
       case _                    => length._1 + (length._2 - length._1) / 2
     }
+
+  type TestProgramStack = Fx3[
+    UniformAsk[Option[MemberOfPublic], ?],
+    UniformAsk[BeardStyle, ?],
+    UniformAsk[BeardLength, ?]
+  ]
 
   def program[R
       : _uniformCore
@@ -50,6 +49,13 @@ object BeardTax {
       memberOfPublic <- ask[Option[MemberOfPublic]]("is-public")
         .validating("born-in-future", _.map{_.age.isBefore(Date.now)}.getOrElse(true))
       beardStyle     <- ask[BeardStyle]("beard-style")
+        .withCustomContentAndArgs(
+          "beard-style.heading" -> {memberOfPublic match {
+            case Some(MemberOfPublic(forename,_,_)) =>
+              ("beard-style.heading.menacing", List(forename))
+            case None =>
+              ("beard-style.heading.sycophantic",Nil)
+          }} )
       beardLength    <- ask[BeardLength]("beard-length-mm")
         .validating("lower-exceeds-higher", {case (l,h) => l < h })
         .emptyUnlessPred(memberOfPublic.isDefined)

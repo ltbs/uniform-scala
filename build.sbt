@@ -122,7 +122,10 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
       "org.atnos" %%% "eff" % "5.4.1",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.1",
+      "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
+      "org.typelevel" %%% "cats-testkit" % "1.1.0" % Test,
+      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.6" % Test
     ),
     scalaJSUseMainModuleInitializer := true
   )
@@ -140,8 +143,7 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
       "com.github.mpilquist" %%% "simulacrum" % "0.14.0",
       "com.typesafe.play" %%% "twirl-api" % "1.3.15",
       "com.beachape" %%% "enumeratum" % "1.5.13",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
-      "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.1"
+      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
     )
   )
 
