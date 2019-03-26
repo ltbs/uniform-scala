@@ -125,7 +125,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.1",
       "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
       "org.typelevel" %%% "cats-testkit" % "1.1.0" % Test,
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.6" % Test
+      "com.github.alexarchambault" %%% "scalacheck-shapeless_1.13" % "1.1.6" % Test
     ),
     scalaJSUseMainModuleInitializer := true
   )

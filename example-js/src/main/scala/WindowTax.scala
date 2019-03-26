@@ -10,11 +10,11 @@ import JsInterpreter._
 import JsImplementations._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import cats.Monoid
-import ltbs.uniform.{DB,UniformCore,Uniform}
+import ltbs.uniform.{DB,UniformCore,Uniform,UniformMessages}
 import ltbs.uniform.web._
 import ltbs.uniform.web.parser._
 import ltbs.uniform.widgets.govuk._
-import play.twirl.api.Html
+import play.twirl.api.{Html,HtmlFormat}
 
 import InferParser._
 
@@ -63,10 +63,7 @@ object WindowTax {
   var state: DB = implicitly[Monoid[DB]].empty
   var breadcrumbs: List[List[String]] = Nil
 
-  implicit val cmsMessages = CmsMessages.fromText{
-    """
-  """
-  }
+  implicit val cmsMessages = UniformMessages.echo.map(HtmlFormat.escape)
 
   @JSExportTopLevel("back")
   def back(page: String) = journey(Back(page.split("[.]").toList))

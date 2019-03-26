@@ -10,11 +10,11 @@ import JsInterpreter._
 import JsImplementations._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import cats.Monoid
-import ltbs.uniform.{DB,UniformCore}
+import ltbs.uniform.{DB,UniformCore,UniformMessages}
 import ltbs.uniform.web._
 import ltbs.uniform.web.parser._
 import ltbs.uniform.widgets.govuk._
-
+import play.twirl.api.{Html,HtmlFormat}
 import InferParser._
 
 object PrototypeApp {
@@ -62,7 +62,7 @@ object PrototypeApp {
   var state: DB = implicitly[Monoid[DB]].empty
   var breadcrumbs: List[List[String]] = Nil
 
-  implicit val cmsMessages = CmsMessages.fromText{
+  implicit val cmsMessages: UniformMessages[Html] = CmsMessages.fromText{
     """
 
 # https://www.playframework.com/documentation/latest/ScalaI18N
@@ -99,7 +99,7 @@ there.is.a.problem=There is a problem
 required=This field is mandatory
 nonnumericformat=Please enter a number
 back=back
-  """}
+  """}.map(Html.apply) |+| UniformMessages.bestGuess.map(HtmlFormat.escape)
 
   @JSExportTopLevel("back")
   def back(page: String) = journey(Back(page.split("[.]").toList))

@@ -5,6 +5,7 @@ import ltbs.uniform.web._
 import org.querki.jquery._
 import JsInterpreter._
 import cats.implicits._ // needed for monadic either in 2.11
+import play.twirl.api.Html
 
 object JsImplementations {
 
@@ -12,7 +13,7 @@ object JsImplementations {
     (implicit
       parser: DataParser[A],
       html: HtmlForm[A],
-      messages: Messages
+      messages: UniformMessages[Html]
     ): Form[A] = new Form[A] {
 
     def decode(out: Encoded): Either[ErrorTree,A] = {
@@ -34,7 +35,7 @@ object JsImplementations {
     def toDataTree(in: A): Input =
       parser.unbind(in)
 
-    def render(key: String, existing: Option[Input], errors: ErrorTree, tell: play.twirl.api.Html): String = {
+    def render(key: String, existing: Option[Input], errors: ErrorTree, tell: Html): String = {
       val values: Input = existing.getOrElse(Tree(Nil))
 
       s"""<fieldset id="uniform" class="uniform" style="border: 0px white; padding: 0px;">""" ++
