@@ -1,6 +1,6 @@
 @import cats.implicits._
 
-@(key: String, errors: ErrorTree, messages: Messages)(ask: Html)(tell: Html)
+@(key: String, errors: ErrorTree, messages: UniformMessages[Html])(ask: Html)(tell: Html)
 
 @path=@{key.split("[.]").filter(_.nonEmpty).tail}
 @fieldErrors=@{errors.atPath(path:_*)}
@@ -25,7 +25,7 @@
 </div>
 
 
-  @for((k::v::_) <- messages.list(s"$key.details").collect{ case x if x.contains("|") => x.split("[|]").toList}) {
+  @for((k::v::_) <- messages.list(s"$key.details").collect{ case x if x.toString.contains("|") => x.toString.split("[|]").toList}) {
 <details class="govuk-details">
     <summary class="govuk-details__summary">
       <span class="govuk-details__summary-text">@k</span>

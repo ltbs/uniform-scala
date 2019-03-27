@@ -1,6 +1,6 @@
 package ltbs.uniform
 
-import org.atnos.eff._, all._, syntax.all._
+import org.atnos.eff._, all._
 import cats.data.State
 
 object DB {

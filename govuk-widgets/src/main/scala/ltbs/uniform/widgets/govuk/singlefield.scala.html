@@ -1,6 +1,6 @@
 @import cats.implicits._
 
-@(key: String, errors: ErrorTree, messages: Messages)(content: Html)
+@(key: String, errors: ErrorTree, messages: UniformMessages[Html])(content: Html)
 
 @path=@{key.split("[.]").filter(_.nonEmpty).tail}
 @fieldErrors=@{errors.atPath(path:_*)}

@@ -10,14 +10,14 @@ import play.api.data.Form
 import ltbs.uniform._
 import play.api._
 import play.api.mvc._
-import play.twirl.api.Html
+import play.twirl.api.{Html, HtmlFormat}
 import ltbs.uniform._
 import ltbs.uniform.web._
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait PlayInterpreter extends Compatibility.PlayController {
 
-  def messages(request: Request[AnyContent]): Messages
+  def messages(request: Request[AnyContent]): UniformMessages[Html]
 
   def renderForm(
     key: List[String],
@@ -25,31 +25,40 @@ trait PlayInterpreter extends Compatibility.PlayController {
     form: Html,
     breadcrumbs: List[String],
     request: Request[AnyContent],
-    messages: Messages
+    messages: UniformMessages[Html]
   ): Html
 
-  def convertMessages(implicit input: i18n.Messages): Messages = new Messages{
-    override def apply(key: List[String],args: Any*): String = input(key, args)
-    override def apply(key: String,args: Any*): String = input(key, args)
-    def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
-      input.messages(key, args:_*).some
-    else
-      none[String]
+  def convertMessages(implicit input: i18n.Messages, escapeHtml: Boolean = false): UniformMessages[Html] = {
+    val stringMessages = new UniformMessages[String]{
+      override def apply(key: List[String],args: Any*): String = {
+        println(s"1: $args")
+        input(key, args:_*)
+      }
+      override def apply(key: String,args: Any*): String = {
+        println(s"2: $args")
+        input(key, args:_*)
+      }
+      def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
+        input.messages(key, args:_*).some
+      else
+        none[String]
 
-    def get(key: List[String],args: Any*): Option[String] = key collectFirst {
-      case k if input.isDefinedAt(k) => input.messages(k, args:_*)
+      override def get(key: List[String],args: Any*): Option[String] = key collectFirst {
+        case k if input.isDefinedAt(k) => input.messages(k, args:_*)
+      }
+
+      def list(key: String,args: Any*): List[String] = {
+        @annotation.tailrec
+        def inner(cnt: Int = 2, acc: List[String] = Nil): List[String] =
+          get(s"$key.$cnt", args:_*) match {
+            case Some(m) => inner(cnt+1, m :: acc)
+            case None    => acc
+          }
+
+        List(key, s"$key.1").map(get(_, args:_*)).flatten ++ inner().reverse
+      }
     }
-
-    def list(key: String,args: Any*): List[String] = {
-      @annotation.tailrec
-      def inner(cnt: Int = 2, acc: List[String] = Nil): List[String] =
-        get(s"$key.$cnt", args:_*) match {
-          case Some(m) => inner(cnt+1, m :: acc)
-          case None    => acc
-        }
-
-      List(key, s"$key.1").map(get(_, args)).flatten ++ inner().reverse
-    }
+    if (escapeHtml) stringMessages.map(HtmlFormat.escape) else stringMessages.map(Html.apply)
   }
 
   val log: Logger = Logger("uniform")
@@ -96,8 +105,12 @@ trait PlayInterpreter extends Compatibility.PlayController {
           ax match {
             case Uniform(id, tell, default, validation, customContent) =>
 
-              val hybridMessages: Messages = if (customContent.nonEmpty) {
-                Messages.fromMap(customContent) |+| messages(request)
+              val hybridMessages: UniformMessages[Html] = if (customContent.nonEmpty) {
+                val newMessageMap: Map[String, List[Html]] = customContent.mapValues{
+                  case (key, args) =>
+                    List(messages(request)(key,args:_*))
+                }
+                UniformMessages.fromMap(newMessageMap) |+| messages(request)
               } else {
                 messages(request)
               }
@@ -121,7 +134,7 @@ trait PlayInterpreter extends Compatibility.PlayController {
                   case ("get", None, `id`) =>
                     log.info(s"$id - nothing in database, step in URI, render empty form")
                     left[NEWSTACK, Result, X](Ok(renderForm(id, Tree.empty,
-                      wmForm.render(id.last, tell, None, request),
+                      wmForm.render(id.last, tell, None, request, hybridMessages),
                       breadcrumbsToUrl(breadcrumbs), request, hybridMessages
                     )))
 
@@ -132,8 +145,8 @@ trait PlayInterpreter extends Compatibility.PlayController {
                                  |\t\t encoded: $encoded """.stripMargin)
                     left[NEWSTACK, Result, X](Ok(
                       renderForm(id, Tree.empty,
-                      wmForm.render(id.last, tell, Some(encoded), request),
-                      breadcrumbsToUrl(breadcrumbs), request, messages(request)
+                      wmForm.render(id.last, tell, Some(encoded), request, hybridMessages),
+                      breadcrumbsToUrl(breadcrumbs), request, hybridMessages
                     )))
 
                   case ("get", Some(data), _) =>
@@ -159,8 +172,8 @@ trait PlayInterpreter extends Compatibility.PlayController {
                         log.info(s"  errors: $errors")
                         log.info(s"  data: $data")
                         left[NEWSTACK, Result, X](BadRequest(renderForm(id, errors,
-                          wmForm.render(id.last, tell, Some(data), request, errors),
-                          breadcrumbsToUrl(breadcrumbs), request, messages(request)
+                          wmForm.render(id.last, tell, Some(data), request, hybridMessages, errors),
+                          breadcrumbsToUrl(breadcrumbs), request, hybridMessages
                         )))
                       case Right(o) =>
                         log.info(s"$id - form submitted, step in URI, validation pass")
@@ -398,9 +411,9 @@ trait PlayInterpreter extends Compatibility.PlayController {
 
   def listingTable[E](csrf: Html)(
     key: String,
-    render: (String, List[(Html, Option[Html], Option[Html])], Int, Int, Messages) => Html,
+    render: (String, List[(Html, Option[Html], Option[Html])], Int, Int, UniformMessages[Html]) => Html,
     elementToHtml: E => Html,
-    messages: Messages
+    messages: UniformMessages[Html]
   )(elements: List[E]): Html = {
 
     def edit(i: Int) = Html(
@@ -429,15 +442,16 @@ trait PlayInterpreter extends Compatibility.PlayController {
 
   }
 
+  private val dummyMessages = UniformMessages.echo.map(Html(_))
+
   def automatic[TELL,ASK]( implicit
     parser: DataParser[ASK],
     html: HtmlForm[ASK],
     renderTell: (TELL, String) => Html
   ): PlayForm[TELL,ASK] = new PlayForm[TELL,ASK] {
-    def inner(m: Messages): PlayForm[TELL,ASK] = {
-      sifProfunctor.lmap(
-        UrlEncodedHtmlForm[TELL,ASK](parser, html, renderTell, m)
-      ){ request =>
+    def inner(m: UniformMessages[Html]): PlayForm[TELL,ASK] = {
+      UrlEncodedHtmlForm[TELL,ASK](parser, html, renderTell, m).
+        transformIn { request =>
 
         val urlEncodedData =
           request.body.asFormUrlEncoded.getOrElse(Map.empty)
@@ -448,10 +462,10 @@ trait PlayInterpreter extends Compatibility.PlayController {
       }
     }
 
-    def decode(out: ltbs.uniform.Encoded): Either[ltbs.uniform.ErrorTree,ASK] = inner(NoopMessages).decode(out)
-    def encode(in: ASK): ltbs.uniform.Encoded = inner(NoopMessages).encode(in)
-    def receiveInput(data: play.api.mvc.Request[play.api.mvc.AnyContent]): ltbs.uniform.Encoded = inner(NoopMessages).receiveInput(data)
-    def render(key: String,tell: TELL,existing: Option[ltbs.uniform.Encoded],data: play.api.mvc.Request[play.api.mvc.AnyContent],errors: ltbs.uniform.ErrorTree): play.twirl.api.Html = inner(messages(data)).render(key,tell,existing,data,errors)
+    def decode(out: ltbs.uniform.Encoded): Either[ltbs.uniform.ErrorTree,ASK] = inner(dummyMessages).decode(out)
+    def encode(in: ASK): ltbs.uniform.Encoded = inner(dummyMessages).encode(in)
+    def receiveInput(data: play.api.mvc.Request[play.api.mvc.AnyContent]): ltbs.uniform.Encoded = inner(dummyMessages).receiveInput(data)
+    def render(key: String,tell: TELL,existing: Option[ltbs.uniform.Encoded],data: play.api.mvc.Request[play.api.mvc.AnyContent], messages: UniformMessages[Html], errors: ltbs.uniform.ErrorTree): play.twirl.api.Html = inner(messages).render(key,tell,existing,data,messages, errors)
 
   }
 

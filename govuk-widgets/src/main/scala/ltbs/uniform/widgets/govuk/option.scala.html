@@ -1,4 +1,4 @@
-@(key: String, values: Input, errors: ErrorTree, messages: Messages, inner: (String, Input, ErrorTree, Messages) => Html)
+@(key: String, values: Input, errors: ErrorTree, messages: UniformMessages[Html], inner: (String, Input, ErrorTree, UniformMessages[Html]) => Html)
 
 @path=@{key.split("[.]").toList.filter(_.nonEmpty).tail: List[String]}
 

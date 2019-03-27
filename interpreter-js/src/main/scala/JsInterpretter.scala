@@ -299,9 +299,9 @@ object JsInterpreter {
 
   def listingTable[E](
     key: String,
-    render: (String, List[(Html, Option[Html], Option[Html])], Int, Int, Messages) => Html,
+    render: (String, List[(Html, Option[Html], Option[Html])], Int, Int, UniformMessages[Html]) => Html,
     elementToHtml: E => Html,
-    messages: Messages
+    messages: UniformMessages[Html]
   )(elements: List[E]): Html = {
 
     def edit(i: Int) = Html(

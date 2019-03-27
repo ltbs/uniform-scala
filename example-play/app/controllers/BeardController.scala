@@ -16,15 +16,17 @@ import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import play.twirl.api.Html
+import play.twirl.api.{Html, HtmlFormat}
 
 import InferParser._
 
 @Singleton
 class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayInterpreter with I18nSupport {
 
-  def messages(request: Request[AnyContent]): Messages =
-    BestGuessMessages(convertMessages(messagesApi.preferred(request)))
+  def messages(request: Request[AnyContent]): UniformMessages[Html] = (
+    convertMessages(messagesApi.preferred(request)) |+|
+      UniformMessages.bestGuess.map(HtmlFormat.escape)
+  )
 
   def renderForm(
     key: List[String],
@@ -32,7 +34,7 @@ class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends C
     form: Html,
     breadcrumbs: List[String],
     request: Request[AnyContent],
-    messagesIn: Messages
+    messagesIn: UniformMessages[Html]
   ): Html = {
     views.html.chrome(key.last, errors, form, breadcrumbs)(messagesIn, request)
   }

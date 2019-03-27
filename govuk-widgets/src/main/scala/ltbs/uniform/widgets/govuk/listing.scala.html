@@ -1,6 +1,6 @@
 @import cats.implicits._
 
-@(key: String, items: List[(Html, Option[Html], Option[Html])], min: Int, max: Int, messages: Messages)
+@(key: String, items: List[(Html, Option[Html], Option[Html])], min: Int, max: Int, messages: UniformMessages[Html])
 
 @if(items.nonEmpty) {
 <table class="govuk-table">
