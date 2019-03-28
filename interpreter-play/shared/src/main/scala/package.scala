@@ -4,8 +4,9 @@ import cats.data._
 import cats.Invariant
 import play.api.data.Form
 import play.api.mvc.{ Request, AnyContent }
-import play.twirl.api.Html
+import play.twirl.api.{Html, HtmlFormat}
 import ltbs.uniform._
+import play.api._
 
 package object playframework {
 
@@ -36,5 +37,36 @@ package object playframework {
   }
 
   implicit def renderTell: (Unit, String) => Html = {case _ => Html("")}
+
+  def convertMessages(input: i18n.Messages, escapeHtml: Boolean = false): UniformMessages[Html] = {
+    val stringMessages = new UniformMessages[String]{
+      override def apply(key: List[String],args: Any*): String = {
+        input(key, args:_*)
+      }
+      override def apply(key: String,args: Any*): String = {
+        input(key, args:_*)
+      }
+      def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
+        Some(input.messages(key, args:_*))
+      else
+        None
+
+      override def get(key: List[String],args: Any*): Option[String] = key collectFirst {
+        case k if input.isDefinedAt(k) => input.messages(k, args:_*)
+      }
+
+      def list(key: String,args: Any*): List[String] = {
+        @annotation.tailrec
+        def inner(cnt: Int = 2, acc: List[String] = Nil): List[String] =
+          get(s"$key.$cnt", args:_*) match {
+            case Some(m) => inner(cnt+1, m :: acc)
+            case None    => acc
+          }
+
+        List(key, s"$key.1").map(get(_, args:_*)).flatten ++ inner().reverse
+      }
+    }
+    if (escapeHtml) stringMessages.map(HtmlFormat.escape) else stringMessages.map(Html.apply)
+  }
 
 }

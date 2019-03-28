@@ -28,39 +28,6 @@ trait PlayInterpreter extends Compatibility.PlayController {
     messages: UniformMessages[Html]
   ): Html
 
-  def convertMessages(implicit input: i18n.Messages, escapeHtml: Boolean = false): UniformMessages[Html] = {
-    val stringMessages = new UniformMessages[String]{
-      override def apply(key: List[String],args: Any*): String = {
-        println(s"1: $args")
-        input(key, args:_*)
-      }
-      override def apply(key: String,args: Any*): String = {
-        println(s"2: $args")
-        input(key, args:_*)
-      }
-      def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
-        input.messages(key, args:_*).some
-      else
-        none[String]
-
-      override def get(key: List[String],args: Any*): Option[String] = key collectFirst {
-        case k if input.isDefinedAt(k) => input.messages(k, args:_*)
-      }
-
-      def list(key: String,args: Any*): List[String] = {
-        @annotation.tailrec
-        def inner(cnt: Int = 2, acc: List[String] = Nil): List[String] =
-          get(s"$key.$cnt", args:_*) match {
-            case Some(m) => inner(cnt+1, m :: acc)
-            case None    => acc
-          }
-
-        List(key, s"$key.1").map(get(_, args:_*)).flatten ++ inner().reverse
-      }
-    }
-    if (escapeHtml) stringMessages.map(HtmlFormat.escape) else stringMessages.map(Html.apply)
-  }
-
   val log: Logger = Logger("uniform")
 
   def formToValidated[A](f: Form[A]): ValidatedData[A] =
@@ -307,82 +274,6 @@ trait PlayInterpreter extends Compatibility.PlayController {
         }
       }
     )
-
-  //   def delist[OUT, NEWSTACK, INNER](
-  //     subJourneyP: (List[OUT], Option[OUT]) => Eff[INNER, OUT]
-  //   )(
-  //     implicit member: Member.Aux[UniformAsk[List[OUT],?], STACK, NEWSTACK],
-  //     stateM: _core[NEWSTACK],
-  //     eitherM: _either[NEWSTACK],
-  //     listingPage: _uniform[List[OUT], ListControl, NEWSTACK],
-  //     parser: DataParser[List[OUT]],
-  //     f: IntoPoly[INNER,NEWSTACK]
-  //   ): Eff[NEWSTACK,A] = e.translate(
-  //     new Translate[UniformAsk[List[OUT],?], NEWSTACK] {
-
-  //       val removeConfirmation: (List[String], List[OUT], OUT) => Eff[NEWSTACK, Boolean] = {alwaysYes[NEWSTACK, OUT] _}
-
-  //       def serialise(in: List[OUT]): String = FormUrlEncoded.fromInputTree(parser.unbind(in)).writeString
-  //       def deserialise(in: String): List[OUT] = parser.bind(FormUrlEncoded.readString(in).toInputTree) match {
-  //         case Left(t) if t.isEmpty => Nil
-  //         case Left(e) => throw new IllegalStateException(e.toString)
-  //         case Right(r) => r
-  //       }
-
-  //       def apply[X](ax: UniformAsk[List[OUT],X]): Eff[NEWSTACK, X] = {
-
-  //         def real: Eff[NEWSTACK,List[OUT]] = ax match {
-  //           case Uniform(id, tell, default, validation) =>
-
-  //             def read: Eff[NEWSTACK, Option[List[OUT]]] =
-  //               db.encoded.get(id :+ "__data").map(_.map(deserialise))
-
-  //             def write(in: List[OUT]): Eff[NEWSTACK, Unit] =
-  //               db.encoded(id :+ "__data") = serialise(in)
-
-  //             def process(elements: List[OUT]): Eff[NEWSTACK,List[OUT]] = {
-  //               uniformP[List[OUT],ListControl,NEWSTACK](id, elements) >>=
-  //               {_ match {
-  //                 case ltbs.uniform.web.Continue => Eff.pure[NEWSTACK,List[OUT]](elements)
-
-  //                 case AddAnother =>
-  //                   subjourney("add") {
-  //                     subJourneyP(elements, None).into[NEWSTACK]
-  //                   } >>= {x =>
-  //                     db.remove(id) >>
-  //                     db.removeRecursive(id.dropRight(1) :+ "add") >>
-  //                     write(elements :+ x) >>
-  //                     process(elements :+ x)}
-
-  //                 case Edit(ordinal) =>
-  //                   subjourney("edit") {
-  //                     subJourneyP(elements, elements.get(ordinal)).into[NEWSTACK]
-  //                   } >>= {x =>
-  //                     db.remove(id) >>
-  //                     db.removeRecursive(id.dropRight(1) :+ "edit") >>
-  //                     write(elements.replace(ordinal, x)) >>
-  //                     process(elements.replace(ordinal, x))}
-
-  //                 case Delete(ordinal) =>
-  //                   removeConfirmation(id, elements, elements(ordinal)) >>= {
-  //                     if (_) {
-  //                       db.remove(id) >>
-  //                       write(elements.delete(ordinal)) >>
-  //                       left[NEWSTACK, Result, List[OUT]](Redirect(".."))
-  //                     } else
-  //                       left[NEWSTACK, Result, List[OUT]](Redirect(".."))
-  //                   }
-  //               }}
-  //             }
-
-  //             read >>= { state => process(state.orElse(default).getOrElse(Nil)) }
-
-  //         }
-  //         real.map{_.asInstanceOf[X]}
-  //       }
-  //     }
-  //   )
-
   }
 
   implicit val scheduler = ExecutorServices.schedulerFromGlobalExecutionContext
