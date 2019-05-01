@@ -3,13 +3,21 @@ package ltbs.uniform.interpreters
 import cats.data._
 import cats.Invariant
 import play.api.data.Form
-import play.api.mvc.{ Request, AnyContent }
+import play.api.mvc.{ Request, Result, AnyContent }
 import play.twirl.api.{Html, HtmlFormat}
 import ltbs.uniform._
 import play.api._
+import scala.concurrent.Future
 
 package object playframework {
 
+  // New
+  type Path = List[String]
+  type JourneyConfig = String
+  type WebInner[A] = RWST[Future, (JourneyConfig, String, Request[AnyContent]), Path, (Path, DB), A]
+  type WebMonad[A] = EitherT[WebInner, Result, A]
+
+  // Old
   type PlayForm[TELL,ASK] = SimpleInteractionForm[Request[AnyContent],TELL,ASK,Html]
 
   type Encoded = String

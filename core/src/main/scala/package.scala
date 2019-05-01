@@ -6,8 +6,15 @@ import org.atnos.eff.all.{none => _, _}
 import cats.implicits._
 import cats.{Monoid,Functor}
 import scala.language.implicitConversions
-
+import shapeless._
 package object uniform {
+
+
+  type HNil = shapeless.HNil
+  type ::[+H,+T <: shapeless.HList] = shapeless.::[H,T]
+
+
+  type GenericHList[A] = Generic[A] { type Repr <: HList }
 
   type _uniformCore[Q]  = cats.data.State[UniformCore,?] |= Q
 

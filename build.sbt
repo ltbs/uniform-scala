@@ -121,7 +121,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
-      "org.atnos" %%% "eff" % "5.5.0",
+      "com.chuusai" %%% "shapeless" % "2.3.3",      
+      "org.atnos" %%% "eff" % "5.5.0", // remove
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.1",
       "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
       "org.typelevel" %%% "cats-testkit" % "1.1.0" % Test,

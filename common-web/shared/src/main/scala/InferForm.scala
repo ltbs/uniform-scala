@@ -1,7 +1,7 @@
 package ltbs.uniform.web
 
 import play.twirl.api.Html
-import shapeless._
+import shapeless.{:: => _, _}
 import shapeless.labelled._
 import cats.implicits._
 import cats.Monoid
