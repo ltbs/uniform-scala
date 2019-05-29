@@ -45,7 +45,7 @@ object InferParser {
   implicit val cnilParser: DataParser[CNil] =
     new DataParser[CNil] {
       def bind(in: Input): Either[ErrorTree,CNil] =
-        Left(Tree.empty)
+        Left(Tree("required"))
       def unbind(a: CNil): Input = Tree.empty
     }
 
