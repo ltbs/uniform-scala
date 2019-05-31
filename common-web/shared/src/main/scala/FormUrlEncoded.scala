@@ -78,9 +78,9 @@ object FormUrlEncoded {
 
         {
           if (subInput.value.size > 1)
-            subInput.value.map{ v => s"${subKey.mkString(".")}[]=$v" }
+            subInput.value.map{ v => s"${subKey.mkString(".")}[]=${urlencode(v,"UTF-8")}" }
           else
-            subInput.value.map{ v => s"${subKey.mkString(".")}=$v" }
+            subInput.value.map{ v => s"${subKey.mkString(".")}=${urlencode(v,"UTF-8")}" }
         } ++ subInput.children.flatMap{
           case (k,f) => inner(subKey :+ k, f)
         }
