@@ -1,0 +1,27 @@
+@(key: String, options: Seq[String], existing: List[String], errors: ErrorTree, messages: UniformMessages[Html], conditional: PartialFunction[String,Html] = PartialFunction.empty)
+
+@keyNoDots=@{key.replace(".","-")}
+
+<div class="govuk-checkboxes">
+
+  @for((opt,num) <- options.zipWithIndex) {
+    <div class="govuk-checkboxes__item" data-target="@keyNoDots">
+      <input class="govuk-checkboxes__input" id="@keyNoDots-@num" name="@{key}[]" type="checkbox" value="@opt" @if(existing.exists(_ == opt)){ checked } @if(conditional.isDefinedAt(opt)) {aria-controls="ting" aria-expanded="true"}>
+      <label class="govuk-label govuk-checkboxes__label" for="@key-@num">
+	@messages.decompose(s"$key.$opt")
+      </label>
+      @messages.get(s"$key.$opt.hint").map { hint => 
+      <span id="@key-@opt-item-hint" class="govuk-hint govuk-checkboxes__hint">
+        @hint
+      </span>
+      }
+    </div>
+
+    @if(conditional.isDefinedAt(opt)) { 
+      <div id="conditional-@keyNoDots-@opt" class="conditional-@keyNoDots @if(existing.exists(_ == opt)){govuk-checkboxes__conditional} else {govuk-checkboxes__conditional--hidden}" aria-hidden="false">
+        @conditional(opt)
+      </div>
+    }
+
+  }
+</div>

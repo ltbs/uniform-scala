@@ -1,0 +1,11 @@
+@import cats.implicits._
+@(key: List[String], values: String, errors: ErrorTree, messages: UniformMessages[Html])
+@fieldsurround(key, errors, messages) {
+
+<textarea class="govuk-textarea @if(errors.definedAtRoot) {govuk-textarea--error}"
+	  id="@{key.mkString("_")}"
+	  name="@{key.mkString(".")}"
+	  rows="5"
+	  aria-describedby="more-detail-hint">@{values}</textarea>
+
+}

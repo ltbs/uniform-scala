@@ -1,0 +1,25 @@
+@import cats.implicits._
+
+@(key: String, errors: ErrorTree, messages: UniformMessages[Html])(content: Html)
+
+@path=@{key.split("[.]").filter(_.nonEmpty).tail.toList}
+@fieldErrors=@{errors.atPath(path)}
+
+<div class="govuk-form-group @if(errors.nonEmpty) {govuk-form-group--error}">
+  <label class="govuk-label" for="@key">
+    @messages(s"$key.heading")
+  </label>
+
+  @content
+
+    @for((k::v::_) <- messages.list(s"$key.details").collect{ case x if x.toString.contains("|") => x.toString.split("[|]").toList}) {
+      <details class="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">@k</span>
+        </summary>
+        <div class="govuk-details__text">@v</div>
+      </details>
+    }
+
+
+</div>

@@ -1,0 +1,29 @@
+@(key: List[String], options: Seq[String], existing: Option[String], errors: ErrorTree, messages: UniformMessages[Html], conditional: PartialFunction[String,Html] = PartialFunction.empty )
+
+@keyNoDots=@{key.mkString("-")}
+
+@fieldsurround(key, errors, messages) {
+  
+<div class="govuk-radios">
+  @for((opt,num) <- options.zipWithIndex) {  
+    <div class="govuk-radios__item" data-target="@keyNoDots">
+      <input class="govuk-radios__input" id="@keyNoDots-@num" name="@{key.mkString(".")}" type="radio" value="@opt" aria-describedby="@keyNoDots-@num-item-hint" @if(existing.exists(_ == opt)){ checked } @if(conditional.isDefinedAt(opt)) {aria-controls="ting" aria-expanded="true"}>
+      <label class="govuk-label govuk-radios__label govuk-label--s" for="@keyNoDots-@num">
+        @messages.decompose({key :+ opt}.mkString("."))
+      </label>
+      @messages.get({key :+ opt :+ "hint"}.mkString(".")).map { hint => 
+        <span id="@keyNoDots-@opt-item-hint" class="govuk-hint govuk-checkboxes__hint">
+          @hint
+        </span>
+      }
+    </div>
+
+    @if(conditional.isDefinedAt(opt)) { 
+      <div id="conditional-@keyNoDots-@opt" class="conditional-@keyNoDots @if(existing.exists(_ == opt)){govuk-radios__conditional} else {govuk-radios__conditional--hidden}" aria-hidden="false">
+        @conditional(opt)
+      </div>
+    }
+  }
+</div>
+
+}

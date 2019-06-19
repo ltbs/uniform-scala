@@ -1,0 +1,23 @@
+@import cats.implicits._
+
+@(key: List[String], errors: ErrorTree, messages: UniformMessages[Html])(inner: Html)
+
+<div class="govuk-form-group @if(errors.definedAtRoot) {govuk-form-group--error}">
+  <label class="govuk-label" for="@{key.mkString("_")}">
+    @messages(key.mkString("."))
+  </label>
+
+  @messages.get({key:+ "hint"}.mkString(".")).map { hint => 
+    <span id="@{key.mkString("_")}-hint" class="govuk-hint">
+      @hint
+    </span>
+  }
+  
+  @errors.valueAtRootList.map { error => 
+    <span id="@{key.mkString("_")}-error" class="govuk-error-message">
+      <span class="govuk-visually-hidden">@messages("error"):</span> @error.prefixWith(key).render(messages)
+    </span>
+  }
+  
+  @inner
+</div>

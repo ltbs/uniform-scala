@@ -16,8 +16,6 @@ lazy val root = project.in(file("."))
     // exampleProgramsJVM,
     commonWebJS,
     commonWebJVM,
-    govukWidgetsJS,
-    govukWidgetsJVM
   )
   .settings(
     publishLocal := {},
@@ -121,14 +119,13 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
-      "com.chuusai" %%% "shapeless" % "2.3.3",      
-      "org.atnos" %%% "eff" % "5.5.0", // remove
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "org.typelevel" %%% "cats-core" % "1.6.0",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.1",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
-      "org.typelevel" %%% "cats-testkit" % "1.1.0" % Test,
-      "com.github.alexarchambault" %%% "scalacheck-shapeless_1.13" % "1.1.6" % Test
+      "com.chuusai" %%% "shapeless" % "2.3.3",
+      "com.github.mpilquist" %%% "simulacrum" % "0.18.0"      
     ),
-    scalaJSUseMainModuleInitializer := true
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)      
   )
 
 lazy val coreJS = core.js
@@ -141,10 +138,7 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.github.mpilquist" %%% "simulacrum" % "0.14.0",
-      "com.typesafe.play" %%% "twirl-api" % "1.3.15",
-      "com.beachape" %%% "enumeratum" % "1.5.13",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+      "com.github.mpilquist" %%% "simulacrum" % "0.14.0"
     )
   )
 
@@ -185,21 +179,20 @@ lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
   .dependsOn(exampleProgramsJVM % "test")
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
-  crossProject(Play25, Play26)
+  crossProject(/*Play25, */Play26, Play27)
     .crossType(CrossType.Full)
     .settings(commonSettings)
-    .configurePlatform(Play25)(_.settings(
-      name := "interpreter-play25",
-      scalaVersion := "2.11.12",
-      crossScalaVersions := Seq("2.11.12")
-    ))
+    // .configurePlatform(Play25)(_.settings(
+    //   name := "interpreter-play25",
+    //   scalaVersion := "2.11.12",
+    //   crossScalaVersions := Seq("2.11.12")
+    // ).dependsOn(core.jvm, `common-web`.jvm))
     .configurePlatform(Play26)(_.settings(
       name := "interpreter-play26"
-    ))
-
-lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
-  .dependsOn(commonWebJVM)
-  .dependsOn(exampleProgramsJVM % "test")
+    ).dependsOn(core.jvm, `common-web`.jvm))
+    .configurePlatform(Play27)(_.settings(
+      name := "interpreter-play27"
+    ).dependsOn(core.jvm, `common-web`.jvm))
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
   .dependsOn(commonWebJVM)
@@ -222,26 +215,25 @@ lazy val `interpreter-js` = project
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8"),
-    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"
-  )
+  .dependsOn(core)
 
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
 lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
 
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(`interpreter-play26`, exampleProgramsJVM, commonWebJVM, govukWidgetsJVM)
-  .dependsOn(interpreterLogictableJVM % "test")
+  .dependsOn(`interpreter-play`.projects(Play26), core.jvm, `example-programs`.jvm)
   .settings(
+    TwirlKeys.templateImports ++= Seq(
+      "ltbs.uniform._",
+      "ltbs.uniform.interpreters.playframework._"
+    ),    
+    PlayKeys.playDefaultPort := 9001,
     libraryDependencies ++= Seq(
       filters,
       guice
     ),
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
-    initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.web._; import ltbs.uniform.web.parser._; import ltbs.uniform.interpreters.playframework._; import ltbs.uniform.sampleprograms.BeardTax._; import ltbs.uniform.widgets.govuk._; implicit val messages: Messages = NoopMessages",
+    initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.interpreters.playframework._",
     initialCommands in consoleQuick := """import cats.implicits._;"""
   )
 
@@ -257,38 +249,7 @@ lazy val `example-js` = project
     )
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(`interpreter-js`, exampleProgramsJS, govukWidgetsJS)
-
-lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8"),
-    libraryDependencies ++= Seq(
-      "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.beachape" %%% "enumeratum" % "1.5.13",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
-    ),
-    sourceDirectories in (Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value,
-    TwirlKeys.templateImports ++= Seq(
-      "ltbs.uniform.web._",
-      "ltbs.uniform._",
-      "ltbs.uniform.widgets.govuk._"
-    ),
-    initialCommands in console := "import ltbs.uniform._;import ltbs.uniform.widgets.govuk._;import ltbs.uniform.datapipeline._",
-    scalacOptions --= Seq(
-      "-Ywarn-unused:imports",
-      "-Ywarn-unused-imports",
-      "-Xfatal-warnings",
-      "-Ywarn-unused",
-      "-Ywarn-unused:params"
-    ) // little we can do about twirl throwing warnings
-  )
-  .enablePlugins(SbtTwirl)
-
-lazy val govukWidgetsJVM = `govuk-widgets`.jvm.dependsOn(commonWebJVM)
-lazy val govukWidgetsJS = `govuk-widgets`.js.dependsOn(commonWebJS)
+  .dependsOn(`interpreter-js`, exampleProgramsJS)
 
 lazy val docs = project
   .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)

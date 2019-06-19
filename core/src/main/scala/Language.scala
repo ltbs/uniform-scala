@@ -3,26 +3,26 @@ package ltbs.uniform
 import shapeless.{HNil => _, `::` => _, _}, ops.hlist.Selector
 import reflect.runtime.universe.WeakTypeTag
 import scala.language.higherKinds
-import scala.reflect.runtime.universe._
 
-trait Language[Wrapper[_], SupportedTell <: HList, SupportedAsk <: HList]{
+
+trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
 
   def interact[Tell: WeakTypeTag, Ask: WeakTypeTag](
     id: String,
     tell: Tell,
     default: Option[Ask] = None,
-    validation: List[List[ValidationRule[Ask]]] = Nil,
+    validation: List[List[Rule[Ask]]] = Nil,
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit
     selectorTell : Selector[SupportedTell, Tell],
     selectorAsk : Selector[SupportedAsk, Ask]
-  ): Wrapper[Ask]
+  ): UF[Ask]
 
   def ask[A: WeakTypeTag](
     id: String,
     default: Option[A] = None,    
-    validation: List[List[ValidationRule[A]]] = Nil,
+    validation: List[List[Rule[A]]] = Nil,
     customContent: Map[String,(String,List[Any])] = Map.empty    
   )(
     implicit selectorAsk : Selector[SupportedAsk, A],

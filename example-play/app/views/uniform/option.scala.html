@@ -1,0 +1,3 @@
+@(key: List[String], values: Input, errors: ErrorTree, messages: UniformMessages[Html], inner: (List[String], Input, ErrorTree, UniformMessages[Html]) => Html)
+
+@radios(key :+ "outer", Seq("TRUE","FALSE"), values.valueAtPath({key :+ "outer"}).flatMap(_.headOption), errors, messages, {case "TRUE" => inner(key :+ "inner", values, errors, messages)})

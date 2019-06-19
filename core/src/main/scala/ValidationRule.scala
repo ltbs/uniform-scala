@@ -2,57 +2,73 @@ package ltbs.uniform
 
 import cats.implicits._
 import cats.Monoid
-import cats.data.ValidatedNel
+import cats.data.NonEmptyList
 
 case class ErrorMsg(msg: String, args: Any*) {
+
+  def prefixWith(in: List[String]): ErrorMsg =
+    ErrorMsg(in.mkString(".") ++ "." ++ msg, args:_*)
+
   def render[A](msgProvider: UniformMessages[A]): A =
     msgProvider(msg, args:_*)
+
+  def toTree: ErrorTree = {
+    ErrorTree.one(NonEmptyList.one(this))
+  }
 }
 
-trait ValidationRule[A] {
+trait Rule[A] {
 
-  def errorsFor(in: A): List[ErrorMsg]
-  def apply(in: A): ValidatedNel[ErrorMsg, A] = errorsFor(in).toNel match {
-    case None => in.valid
-    case Some(nel) => nel.invalid
+  def apply(in: A): ErrorTree
+
+  def either(in: A): Either[ErrorTree, A] = apply(in) match {
+    case ErrorTree.empty => Right(in)
+    case x => Left(x)
   }
-  def andThen(that: ValidationRule[A]): ValidationRule[A] = {
+  
+  def andThen(that: Rule[A]): Rule[A] = {
     val orig = this
-    new ValidationRule[A] {
-      def errorsFor(in: A): List[ErrorMsg] = orig.errorsFor(in) match {
-        case Nil => that.errorsFor(in)
+    new Rule[A] {
+      def apply(in: A): ErrorTree = orig.apply(in) match {
+        case ErrorTree.empty => that.apply(in)
         case xs  => xs
       }
     }
   }
 }
 
-case class ListValidation[A](
-  elementValidation: ValidationRule[A]
-) extends ValidationRule[List[A]] {
-  def errorsFor(in: List[A]) = in.flatMap(elementValidation.errorsFor)
-}
+object Rule {
 
-object ValidationRule {
+  def assert[A](pred: A => Boolean)(error: ErrorMsg, pathH: InputPath, pathT: InputPath*) = {
+    val paths = NonEmptyList(pathH,pathT.toList)
+    new Rule[A] {
+      def apply(in: A) = if (pred(in))
+        ErrorTree.empty
+      else
+        Map(paths -> NonEmptyList.one(error))
+    }
+  }
 
-  def apply[A](rules: (A => Boolean, ErrorMsg)*): List[List[ValidationRule[A]]] = 
+  def apply[A](rules: (A => Boolean, (ErrorMsg, NonEmptyList[InputPath]))*): List[List[Rule[A]]] = 
     List(rules.toList.map{case (r, msg) => fromPred(r, msg)})
 
-  def fromPred[A](pred: A => Boolean, msg: ErrorMsg): ValidationRule[A] = new ValidationRule[A] {
-    def errorsFor(in: A) = if (pred(in)) Nil else List(msg)
+  def fromPred[A](pred: A => Boolean, msg: (ErrorMsg, NonEmptyList[InputPath])): Rule[A] = new Rule[A] {
+    def apply(in: A) = if (pred(in)) ErrorTree.empty else Map(msg._2 -> NonEmptyList.one(msg._1))
   }
 
-  implicit def vrMonoid[A]: Monoid[ValidationRule[A]] = new Monoid[ValidationRule[A]] {
-    def empty: ValidationRule[A] = new ValidationRule[A] {
-      def errorsFor(in: A): List[ErrorMsg] = Nil
-    }
-    def combine(x: ValidationRule[A], y: ValidationRule[A]) = new ValidationRule[A] {
-      def errorsFor(in: A): List[ErrorMsg] = x.errorsFor(in) |+| y.errorsFor(in)
+  implicit def vrMonoid[A]: Monoid[Rule[A]] = new Monoid[Rule[A]] {
+    def empty: Rule[A] = noop
+    def combine(x: Rule[A], y: Rule[A]) = new Rule[A] {
+      def apply(in: A): ErrorTree = x.apply(in) |+| y.apply(in)
     }
   }
 
-  def alwaysFail[A]: ValidationRule[A] = new ValidationRule[A] {
-    def errorsFor(in: A): List[ErrorMsg] = ErrorMsg("none-shall-pass") :: Nil
+  def alwaysFail[A]: Rule[A] = new Rule[A] {
+    def apply(in: A): ErrorTree = ErrorTree.oneErr(ErrorMsg("none-shall-pass"))
+  }
+
+  def noop[A]: Rule[A] = new Rule[A] {
+    def apply(in: A): ErrorTree = ErrorTree.empty
   }
 
 }

@@ -1,0 +1,37 @@
+@import cats.implicits._
+
+@(key: String, items: List[(Html, Option[Html], Option[Html])], min: Int, max: Int, messages: UniformMessages[Html])
+
+@if(items.nonEmpty) {
+<table class="govuk-table">
+  <caption class="govuk-table__caption">Caption</caption>
+
+  <thead class="govuk-table__head">
+    <tr class="govuk-table__row">
+      <th class="govuk-table__header" scope="col">Item</th>
+      <th class="govuk-table__header" scope="col">Delete</th>
+      <th class="govuk-table__header" scope="col">Edit</th>      
+    </tr>
+  </thead>
+
+  <tbody class="govuk-table__body">
+    @for(((item, editLink, deleteLink), id) <- items.zipWithIndex) {
+        <tr class="govuk-table__row">
+	  <td class="govuk-table__cell">
+            @item
+	  </td>
+          <td class="govuk-table__cell align-centre">
+	    @if(items.length > min) {
+              @deleteLink
+	    } 
+          </td>
+
+          <td class="govuk-table__cell align-right">
+            @editLink
+          </td>
+
+        </tr>
+    }
+  </tbody>
+</table>
+}

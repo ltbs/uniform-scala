@@ -1,0 +1,12 @@
+@import cats.implicits._
+
+@(key: List[String], values: String, errors: ErrorTree, messages: UniformMessages[Html])
+
+@fieldsurround(key, errors, messages) {
+  
+  <input class="govuk-input govuk-!-width-two-thirds @if(errors.definedAtRoot) {govuk-input--error}"
+	 id="@{key.mkString("_")}"
+	 name="@{key.mkString(".")}"
+	 value="@{values}" />
+
+}

@@ -1,107 +1,33 @@
-package ltbs.uniform.interpreters.playframework
+package ltbs.uniform
+package interpreters.playframework
 
-import cats.data._
-import cats.implicits._
-import ltbs.uniform.{:: => _, _}, web._
-import play.api._,mvc._
-import play.twirl.api.Html
+import play.api._,mvc._,http.Writeable
 import reflect.runtime.universe.WeakTypeTag
-import scala.concurrent.{ ExecutionContext, Future }
-import shapeless._, ops.hlist.Selector
+import shapeless.{Path => _,_}, ops.hlist.Selector
+import concurrent.{ExecutionContext, Future}
+import cats.data.{EitherT, RWST}
+import cats.implicits._
+import cats.Monoid
+import common.web._
 
-case class AskInput[A](
-  id: String,
-  t: Html,
-  default: Option[A],
-  validation: List[List[ValidationRule[A]]],
-  customContent: Map[String,(String,List[Any])]
-)
+abstract class PlayInterpreter[Html: Writeable](
+  implicit ec: ExecutionContext
+) extends Compatibility.PlayController with InferFormField[Html] {
 
-trait PlayTell[A] {
-  def render(in: A): Html
-}
+  type PlayAsk[A] = GenericWebAsk[A, Html]
+  type PlayTell[A] = GenericWebTell[A, Html]
 
-trait PlayAsk[A] {
-  def promptUser: AskInput[A] => WebMonad[A]
-}
+  def messages(
+    request: Request[AnyContent],
+    customContent: Map[String,(String,List[Any])]
+  ): UniformMessages[Html]
 
-trait PlayInterpreterUF4 extends Compatibility.PlayController {
-
-  def messages(request: Request[AnyContent]): UniformMessages[Html]
-
-  // asks
-  protected trait PlayAskHlist[A <: HList] {
-    type Supported = A
-    def promptUser[Subtype](
-      implicit selector : Selector[Supported, Subtype],
-      tt: WeakTypeTag[Subtype]
-    ): AskInput[Subtype] => WebMonad[Subtype]
-  }
-
-  implicit val hnilAsk = new PlayAskHlist[HNil] {
-    def promptUser[Subtype](
-      implicit s : Selector[Supported, Subtype],
-      tt: WeakTypeTag[Subtype]
-    ): AskInput[Subtype] => WebMonad[Subtype] = 
-      throw new IllegalStateException("not possible!")
-  }
-
-  implicit def hConsAsk[H, T <: HList](
-    implicit
-      hParser: Lazy[PlayAsk[H]],
-    tParser: PlayAskHlist[T],
-    tth: WeakTypeTag[H]
-  ): PlayAskHlist[H :: T] = new PlayAskHlist[H :: T] {
-    def promptUser[Subtype](
-      implicit selector : Selector[Supported, Subtype],
-      ttp: WeakTypeTag[Subtype]
-    ): AskInput[Subtype] => WebMonad[Subtype] =
-      if (ttp == tth)
-        hParser.value.promptUser.asInstanceOf[AskInput[Subtype] => WebMonad[Subtype]] // hParser.value.promptUser.map{_.asInstanceOf[Subtype]}
-      else
-        tParser.promptUser(selector.asInstanceOf[Selector[tParser.Supported,Subtype]], ttp)
-  }
-
-  //tells 
-  protected trait PlayTellHlist[A <: HList] {
-    type Supported = A
-    def render[Subtype](in: Subtype)(
-      implicit selector : Selector[Supported, Subtype],
-      tt: WeakTypeTag[Subtype]
-    ): Html
-  }
-
-  implicit val hnilTell = new PlayTellHlist[HNil] {
-    def render[Subtype](in: Subtype)(
-      implicit selector : Selector[Supported, Subtype],
-      tt: WeakTypeTag[Subtype]
-    ): Html = throw new IllegalStateException("not possible!")
-  }
-
-  implicit def hConsTell[H, T <: HList](
-    implicit
-      hParser: Lazy[PlayTell[H]],
-    tParser: PlayTellHlist[T],
-    tth: WeakTypeTag[H]
-  ): PlayTellHlist[H :: T] = new PlayTellHlist[H :: T] {
-    def render[Subtype](in: Subtype)(
-      implicit selector : Selector[Supported, Subtype],
-      ttp: WeakTypeTag[Subtype]
-    ): Html =
-      if (ttp == tth)
-        hParser.value.render(in.asInstanceOf[H])
-      else
-        tParser.render(in)(
-          selector.asInstanceOf[Selector[tParser.Supported,Subtype]],
-          ttp
-        )
-  }
-  
-  def renderForm(
+  def pageChrome(
     key: List[String],
     errors: ErrorTree,
-    form: Html,
-    breadcrumbs: List[String],
+    tell: Html,
+    ask: Html,
+    breadcrumbs: Path,
     request: Request[AnyContent],
     messages: UniformMessages[Html]
   ): Html
@@ -109,26 +35,85 @@ trait PlayInterpreterUF4 extends Compatibility.PlayController {
   val log: Logger = Logger("uniform")
 
   class FuturePlayInterpreter[
-    SupportedTell <: HList : PlayTellHlist,
-    SupportedAsk <: HList : PlayAskHlist
-  ] extends Language[WebMonad, SupportedTell, SupportedAsk] {
+    SupportedTell <: HList,
+    SupportedAsk  <: HList
+  ](implicit
+    tellSummoner : Summoner[SupportedTell, PlayTell],
+    askSummoner  : Summoner[SupportedAsk, PlayAsk]
+  ) extends Language[WebMonad, SupportedTell, SupportedAsk] {
     override def interact[Tell: WeakTypeTag, Ask: WeakTypeTag](
       id: String,
       t: Tell,
       default: Option[Ask],
-      validation: List[List[ValidationRule[Ask]]],
+      validation: List[List[Rule[Ask]]],
       customContent: Map[String,(String,List[Any])]
     )(
       implicit selectorTell : Selector[SupportedTell, Tell],
       selectorAsk : Selector[SupportedAsk, Ask]
     ): WebMonad[Ask] = {
-      val tellHtml = the[PlayTellHlist[SupportedTell]].render(t)
-      val askInput = AskInput[Ask](
-        id, tellHtml, default, validation, customContent
-      )
-      val p = the[PlayAskHlist[SupportedAsk]].promptUser[Ask]
-      p(askInput)
+      val tellHtml = tellSummoner.instanceFor[Tell].render(t)
+      val asker = askSummoner.instanceFor[Ask]
+
+      EitherT[WebInner, Result, Ask] {
+        RWST { case ((config, currentId, request), (path, db)) =>
+          val input: Option[Input] = request.body.asFormUrlEncoded.map{
+            _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
+          }
+
+          import AskResult._
+
+          val localMessages = messages(request, customContent)
+          asker.page(
+            targetId = id.split("/").toList.dropWhile(_.isEmpty),
+            currentId,
+            default,
+            validation,
+            config,
+            input,
+            path,
+            db,
+            localMessages
+          ).map { case PageOut(newPath, newDb, output) =>
+              val result: Either[Result,Ask] = output match {
+                case GotoPath(redirection) =>
+                  val path = relativePath(currentId, redirection)
+                  log.info(s"redirecting to $path")
+                  Left(Redirect(path))
+                case Payload(askHtml, errors) => Left(Ok(
+                  pageChrome(currentId, errors, tellHtml, askHtml, path, request, localMessages)
+                ))
+                case Success(out) => Right(out)
+              }
+
+              ((),(newPath,newDb),result)
+          }
+        }
+      }
+
     }
   }
+
+  def run[A](
+    program: WebMonad[A],
+    id: String,
+    config: JourneyConfig = ""
+  )(
+    terminalFold: A => Future[Result]
+  )(
+    implicit request: Request[AnyContent],
+    persistence: PersistenceEngine
+  ): Future[Result] = {
+    val targetId: List[String] = id.split("/").toList.dropWhile(_.isEmpty)
+
+    persistence(request){ db => 
+      program.value.run((config,targetId,request),(Monoid[Path].empty,db)) flatMap {
+        case (_, (_,newDb), Left(result)) =>
+          Future.successful((newDb,result))
+        case (_, (_,newDb), Right(value)) =>
+          terminalFold(value).map{result => (newDb,result)}
+      }
+    }
+  }
+
 
 }

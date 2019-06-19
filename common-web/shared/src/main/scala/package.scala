@@ -1,39 +1,38 @@
 package ltbs.uniform
+package common
 
-import cats.implicits._
-import cats.arrow.Profunctor
-import cats.{Invariant,Monoid}
-import play.twirl.api.Html
-import scala.language.implicitConversions
+import cats.syntax.eq._
 
-package object web {
+package web {
+  trait webcommon {
 
-  type FormUrlEncoded = Map[String, Seq[String]]
-  type Input = Tree[String, List[String]]
+    type Path = List[List[String]]
+    type JourneyConfig = String
 
-  implicit val htmlMonoidInstance = new Monoid[Html] {
-    def empty: Html = Html("")
-    def combine(a: Html, b: Html):Html = Html(a.toString ++ b.toString)
+    type DB = Map[List[String],String]
+
+    def relativePath(from: List[String], to: List[String]): String = {
+      import cats.instances.string._
+      val (rem, add) = removeCommon(from, to)
+        (rem.drop(1).map{_ => ".."} ++ add).mkString("/")
+    }
+
+    @annotation.tailrec
+    final def removeCommon[B: cats.Eq](
+      x: List[B],
+      y: List[B]
+    ): (List[B], List[B]) = (x,y) match {
+      case (x::xs, y::ys) if x === y => removeCommon(xs, ys)
+      case a => a
+    }
+
+    implicit def formToWebAsk[A, Html](
+      implicit codec: FormFieldEncoding[A],
+       renderer: FormFieldPresentation[A,Html]
+    ): GenericWebAsk[A, Html] = new SimpleForm(InferFormField.combine(codec,renderer))
+
   }
-
-  implicit def richFormUrlEncoded(in: FormUrlEncoded): RichFormUrlEncoded =
-    new RichFormUrlEncoded(in)
-
-  implicit def sifInvariant[IN,OUT,TELL] = new Invariant[SimpleInteractionForm[IN,TELL,?,OUT]] {
-    def imap[A, B](fa: SimpleInteractionForm[IN,TELL,A,OUT])(f: A => B)(g: B => A) =
-      fa.transform(f map (_.asRight))(g)
-  }
-
-  def UrlEncodedHtmlForm[TELL,ASK](
-    parser: DataParser[ASK],
-    html: HtmlForm[ASK],
-    renderTell: (TELL, String) => Html,
-    messages: UniformMessages[Html]
-  ): SimpleInteractionForm[FormUrlEncoded,TELL,ASK,Html] = { 
-    val underlying = new InputHtmlForm(parser, html, renderTell, messages)
-    underlying.transformIn(_.toInputTree)
-  }
-
-  protected[web] val required = "required"
-
 }
+
+
+package object web extends webcommon

@@ -1,64 +1,217 @@
 package controllers
 
-
-import cats.implicits._
-import cats.kernel.Monoid
+import cats.implicits._, cats.Monoid
 import javax.inject._
-import ltbs.uniform._
-import ltbs.uniform.web._
-import ltbs.uniform.web.parser._
-import ltbs.uniform.interpreters.playframework._
-import ltbs.uniform.sampleprograms.BeardTax._
-import ltbs.uniform.widgets.govuk._
-import org.atnos.eff._
-import play.api._
+import ltbs.uniform._, interpreters.playframework._, examples.beardtax._
 import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import play.twirl.api.{Html, HtmlFormat}
-
-import InferParser._
+import java.time.LocalDate
+import cats.data.Validated
 
 @Singleton
-class BeardController @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayInterpreter with I18nSupport {
+class BeardController @Inject()(
+  implicit val messagesApi: MessagesApi
+) extends PlayInterpreter[Html] with I18nSupport {
 
-  def messages(request: Request[AnyContent]): UniformMessages[Html] = (
-    convertMessages(messagesApi.preferred(request)) |+|
+  val mon: Monoid[Html] = new Monoid[Html] {
+    def empty: Html = Html("")
+    def combine(a: Html, b: Html) = Html(a.toString + b.toString)
+  }
+
+  def messages(request: Request[AnyContent], customContent: Map[String,(String, List[Any])]): UniformMessages[Html] = (
+    this.convertMessages(messagesApi.preferred(request)) |+|
       UniformMessages.bestGuess.map(HtmlFormat.escape)
   )
 
-  def renderForm(
+  def pageChrome(
     key: List[String],
     errors: ErrorTree,
-    form: Html,
-    breadcrumbs: List[String],
+    tell: Html,
+    ask: Html,
+    breadcrumbs: Path,
     request: Request[AnyContent],
-    messagesIn: UniformMessages[Html]
-  ): Html = {
-    views.html.chrome(key.last, errors, form, breadcrumbs)(messagesIn, request)
+    messages: UniformMessages[Html]
+  ): Html = 
+      views.html.chrome(key, errors, Html(tell.toString + ask.toString), breadcrumbs)(messages, request)
+
+  def selectionOfFields(
+    inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html)]
+  )(key: List[String], path: Path, values: Option[Input], errors: ErrorTree, messages: UniformMessages[Html]): Html = {
+    val value: Option[String] = values.fold(none[String])(_.valueAtRoot.flatMap{_.headOption})
+    views.html.uniform.radios(
+      key,
+      inner.map{_._1},
+      value,
+      errors,
+      messages,
+      inner.map{
+        case(subkey,f) => subkey -> f(key :+ subkey, path, values.map{_ / subkey}, errors / subkey, messages)
+      }.filter(_._2.toString.trim.nonEmpty).toMap
+    )
   }
 
-  val persistence = new Persistence {
-    private var data: DB = Monoid[DB].empty
-    def dataGet: Future[DB] = Future.successful(data)
-    def dataPut(dataIn: DB): Future[Unit] =
-      Future(data = dataIn).map{_ => ()}
+  implicit val persistence: PersistenceEngine = DebugPersistence(UnsafePersistence())
+
+  implicit val twirlBigStringField = new FormField[BigString,Html] {
+    import shapeless.tag
+    def decode(out: Input): Either[ErrorTree,BigString] = {
+      val root: Option[BigString] = {
+        val asString = out.valueAtRoot
+          .flatMap(_.filter(_.trim.nonEmpty).headOption)
+
+        asString.map{tag[BigStringTag][String]}
+      }
+
+      root match {
+        case None => Left(ErrorMsg("required").toTree)
+        case Some(data) => Right(data)
+      }
+    }
+
+    def encode(in: BigString): Input = Input.one(List(in))
+    def render(
+      key: List[String],
+      path: Path,
+      data: Option[Input],
+      errors: ErrorTree,
+      messages: UniformMessages[Html]
+    ): Html = {
+      val existingValue: String = data.flatMap(_.valueAtRoot.flatMap{_.headOption}).getOrElse("")
+      views.html.uniform.textarea(key, existingValue, errors, messages)
+    }
   }
 
-  def beardAction(key: String) = {
-    implicit val keys: List[String] = key.split("/").toList
-    Action.async { implicit request =>
-      runWeb(
-        program = program[FxAppend[TestProgramStack, PlayStack]]
-          .useForm(automatic[Unit, Option[MemberOfPublic]])
-          .useForm(automatic[Unit, BeardStyle])
-          .useForm(automatic[Unit, BeardLength]),
-        persistence
-      )(
-        a => Future.successful(Ok(s"You have £$a to pay"))
+  implicit val twirlBooleanField = new FormField[Boolean,Html] {
+    def decode(out: Input): Either[ErrorTree,Boolean] = {
+      val root: Option[String] = out.valueAtRoot
+        .flatMap(_.filter(_.trim.nonEmpty).headOption)
+
+      root match {
+        case None => Left(ErrorMsg("required").toTree)
+        case Some("TRUE") => Right(true)
+        case Some("FALSE") => Right(false)
+        case _ => Left(ErrorMsg("bad.value").toTree)          
+      }
+    }
+
+    def encode(in: Boolean): Input = in match {
+      case true => Input.one(List("TRUE"))
+      case false => Input.one(List("FALSE"))        
+    }
+
+    def render(
+      key: List[String],
+      path: Path,
+      data: Option[Input],
+      errors: ErrorTree,
+      messages: UniformMessages[Html]
+    ): Html = {
+      val existingValue: Option[String] = data.flatMap(_.valueAtRoot.flatMap{_.headOption})
+      views.html.uniform.radios(key, List("TRUE","FALSE"), existingValue, errors, messages)
+    }
+  }
+
+
+  implicit val twirlStringField = new FormField[String,Html] {
+    def decode(out: Input): Either[ErrorTree,String] = {
+      val root: Option[String] = out.valueAtRoot
+        .flatMap(_.filter(_.trim.nonEmpty).headOption)
+
+      root match {
+        case None => Left(ErrorMsg("required").toTree)
+        case Some(data) => Right(data)
+      }
+    }
+
+    def encode(in: String): Input = Input.one(List(in))
+    def render(
+      key: List[String],
+      path: Path,
+      data: Option[Input],
+      errors: ErrorTree,
+      messages: UniformMessages[Html]
+    ): Html = {
+      val existingValue: String = data.flatMap(_.valueAtRoot.flatMap{_.headOption}).getOrElse("")
+      views.html.uniform.string(key, existingValue, errors, messages)
+    }
+  }
+
+  implicit val twirlIntField2: FormField[Int,Html] =
+    twirlStringField.simap(x =>
+      Either.catchOnly[NumberFormatException](x.toInt)
+        .leftMap(_ => ErrorMsg("bad.value").toTree)
+    )(_.toString)
+
+
+  implicit val twirlDateField = new FormField[LocalDate,Html] {
+
+    def decode(out: Input): Either[ErrorTree,LocalDate] = {
+
+      def intAtKey(key: String): Validated[ErrorTree, Int] =
+        Validated.fromOption(
+          out.valueAt(key).flatMap{_.filter(_.trim.nonEmpty).headOption},
+          ErrorTree.oneErr(ErrorMsg("required")).prefixWith(key)
+        ).andThen{
+            x => Validated.catchOnly[NumberFormatException](x.toInt).leftMap(_ => ErrorMsg("badValue").toTree)
+        }
+
+      (
+        intAtKey("year"),
+        intAtKey("month"),
+        intAtKey("day")
+      ).tupled.toEither.flatMap{ case (y,m,d) =>
+        Either.catchOnly[java.time.DateTimeException]{
+          LocalDate.of(y,m,d)
+        }.leftMap(_ => ErrorTree.oneErr(ErrorMsg("badDate")))
+      }
+    }
+
+    def encode(in: LocalDate): Input = Map(
+        List("year") -> in.getYear(),
+        List("month") -> in.getMonthValue(),
+        List("day") -> in.getDayOfMonth()
+      ).mapValues(_.toString.pure[List])
+
+    def render(
+      key: List[String],
+      path: Path,
+      data: Option[Input],
+      errors: ErrorTree,
+      messages: UniformMessages[Html]
+    ): Html = {
+      val existingValue: String = data.flatMap(_.valueAtRoot.flatMap{_.headOption}).getOrElse("")
+      views.html.uniform.date(
+        key,
+        data.getOrElse(Input.empty),
+        errors,
+        messages
       )
     }
+  }
+
+  class HodConnector extends Hod[Future] {
+    def costOfBeard(beardStyle: BeardStyle, length: BeardLength): Future[Int] =
+      Future{
+        Thread.sleep(2000)
+        IdDummyHod.costOfBeard(beardStyle, length)
+      }
+  }
+
+  def adaptedHod = new Hod[WebMonad] {
+    val inner = new HodConnector
+    def costOfBeard(beardStyle: BeardStyle, length: BeardLength): WebMonad[Int] =
+      FutureAdapter.alwaysRerun.apply(inner.costOfBeard(beardStyle, length))
+  }
+
+  def beardAction(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
+    val playProgram = beardProgram(
+      new FuturePlayInterpreter[TellTypes, AskTypes],
+      adaptedHod
+    )
+    run(playProgram, targetId){ _ => Future.successful(Ok("Fin"))}
   }
 
 }
