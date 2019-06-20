@@ -6,7 +6,7 @@ import cats.data.NonEmptyList
 import language.higherKinds
 import shapeless.tag.@@
 
-package object uniform extends TreeLike.ToTreeLikeOps with TreeLikeInstances {
+package object uniform extends TreeLike.ToTreeLikeOps with TreeLikeInstances with ScalaVersionCompatibility {
 
   /** Used to represent multi-line input. 
     * 

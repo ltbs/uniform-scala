@@ -3,6 +3,7 @@ package common.web
 
 import shapeless._, labelled._
 import cats.Monoid
+import com.github.ghik.silencer.silent
 
 trait InferFormFieldPresentation[Html] {
 
@@ -41,9 +42,9 @@ trait InferFormFieldPresentation[Html] {
   }
   
   implicit def genericField[A, H, T](implicit
-    generic: LabelledGeneric.Aux[A,T],
+    @silent generic: LabelledGeneric.Aux[A,T],
     hGenParser: Lazy[FF[T]],
-    lp: LowPriority
+    @silent lp: LowPriority
   ): FF[A] = hGenParser.value.mapToType
 
   // COPRODUCTS

@@ -5,6 +5,7 @@ import cats.implicits._
 import reflect.runtime.universe.WeakTypeTag
 import shapeless._, ops.hlist.Selector
 import language.higherKinds
+import com.github.ghik.silencer.silent
 
 trait TellCli[A] {
   def render(in: A): String
@@ -54,7 +55,9 @@ object CliApp extends App {
     } yield (one + two)
   }
 
-  implicit def tellAny[A](implicit lp:LowPriority): TellCli[A] = new TellCli[A] {
+  implicit def tellAny[A](
+    implicit @silent lp:LowPriority
+  ): TellCli[A] = new TellCli[A] {
     def render(in: A): String = in.toString + "\n"
   }
 

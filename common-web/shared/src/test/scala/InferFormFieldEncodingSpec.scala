@@ -31,6 +31,23 @@ final case class TestCaseClass(a: Int, b: String, c: (Int, Int))
 
 class InferFormFieldEncodingSpec extends FlatSpec with Matchers with InferFormFieldEncoding with SampleFormFieldEncoders {
 
+  // the names of the fields are taken from the structure of the data
+  // however in different versions of scala the names for the values inside 
+  // Left and Right differ. To test them correctly we use runtime reflection
+  // to get the appropriate values to check against.
+  val (leftValueName, rightValueName) = {
+    import scala.reflect.runtime.universe._
+    def getConstructorParamName[T: TypeTag]: List[String] = {
+      typeOf[T].members.collect {
+        case m: MethodSymbol if m.isCaseAccessor => m.name.toString
+      }.toList
+    }
+    (
+      getConstructorParamName[Left[String, Int]].head,
+      getConstructorParamName[Right[String, Int]].head
+    )
+  }
+
   def testEncoding[A](in: A)(implicit codec: FormFieldEncoding[A]): org.scalatest.Assertion = {
     import codec._
     decode(encode(in)) should be ((in).asRight[ErrorTree])
@@ -66,14 +83,14 @@ class InferFormFieldEncodingSpec extends FlatSpec with Matchers with InferFormFi
     codec.encode(testRecord1) should be (
       Map(
         Nil -> List("Left"),
-        List("Left", "value") -> List("test")
+        List("Left", leftValueName) -> List("test")
       )
     )
 
     codec.encode(testRecord2) should be (
       Map(
         Nil -> List("Right"),
-        List("Right", "value") -> List("12")
+        List("Right", rightValueName) -> List("12")
       )
     )    
   }
@@ -113,7 +130,7 @@ class InferFormFieldEncodingSpec extends FlatSpec with Matchers with InferFormFi
         Nil -> List("Left")
       )
     ) should be (
-      Left(Map(NonEmptyList.one(List("Left", "value")) -> NonEmptyList.one(ErrorMsg("required"))))
+      Left(Map(NonEmptyList.one(List("Left", leftValueName)) -> NonEmptyList.one(ErrorMsg("required"))))
     )
 
   }
@@ -125,10 +142,10 @@ class InferFormFieldEncodingSpec extends FlatSpec with Matchers with InferFormFi
     codec.decode(
       Map(
         Nil -> List("Right"),
-        List("Right","value") -> List("Right")        
+        List("Right",rightValueName) -> List("Right")        
       )
     ) should be (
-      Left(Map(NonEmptyList.one(List("Right", "value", "Right", "value")) -> NonEmptyList.one(ErrorMsg("required"))))
+      Left(Map(NonEmptyList.one(List("Right", rightValueName, "Right", rightValueName)) -> NonEmptyList.one(ErrorMsg("required"))))
     )
 
   }

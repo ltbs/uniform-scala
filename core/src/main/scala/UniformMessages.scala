@@ -203,8 +203,8 @@ object BestGuessMessages extends RegexParsers with UniformMessages[String] {
     parse(camel,key.replaceFirst("[.](heading|option)$","").split("[.]").last) match {
       case Success(Nil,_) => key
       case Success((firstWord::rest),_) => (titleCase(firstWord) :: rest).mkString(" ")
-      case Failure(msg,_) => key
-      case Error(msg,_) =>   key
+      case Failure(_,_) => key
+      case Error(_,_) =>   key
     }
   }
 }

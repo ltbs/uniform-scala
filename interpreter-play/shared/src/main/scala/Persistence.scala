@@ -4,7 +4,6 @@ package interpreters.playframework
 import play.api._,mvc._
 import concurrent.{Future,ExecutionContext}
 import java.util.UUID
-import common.web._
 
 trait PersistenceEngine {
   def apply(request: Request[AnyContent])(f: DB => Future[(DB,Result)]): Future[Result]

@@ -3,6 +3,7 @@ package interpreters
 
 import cats.implicits._
 import cats.data._
+import com.github.ghik.silencer.silent
 
 package object logictable {
   type Logic[A] = EitherT[WriterT[List, List[String], ?],ErrorTree,A]
@@ -19,7 +20,7 @@ package object logictable {
   }
 
   implicit def automaticTell[A](
-    implicit lp: shapeless.LowPriority
+    implicit @silent lp: shapeless.LowPriority
   ) = new TellRenderer[A] {
     def apply(key: String, value: A): List[String] =
       List(value.toString)
