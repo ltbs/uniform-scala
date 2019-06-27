@@ -125,10 +125,13 @@ lazy val commonSettings = Seq(
 
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
+  .enablePlugins(TutPlugin)
   .settings(commonSettings)
   .settings(
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
+    tutSourceDirectory := baseDirectory.value.getParentFile / "docs",
+    tutTargetDirectory := baseDirectory.value.getParentFile.getParentFile / "docs" / "src" / "main" / "tut" / "core",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.typelevel" %%% "cats-core" % "1.6.0",
@@ -301,7 +304,9 @@ lazy val docs = project
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
       "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
-    )
+    ),
+
+    tut := (tut dependsOn tut.in(coreJVM)).value,
   )
 
 // older, macro based implementations

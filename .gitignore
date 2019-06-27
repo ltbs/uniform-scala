@@ -12,3 +12,4 @@ logs
 **/*.log
 
 .idea
+docs/src/main/tut/core/

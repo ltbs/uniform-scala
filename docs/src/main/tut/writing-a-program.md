@@ -1,242 +1,326 @@
 ---
 layout: docs
-title: Writing a program
+title: Writing a journey
 position: 2
 ---
 
 # Imports
 
-Uniform is built upon *monad stacks*, and uses the [Eff Monad
-Library](https://github.com/atnos-org/eff) to do the heavy
-lifting. When writing a program you need to import this library -
+You will need to import the core uniform library, and you will need
+cats. You do not need to import any interpreters when merely defining the journey.
 
-```tut:silent
-import org.atnos.eff._
-```
 
-You will also need to import the core uniform library. You do not need
-to import any interpreters when merely defining the program.
 
 ```tut:silent
 import ltbs.uniform._
+import cats.implicits._
 ```
 
-# Writing a program
+We will also be using higher-kinded types - 
 
-The program itself defines the user-journey or interaction you wish to
+```tut:silent
+import scala.language.higherKinds
+```
+
+# Writing a journey
+
+The journey itself defines the user-journey or interaction you wish to
 model. It is completely abstract at this point and the interpreter
 gets to decide how to represent the questions.
 
-## Ask function (`uask`)
+## Ask function (`ask`)
 
-The most basic interaction with the user is the `uask` function - it
+The most basic interaction with the user is the `ask` function - it
 needs a name and a data type -
 
 ```
-uask[Stack,Int]("favouriteNumber")
+ask[Int]("favouriteNumber")
 ```
 
-However this code alone will fail -
+However in order to run this query, there must be an interpreter
+available. 
 
-```tut:fail
-uask[Stack,Int]("favouriteNumber")
+First you must specify the data types you wish to ask of the user and
+the data types you wish to present back to the user. 
+
+```tut
+type TellTypes = NilTypes
+type AskTypes = Int :: NilTypes
 ```
 
-In order to run our program must be
-applied to a monad stack. And this
-stack must know about every data-type you will ask the users.
+Here we are defining that our journey needs to ask the user for
+integers, and doesn't have any data types which it needs to present to
+the user.
+
+This forms a contract between the journey and the interpreter -
+the uniform language supports any data type but
+attempting to use an interpreter that does not support a given
+data-type required by the journey will cause a compilation error. 
+
+Fortunately the interpreters are extensible to support new data-types
+and in many cases can infer support for your custom case classes and
+other data-types.
+
+Next we can write the actual journey itself -
 
 ```tut:silent
-def intOnlyProgram[Stack : _uniformCore : _uniformAsk[Int,?]] =
-  ask[Int]("favouriteNumber")
+def additionJourney[F[_] : cats.Monad](
+  interpreter: Language[F, TellTypes, AskTypes]
+): F[Int] = {
+  import interpreter._
+
+  for {
+    a <- ask[Int]("a")
+    b <- ask[Int]("b")
+  } yield a + b
+}
 ```
 
-This represents prompting the user for a value - in this case an
-`Int`.
+Notice that this is very similar to a tagless final program - except
+that we are taking our `TellTypes` and our `AskTypes` as additional
+parameters into our interpreter (telling the interpreter what we
+expect it to support), and that the `interpreter.ask` method
+accepts a type parameter which controls it's output type. 
 
-Optional fields are treated as you would expect, as are lists -
+In this case the journey represents asking the user for two `Int`'s
+and it returns the sum of the two values (hence the return type is
+`F[Int]`.
 
-```tut:silent
-def intListProgram[S : _uniformCore : _uniformAsk[List[Int],?]] =
-  ask[List[Int]]("favouriteNumbers")
+The names `a` and `b` simply represent normal scala variables inside
+the for comprehension and are not visible outside the code.
 
-def stringOptProgram[S : _uniformCore : _uniformAsk[Option[String],?]] =
-  ask[Option[String]]("optionalDescription")
-```
+The strings `"a"` and `"b"` in this case are used as the field
+identifiers - these are presented to the user but the exact form will
+depend upon the interpreter used. It may for example be used to
+construct messages telling the user which question they are answering,
+for forming URL's or for persistence of data.
+
+Reusing the variable name would just result in the normal, harmless,
+shadowing behaviour. However the field identifiers must be kept unique
+for a given journey as otherwise the interpreters can get confused as
+they do know the current place in the journey.
+
+======================================== TODO ========================================
 
 ## Composition
 
-Each statement in the program (such as `uask`) is monadic - you can
-compose the questions inside a for comprehension, assign them to
-variables and even build big programs from smaller programs.
+It is easy to create subjourneys and compose them into a larger
+journey provided you are using the same interpreter.
 
-Suppose we have a case class called `Pizza`
-
-```tut:silent
-case class Pizza(size: Int, toppings: Iterable[String], base: Int)
-```
-
-We could then write a program to collect the values, it has a return
-type of `Eff[S, Pizza]`. We must however be careful to include *all*
-the values you want to include in the stack -
-
-```tut:fail
-def pizzaProgram[S
-      : _uniformCore
-	  : _uniformAsk[Int]
-    ]: Eff[S, Pizza] = for
-{
-  size     <- ask[Int]("size")
-  toppings <- ask[List[String]]("toppings")
-  base     <- ask[Int]("base")
-} yield Pizza(size, toppings, base)
-```
-
-This error message is telling us that we are trying to create a
-program that needs to be able to ask the user for `Int`'s and
-`List[String]`'s, but we want it to be executable by interpreters that
-don't need to know how to ask the user for a `List[String]`. Obviously
-this cannot work, so we must add `_uniform[List[String], ?]` to our
-stack -
+Lets start with an example that collects two `Person` records from a
+user - 
 
 ```tut:silent
-def pizzaProgram[S
-      : _uniformCore
-	  : _uniformAsk[Int,?]
-	  : _uniformAsk[List[String],?]
-    ]: Eff[S, Pizza] = for
-{
-  size     <- ask[Int]("size")
-  toppings <- ask[List[String]]("toppings")
-  base     <- ask[Int]("base")
-} yield Pizza(size, toppings, base)
+case class Person(name: String, age: Int)
+
+def senderAndReceiver1[F[_] : cats.Monad](
+  interpreter: Language[
+    F,
+    NilTypes,
+    Person :: NilTypes
+  ]
+): F[(Person, Person)] = {
+  import interpreter._
+
+  for {
+    sender   <- ask[Person]("sender")
+    receiver <- ask[Person]("receiver")    
+  } yield (sender, receiver)
+}
 ```
 
-Alternatively we can use the [Cats](https://typelevel.org/cats/)
-library and take advantage of the applicative syntax for something a
-bit terser. You will however need to modify the syntax slightly, the following
-will not work -
-
-```tut:fail
-def pizzaProgram2[S
-  : _uniformCore
-  : _uniformAsk[Int, ?]
-  : _uniformAsk[List[String], ?]
-]: Eff[S, Pizza] = (
-  ask[Int]("size"),
-  ask[List[String]]("toppings"),
-  ask[Int]("base")
-).mapN(Pizza)
-```
-
-In this case because we are constructing a tuple first
-of all the scala type inference does not know what stack you want the uniform
-interactions to be part of. You can help it by calling `.in[MYSTACK]` on
-the uniform instruction -
+This is fine, but if we wanted to ask the user for the name and age
+separately we would have some duplication in our code -
 
 ```tut:silent
-import cats.implicits._
+case class Person(name: String, age: Int)
 
-def pizzaProgram2[S
-  : _uniformCore
-  : _uniformAsk[Int, ?]
-  : _uniformAsk[List[String], ?]
-]: Eff[S, Pizza] = (
-  ask[Int]("size").in[S],
-  ask[List[String]]("toppings").in[S],
-  ask[Int]("base").in[S]
-).mapN(Pizza)
+def senderAndReceiver2[F[_] : cats.Monad](
+  interpreter: Language[
+    F,
+    NilTypes,
+    String :: Int :: NilTypes
+  ]
+): F[(Person, Person)] = {
+  import interpreter._
+
+  for {
+    senderName   <- ask[String]("sender-name")
+    senderAge    <- ask[Int]("sender-age")
+    receiverName <- ask[String]("receiver-name")
+    receiverAge  <- ask[Int]("receiver-age")        
+  } yield (
+    Person(senderName, senderAge),
+    Person(receiverName, receiverAge)
+  )
+}
 ```
 
-## Branching Logic
-
-If you want to conditionally ask a question there are a number of ways
-to do it. The most flexible is to use the normal scala `if` or `case`
-statements
--
+We can separate out the collection of the person record into a local
+function - 
 
 ```tut:silent
-def conditionalProgram[S
-  : _uniformCore
-  : _uniformAsk[Int, ?]
-  : _uniformAsk[String, ?]
-]: Eff[S, (Int,String)] = for {
-  size     <- ask[Int]("size")
-  discount <- if (size >= 3) ask[String]("discountCode").in[S]
-              else           Eff.pure[S,String]("")
-} yield (size, discount)
+
+def senderAndReceiver2[F[_] : cats.Monad](
+  interpreter: Language[
+    F,
+    NilTypes,
+    String :: Int :: NilTypes
+  ]
+): F[(Person, Person)] = {
+  import interpreter._
+
+  def askPerson(id: String): F[Person] = for {
+    name <- ask[String](s"$id-name")
+    age  <- ask[Int](s"$id-age")    
+  } yield Person (name, age)
+
+  for {
+    sender   <- askPerson("sender")
+    receiver <- askPerson("receiver")    
+  } yield (sender, receiver)
+}
 ```
 
-In this example the user will only be prompted for a discount code if
-they have asked for a large pizza, if they do not provide one the
-discount code will be set to the empty string (`""`).
+Notice that we are using the 
 
-## Optional fields (`when`)
+## Branching
 
-There are two functions you can use to simplify this. The first is
-`when` and is used as follows -
+Notice how no questions are dependent upon the result of a previous
+question? Perhaps a `cats.Monad` here is overkill and we should use
+`cats.Applicative` instead -
+
+```tut:silent
+def senderAndReceiverApplicative[F[_] : cats.Applicative](
+  interpreter: Language[
+    F,
+    NilTypes,
+    String :: Int :: NilTypes
+  ]
+): F[(Person, Person)] = {
+  import interpreter._
+
+  def askPerson(id: String): F[Person] = (
+    ask[String](s"$id-name"),
+    ask[Int](s"$id-age")    
+  ).mapN(Person)
+
+  (askPerson("sender"), askPerson("receiver")).tupled
+}
+```
+
+But lets suppose we want an optional third `Person` in our tuple. We
+could literally add an extra type (`Option[Person]`) into our
+`AskTypes`, but lets use branching instead - 
+
+```tut:silent
+def senderAndReceiver4[F[_] : cats.Monad](
+  interpreter: Language[
+    F,
+    NilTypes,
+    Boolean :: String :: Int :: NilTypes
+  ]
+): F[(Person, Person, Option[Person])] = {
+  import interpreter._
+
+  def askPerson(id: String): F[Person] = (
+    ask[String](s"$id-name"),
+    ask[Int](s"$id-age")    
+  ).mapN(Person)
+
+  (
+    askPerson("sender"),
+    askPerson("receiver"),
+    ask[Boolean]("use-cc") flatMap {
+      case true  => askPerson("cc") map {_.some}
+      case false => none[Person].pure[F]
+    }
+  ).tupled
+}
+```
+
+In this case the journey would ask the user the same 4 questions
+initially as `senderAndReceiver2`, however it would then ask the user
+for a `Boolean`. If they answer no then the journey would end with
+`_3` being `None`. If the user picked yes however then they would be
+asked again for a name and age and this time `_3` would be defined
+(`Some`).
+
+This could be used for all sorts of branching - you are not confined
+to booleans, or to using pattern matching.
+
+```tut:silent
+def bigSpender[F[_] : cats.Monad](
+  interpreter: Language[
+    F,
+    NilTypes,
+    Boolean :: String :: Int :: NilTypes
+  ]
+): F[Option[Person]] = {
+  import interpreter._
+  for {
+
+    spendAny    <- ask[Boolean]("spendAny")
+    spendAmount <- if (spendAny) {
+                     ask[Int]("spendAmount")
+                   } else {
+                     0.pure[F]
+                   }
+    optSpender  <- if (spendAmount > 100000)
+                     (
+                      ask[String]("name"),
+                       ask[Int]("age")    
+                     ).mapN(Person).map{_.some}
+                   else
+                     none[Person].pure[F]                
+  } yield optSpender
+}
+```
+
+However the specific use-case of asking a `Boolean` to control an
+option comes up a lot, so uniform offers a special syntax for it. 
+
+The `when` construct can take either an `F[Boolean]` or a
+`Boolean` where `F` is any `Monad`. Similar to `when` is `emptyUnless`
+- this however only works if the datatype you are asking for is a
+`Monoid`, in which case it will give `empty` should the user answer
+no.
+
+For example -
 
 ```tut
-def conditionalProgram2[S
-  : _uniformCore
-  : _uniformAsk[Int, ?]
-  : _uniformAsk[String, ?]
-]: Eff[S, (Int,Option[String])] = for {
-  size     <- ask[Int]("size")
-  discount <- ask[String]("discountCode").in[S] when (size >= 3)
-} yield (size, discount)
+import scala.concurrent._, duration._
+implicit val ec = ExecutionContext.global
+
+Await.result(
+  Future{Thread.sleep(2000); 12} when false,
+  1.second)
+
+Await.result(
+  Future{Thread.sleep(2000); 12} when false.pure[Future],
+  1.second)
+
+Await.result(
+  Future{Thread.sleep(2000); 12} emptyUnless false,
+  1.second)
 ```
 
-This is similar to the previous example, except that it returns an
-`Option[String]` rather than a string. The argument to `when` can be
-either a normal predicate, or another uniform journey provided that that
-journey returns a `Boolean`. For example if we wanted to first ask the
-user if they have a discount code and then only if they say yes to
-prompt them for the code itself -
-
-```tut
-def discountProgram[S
-  : _uniformCore
-  : _uniformAsk[Boolean, ?]
-  : _uniformAsk[String, ?]
-]: Eff[S, Option[String]] =
-  ask[String]("discountCode").in[S] when ask[Boolean]("haveDiscountCode")
+```tut:silent
+def bigSpender[F[_] : cats.Monad](
+  interpreter: Language[
+    F,
+    NilTypes,
+    Boolean :: String :: Int :: NilTypes
+  ]
+): F[Option[Person]] = {
+  import interpreter._
+  for {
+    spendAmount <- ask[Int]("spendAmount") emptyUnless
+                     ask[Boolean]("spendAny") 
+    optSpender  <- (
+                     ask[String]("name"),
+                     ask[Int]("age")    
+                   ).mapN(Person) when (spendAmount > 100000)
+  } yield optSpender
+}
 ```
-
-## Monoid fields (`emptyUnless`)
-
-If we wanted to keep the previous behaviour of returning an empty
-string in the event of the user ordering a small pizza there is
-likewise a number of ways we can achieve this. A clumbsy option would be to use
-the `map` function -
-
-```
-def discountProgram2[S
-  : _uniformCore
-  : _uniformAsk[Boolean, ?]
-  : _uniformAsk[String, ?]
-]: Eff[S, String] =
-  (ask[String]("discountCode") when ask[Boolean]("haveDiscountCode"))
-    .map(_.getOrElse(""))
-```
-
-This works because unform journeys are monadic and all monads are also
-functors. Because functors provide `map` as long as you have a
-journey of type `Uniform[A]` and a function of type `A ⇒ B` you can
-therefore produce a `Uniform[B]`.
-
-However there is a convenience method for this too. If you have a
-`Uniform[A]` and you know that `A` is a Monoid you can use the
-`emptyUnless` function.
-
-```tut
-def discountProgram3[S
-  : _uniformCore
-  : _uniformAsk[Boolean, ?]
-  : _uniformAsk[String, ?]
-]: Eff[S, String] =
-  ask[String]("discountCode") emptyUnless ask[Boolean]("haveDiscountCode")
-```
-
-Otherwise `emptyUnless` works identically to `when` except that it
-returns an `A` rather than an `Option[A]`.
