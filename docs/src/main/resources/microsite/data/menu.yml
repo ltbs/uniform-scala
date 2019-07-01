@@ -14,7 +14,7 @@ options:
      - title: Asking
        url: core/asks.html
      - title: Interacting
-       url: core/interacts.html       
+       url: core/interacts.html
      - title: Validation
        url: core/validation.html
      - title: Branching
@@ -26,10 +26,12 @@ options:
     nested_options:
      - title: Controllers
        url: play/controllers.html
+     - title: WebMonad
+       url: play/web-monad.html
      - title: Internationalisation
        url: play/internationalisation.html
      - title: Listing Pages
-       url: play/listing-pages.html                  
+       url: play/listing-pages.html
      - title: Memoisation
        url: play/remote-calls.html
   - title: Other Interpreters
@@ -40,7 +42,6 @@ options:
      - title: Logic Table Interpreter
        url: interpreter-logic-table.html
      - title: Static Site interpreter
-       url: interpreter-static-site.html       
+       url: interpreter-static-site.html
      - title: Selenium Interpreter
        url: interpreter-selenium.html
-       
