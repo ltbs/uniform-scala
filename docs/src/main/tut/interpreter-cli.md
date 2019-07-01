@@ -19,7 +19,7 @@ fundamentals of uniform in action.
 
 First of all you need a program. Lets start with a simple greeting application -
 
-```tut:silent
+```
 import org.atnos.eff._
 import ltbs.uniform._
 
@@ -53,7 +53,7 @@ libraryDependencies +=
 
 We need to import the interpreter -
 
-```tut:silent
+```
 import ltbs.uniform.interpreters.cli._
 ```
 
@@ -62,7 +62,7 @@ consist of all the `UniformAsk` and `UniformSelect` usages, plus
 possibly some other monads that the interpreter itself needs. Our CLI
 interpreter uses the `Eval` monad from the cats library.
 
-```tut:silent
+```
 type Stack = Fx.fx3[
   UniformAsk[String,?],
   cats.Eval,
@@ -72,7 +72,7 @@ type Stack = Fx.fx3[
 
 The program can now be executed using the interpreter.
 
-```tut
+```
 import org.atnos.eff.syntax.all._ // provides runEval and run
 
 def runHelloProgram = helloProgram[Stack].
@@ -90,7 +90,7 @@ then a surname and then give the expected greeting.
 
 We'll update our program to include a new field type -
 
-```tut:silent
+```
 def helloProgram2[S
   : _uniformCore
   : _uniformAsk[String,?]
@@ -109,7 +109,7 @@ def helloProgram2[S
 
 And add a new stack -
 
-```tut:silent
+```
 type Stack2 = Fx.fx4[
   UniformAsk[Boolean,?],
   UniformAsk[String,?],
@@ -121,7 +121,7 @@ type Stack2 = Fx.fx4[
 The program is perfectly valid, but our interpreter doesn't know how
 to handle a boolean -
 
-```tut:fail
+```
 def runHelloProgram2 = helloProgram2[Stack2].
   using(identity). // String => String
   runState(UniformCore()).
@@ -133,7 +133,7 @@ We must write a `String ⇒ Boolean` function and provide
 it to our interpreter so the interpreter knows how to take the users
 input (a `String`) and convert it into a valid `Boolean`.
 
-```tut
+```
 def runHelloProgram2 = helloProgram2[Stack2].
   using(identity).			// String => String
   using(_.toLowerCase.startsWith("y")). // Boolean => String

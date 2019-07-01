@@ -123,15 +123,20 @@ lazy val commonSettings = Seq(
   )
 )
 
+def tutSettings(name: String) = Seq(
+    tutSourceDirectory := baseDirectory.value.getParentFile / "docs",
+    tutTargetDirectory := baseDirectory.value.getParentFile.getParentFile / "docs" / "src" / "main" / "tut" / name,
+    scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
+    fork in (Tut, run) := true
+)
+
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
-  .enablePlugins(TutPlugin)
   .settings(commonSettings)
+  .enablePlugins(TutPlugin).settings(tutSettings("core"))
   .settings(
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
-    tutSourceDirectory := baseDirectory.value.getParentFile / "docs",
-    tutTargetDirectory := baseDirectory.value.getParentFile.getParentFile / "docs" / "src" / "main" / "tut" / "core",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.typelevel" %%% "cats-core" % "1.6.0",
@@ -210,6 +215,7 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
   .dependsOn(commonWebJVM)
+  .enablePlugins(TutPlugin).settings(tutSettings("play"))
   .dependsOn(exampleProgramsJVM % "test")
 
 lazy val `interpreter-js` = project
@@ -267,7 +273,7 @@ lazy val `example-js` = project
 
 lazy val docs = project
   .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)
-  .aggregate(`interpreter-js`)
+//  .aggregate(`interpreter-js`)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
@@ -293,20 +299,23 @@ lazy val docs = project
       "gray-light"      -> "#E2E3E3",
       "gray-lighter"    -> "#F3F4F4",
       "white-color"     -> "#FFFFFF"),
-    micrositeExtraMdFiles := Map(
-      file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") -> ExtraMdFileConfig(
-        "interpreter-js.md",
-        "docs"
-      )
-    ),
+    // micrositeExtraMdFiles := Map(
+    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") -> ExtraMdFileConfig(
+    //     "interpreter-js.md",
+    //     "docs"
+    //   )
+    // ),
     scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
 //    scalacOptions in Tut += "-Xfatal-warnings", // play controller scuppers this
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
       "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
     ),
-
-    tut := (tut dependsOn tut.in(coreJVM)).value,
+    fork in (Tut, run) := true,
+    tut := (tut
+      dependsOn tut.in(coreJVM)
+      dependsOn tut.in(`interpreter-play26`)      
+    ).value,
   )
 
 // older, macro based implementations

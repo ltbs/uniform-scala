@@ -1,12 +1,12 @@
 ---
 layout: docs
-title: Writing a basic journey
-position: 1
+title: Writing a journey
+position: 2
 ---
 
 # Writing a basic journey 
 
-To get our feet wet we're going to start with a simple program that
+To get our feet wet we're going to start with a simple user journey that
 does a few things - first it will ask the user for their date of
 birth, secondly it will calculate the number of days the user has been
 alive and finally it will return their date of birth as a string. 
