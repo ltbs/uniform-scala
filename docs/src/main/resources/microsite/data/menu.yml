@@ -45,3 +45,8 @@ options:
        url: interpreter-static-site.html
      - title: Selenium Interpreter
        url: interpreter-selenium.html
+  - title: Advanced Options
+    url: core/advanced.html
+    nested_options:
+     - title: Writing Interpreters
+       url: core/writing-interpreters.html

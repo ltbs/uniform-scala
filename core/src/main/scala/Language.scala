@@ -1,13 +1,11 @@
 package ltbs.uniform
 
-import shapeless.{HNil => _, `::` => _, _}, ops.hlist.Selector
-import reflect.runtime.universe.WeakTypeTag
+import shapeless.HList
 import scala.language.higherKinds
-
 
 trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
 
-  def interact[Tell: WeakTypeTag, Ask: WeakTypeTag](
+  def interact[Tell, Ask](
     id: String,
     tell: Tell,
     default: Option[Ask] = None,
@@ -15,27 +13,27 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit
-    selectorTell : Selector[SupportedTell, Tell],
-    selectorAsk : Selector[SupportedAsk, Ask]
+    selectorTell : IndexOf[SupportedTell, Tell],
+    selectorAsk : IndexOf[SupportedAsk, Ask]
   ): UF[Ask]
 
-  def ask[A: WeakTypeTag](
+  def ask[A](
     id: String,
-    default: Option[A] = None,    
+    default: Option[A] = None,
     validation: List[List[Rule[A]]] = Nil,
-    customContent: Map[String,(String,List[Any])] = Map.empty    
+    customContent: Map[String,(String,List[Any])] = Map.empty
   )(
-    implicit selectorAsk : Selector[SupportedAsk, A],
-    selectorTell : Selector[SupportedTell, Unit]
+    implicit selectorAsk : IndexOf[SupportedAsk, A],
+    selectorTell : IndexOf[SupportedTell, Unit]
   ) = interact[Unit,A](id, (), default, validation, customContent)
 
-  def tell[A: WeakTypeTag](
+  def tell[A](
     id: String,
     t: A,
-    customContent: Map[String,(String,List[Any])] = Map.empty    
+    customContent: Map[String,(String,List[Any])] = Map.empty
   )(
-    implicit selectorAsk : Selector[SupportedAsk, Unit],
-    selectorTell : Selector[SupportedTell, A]
+    implicit selectorAsk : IndexOf[SupportedAsk, Unit],
+    selectorTell : IndexOf[SupportedTell, A]
   ) = interact[A,Unit](id, t, customContent=customContent)
 
 }

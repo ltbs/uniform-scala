@@ -2,8 +2,7 @@ package ltbs.uniform
 package interpreters.playframework
 
 import play.api._,mvc._,http.Writeable
-import reflect.runtime.universe.WeakTypeTag
-import shapeless.{Path => _,_}, ops.hlist.Selector
+import shapeless.{Path ⇒ _,_}
 import concurrent.{ExecutionContext, Future}
 import cats.data.{EitherT, RWST}
 import cats.implicits._
@@ -37,27 +36,27 @@ abstract class PlayInterpreter[Html: Writeable](
   class FuturePlayInterpreter[
     SupportedTell <: HList,
     SupportedAsk  <: HList
-  ](implicit
-    tellSummoner : Summoner[SupportedTell, PlayTell],
-    askSummoner  : Summoner[SupportedAsk, PlayAsk]
+  ](
+    implicit tellSummoner : TypeclassList[SupportedTell, PlayTell],
+    askSummoner  : TypeclassList[SupportedAsk, PlayAsk]
   ) extends Language[WebMonad, SupportedTell, SupportedAsk] {
-    override def interact[Tell: WeakTypeTag, Ask: WeakTypeTag](
+    override def interact[Tell, Ask](
       id: String,
       t: Tell,
       default: Option[Ask],
       validation: List[List[Rule[Ask]]],
       customContent: Map[String,(String,List[Any])]
     )(
-      implicit selectorTell : Selector[SupportedTell, Tell],
-      selectorAsk : Selector[SupportedAsk, Ask]
+      implicit selectorTell : IndexOf[SupportedTell, Tell],
+      selectorAsk : IndexOf[SupportedAsk, Ask]
     ): WebMonad[Ask] = {
-      val tellHtml = tellSummoner.instanceFor[Tell].render(t)
-      val asker = askSummoner.instanceFor[Ask]
+      val tellHtml = tellSummoner.forType[Tell].render(t)
+      val asker: PlayAsk[Ask] = askSummoner.forType[Ask]
 
       EitherT[WebInner, Result, Ask] {
-        RWST { case ((config, currentId, request), (path, db)) =>
+        RWST { case ((config, currentId, request), (path, db)) ⇒
           val input: Option[Input] = request.body.asFormUrlEncoded.map{
-            _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
+            _.map{ case (k,v) ⇒ (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
           }
 
           import AskResult._
@@ -73,16 +72,16 @@ abstract class PlayInterpreter[Html: Writeable](
             path,
             db,
             localMessages
-          ).map { case PageOut(newPath, newDb, output) =>
+          ).map { case PageOut(newPath, newDb, output) ⇒
               val result: Either[Result,Ask] = output match {
-                case GotoPath(redirection) =>
+                case GotoPath(redirection) ⇒
                   val path = relativePath(currentId, redirection)
                   log.info(s"redirecting to $path")
                   Left(Redirect(path))
-                case Payload(askHtml, errors) => Left(Ok(
+                case Payload(askHtml, errors) ⇒ Left(Ok(
                   pageChrome(currentId, errors, tellHtml, askHtml, path, request, localMessages)
                 ))
-                case Success(out) => Right(out)
+                case Success(out) ⇒ Right(out)
               }
 
               ((),(newPath,newDb),result)
@@ -98,19 +97,19 @@ abstract class PlayInterpreter[Html: Writeable](
     id: String,
     config: JourneyConfig = ""
   )(
-    terminalFold: A => Future[Result]
+    terminalFold: A ⇒ Future[Result]
   )(
     implicit request: Request[AnyContent],
     persistence: PersistenceEngine
   ): Future[Result] = {
     val targetId: List[String] = id.split("/").toList.dropWhile(_.isEmpty)
 
-    persistence(request){ db => 
+    persistence(request){ db ⇒
       program.value.run((config,targetId,request),(Monoid[Path].empty,db)) flatMap {
-        case (_, (_,newDb), Left(result)) =>
+        case (_, (_,newDb), Left(result)) ⇒
           Future.successful((newDb,result))
-        case (_, (_,newDb), Right(value)) =>
-          terminalFold(value).map{result => (newDb,result)}
+        case (_, (_,newDb), Right(value)) ⇒
+          terminalFold(value).map{result ⇒ (newDb,result)}
       }
     }
   }

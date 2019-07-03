@@ -6,15 +6,18 @@ import cats.data.NonEmptyList
 import language.higherKinds
 import shapeless.tag.@@
 
-package object uniform extends TreeLike.ToTreeLikeOps with TreeLikeInstances with ScalaVersionCompatibility {
+package object uniform extends TreeLike.ToTreeLikeOps
+    with TreeLikeInstances
+    with ScalaVersionCompatibility
+{
 
-  /** Used to represent multi-line input. 
-    * 
+  /** Used to represent multi-line input.
+    *
     * Behaves identically to, and can be freely cast to, a
     * String. However interpreters may decide to treat it
     * differently - for example a web interpreter will usually render
     * this a textarea or a cli interpreter may prompt for several
-    * lines. 
+    * lines.
     */
   type BigString = String @@ BigStringTag
 
@@ -29,10 +32,10 @@ package object uniform extends TreeLike.ToTreeLikeOps with TreeLikeInstances wit
       val ungrouped: List[(String, String)] =
         in.split("&").toList
           .map{_.split("=").toList}
-          .collect { case (k::v::Nil) => k -> v }
+          .collect { case (k::v::Nil) ⇒ k → v }
 
-      ungrouped.groupBy(_._1).map{ case (k, comb) =>
-        k.split("[.]").toList.dropWhile(_.isEmpty) -> comb.map {_._2}
+      ungrouped.groupBy(_._1).map{ case (k, comb) ⇒
+        k.split("[.]").toList.dropWhile(_.isEmpty) → comb.map {_._2}
       }.asRight
     }
   }
@@ -40,8 +43,8 @@ package object uniform extends TreeLike.ToTreeLikeOps with TreeLikeInstances wit
   implicit class RichInput(input: Input) {
     def toUrlEncodedString: String = {
       input
-        .flatMap { case (k, vs)=>
-          vs.map { v =>
+        .flatMap { case (k, vs) ⇒
+          vs.map { v ⇒
             s"""${k.mkString(".")}=${java.net.URLEncoder.encode(v, "UTF-8")}"""
           }
         }
@@ -51,36 +54,40 @@ package object uniform extends TreeLike.ToTreeLikeOps with TreeLikeInstances wit
 
   implicit class RichErrorTree(a: ErrorTree) {
     def valueAtRootList: List[ErrorMsg] = a.valueAtRoot match {
-      case None => Nil
-      case Some(nel) => nel.toList
+      case None      ⇒ Nil
+      case Some(nel) ⇒ nel.toList
     }
   }
 
   implicit class RichAppOps[F[_]: Applicative, A](e: F[A]) {
-    def emptyUnless(b: => Boolean)(implicit mon: Monoid[A]): F[A] =
+    def emptyUnless(b: ⇒ Boolean)(implicit mon: Monoid[A]): F[A] =
       if(b) e else Monoid[A].empty.pure[F]
 
-    def emptyUnless(eb: F[Boolean])(implicit mon: Monoid[A], monad: Monad[F]): F[A] = for {
-      opt <- eb
-      ret <- if (opt) e else mon.empty.pure[F]
+    def emptyUnless(eb: F[Boolean])(
+      implicit mon: Monoid[A],
+      monad: Monad[F]
+    ): F[A] = for {
+      opt ← eb
+      ret ← if (opt) e else mon.empty.pure[F]
     } yield ret
 
-    def when(b: => Boolean): F[Option[A]] =
+    def when(b: ⇒ Boolean): F[Option[A]] =
       if(b) e.map{_.some} else none[A].pure[F]
 
     def when(wmb: F[Boolean])(implicit monad: Monad[F]): F[Option[A]] = for {
-      opt <- wmb
-      ret <- if (opt) e map {_.some} else none[A].pure[F]
+      opt ← wmb
+      ret ← if (opt) e map {_.some} else none[A].pure[F]
     } yield ret
-    
+
   }
 
   implicit class RichRuleListList[A](inner: List[List[Rule[A]]]) {
     def combined: Rule[A] = {
       inner match {
-        case Nil => Rule.noop
-        case x => x.map{_.combineAll}.reduce(_ andThen _)
+        case Nil ⇒ Rule.noop
+        case x   ⇒ x.map{_.combineAll}.reduce(_ andThen _)
       }
     }
   }
+
 }
