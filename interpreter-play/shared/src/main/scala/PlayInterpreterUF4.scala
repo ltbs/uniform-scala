@@ -9,9 +9,9 @@ import cats.implicits._
 import cats.Monoid
 import common.web._
 
-abstract class PlayInterpreter[Html: Writeable](
+abstract class PlayInterpreter[Html: Writeable: Monoid](
   implicit ec: ExecutionContext
-) extends Compatibility.PlayController with InferFormField[Html] {
+) extends InferFormField[Html] with Compatibility.PlayController {
 
   type PlayAsk[A] = GenericWebAsk[A, Html]
   type PlayTell[A] = GenericWebTell[A, Html]

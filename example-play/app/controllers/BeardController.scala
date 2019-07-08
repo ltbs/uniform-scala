@@ -16,11 +16,6 @@ class BeardController @Inject()(
   implicit val messagesApi: MessagesApi
 ) extends PlayInterpreter[Html] with I18nSupport {
 
-  val mon: Monoid[Html] = new Monoid[Html] {
-    def empty: Html = Html("")
-    def combine(a: Html, b: Html) = Html(a.toString + b.toString)
-  }
-
   def messages(
     request: Request[AnyContent],
     customContent: Map[String,(String, List[Any])]

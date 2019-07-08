@@ -68,4 +68,9 @@ package object playframework extends common.web.webcommon {
     }
   }
 
+  implicit val mon: cats.Monoid[TwirlHtml] = new cats.Monoid[TwirlHtml] {
+    def empty: TwirlHtml = TwirlHtml("")
+    def combine(a: TwirlHtml, b: TwirlHtml) = TwirlHtml(a.toString + b.toString)
+  }
+
 }

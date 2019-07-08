@@ -215,7 +215,14 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
   .dependsOn(commonWebJVM)
-  .enablePlugins(TutPlugin).settings(tutSettings("play"))
+  .enablePlugins(TutPlugin)
+  .settings(tutSettings("play"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.play" %% "play" % "2.6.20" % Tut,
+      "com.lihaoyi" %% "scalatags" % "0.7.0" % Tut
+    )
+  )
   .dependsOn(exampleProgramsJVM % "test")
 
 lazy val `interpreter-js` = project
@@ -343,7 +350,7 @@ lazy val `sbt-gforms-to-uniform-converter` = project
     scalacOptions := Seq(),
     scalaVersion := {
       val Some((major,_)) = CrossVersion.partialVersion((sbtVersion in pluginCrossBuild).value)
-      if (major == 0) "2.10.7" else "2.12.7"
+      if (major == 0) "2.10.7" else "2.12.8"
     }
   )
   .enablePlugins(SbtPlugin)

@@ -5,9 +5,7 @@ import shapeless._, labelled._
 import cats.Monoid
 import com.github.ghik.silencer.silent
 
-trait InferFormFieldPresentation[Html] {
-
-  val mon: Monoid[Html]
+abstract class InferFormFieldPresentation[Html: Monoid] {
 
   type FF[A] = FormFieldPresentation[A, Html]
 
@@ -18,7 +16,7 @@ trait InferFormFieldPresentation[Html] {
       data: Option[Input],
       errors: ErrorTree,
       messages: UniformMessages[Html]
-    ): Html = mon.empty
+    ): Html = Monoid[Html].empty
   }
 
   implicit def hConsField[K <: Symbol, H, T <: HList](
@@ -35,7 +33,7 @@ trait InferFormFieldPresentation[Html] {
       data: Option[Input],
       errors: ErrorTree,
       messages: UniformMessages[Html]
-    ): Html = mon.combine(
+    ): Html = Monoid[Html].combine(
       hField.value.render(key :+ fieldName, path, data.map{_ / fieldName}, errors / fieldName, messages),
       tField.render(key, path, data, errors, messages)
     )
