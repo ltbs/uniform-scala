@@ -11,8 +11,8 @@ extend the `PlayInterpreter[Html]` where `Html` is some play writeable type
 [ScalaTags](http://www.lihaoyi.com/scalatags/) or any other representation you wish)
 
 There are a few things we will need to configure before we can use our
-controller. 
-## Imports 
+controller.
+## Imports
 
 ```tut:silent
 import ltbs.uniform._, interpreters.playframework._
@@ -27,10 +27,10 @@ import play.twirl.api.{Html, HtmlFormat}
 We need to tell Uniform where to get messages (i18n messages)
 from. Because Uniform is interpreter-agnostic it does not use Play
 messages automatically as you may wish to share messages between
-different interpreters. 
+different interpreters.
 
 For now we'll just use the 'best guess' messages. We'll create a
-function to populate our messages like so - 
+function to populate our messages like so -
 
 ```tut:silent
   def messages(
@@ -43,11 +43,11 @@ function to populate our messages like so -
 ## Page Chrome
 
 The term 'chrome' is used here to mean all HTML on the page
-surrounding the form. 
+surrounding the form.
 
 We need to tell the interpreter what chrome to use. For our Twirl
 based example we'd probably want to defer to a view, but for our
-simple example we'll just leave it undefined for now. 
+simple example we'll just leave it undefined for now.
 
 ```tut:silent
   def pageChrome(
@@ -61,17 +61,17 @@ simple example we'll just leave it undefined for now.
   ): Html = ???
 ```
 
-## Selection of fields 
+## Selection of fields
 
 Sometimes we may want to offer the user a choice between several
 fields or sets of fields. For example an `Either[String,Int]` or a
 sealed trait hierarchy. In this situation you may want to use
 Javacript to control hiding and revealing form elements, perhaps
-toggled by radio buttons. 
+toggled by radio buttons.
 
 The `selectionOfFields` method takes a list of options and a function
 to control the Html that should be presented when that option is
-active. 
+active.
 
 ```tut:silent
   def selectionOfFields(
@@ -90,28 +90,28 @@ active.
 
 ## Invoking a journey
 
-We also need an actual action that will invoke the journey. 
+We also need an actual action that will invoke the journey.
 
 ```scala
-def myjourney(targetId: String) = 
+def myjourney(targetId: String) =
   Action.async { implicit request: Request[AnyContent] ⇒
 
     // interpret our journey using the play interpreter
     val playJourney = myJourney(
       new FuturePlayInterpreter[TellTypes, AskTypes],
     )
-	
+
     // Run the journey using the request and the targetId
     run(playJourney, targetId){ output ⇒
-	    // final code to be run upon successful completion 
-		// of the journey
-	    println(output)
+        // final code to be run upon successful completion
+        // of the journey
+        println(output)
       Future.successful(Ok("Completed"))
     }
   }
 ```
 
-In our routes file we would write something like this - 
+In our routes file we would write something like this -
 
 ```
 GET         /myjourney/           controllers.ExampleController.myjourney(id = "")
@@ -124,7 +124,7 @@ POST        /myjourney/*id        controllers.ExampleController.myjourney(id: St
 
 Combining these elements we get an outline of our interpreter setup
 
-```tut:silent
+```scala
 import ltbs.uniform._, interpreters.playframework._
 
 import play.api.i18n.{Messages ⇒ _, _}
@@ -132,7 +132,7 @@ import play.api.mvc._
 import play.twirl.api.{Html, HtmlFormat}
 
 class ExampleController (
-  implicit val messagesApi: MessagesApi, 
+  implicit val messagesApi: MessagesApi,
   ec: concurrent.ExecutionContext
 ) extends PlayInterpreter[Html] with I18nSupport {
 
@@ -165,19 +165,19 @@ class ExampleController (
     messages: UniformMessages[Html]
   ): Html = ???
 
-  def myjourney(targetId: String) = 
+  def myjourney(targetId: String) =
     Action.async { implicit request: Request[AnyContent] ⇒
-  
+
       // interpret our journey using the play interpreter
       val playJourney = myJourney(
         new FuturePlayInterpreter[TellTypes, AskTypes],
       )
-	
+
       // Run the journey using the request and the targetId
       run(playJourney, targetId){ output ⇒
-	    // final code to be run upon successful completion 
-		// of the journey
-	    println(output)
+        // final code to be run upon successful completion
+        // of the journey
+        println(output)
         Future.successful(Ok("Completed"))
       }
     }

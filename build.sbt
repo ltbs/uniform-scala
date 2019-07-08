@@ -70,10 +70,10 @@ lazy val commonSettings = Seq(
     "-Ywarn-numeric-widen",              // Warn when numerics are widened.
     "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
   ) ++ {CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2,11)) => Seq(
+    case Some((2,11)) ⇒ Seq(
       "-Ywarn-unused"
     )
-    case _ => Seq(
+    case _ ⇒ Seq(
       "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
       "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
       "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
@@ -110,7 +110,7 @@ lazy val commonSettings = Seq(
   com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration.value.withOverwrite(isSnapshot.value),
   publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(isSnapshot.value),
   com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration.value.withOverwrite(isSnapshot.value),
-  git.gitTagToVersionNumber := { tag: String =>
+  git.gitTagToVersionNumber := { tag: String ⇒
     if(tag matches "[0-9]+\\..*") Some(tag)
     else None
   },
@@ -142,7 +142,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.typelevel" %%% "cats-core" % "1.6.0",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.1",
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.github.mpilquist" %%% "simulacrum" % "0.18.0"      
+      "com.github.mpilquist" %%% "simulacrum" % "0.18.0"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
@@ -219,8 +219,8 @@ lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
   .settings(tutSettings("play"))
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play" % "2.6.20" % Tut,
-      "com.lihaoyi" %% "scalatags" % "0.7.0" % Tut
+      "com.typesafe.play" %% "play" % "2.6.20" % Tut
+//      "com.lihaoyi" %% "scalatags" % "0.7.0" % Tut
     )
   )
   .dependsOn(exampleProgramsJVM % "test")
@@ -254,7 +254,7 @@ lazy val `example-play` = project.settings(commonSettings)
     TwirlKeys.templateImports ++= Seq(
       "ltbs.uniform._",
       "ltbs.uniform.interpreters.playframework._"
-    ),    
+    ),
     PlayKeys.playDefaultPort := 9001,
     libraryDependencies ++= Seq(
       filters,
@@ -295,19 +295,19 @@ lazy val docs = project
     micrositeGitterChannel  := false,
     micrositeHighlightTheme := "color-brewer",
     micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
-      "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
+      "last-stable-version" → com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
     )),
     micrositePalette := Map(
-      "brand-primary"   -> "#5236E0",
-      "brand-secondary" -> "#32423F",
-      "brand-tertiary"  -> "#232F2D",
-      "gray-dark"       -> "#3E4645",
-      "gray"            -> "#7F8483",
-      "gray-light"      -> "#E2E3E3",
-      "gray-lighter"    -> "#F3F4F4",
-      "white-color"     -> "#FFFFFF"),
+      "brand-primary"   → "#5236E0",
+      "brand-secondary" → "#32423F",
+      "brand-tertiary"  → "#232F2D",
+      "gray-dark"       → "#3E4645",
+      "gray"            → "#7F8483",
+      "gray-light"      → "#E2E3E3",
+      "gray-lighter"    → "#F3F4F4",
+      "white-color"     → "#FFFFFF"),
     // micrositeExtraMdFiles := Map(
-    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") -> ExtraMdFileConfig(
+    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") → ExtraMdFileConfig(
     //     "interpreter-js.md",
     //     "docs"
     //   )
@@ -321,7 +321,7 @@ lazy val docs = project
     fork in (Tut, run) := true,
     tut := (tut
       dependsOn tut.in(coreJVM)
-      dependsOn tut.in(`interpreter-play26`)      
+      dependsOn tut.in(`interpreter-play26`)
     ).value,
   )
 
@@ -356,4 +356,3 @@ lazy val `sbt-gforms-to-uniform-converter` = project
   .enablePlugins(SbtPlugin)
 
 crossSbtVersions := Vector("0.13.17", "1.2.8")
-
