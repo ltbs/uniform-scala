@@ -2,8 +2,10 @@ package ltbs.uniform
 
 import scala.util.parsing.combinator._
 import cats.Monoid
+import cats.implicits._
 
 trait UniformMessages[A] {
+
   def apply(key: String, args: Any*): A =
     get(key, args:_*).getOrElse(throw new NoSuchElementException(s"key not found: $key"))
   def apply(keys: List[String], args: Any*): A =
@@ -94,6 +96,23 @@ object UniformMessages {
   }
 
   def bestGuess: UniformMessages[String] = BestGuessMessages
+
+  implicit def contentMonoidInstance[A] = new Monoid[UniformMessages[A]] {
+    def empty: UniformMessages[A] = NoopMessages[A]
+    def combine(a: UniformMessages[A], b: UniformMessages[A]):UniformMessages[A] = new UniformMessages[A] {
+      def get(key: String, args: Any*): Option[A] = a.get(key, args:_*).orElse(b.get(key, args:_*))
+      override def get(key: List[String], args: Any*): Option[A] = a.get(key, args:_*).orElse(b.get(key, args:_*))
+      def list(key: String, args: Any*): List[A] = a.list(key, args:_*) |+| b.list(key, args:_*)
+      override def decompose(key: String, args: Any*): A = a.decomposeOpt(key, args:_*).getOrElse(b.decompose(key, args:_*))
+
+      override def apply(key: String, args: Any*): A = 
+         a.get(key, args:_*).getOrElse(b(key, args:_*))
+
+      override def apply(keys: List[String], args: Any*): A =
+         a.get(keys, args:_*).getOrElse(b(keys, args:_*))        
+    }
+  }
+
 }
 
 case class SimpleMapMessages[A](msg: Map[String,List[A]]) extends UniformMessages[A] {
@@ -184,8 +203,8 @@ object BestGuessMessages extends RegexParsers with UniformMessages[String] {
     parse(camel,key.replaceFirst("[.](heading|option)$","").split("[.]").last) match {
       case Success(Nil,_) => key
       case Success((firstWord::rest),_) => (titleCase(firstWord) :: rest).mkString(" ")
-      case Failure(msg,_) => key
-      case Error(msg,_) =>   key
+      case Failure(_,_) => key
+      case Error(_,_) =>   key
     }
   }
 }

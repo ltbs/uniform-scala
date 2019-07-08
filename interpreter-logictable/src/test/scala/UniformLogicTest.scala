@@ -1,31 +1,45 @@
 package ltbs.uniform
+package interpreters.logictable
 
-import org.atnos.eff._
 import cats.implicits._
-import org.atnos.eff.syntax.all._
-
-import interpreters.logictable._
-import sampleprograms.LitreageTest._
+import examples.beardtax._
 
 object UniformLogicTest {
 
-  val output = program[FxAppend[TestProgramStack, LogicTableStack]]
-    .runState(UniformCore())
-    .giveExamples(List(true,false))
-    .giveExamples(
-      for {
-        lower <- (0L to 4L).toList.map(_ * 500000)
-        higher <- (0L to 4L).toList.map(_ * 500000)
-      } yield (lower,higher).some
+  implicit val optMopSamples = new SampleData[Option[MemberOfPublic]] {
+    def apply(key: String):List[Option[MemberOfPublic]] = List(
+      Some(MemberOfPublic("john", "johnson", java.time.LocalDate.now))
     )
-    .runEither
-    .runWriter
-    .runList
-    .run
+  }
+
+  implicit val beardStyleSamples = new SampleData[BeardStyle] {
+    def apply(key: String):List[BeardStyle] = List(
+      BeardStyle.Gunslinger(1),
+      BeardStyle.LaughingCavalier
+    )
+  }
+
+  implicit val beardLengthSamples = new SampleData[BeardLength] {
+    def apply(key: String):List[BeardLength] = List(
+      (1,2), (-1,3)
+    )
+  }
+
+  val interpreter = new LogicTableInterpreter[TellTypes, AskTypes]()
+
+  val dummyHod = new Hod[Logic] {
+    def costOfBeard(beardStyle: BeardStyle, length: BeardLength): Logic[Int] =
+      IdDummyHod.costOfBeard(beardStyle, length).pure[Logic]
+  }
 
   def main(args: Array[String]): Unit = {
-    output.foreach{ case (a,b) =>
-      println(s"""${b.mkString(",")} => ${a.toValidated}""")
+    val output: List[(List[String], Either[ErrorTree,Int])] = beardProgram(
+      interpreter, dummyHod
+    ).value.run
+
+    output.foreach{ case (messages, outcome) =>
+      println(messages.mkString("\n"))
+      println(s"   => $outcome")
     }
   }
 

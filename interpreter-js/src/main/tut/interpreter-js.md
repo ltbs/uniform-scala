@@ -16,7 +16,7 @@ on the page out, thus creating the illusion of a multi-page journey.
 We need somewhere to keep the state. The simplest place is in a `var`
 on the page, like so -
 
-```tut:silent
+```
 import cats.implicits._
 import cats.Monoid
 import ltbs.uniform._, prototype.JsInterpreter._
@@ -31,7 +31,7 @@ var state: DB = Monoid[DB].empty
 
 We need to combine the stacks for the JS Interpreter and our program -
 
-```tut:silent
+```
 import ltbs.uniform.sampleprograms.BeardTax._
 
 type CombinedStack = FxAppend[TestProgramStack, JsStack]
@@ -43,7 +43,7 @@ before whereas we needed to write code to extract the data from the
 POST request we now need to define how to get the values from the
 DOM.
 
-```tut:silent
+```
 import ltbs.uniform._
 import org.querki.jquery.JQuery
 
@@ -92,7 +92,7 @@ retrieved from the store into something that be placed on the form
 
 We can now execute our program and write the state back -
 
-```tut:silent
+```
 
 @scalajs.js.annotation.JSExportTopLevel("runProgram")
 def runProgram(implicit action: Action): Unit = {

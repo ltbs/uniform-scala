@@ -9,21 +9,23 @@ lazy val root = project.in(file("."))
     `interpreter-gui`,
     interpreterLogictableJS,
     interpreterLogictableJVM,
-//    `interpreter-play25`,
-    `interpreter-play26`,
-    `interpreter-js`,
+    `interpreter-play`.projects(Play25),
+    `interpreter-play`.projects(Play26),
+    `interpreter-play`.projects(Play27),
+//    `interpreter-js`,
     // exampleProgramsJS,
     // exampleProgramsJVM,
-    commonWebJS,
+//    commonWebJS,
     commonWebJVM,
-    govukWidgetsJS,
-    govukWidgetsJVM
   )
   .settings(
     publishLocal := {},
     publish := {},
     publishArtifact := false
   )
+
+scalaVersion := "2.11.12"
+crossScalaVersions := Seq("2.11.12")
 
 enablePlugins(GitVersioning)
 
@@ -44,7 +46,6 @@ lazy val commonSettings = Seq(
     "-Xfuture",                          // Turn on future language features.
     "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
     "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
-//    "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
     "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
     "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
     "-Xlint:inaccessible",               // Warn about inaccessible types in method signatures.
@@ -62,21 +63,27 @@ lazy val commonSettings = Seq(
     "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
     "-Ypartial-unification",             // Enable partial unification in type constructor inference
     "-Ywarn-dead-code",                  // Warn when dead code is identified.
-//    "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
     "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
     "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
     "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
     "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
     "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-    "-Ywarn-unused",
-//    "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
-//    "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
-//   "-Ywarn-unused:locals",              // Warn if a local definition is unused.
-//    "-Ywarn-unused:params",              // Warn if a value parameter is unused.
-//    "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
-//    "-Ywarn-unused:privates",            // Warn if a private member is unused.
     "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
-  ),
+  ) ++ {CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((2,11)) ⇒ Seq(
+      "-Ywarn-unused"
+    )
+    case _ ⇒ Seq(
+      "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
+      "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
+      "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
+      "-Ywarn-unused:locals",              // Warn if a local definition is unused.
+      "-Ywarn-unused:params",              // Warn if a value parameter is unused.
+      "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
+      "-Ywarn-unused:privates",            // Warn if a private member is unused.
+      "-Ywarn-extra-implicit"              // Warn when more than one implicit parameter section is defined.
+    )
+  }},
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings", "-Ywarn-unused"),
   scmInfo := Some(
     ScmInfo(
@@ -103,31 +110,41 @@ lazy val commonSettings = Seq(
   com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration.value.withOverwrite(isSnapshot.value),
   publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(isSnapshot.value),
   com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration.value.withOverwrite(isSnapshot.value),
-  git.gitTagToVersionNumber := { tag: String =>
+  git.gitTagToVersionNumber := { tag: String ⇒
     if(tag matches "[0-9]+\\..*") Some(tag)
     else None
   },
   useGpg := true,
   licenses += ("GPL-3", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
-    "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+    "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
+    compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.1"),
+    "com.github.ghik" %% "silencer-lib" % "1.4.1" % Provided
   )
+)
+
+def tutSettings(name: String) = Seq(
+    tutSourceDirectory := baseDirectory.value.getParentFile / "docs",
+    tutTargetDirectory := baseDirectory.value.getParentFile.getParentFile / "docs" / "src" / "main" / "tut" / name,
+    scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
+    fork in (Tut, run) := true
 )
 
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
+  .enablePlugins(TutPlugin).settings(tutSettings("core"))
   .settings(
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
-      "org.atnos" %%% "eff" % "5.5.0",
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "org.typelevel" %%% "cats-core" % "1.6.0",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.1",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
-      "org.typelevel" %%% "cats-testkit" % "1.1.0" % Test,
-      "com.github.alexarchambault" %%% "scalacheck-shapeless_1.13" % "1.1.6" % Test
+      "com.chuusai" %%% "shapeless" % "2.3.3",
+      "com.github.mpilquist" %%% "simulacrum" % "0.18.0"
     ),
-    scalaJSUseMainModuleInitializer := true
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
 
 lazy val coreJS = core.js
@@ -140,10 +157,7 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.github.mpilquist" %%% "simulacrum" % "0.14.0",
-      "com.typesafe.play" %%% "twirl-api" % "1.3.15",
-      "com.beachape" %%% "enumeratum" % "1.5.13",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
+      "com.github.mpilquist" %%% "simulacrum" % "0.14.0"
     )
   )
 
@@ -184,24 +198,31 @@ lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
   .dependsOn(exampleProgramsJVM % "test")
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
-  crossProject(Play25, Play26)
+  crossProject(Play25, Play26, Play27)
     .crossType(CrossType.Full)
     .settings(commonSettings)
     .configurePlatform(Play25)(_.settings(
       name := "interpreter-play25",
       scalaVersion := "2.11.12",
       crossScalaVersions := Seq("2.11.12")
-    ))
+    ).dependsOn(core.jvm, `common-web`.jvm))
     .configurePlatform(Play26)(_.settings(
       name := "interpreter-play26"
-    ))
-
-lazy val `interpreter-play25` = `interpreter-play`.projects(Play25)
-  .dependsOn(commonWebJVM)
-  .dependsOn(exampleProgramsJVM % "test")
+    ).dependsOn(core.jvm, `common-web`.jvm))
+    .configurePlatform(Play27)(_.settings(
+      name := "interpreter-play27"
+    ).dependsOn(core.jvm, `common-web`.jvm))
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
   .dependsOn(commonWebJVM)
+  .enablePlugins(TutPlugin)
+  .settings(tutSettings("play"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.play" %% "play" % "2.6.20" % Tut
+//      "com.lihaoyi" %% "scalatags" % "0.7.0" % Tut
+    )
+  )
   .dependsOn(exampleProgramsJVM % "test")
 
 lazy val `interpreter-js` = project
@@ -221,26 +242,25 @@ lazy val `interpreter-js` = project
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8"),
-    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"
-  )
+  .dependsOn(core)
 
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
 lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
 
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(`interpreter-play26`, exampleProgramsJVM, commonWebJVM, govukWidgetsJVM)
-  .dependsOn(interpreterLogictableJVM % "test")
+  .dependsOn(`interpreter-play`.projects(Play26), core.jvm, `example-programs`.jvm)
   .settings(
+    TwirlKeys.templateImports ++= Seq(
+      "ltbs.uniform._",
+      "ltbs.uniform.interpreters.playframework._"
+    ),
+    PlayKeys.playDefaultPort := 9001,
     libraryDependencies ++= Seq(
       filters,
       guice
     ),
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
-    initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.web._; import ltbs.uniform.web.parser._; import ltbs.uniform.interpreters.playframework._; import ltbs.uniform.sampleprograms.BeardTax._; import ltbs.uniform.widgets.govuk._; implicit val messages: Messages = NoopMessages",
+    initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.interpreters.playframework._",
     initialCommands in consoleQuick := """import cats.implicits._;"""
   )
 
@@ -256,42 +276,11 @@ lazy val `example-js` = project
     )
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(`interpreter-js`, exampleProgramsJS, govukWidgetsJS)
-
-lazy val `govuk-widgets` = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8"),
-    libraryDependencies ++= Seq(
-      "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.beachape" %%% "enumeratum" % "1.5.13",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
-    ),
-    sourceDirectories in (Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value,
-    TwirlKeys.templateImports ++= Seq(
-      "ltbs.uniform.web._",
-      "ltbs.uniform._",
-      "ltbs.uniform.widgets.govuk._"
-    ),
-    initialCommands in console := "import ltbs.uniform._;import ltbs.uniform.widgets.govuk._;import ltbs.uniform.datapipeline._",
-    scalacOptions --= Seq(
-      "-Ywarn-unused:imports",
-      "-Ywarn-unused-imports",
-      "-Xfatal-warnings",
-      "-Ywarn-unused",
-      "-Ywarn-unused:params"
-    ) // little we can do about twirl throwing warnings
-  )
-  .enablePlugins(SbtTwirl)
-
-lazy val govukWidgetsJVM = `govuk-widgets`.jvm.dependsOn(commonWebJVM)
-lazy val govukWidgetsJS = `govuk-widgets`.js.dependsOn(commonWebJS)
+  .dependsOn(`interpreter-js`, exampleProgramsJS)
 
 lazy val docs = project
   .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)
-  .aggregate(`interpreter-js`)
+//  .aggregate(`interpreter-js`)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
@@ -306,29 +295,34 @@ lazy val docs = project
     micrositeGitterChannel  := false,
     micrositeHighlightTheme := "color-brewer",
     micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
-      "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
+      "last-stable-version" → com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
     )),
     micrositePalette := Map(
-      "brand-primary"   -> "#5236E0",
-      "brand-secondary" -> "#32423F",
-      "brand-tertiary"  -> "#232F2D",
-      "gray-dark"       -> "#3E4645",
-      "gray"            -> "#7F8483",
-      "gray-light"      -> "#E2E3E3",
-      "gray-lighter"    -> "#F3F4F4",
-      "white-color"     -> "#FFFFFF"),
-    micrositeExtraMdFiles := Map(
-      file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") -> ExtraMdFileConfig(
-        "interpreter-js.md",
-        "docs"
-      )
-    ),
+      "brand-primary"   → "#5236E0",
+      "brand-secondary" → "#32423F",
+      "brand-tertiary"  → "#232F2D",
+      "gray-dark"       → "#3E4645",
+      "gray"            → "#7F8483",
+      "gray-light"      → "#E2E3E3",
+      "gray-lighter"    → "#F3F4F4",
+      "white-color"     → "#FFFFFF"),
+    // micrositeExtraMdFiles := Map(
+    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") → ExtraMdFileConfig(
+    //     "interpreter-js.md",
+    //     "docs"
+    //   )
+    // ),
     scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
 //    scalacOptions in Tut += "-Xfatal-warnings", // play controller scuppers this
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
       "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
-    )
+    ),
+    fork in (Tut, run) := true,
+    tut := (tut
+      dependsOn tut.in(coreJVM)
+      dependsOn tut.in(`interpreter-play26`)
+    ).value,
   )
 
 // older, macro based implementations
@@ -356,10 +350,9 @@ lazy val `sbt-gforms-to-uniform-converter` = project
     scalacOptions := Seq(),
     scalaVersion := {
       val Some((major,_)) = CrossVersion.partialVersion((sbtVersion in pluginCrossBuild).value)
-      if (major == 0) "2.10.7" else "2.12.7"
+      if (major == 0) "2.10.7" else "2.12.8"
     }
   )
   .enablePlugins(SbtPlugin)
 
 crossSbtVersions := Vector("0.13.17", "1.2.8")
-

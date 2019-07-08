@@ -25,7 +25,7 @@ libraryDependencies +=
 
 Next you will need to extend your controller using `PlayController`.
 
-```tut:silent
+```
 import ltbs.uniform.interpreters.playframework._
 import ltbs.uniform.web._
 import ltbs.uniform._
@@ -78,7 +78,7 @@ need to supply an instance of the `PlayForm` trait. For example if we
 wanted to handle allowing the user to input a `String` you can enter
 the following -
 
-```tut:silent
+```
 val myForm = new PlayForm[String] {
 
 }
@@ -118,7 +118,7 @@ For simplicity here we'll just roll our own.
 (and mapping) should be defined, and also how to hook in any validation defined
 in the uniform journey itself.
 
-```tut:silent
+```
 class ExampleController2 @Inject()(implicit val messagesApi: MessagesApi) extends Controller with PlayInterpreter with I18nSupport {
   import ltbs.uniform.sampleprograms.GreasySpoon._
 
@@ -159,7 +159,7 @@ back later. For testing purposes however we'll just use a crude in-memory map.
 Note that this combines data between ALL users - for obvious reasons you
 shouldn't do this for a real service.
 
-```tut
+```
 type DB = Map[String,String]
 
 def persistence(implicit ec: ExecutionContext) = new Persistence {
@@ -173,7 +173,7 @@ def persistence(implicit ec: ExecutionContext) = new Persistence {
 Now we have our persistence mechanism, we can construct the actual journey as
 needed -
 
-```tut:silent
+```
 class ExampleController3(
   implicit val ec: ExecutionContext
 ) extends Controller with PlayInterpreter {

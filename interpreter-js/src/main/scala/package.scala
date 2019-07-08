@@ -1,19 +1,19 @@
 package ltbs.uniform
+package interpreters
 
-package object prototype {
+import cats.data._
+import scala.concurrent.Future
+import org.querki.jquery._
 
-  implicit class RichList[ELEM](inner: List[ELEM]) {
-    def replace(ordinal: Int, elem: ELEM): List[ELEM] = 
-      if (ordinal >= 0 && ordinal < inner.size) 
-        inner.take(ordinal) ++ {elem :: inner.drop(ordinal + 1)}
-      else
-        throw new IndexOutOfBoundsException
+package object js extends common.web.webcommon {
 
-    def delete(ordinal: Int): List[ELEM] =
-      if (ordinal >= 0 && ordinal < inner.size) 
-        inner.take(ordinal) ++ inner.drop(ordinal + 1)
-      else
-        throw new IndexOutOfBoundsException
+  def fromNode[A](key: String, fieldSet: JQuery): Either[ErrorTree,A] = {
+    val fields = $("fieldset.uniform").serialize()
+    println(s"raw data: $fields")
+//    val decoded=FormUrlEncoded.readString(fields)
+//    val input = decoded.toInputTree
+//    parser.bind(input.children.getOrElse(key,Tree(Nil): Input))
+    ???
   }
   
 }

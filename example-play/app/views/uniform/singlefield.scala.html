@@ -1,0 +1,22 @@
+@import cats.implicits._
+
+@(key: String, errors: ErrorTree, messages: UniformMessages[Html])(content: Html)
+
+@path=@{key.split("[.]").filter(_.nonEmpty).tail.toList}
+@fieldErrors=@{errors.atPath(path)}
+
+<div class="govuk-form-group @if(errors.definedAtPath(path.drop(1))) {govuk-form-group--error}">
+  <fieldset class="govuk-fieldset" aria-describedby="@key-hint">
+    <legend class="govuk-fieldset__legend govuk-fieldset__legend--xl">
+      <h1 class="govuk-fieldset__heading">
+        @messages(s"$key.heading")
+      </h1>
+    </legend>
+    @messages.get(s"$key.hint").map { hint => 
+      <span id="@key-hint" class="govuk-hint">
+        @hint
+      </span>
+    }
+    @content
+  </fieldset>
+</div>

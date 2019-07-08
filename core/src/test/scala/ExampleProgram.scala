@@ -1,10 +1,10 @@
 package ltbs.uniform
 
 import org.scalatest._
-import org.atnos.eff._, all._, syntax.all._
 import cats._, implicits._
+import scala.language.higherKinds
 
-case class SillyEmpty[IN,OUT]()(implicit m: Monoid[OUT]) {
+case class SillyEmpty[OUT]()(implicit m: Monoid[OUT]) {
   def empty: OUT = m.empty
 }
 
@@ -12,52 +12,23 @@ class SyntaxSpec extends FlatSpec with Matchers {
 
   "A program" should "be compilable and executable with asks, tells and interacts" in {
 
-    def program[R
-        : _uniformCore
-        : _uniform[String,Int,?]
-        : _uniformAsk[Option[String],?]
-        : _uniformTell[Option[String],?]
-    ]: Eff[R,(Int, Option[String])] = for {
-      a <- dialogue[String,Int]("hiya")("in")
-      b <- dialogue[String,Int]("hiya2")("in")
-      c <- ask[Option[String]]("c")
-      _ <- tell[Option[String]]("_")(c)
-    } yield ((a + b,c))
+    // the data types that the user can be presented with in a `tell'
+    type TellTypes = String :: Option[String] :: NilTypes
 
-    implicit class ZeroOps[R, A](e: Eff[R, A]) {
-      def fromMonoid[IN,OUT, U](
-        sillyEmpty: SillyEmpty[IN,OUT]
-      )(
-        implicit member: Member.Aux[Uniform[IN,OUT,?], R, U],
-        evalM:_eval[U]
-      ): Eff[U, A] =
-        e.translate(
-          new Translate[Uniform[IN,OUT,?], U] {
-            def apply[X](ax: Uniform[IN,OUT,X]): Eff[U, X] =
-              send(
-                Eval.later{
-                  sillyEmpty.empty.asInstanceOf[X]
-                }
-              )
-          })
+    // the data types that the user can be prompted for in an `ask'     
+    type AskTypes = Int :: Option[String] :: NilTypes
+
+    def program[F[_]: Monad](
+      interpreter: Language[F, TellTypes, AskTypes]
+    ): F[(Int, Option[String])] = {
+      import interpreter._
+      for {
+        a <- interact[String,Int]("hiya", "in")
+        b <- interact[String,Int]("hiya2", "in")
+        c <- ask[Option[String]]("c")
+        _ <- tell[Option[String]]("_", c)
+      } yield ((a + b, c))
     }
-
-    type STACK = Fx.fx5[
-      cats.data.State[UniformCore,?],
-      Uniform[String,Int,?],
-      UniformTell[Option[String],?],
-      UniformAsk[Option[String],?],
-      Eval
-    ]
-
-    val (output,_) = program[STACK]
-      .fromMonoid(SillyEmpty[String,Int])
-      .fromMonoid(SillyEmpty[Unit,Option[String]])
-      .fromMonoid(SillyEmpty[Option[String],Unit])
-      .runState(UniformCore())
-      .runEval
-      .run
-    output should be ((0,None))
   }
 
 }

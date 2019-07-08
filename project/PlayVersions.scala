@@ -28,3 +28,11 @@ object Play26 extends Platform {
     )
 }
 
+object Play27 extends Platform {
+  def identifier: String = "play27"
+  def sbtSuffix: String = "27"
+  def enable(project: Project): Project = project
+    .settings(
+      libraryDependencies += "com.typesafe.play" %% "play" % "2.7.2" % "provided"
+    )
+}

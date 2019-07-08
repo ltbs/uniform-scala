@@ -20,7 +20,7 @@ spreadsheet to be shown to stakeholders or Business Analysts.
 For this example we will include a slightly more complex program in
 order to test the logic -
 
-```tut:silent
+```
 import org.atnos.eff._
 import ltbs.uniform._
 import cats.implicits._
@@ -78,7 +78,7 @@ libraryDependencies +=
 
 And we need to import
 
-```tut:silent
+```
 import ltbs.uniform.interpreters.logictable._
 ```
 
@@ -87,14 +87,14 @@ interpreter needs a few monads in its stack, but it defines its own
 type for the stack. We need to define the stack for our program and
 join it to the stack needed by the logic table interpreter -
 
-```tut:silent
+```
 type GreasyStack = Fx2[UniformAsk[Int,?], UniformAsk[Boolean,?]]
 type FullStack = FxAppend[GreasyStack, LogicTableStack]
 ```
 
 ## Providing sample input
 
-```tut
+```
 import org.atnos.eff.syntax.all._
 
 val output = greasySpoon[FullStack].

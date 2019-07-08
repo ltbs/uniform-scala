@@ -6,20 +6,47 @@ options:
   - title: Setup
     url: setup.html
 
-  - title: Writing a program
-    url: writing-a-program.html
-
-  - title: Interpreters
+  - title: Writing a journey
+    url: core/basic-program.html
+    nested_options:
+     - title: Telling
+       url: core/tells.html
+     - title: Asking
+       url: core/asks.html
+     - title: Interacting
+       url: core/interacts.html
+     - title: Validation
+       url: core/validation.html
+     - title: Branching
+       url: core/branching.html
+     - title: Remote Calls
+       url: core/remote-calls.html
+  - title: Play Framework Interpreter
+    url: play/index.html
+    nested_options:
+     - title: Controllers
+       url: play/controllers.html
+     - title: WebMonad
+       url: play/web-monad.html
+     - title: Internationalisation
+       url: play/internationalisation.html
+     - title: Listing Pages
+       url: play/listing-pages.html
+     - title: Memoisation
+       url: play/remote-calls.html
+  - title: Other Interpreters
     url: interpreters.html
     nested_options:
      - title: CLI Interpreter
        url: interpreter-cli.html
      - title: Logic Table Interpreter
        url: interpreter-logic-table.html
-     - title: Play Framework Interpreter
-       url: interpreter-play.html
      - title: Static Site interpreter
-       url: interpreter-static-site.html       
+       url: interpreter-static-site.html
      - title: Selenium Interpreter
        url: interpreter-selenium.html
-       
+  - title: Advanced Options
+    url: core/advanced.html
+    nested_options:
+     - title: Writing Interpreters
+       url: core/writing-interpreters.html

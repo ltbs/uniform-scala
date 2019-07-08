@@ -1,27 +1,18 @@
-package ltbs.uniform.prototype
+package ltbs.uniform
+package interpreters.js
+
+import examples.beardtax._
 
 import cats.implicits._
-import org.atnos.eff._
-import org.atnos.eff.syntax.all._
 import org.querki.jquery._
-import ltbs.uniform.sampleprograms.BeardTax._
-
-import JsInterpreter._
 import JsImplementations._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import cats.Monoid
-import ltbs.uniform.{DB,UniformCore,UniformMessages}
-import ltbs.uniform.web._
 import ltbs.uniform.web.parser._
 import ltbs.uniform.widgets.govuk._
 import play.twirl.api.{Html,HtmlFormat}
-import InferParser._
 
-object PrototypeApp {
-
-  implicit val messages = new MessagesProvider {
-    reload()
-  }
+object BeardTaxApp {
 
   @JSExportTopLevel("enableMessages")
   def enableMessages(): Unit = {
@@ -118,27 +109,27 @@ back=back
     breadcrumbs = newBreadcrumbs
     state = newState
     result match {
-      case Left(page) => setPage(page)
-      case Right(fin) => scala.scalajs.js.Dynamic.global.alert(s"You have £$fin to pay")
+      case Left(page) ⇒ setPage(page)
+      case Right(fin) ⇒ scala.scalajs.js.Dynamic.global.alert(s"You have £$fin to pay")
     }
   }
 
   def updateDataTargets(): Unit = {
     val i = $("""[data-target] > input[type="radio"]""")
-    i.change{ e: org.scalajs.dom.Element =>
+    i.change{ e: org.scalajs.dom.Element ⇒
 
       val radioValue=$(e).value
       val dataTarget=$(e).parent("[data-target]").attr("data-target")
-	$(".conditional-" + dataTarget).removeClass("govuk-radios__conditional")
-	$(".conditional-" + dataTarget).addClass("govuk-radios__conditional--hidden")
-	$("#conditional-" + dataTarget + "-" + radioValue).removeClass("govuk-radios__conditional--hidden")
-	$("#conditional-" + dataTarget + "-" + radioValue).addClass("govuk-radios__conditional")
+        $(".conditional-" + dataTarget).removeClass("govuk-radios__conditional")
+        $(".conditional-" + dataTarget).addClass("govuk-radios__conditional--hidden")
+        $("#conditional-" + dataTarget + "-" + radioValue).removeClass("govuk-radios__conditional--hidden")
+        $("#conditional-" + dataTarget + "-" + radioValue).addClass("govuk-radios__conditional")
     }
     ()
   }
 
   def setPage(page: Page): Unit = {
-    page.title.map { title =>
+    page.title.map { title ⇒
 //      breadcrumbs = title.split("[.]").toList :: breadcrumbs
       $("#title").html(messages.span(s"heading.$title"))
       $("#backlink").html(messages.span(s"heading.$title"))
@@ -150,19 +141,19 @@ back=back
     }
 
     val backlink = { breadcrumbs.lastOption match {
-      case Some(back) =>
+      case Some(back) ⇒
         s"""<a href="#" onclick="back('${back.mkString(".")}');" class="govuk-back-link">${messages.getMessage(List(s"back-to-${back.mkString(".")}","back"))}</a>"""
-      case None => ""
+      case None ⇒ ""
     }}
 
-    page.body.map { x => $("#mainBody").html(backlink ++ x) }
+    page.body.map { x ⇒ $("#mainBody").html(backlink ++ x) }
 
     page.errors.flatTree match {
-      case Nil => $("#error-summary-display").css("display", "none")
-      case err =>
+      case Nil ⇒ $("#error-summary-display").css("display", "none")
+      case err ⇒
         $("#error-summary-display").css("display", "block")
         $("#error-summary-list").html {
-          err.map{ msg =>
+          err.map{ msg ⇒
             s"""|<li role="tooltip">
                 |  <a href="#packQty.higher" id="packQty.higher-error-summary" data-focuses="packQty.higher">
                 |    $msg

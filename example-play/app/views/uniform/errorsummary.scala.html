@@ -1,0 +1,23 @@
+@import cats.implicits._
+
+@(key: List[String], values: Input, errors: ErrorTree, messages: UniformMessages[Html])
+
+
+@if(errors.nonEmpty) { 
+
+<div class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" tabindex="-1" data-module="error-summary">
+
+  <h2 class="govuk-error-summary__title" id="error-summary-title">
+    @messages({key :+ "there.is.a.problem"}.mkString("."))
+  </h2>
+  <div class="govuk-error-summary__body">
+    <ul class="govuk-list govuk-error-summary__list">
+      @for((path, errormsg) <- ErrorTree.simplified(errors)) {       
+      <li>
+        <a href="#@{(key :: path).mkString(".")}">@errormsg.prefixWith(key ++ path).render(messages)</a>
+      </li>
+      }
+    </ul>
+  </div>
+</div>
+}

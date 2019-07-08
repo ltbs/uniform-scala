@@ -1,72 +1,76 @@
-package ltbs.uniform.interpreters
+package ltbs.uniform
+package interpreters
 
 import cats.data._
-import cats.Invariant
-import play.api.data.Form
-import play.api.mvc.{ Request, AnyContent }
-import play.twirl.api.{Html, HtmlFormat}
-import ltbs.uniform._
-import play.api._
+import common.web.GenericWebTell
+import play.api._, mvc.{ Request, Result, AnyContent }
+import play.twirl.api.{Html => TwirlHtml}
+import scala.concurrent.Future
 
-package object playframework {
-
-  type PlayForm[TELL,ASK] = SimpleInteractionForm[Request[AnyContent],TELL,ASK,Html]
+package object playframework extends common.web.webcommon {
 
   type Encoded = String
+  type WebInner[A] = RWST[Future, (JourneyConfig, List[String], Request[AnyContent]), Unit, (Path, DB), A]
+  type WebMonad[A] = EitherT[WebInner, Result, A]
 
-  type ValidationError = String
-  type ValidatedData[A] = Option[Validated[ValidationError, A]]
+  type FormField[A,B] = common.web.FormField[A,B]
 
-  implicit val playFormFunctor: Invariant[Form] = new Invariant[Form]{
-    def imap[A, B](fa: Form[A])(f: A => B)(g: B => A): Form[B] =
-      new Form[B](fa.mapping.transform(f, g), fa.data, fa.errors, fa.value.map(f))
+  implicit val tellTwirlUnit = new GenericWebTell[Unit,TwirlHtml] {
+    def render(in: Unit):TwirlHtml = TwirlHtml("")
   }
 
-  implicit class RichList[ELEM](inner: List[ELEM]) {
-    def replace(ordinal: Int, elem: ELEM): List[ELEM] = 
-      if (ordinal >= 0 && ordinal < inner.size) 
-        inner.take(ordinal) ++ {elem :: inner.drop(ordinal + 1)}
-      else
-        throw new IndexOutOfBoundsException
-
-    def delete(ordinal: Int): List[ELEM] =
-      if (ordinal >= 0 && ordinal < inner.size) 
-        inner.take(ordinal) ++ inner.drop(ordinal + 1)
-      else
-        throw new IndexOutOfBoundsException
+  implicit val twirlUnitField = new FormField[Unit,TwirlHtml] {
+    def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
+    def encode(in: Unit): Input = Input.empty
+    def render(
+      key: List[String],
+      path: Path,
+      data: Option[Input],
+      errors: ErrorTree,
+      messages: UniformMessages[TwirlHtml]
+    ): TwirlHtml = TwirlHtml("")
   }
 
-  implicit def renderTell: (Unit, String) => Html = {case _ => Html("")}
 
-  def convertMessages(input: i18n.Messages, escapeHtml: Boolean = false): UniformMessages[Html] = {
-    val stringMessages = new UniformMessages[String]{
-      override def apply(key: List[String],args: Any*): String = {
-        input(key, args:_*)
-      }
-      override def apply(key: String,args: Any*): String = {
-        input(key, args:_*)
-      }
-      def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
-        Some(input.messages(key, args:_*))
-      else
-        None
+  implicit class RichTwirlInterpreter(interpreter: PlayInterpreter[TwirlHtml]) {
+    def convertMessages(input: i18n.Messages, escapeHtml: Boolean = false): UniformMessages[TwirlHtml] = {
+      val stringMessages = new UniformMessages[String]{
+        override def apply(key: List[String],args: Any*): String = {
+          input(key, args:_*)
+        }
+        override def apply(key: String,args: Any*): String = {
+          input(key, args:_*)
+        }
+        def get(key: String,args: Any*): Option[String] = if (input.isDefinedAt(key))
+          Some(input.messages(key, args:_*))
+        else
+          None
 
-      override def get(key: List[String],args: Any*): Option[String] = key collectFirst {
-        case k if input.isDefinedAt(k) => input.messages(k, args:_*)
-      }
+        override def get(key: List[String],args: Any*): Option[String] = key collectFirst {
+          case k if input.isDefinedAt(k) => input.messages(k, args:_*)
+        }
 
-      def list(key: String,args: Any*): List[String] = {
-        @annotation.tailrec
-        def inner(cnt: Int = 2, acc: List[String] = Nil): List[String] =
-          get(s"$key.$cnt", args:_*) match {
-            case Some(m) => inner(cnt+1, m :: acc)
-            case None    => acc
-          }
+        def list(key: String,args: Any*): List[String] = {
+          @annotation.tailrec
+          def inner(cnt: Int = 2, acc: List[String] = Nil): List[String] =
+            get(s"$key.$cnt", args:_*) match {
+              case Some(m) => inner(cnt+1, m :: acc)
+              case None    => acc
+            }
 
-        List(key, s"$key.1").map(get(_, args:_*)).flatten ++ inner().reverse
+          List(key, s"$key.1").map(get(_, args:_*)).flatten ++ inner().reverse
+        }
       }
+      if (escapeHtml) stringMessages.map(
+        play.twirl.api.HtmlFormat.escape
+      ) else
+          stringMessages.map(TwirlHtml.apply)
     }
-    if (escapeHtml) stringMessages.map(HtmlFormat.escape) else stringMessages.map(Html.apply)
+  }
+
+  implicit val mon: cats.Monoid[TwirlHtml] = new cats.Monoid[TwirlHtml] {
+    def empty: TwirlHtml = TwirlHtml("")
+    def combine(a: TwirlHtml, b: TwirlHtml) = TwirlHtml(a.toString + b.toString)
   }
 
 }
