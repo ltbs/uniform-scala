@@ -6,6 +6,9 @@ import cats.implicits._
 
 object SampleFormFieldRenderers extends SampleFormFieldRenderers
 trait SampleFormFieldRenderers {
+
+  def selectionOfFields(inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[String]) ⇒ String)])(key: List[String], path: Path, values: Option[Input], errors: ErrorTree, messages: UniformMessages[String]):String = key.mkString(".") ++ ":" ++ inner.map(_._1).mkString(",")
+
   implicit val stringFieldR = new FormFieldPresentation[String, String] {
     def render(
       key: List[String],
@@ -34,10 +37,13 @@ trait SampleFormFieldRenderers {
 
 }
 
-class InferFormFieldPresentationSpec extends FlatSpec with Matchers with InferFormFieldPresentation[String] with SampleFormFieldRenderers {
+class InferFormFieldPresentationSpec extends FlatSpec with Matchers {
+
+  object Presenter extends InferFormFieldPresentation[String] with SampleFormFieldRenderers {}
+  import Presenter._
 
   val mon: cats.Monoid[String] = implicitly
-  def selectionOfFields(inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[String]) => String)])(key: List[String],path: Path, values: Option[Input],errors: ErrorTree,messages: UniformMessages[String]): String = {
+  def selectionOfFields(inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[String]) ⇒ String)])(key: List[String],path: Path, values: Option[Input],errors: ErrorTree,messages: UniformMessages[String]): String = {
     key.mkString(".") ++ ":" ++ inner.map{_._1}.mkString(",")
   }
 
@@ -59,6 +65,6 @@ class InferFormFieldPresentationSpec extends FlatSpec with Matchers with InferFo
 
     presentation.render(List("testRecord"), Nil, None, ErrorTree.empty, UniformMessages.noop) should be (
       "testRecord:Left,Right"
-    ) 
+    )
   }
 }
