@@ -32,7 +32,9 @@ package object uniform extends TreeLike.ToTreeLikeOps
       val ungrouped: List[(String, String)] =
         in.split("&").toList
           .map{_.split("=").toList}
-          .collect { case (k::v::Nil) ⇒ k → v }
+          .collect { case (k::v::Nil) ⇒ k →
+            java.net.URLDecoder.decode(v, "UTF-8")
+          }
 
       ungrouped.groupBy(_._1).map{ case (k, comb) ⇒
         k.split("[.]").toList.dropWhile(_.isEmpty) → comb.map {_._2}
