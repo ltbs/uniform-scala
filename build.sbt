@@ -21,7 +21,8 @@ lazy val root = project.in(file("."))
   .settings(
     publishLocal := {},
     publish := {},
-    publishArtifact := false
+    publishArtifact := false,
+    publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo")))
   )
 
 scalaVersion := "2.11.12"
