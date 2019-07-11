@@ -4,11 +4,13 @@ import cats.implicits._
 import cats.{Monoid, Applicative, Monad}
 import cats.data.NonEmptyList
 import language.higherKinds
-import shapeless.tag.@@
+import shapeless.tag
+import shapeless.tag.{@@}
 
 package object uniform extends TreeLike.ToTreeLikeOps
     with TreeLikeInstances
     with ScalaVersionCompatibility
+    with OptTC
 {
 
   /** Used to represent multi-line input.
@@ -20,6 +22,19 @@ package object uniform extends TreeLike.ToTreeLikeOps
     * lines.
     */
   type BigString = String @@ BigStringTag
+
+  type NonEmptyString = String @@ NonEmptyStringTag
+
+  object NonEmptyString {
+    def fromString(in: String): Option[NonEmptyString] = in.trim match {
+      case "" ⇒ None
+      case x ⇒ Some(tag[NonEmptyStringTag][String](x))
+    }
+
+    def apply(in: String): NonEmptyString = fromString(in).getOrElse(
+      throw new IllegalStateException("Empty string supplied")
+    )
+  }
 
   type InputPath = List[String]
   type Input = Map[InputPath, List[String]]
@@ -91,5 +106,4 @@ package object uniform extends TreeLike.ToTreeLikeOps
       }
     }
   }
-
 }

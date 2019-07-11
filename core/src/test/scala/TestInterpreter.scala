@@ -25,7 +25,7 @@ class MonoidInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
 
 class TestInterpreter extends FlatSpec with Matchers {
 
-  "A sodding interpreter" should "not suffer type erasure" in {
+  "An interpreter" should "not suffer type erasure" in {
 
     type TellTypes = String :: Option[String] :: NilTypes
     type AskTypes = Int :: Option[String] :: NilTypes
