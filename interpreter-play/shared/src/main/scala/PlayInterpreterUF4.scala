@@ -92,15 +92,15 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](
     }
   }
 
-  def run[A](
+  def run[A, B <: Request[AnyContent]](
     program: WebMonad[A],
     id: String,
     config: JourneyConfig = ""
   )(
     terminalFold: A ⇒ Future[Result]
   )(
-    implicit request: Request[AnyContent],
-    persistence: PersistenceEngine
+    implicit request: B,
+    persistence: PersistenceEngine[B]
   ): Future[Result] = {
     val targetId: List[String] = id.split("/").toList.dropWhile(_.isEmpty)
 
