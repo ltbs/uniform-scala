@@ -51,7 +51,7 @@ class BeardController @Inject()(
     )
   }
 
-  implicit val persistence: PersistenceEngine = DebugPersistence(UnsafePersistence())
+  implicit val persistence: PersistenceEngine[Request[AnyContent]] = DebugPersistence(UnsafePersistence())
 
   implicit val twirlBigStringField = new FormField[BigString,Html] {
     import shapeless.tag
