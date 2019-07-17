@@ -114,15 +114,8 @@ class BeardController @Inject()(
 
 
   implicit val twirlStringField = new FormField[String,Html] {
-    def decode(out: Input): Either[ErrorTree,String] = {
-      val root: Option[String] = out.valueAtRoot
-        .flatMap(_.filter(_.trim.nonEmpty).headOption)
-
-      root match {
-        case None ⇒ Left(ErrorMsg("required").toTree)
-        case Some(data) ⇒ Right(data)
-      }
-    }
+    def decode(out: Input): Either[ErrorTree,String] =
+      out.valueAtRoot.flatMap(_.headOption).getOrElse("").asRight
 
     def encode(in: String): Input = Input.one(List(in))
     def render(
@@ -136,6 +129,14 @@ class BeardController @Inject()(
       views.html.uniform.string(key, existingValue, errors, messages)
     }
   }
+
+  implicit val twirlNonEmptyStringField: FormField[NonEmptyString, Html] =
+    twirlStringField.simap(x ⇒
+      NonEmptyString.fromString(x) match {
+        case Some(x) ⇒ Right(x)
+        case None    ⇒ Left(ErrorMsg("required").toTree)
+      }
+    )(identity)
 
   implicit val twirlIntField2: FormField[Int,Html] =
     twirlStringField.simap(x ⇒

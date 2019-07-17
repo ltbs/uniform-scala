@@ -21,6 +21,8 @@ package object uniform extends TreeLike.ToTreeLikeOps
     */
   type BigString = String @@ BigStringTag
 
+  type NonEmptyString = String @@ NonEmptyStringTag
+
   type InputPath = List[String]
   type Input = Map[InputPath, List[String]]
   type ErrorTree = Map[NonEmptyList[InputPath], NonEmptyList[ErrorMsg]]
