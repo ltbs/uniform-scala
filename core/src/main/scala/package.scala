@@ -1,16 +1,18 @@
 package ltbs
 
+import language.{higherKinds, implicitConversions}
+
 import cats.implicits._
 import cats.{Monoid, Applicative, Monad}
 import cats.data.NonEmptyList
-import language.higherKinds
-import shapeless.tag
 import shapeless.tag.{@@}
-
+import uniform.Quantity.ToQuantityOps
 package object uniform extends TreeLike.ToTreeLikeOps
     with TreeLikeInstances
     with ScalaVersionCompatibility
     with OptTC
+    with ToQuantityOps
+    with QuantityInstances
 {
 
   /** Used to represent multi-line input.
@@ -24,17 +26,6 @@ package object uniform extends TreeLike.ToTreeLikeOps
   type BigString = String @@ BigStringTag
 
   type NonEmptyString = String @@ NonEmptyStringTag
-
-  object NonEmptyString {
-    def fromString(in: String): Option[NonEmptyString] = in.trim match {
-      case "" ⇒ None
-      case x ⇒ Some(tag[NonEmptyStringTag][String](x))
-    }
-
-    def apply(in: String): NonEmptyString = fromString(in).getOrElse(
-      throw new IllegalStateException("Empty string supplied")
-    )
-  }
 
   type InputPath = List[String]
   type Input = Map[InputPath, List[String]]
@@ -106,4 +97,8 @@ package object uniform extends TreeLike.ToTreeLikeOps
       }
     }
   }
+
+  implicit def soloRuleToListList[A](in: Rule[A]): List[List[Rule[A]]] = in.pure[List].pure[List]
+  implicit def listOfRulesToListList[A](in: List[Rule[A]]): List[List[Rule[A]]] = in.pure[List]
+
 }
