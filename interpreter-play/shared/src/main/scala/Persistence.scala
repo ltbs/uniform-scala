@@ -5,8 +5,8 @@ import play.api._,mvc._
 import concurrent.{Future,ExecutionContext}
 import java.util.UUID
 
-trait PersistenceEngine {
-  def apply(request: Request[AnyContent])(f: DB => Future[(DB,Result)]): Future[Result]
+trait PersistenceEngine[A <: Request[AnyContent]] {
+  def apply(request: A)(f: DB => Future[(DB,Result)]): Future[Result]
 }
 
 case class DebugPersistence(underlying: UUIDPersistence)(implicit ec: ExecutionContext) extends UUIDPersistence {
@@ -26,7 +26,7 @@ case class DebugPersistence(underlying: UUIDPersistence)(implicit ec: ExecutionC
   }
 }
 
-abstract class UUIDPersistence()(implicit ec: ExecutionContext) extends PersistenceEngine {
+abstract class UUIDPersistence()(implicit ec: ExecutionContext) extends PersistenceEngine[Request[AnyContent]] {
   def load(uuid: UUID): Future[DB]
   def save(uuid: UUID, db: DB): Future[Unit]
   def apply(request: Request[AnyContent])(f: DB ⇒ Future[(DB,Result)]): Future[Result] = {

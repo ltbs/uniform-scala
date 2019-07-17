@@ -1,5 +1,7 @@
 package ltbs.uniform
 
+trait NonEmptyStringTag
+
 object NonEmptyString {
   def fromString(in: String): Option[NonEmptyString] = in.trim match {
     case "" ⇒ None
