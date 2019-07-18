@@ -50,7 +50,6 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](
       implicit selectorTell : IndexOf[SupportedTell, Tell],
       selectorAsk : IndexOf[SupportedAsk, Ask]
     ): WebMonad[Ask] = {
-      val tellHtml = tellSummoner.forType[Tell].render(t)
       val asker: PlayAsk[Ask] = askSummoner.forType[Ask]
 
       EitherT[WebInner, Result, Ask] {
@@ -58,10 +57,10 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](
           val input: Option[Input] = request.body.asFormUrlEncoded.map{
             _.map{ case (k,v) ⇒ (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
           }
-
           import AskResult._
 
           val localMessages = messages(request, customContent)
+          val tellHtml = tellSummoner.forType[Tell].render(t, id, localMessages)
           asker.page(
             targetId = id.split("/").toList.dropWhile(_.isEmpty),
             currentId,

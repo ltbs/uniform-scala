@@ -48,11 +48,11 @@ abstract class JsInterpreter[Html](domSelector: String) {
       implicit selectorTell : IndexOf[SupportedTell, Tell],
       selectorAsk : IndexOf[SupportedAsk, Ask]
     ): DomMonad[Ask] = {
-      val tellHtml = tellSummoner.forType[Tell].render(t)
       val asker = askSummoner.forType[Ask]
 
       RWST { case ((config, currentId, input), (path, db)) ⇒
         val localMessages = messages(customContent)
+        val tellHtml = tellSummoner.forType[Tell].render(t, id, localMessages)
         asker.page(
           targetId = id.split("/").toList.dropWhile(_.isEmpty),
           currentId,
