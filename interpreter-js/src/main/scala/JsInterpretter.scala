@@ -49,10 +49,10 @@ abstract class JsInterpreter[Html](domSelector: String) {
       selectorAsk : IndexOf[SupportedAsk, Ask]
     ): DomMonad[Ask] = {
       val asker = askSummoner.forType[Ask]
-
+      val teller = tellSummoner.forType[Tell]
       RWST { case ((config, currentId, input), (path, db)) ⇒
         val localMessages = messages(customContent)
-        val tellHtml = tellSummoner.forType[Tell].render(t, id, localMessages)
+        val tellHtml = teller.render(t, id, localMessages)
         asker.page(
           targetId = id.split("/").toList.dropWhile(_.isEmpty),
           currentId,
