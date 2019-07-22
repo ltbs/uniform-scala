@@ -35,9 +35,9 @@ class Rewriter[TC[_], SupportedTell <: HList, SupportedAsk <: HList](
         selectorTell : IndexOf[SupportedTell, Tell],
       selectorAsk : IndexOf[SupportedAsk, Ask]
     ): TC[Ask] = rewriteSummoner.forType[Ask] match {
-      case Some(s) ⇒
+      case Some(s) =>
         s.interact(id, tell, default, validation, customContent)
-      case None ⇒
+      case None =>
         naive.interact(id, tell, default, validation, customContent)
     }
 

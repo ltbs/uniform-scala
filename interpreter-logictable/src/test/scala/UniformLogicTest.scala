@@ -37,9 +37,9 @@ object UniformLogicTest {
       interpreter, dummyHod
     ).value.run
 
-    output.foreach{ case (messages, outcome) ⇒
+    output.foreach{ case (messages, outcome) =>
       println(messages.mkString("\n"))
-      println(s"   ⇒ $outcome")
+      println(s"   => $outcome")
     }
   }
 

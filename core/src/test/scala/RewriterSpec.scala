@@ -17,8 +17,8 @@ class RewriterSpec extends FlatSpec with Matchers {
     ): F[(String, Int)] = {
       import interpreter._
       for {
-        s ← ask[String]("s")
-        i ← ask[Int]("i")
+        s <- ask[String]("s")
+        i <- ask[Int]("i")
       } yield (s,i)
     }
 

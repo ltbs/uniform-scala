@@ -3,7 +3,7 @@ package ltbs.uniform
 import org.scalatest._
 import cats.implicits._
 import cats.{Id, Monad}
-import shapeless.{Id ⇒ _, _}
+import shapeless.{Id => _, _}
 import scala.language.higherKinds
 
 class MonoidInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
@@ -35,10 +35,10 @@ class TestInterpreter extends FlatSpec with Matchers {
     ): F[(Int, Option[String])] = {
       import interpreter._
       for {
-        a ← interact[String,Int]("hiya", "in")
-        b ← interact[String,Int]("hiya2", "in")
-        c ← ask[Option[String]]("c")
-        _ ← tell[Option[String]]("_", c)
+        a <- interact[String,Int]("hiya", "in")
+        b <- interact[String,Int]("hiya2", "in")
+        c <- ask[Option[String]]("c")
+        _ <- tell[Option[String]]("_", c)
       } yield ((a + b, c))
     }
 

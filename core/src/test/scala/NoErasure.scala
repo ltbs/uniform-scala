@@ -1,7 +1,7 @@
 package ltbs.uniform
 
 import org.scalatest._
-import shapeless.{the ⇒ _, _}
+import shapeless.{the => _, _}
 
 class NoErasure extends FlatSpec with Matchers {
 

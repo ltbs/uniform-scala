@@ -3,7 +3,7 @@ package interpreters.js
 
 import ltbs.uniform._
 import ltbs.uniform._
-import shapeless.{Path ⇒ _, _}
+import shapeless.{Path => _, _}
 import common.web._
 import cats.implicits._
 import cats.data._
@@ -50,7 +50,7 @@ abstract class JsInterpreter[Html](domSelector: String) {
     ): DomMonad[Ask] = {
       val asker = askSummoner.forType[Ask]
       val teller = tellSummoner.forType[Tell]
-      RWST { case ((config, currentId, input), (path, db)) ⇒
+      RWST { case ((config, currentId, input), (path, db)) =>
         val localMessages = messages(customContent)
         val tellHtml = teller.render(t, id, localMessages)
         asker.page(
