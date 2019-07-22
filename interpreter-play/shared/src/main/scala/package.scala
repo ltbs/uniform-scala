@@ -2,7 +2,7 @@ package ltbs.uniform
 package interpreters
 
 import cats.data._
-import common.web.GenericWebTell
+import common.web.{GenericWebTell, GenericWebAsk, PageOut}
 import play.api._, mvc.{ Request, Result, AnyContent }
 import play.twirl.api.{Html => TwirlHtml}
 import scala.concurrent.Future
@@ -31,6 +31,20 @@ package object playframework extends common.web.webcommon {
     ): TwirlHtml = TwirlHtml("")
   }
 
+  implicit val twirlNothingField = new GenericWebAsk[Nothing,TwirlHtml] {
+
+    def page(
+      targetId: List[String],
+      currentId: List[String],
+      default: Option[Nothing],
+      validation: List[List[Rule[Nothing]]],
+      config: JourneyConfig,
+      submittedData: Option[Input],
+      path: Path,
+      db: DB,
+      messages: UniformMessages[TwirlHtml]
+    ): Future[PageOut[Nothing,TwirlHtml]] = ???
+  }
 
   implicit class RichTwirlInterpreter(interpreter: PlayInterpreter[TwirlHtml]) {
     def convertMessages(input: i18n.Messages, escapeHtml: Boolean = false): UniformMessages[TwirlHtml] = {

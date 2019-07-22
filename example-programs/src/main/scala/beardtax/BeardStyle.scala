@@ -3,6 +3,7 @@ package ltbs.uniform.examples.beardtax
 sealed trait BeardStyle
 
 object BeardStyle {
+  final case object CleanShaven      extends BeardStyle
   final case object Goatee           extends BeardStyle
   final case object Horseshoe        extends BeardStyle
   final case object MuttonChops      extends BeardStyle

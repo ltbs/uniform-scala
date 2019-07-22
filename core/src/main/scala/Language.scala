@@ -6,7 +6,7 @@ import com.github.ghik.silencer.silent
 
 trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
 
-  def subJourney[A](@silent id: String)(sub: ⇒ UF[A]): UF[A] = sub
+  def subJourney[A](@silent id: String)(sub: => UF[A]): UF[A] = sub
 
   def interact[Tell, Ask](
     id: String,
@@ -32,11 +32,20 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
 
   def tell[A](
     id: String,
-    t: A,
+    tell: A,
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit selectorAsk : IndexOf[SupportedAsk, Unit],
     selectorTell : IndexOf[SupportedTell, A]
-  ) = interact[A,Unit](id, t, customContent=customContent)
+  ) = interact[A,Unit](id, tell, customContent=customContent)
+
+  def end[A](
+    id: String,
+    tell: A = (),
+    customContent: Map[String,(String,List[Any])] = Map.empty
+  )(
+    implicit selectorAsk : IndexOf[SupportedAsk, Nothing],
+    selectorTell : IndexOf[SupportedTell, A]
+  ) = interact[A,Nothing](id, tell, customContent=customContent)
 
 }
