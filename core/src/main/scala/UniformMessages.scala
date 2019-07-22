@@ -4,13 +4,32 @@ import scala.util.parsing.combinator._
 import cats.Monoid
 import cats.implicits._
 
+/** Content/internationalisation messages to be used by the interpreter. */
 trait UniformMessages[A] {
 
+  /** fetch the message for the key, supplying any arguments. Throw an
+    * exception if it not found
+    */
   def apply(key: String, args: Any*): A =
-    get(key, args:_*).getOrElse(throw new NoSuchElementException(s"key not found: $key"))
+    get(key, args:_*).getOrElse(
+      throw new NoSuchElementException(s"key not found: $key")
+    )
+
+  /** fetch a message for the list of keys, supplying any arguments
+    * against the first match. Throw an exception if none of the keys
+    * are found
+    */
   def apply(keys: List[String], args: Any*): A =
-    get(keys, args:_*).getOrElse(throw new NoSuchElementException(s"""keys not found: ${keys.mkString(",")}"""))    
+    get(keys, args:_*).getOrElse(throw new NoSuchElementException(
+      s"""keys not found: ${keys.mkString(",")}"""
+    ))
+
+  /** fetch the message for the key, supplying any arguments. */
   def get(key: String, args: Any*): Option[A]
+
+  /** fetch a message for the list of keys, supplying any arguments
+    * against the first match. 
+    */  
   def get(keys: List[String], args: Any*): Option[A] = {
     @annotation.tailrec
     def inner(keys: List[String], args: Seq[Any]): Option[A] = keys match {
@@ -23,8 +42,14 @@ trait UniformMessages[A] {
     inner(keys, args)
   }
 
+  /** fetch the messages for the key, supplying any arguments. Expect
+    * multiple entries. 
+    */
   def list(key: String, args: Any*): List[A]
 
+  /** The same as decompose, except returning an None rather than an
+    * exception in the event of there being no match 
+    */
   def decomposeOpt(key: String, args: Any*): Option[A] = 
     get(
       key.split("[.]").tails.collect{
@@ -32,11 +57,23 @@ trait UniformMessages[A] {
       }.toList,
       args:_*)
 
+  /** search for the 'tails' of the keys split by full-stops. For
+    * example if the supplied key is 'a.b.c' a match for 'a.b.c' would
+    * be preferred, followed by 'b.c', followed by just 'c'. This is
+    * used to allow general messages - such as
+    * 'deliveryaddress.postcode' matching against 'postcode'. Will
+    * throw an exception if there are no matches against any of the
+    * keys 
+    */
   def decompose(key: String, args: Any*): A =
     decomposeOpt(key, args:_*).getOrElse(
       throw new NoSuchElementException(s"""key not found: $key""")
     )
 
+  /** create a new UniformMessages based on the existing one. Uses a
+    * fallback function to provide the content in the event of no
+    * match being found 
+    */
   def withDefault(f: String => A): UniformMessages[A] = {
     val underlying = this
     new UniformMessages[A] {
@@ -76,9 +113,27 @@ trait UniformMessages[A] {
 }
 
 object UniformMessages {
-  def fromMap[A](msg: Map[String,List[A]]): UniformMessages[A] = SimpleMapMessages[A](msg)
-  def fromMapWithSubstitutions(msg: Map[String,List[String]]): UniformMessages[String] = MapMessagesWithSubstitutions(msg)  
+
+  /** Produce a simple UniformMessages from a map. Any arguments
+    * supplied are ignored. 
+    */
+  def fromMap[A](msg: Map[String,List[A]]): UniformMessages[A] =
+    SimpleMapMessages[A](msg)
+
+  /** Produce a simple UniformMessages from a map. Substitutes
+    * arguments similiarly to Play Messages.
+    */
+  def fromMapWithSubstitutions(
+    msg: Map[String,List[String]]
+  ): UniformMessages[String] = MapMessagesWithSubstitutions(msg)
+
+  /** A messages provider that has no values. */
   def noop[A]: UniformMessages[A] = NoopMessages[A]
+
+  /** A messages provider that will echo the keys back in the event of
+    * being asked for a mandatory (apply) value. Will return None for
+    * non-mandatory values. 
+    */
   def echo: UniformMessages[String] = new UniformMessages[String] {
     def get(key: String, args: Any*): Option[String] = None
     def list(key: String, args: Any*): List[String] = Nil
@@ -87,6 +142,9 @@ object UniformMessages {
     override def decompose(key: String, args: Any*): String = key
   }
 
+  /** A messages provider that will echo the key back, even if asked
+    * for an optional value 
+    */
   def attentionSeeker: UniformMessages[String] = new UniformMessages[String] {
     def get(key: String, args: Any*): Option[String] = Some(key)
     def list(key: String, args: Any*): List[String] = List(key)
@@ -95,6 +153,12 @@ object UniformMessages {
     override def decompose(key: String, args: Any*): String = key
   }
 
+  /** A messages provider that attempts to deconstruct a keyword into
+    * a sentence and apply sensible capitalisation for non-optional
+    * values. 
+    * 
+    * For example 'get('yetAnotherField')' would yield 'Get Another Field'
+    */
   def bestGuess: UniformMessages[String] = BestGuessMessages
 
   implicit def contentMonoidInstance[A] = new Monoid[UniformMessages[A]] {
@@ -112,7 +176,6 @@ object UniformMessages {
          a.get(keys, args:_*).getOrElse(b(keys, args:_*))        
     }
   }
-
 }
 
 case class SimpleMapMessages[A](msg: Map[String,List[A]]) extends UniformMessages[A] {

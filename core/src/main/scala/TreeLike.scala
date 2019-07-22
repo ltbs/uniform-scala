@@ -4,6 +4,7 @@ import simulacrum._
 import scala.language.implicitConversions
 import cats.data.{NonEmptyList => NEL}
 
+/** A typeclass used for data structures that can be navigated like trees */
 @typeclass trait TreeLike[T] {
 
   type Key

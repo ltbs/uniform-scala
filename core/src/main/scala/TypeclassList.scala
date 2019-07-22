@@ -3,6 +3,7 @@ package ltbs.uniform
 import scala.language.higherKinds
 import shapeless._
 
+/** A KList of F[l] for all l in L, constructed using implicits */
 trait TypeclassList[L <: HList, F[_]] {
   type Repr <: HList
   protected val list: Repr

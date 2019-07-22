@@ -3,8 +3,12 @@ package ltbs.uniform
 import shapeless.HList
 import scala.language.higherKinds
 
+/** Abstract representation of an interaction with a user. */
 trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
 
+  /** represents both presenting the user with some data and asking
+    * the user for some data in return. 
+    */
   def interact[Tell, Ask](
     id: String,
     tell: Tell,
@@ -17,6 +21,7 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     selectorAsk : IndexOf[SupportedAsk, Ask]
   ): UF[Ask]
 
+  /** prompt the user to supply some data. */  
   def ask[A](
     id: String,
     default: Option[A] = None,
@@ -27,6 +32,7 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     selectorTell : IndexOf[SupportedTell, Unit]
   ) = interact[Unit,A](id, (), default, validation, customContent)
 
+  /** present the user with some data. */
   def tell[A](
     id: String,
     t: A,

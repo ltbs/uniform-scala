@@ -4,6 +4,9 @@ import cats.implicits._
 import cats.Monoid
 import cats.data.NonEmptyList
 
+/** an error, usually constructed into an ErrorTree to provide the
+  * paths to the fields where the errors occurred 
+  */
 case class ErrorMsg(msg: String, args: Any*) {
 
   def prefixWith(in: List[String]): ErrorMsg =
@@ -17,15 +20,23 @@ case class ErrorMsg(msg: String, args: Any*) {
   }
 }
 
+/** A validation rule used to check input data. */
 trait Rule[A] {
 
+  /** give a tree of errors for the input data. ErrorTree.empty is
+    * returned if the data is valid 
+    */
   def apply(in: A): ErrorTree
 
+  /** check the input and return a Left(ErrorTree) if there is an
+    * error or a Right(a) if the data is valid 
+    */
   def either(in: A): Either[ErrorTree, A] = apply(in) match {
     case ErrorTree.empty => Right(in)
     case x => Left(x)
   }
-  
+
+  /** compose a new validation rule by chaining two together */
   def andThen(that: Rule[A]): Rule[A] = {
     val orig = this
     new Rule[A] {
