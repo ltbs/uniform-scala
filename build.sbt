@@ -4,6 +4,7 @@ import microsites.ExtraMdFileConfig
 val scala2_10 = "2.10.7"
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.8"
+val scala2_13 = "2.13.0"
 
 lazy val root = project.in(file("."))
   .aggregate(
@@ -32,14 +33,25 @@ lazy val root = project.in(file("."))
 scalaVersion := scala2_11
 crossScalaVersions := Seq(scala2_11)
 
-enablePlugins(GitVersioning)
+enablePlugins(GitVersioning, SiteScaladocPlugin, ScalaUnidocPlugin)
+
+scalacOptions in (ScalaUnidoc, unidoc) += "-Ymacro-expand:none"
+
+def macroDependencies(scalaVersion: String) =
+  CrossVersion.partialVersion(scalaVersion) match {
+    case Some((2, minor)) if minor < 13 =>
+      Seq(
+        compilerPlugin(("org.scalamacros" %% "paradise" % "2.1.1").cross(CrossVersion.patch))
+      )
+    case _ => Seq()
+  }
 
 lazy val commonSettings = Seq(
   scalaVersion := scala2_12,
   crossScalaVersions := Seq(scala2_11, scala2_12),
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
-  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
+  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   scalacOptions ++= Seq(
 //    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
@@ -50,7 +62,7 @@ lazy val commonSettings = Seq(
     "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
     "-Xfuture",                          // Turn on future language features.
     "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
-    "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
+//    "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
     "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
     "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
     "-Xlint:inaccessible",               // Warn about inaccessible types in method signatures.
@@ -64,21 +76,21 @@ lazy val commonSettings = Seq(
     "-Xlint:private-shadow",             // A private field (or class parameter) shadows a superclass field.
     "-Xlint:stars-align",                // Pattern sequence wildcard must align with sequence component.
     "-Xlint:type-parameter-shadow",      // A local type parameter shadows a type already in scope.
-    "-Xlint:unsound-match",              // Pattern match may not be typesafe.
-    "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-    "-Ypartial-unification",             // Enable partial unification in type constructor inference
+//    "-Xlint:unsound-match",              // Pattern match may not be typesafe.
+//    "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
     "-Ywarn-dead-code",                  // Warn when dead code is identified.
-    "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
-    "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
-    "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-    "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
     "-Ywarn-numeric-widen",              // Warn when numerics are widened.
     "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
   ) ++ {CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2,11)) ⇒ Seq(
-      "-Ywarn-unused"
+    case Some((2,11)) => Seq(
+      "-Ywarn-unused",
+      "-Ypartial-unification",             // Enable partial unification in type constructor inference
+      "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
+      "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+      "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
+      "-Ywarn-inaccessible"               // Warn about inaccessible types in method signatures.
     )
-    case _ ⇒ Seq(
+    case Some((2,12)) => Seq(
       "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
       "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
       "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
@@ -86,8 +98,17 @@ lazy val commonSettings = Seq(
       "-Ywarn-unused:params",              // Warn if a value parameter is unused.
       "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
       "-Ywarn-unused:privates",            // Warn if a private member is unused.
-      "-Ywarn-extra-implicit"              // Warn when more than one implicit parameter section is defined.
+      "-Ywarn-extra-implicit",              // Warn when more than one implicit parameter section is defined.
+      "-Ypartial-unification",             // Enable partial unification in type constructor inference
+      "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
+      "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+      "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
+      "-Ywarn-inaccessible"               // Warn about inaccessible types in method signatures.
     )
+    case Some((2,13)) => Seq(
+      "-Ymacro-annotations"
+    )
+    case _ => Nil
   }},
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings", "-Ywarn-unused"),
   scmInfo := Some(
@@ -115,14 +136,14 @@ lazy val commonSettings = Seq(
   com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration.value.withOverwrite(isSnapshot.value),
   publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(isSnapshot.value),
   com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration.value.withOverwrite(isSnapshot.value),
-  git.gitTagToVersionNumber := { tag: String ⇒
+  git.gitTagToVersionNumber := { tag: String =>
     if(tag matches "[0-9]+\\..*") Some(tag)
     else None
   },
   useGpg := true,
   licenses += ("GPL-3", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
-    "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
+    "org.scalatest" %%% "scalatest" % "3.0.8" % "test",
     compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.1"),
     "com.github.ghik" %% "silencer-lib" % "1.4.1" % Provided
   )
@@ -141,27 +162,26 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .enablePlugins(TutPlugin).settings(tutSettings("core"))
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.typelevel" %%% "cats-core" % "1.6.0",
-      "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.1",
+      "org.typelevel" %%% "cats-core" % "2.0.0-M4",
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.github.mpilquist" %%% "simulacrum" % "0.18.0"
-    ),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+      "com.github.mpilquist" %%% "simulacrum" % "0.19.0"
+    ) ++ macroDependencies(scalaVersion.value)
   )
 
 lazy val coreJS = core.js
-lazy val coreJVM = core.jvm
+lazy val coreJVM = core.jvm.settings (
+  crossScalaVersions += scala2_13
+)
 
 lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
   .settings(commonSettings)
   .settings(
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.github.mpilquist" %%% "simulacrum" % "0.14.0"
-    )
+      "com.github.mpilquist" %%% "simulacrum" % "0.19.0"
+    ) ++ macroDependencies(scalaVersion.value)
   )
 
 lazy val commonWebJVM = `common-web`.jvm.dependsOn(coreJVM)
@@ -265,7 +285,7 @@ lazy val `example-js` = project
   .dependsOn(`interpreter-js`, exampleProgramsJS)
 
 lazy val docs = project
-  .dependsOn(coreJVM, exampleProgramsJVM)
+//  .dependsOn(coreJVM, exampleProgramsJVM)
 //  .aggregate(`interpreter-js`)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
@@ -280,19 +300,19 @@ lazy val docs = project
     micrositeGitterChannel  := false,
     micrositeHighlightTheme := "color-brewer",
     micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
-      "last-stable-version" → com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
+      "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
     )),
     micrositePalette := Map(
-      "brand-primary"   → "#5236E0",
-      "brand-secondary" → "#32423F",
-      "brand-tertiary"  → "#232F2D",
-      "gray-dark"       → "#3E4645",
-      "gray"            → "#7F8483",
-      "gray-light"      → "#E2E3E3",
-      "gray-lighter"    → "#F3F4F4",
-      "white-color"     → "#FFFFFF"),
+      "brand-primary"   -> "#5236E0",
+      "brand-secondary" -> "#32423F",
+      "brand-tertiary"  -> "#232F2D",
+      "gray-dark"       -> "#3E4645",
+      "gray"            -> "#7F8483",
+      "gray-light"      -> "#E2E3E3",
+      "gray-lighter"    -> "#F3F4F4",
+      "white-color"     -> "#FFFFFF"),
     // micrositeExtraMdFiles := Map(
-    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") → ExtraMdFileConfig(
+    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") -> ExtraMdFileConfig(
     //     "interpreter-js.md",
     //     "docs"
     //   )
