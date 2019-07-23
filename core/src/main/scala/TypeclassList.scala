@@ -3,6 +3,7 @@ package ltbs.uniform
 import scala.language.higherKinds
 import shapeless._
 
+@annotation.implicitNotFound("Cannot find an implicit ${F}[_] for each type in ${L}")
 trait TypeclassList[L <: HList, F[_]] {
   type Repr <: HList
   protected val list: Repr

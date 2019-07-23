@@ -2,7 +2,7 @@ package ltbs.uniform
 
 import shapeless._
 
-@annotation.implicitNotFound("Cannot find $U in $L")
+@annotation.implicitNotFound("Cannot find ${U} in ${L}")
 trait IndexOf[L <: HList, U] extends DepFn1[L] with Serializable {
   val index: Int
   type Out = Nat
