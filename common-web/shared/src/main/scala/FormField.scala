@@ -2,11 +2,16 @@ package ltbs.uniform
 package common.web
 import cats.implicits._
 
+/** Defines the encoding for a given datatype.
+  * {{{
+  *
+  * }}}
+  */
 trait FormFieldEncoding[A]{
   def encode(in: A): Input
   def decode(out: Input): Either[ErrorTree,A]
 
-  def imap[B](f: A => B)(g: B => A): FormFieldEncoding[B] = 
+  def imap[B](f: A => B)(g: B => A): FormFieldEncoding[B] =
     simap[B](f(_).asRight)(g)
 
   def simap[B](f: A => Either[ErrorTree,B])(g: B => A): FormFieldEncoding[B] = {
@@ -20,6 +25,7 @@ trait FormFieldEncoding[A]{
 
 }
 
+/** Defines the rendering for a given datatype */
 trait FormFieldPresentation[A, Html]{
   def render(
     key: List[String],
@@ -43,6 +49,7 @@ trait FormFieldPresentation[A, Html]{
   }
 }
 
+/** Defines both the rendering and the encoding for a given datatype */
 trait FormField[A, Html] extends FormFieldEncoding[A] with FormFieldPresentation[A, Html] {
   override def imap[B](f: A => B)(g: B => A): FormField[B, Html] =
     simap[B](f(_).asRight)(g)
@@ -66,6 +73,7 @@ trait FormField[A, Html] extends FormFieldEncoding[A] with FormFieldPresentation
 
 object FormField {
 
+  /** Construct a FormField from the presentation and the encoding */
   def build[A,Html](
     codec: FormFieldEncoding[A],
     renderer: FormFieldPresentation[A, Html]
