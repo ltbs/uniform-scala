@@ -32,7 +32,7 @@ all our steps into one big `Either[Result, B]`.
 
 Inside our controller we invoke our program with the play
 interpreter. Along with the program we supply a _terminating fold_ of the
-form `B ⇒ Future[Result]` which allows us to specify what should happen when
+form `B => Future[Result]` which allows us to specify what should happen when
 we get to the end of the journey along with what should be sent to the
 user.
 
@@ -55,7 +55,7 @@ may be needed in the future.
 The `List[String]` reader is used for the URL pieces, for example -
 
 ```
-http://server.com/path-to-journey/one/two/three/ ⇒ List("one","two","three")
+http://server.com/path-to-journey/one/two/three/ => List("one","two","three")
 ```
 
 Normally the user will move through the journey naturally (there is a

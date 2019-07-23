@@ -24,10 +24,10 @@ class SyntaxSpec extends FlatSpec with Matchers {
     ): F[(Int, Option[String])] = {
       import interpreter._
       for {
-        a ← interact[String,Int]("hiya", "in")
-        b ← interact[String,Int]("hiya2", "in")
-        c ← ask[Option[String]]("c")
-        _ ← tell[Option[String]]("_", c)
+        a <- interact[String,Int]("hiya", "in")
+        b <- interact[String,Int]("hiya2", "in")
+        c <- ask[Option[String]]("c")
+        _ <- tell[Option[String]]("_", c)
       } yield ((a + b, c))
     }
   }

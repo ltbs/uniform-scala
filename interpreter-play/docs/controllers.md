@@ -17,7 +17,7 @@ controller.
 ```tut:silent
 import ltbs.uniform._, interpreters.playframework._
 
-import play.api.i18n.{Messages ⇒ _, _}
+import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import play.twirl.api.{Html, HtmlFormat}
 ```
@@ -77,7 +77,7 @@ active.
   def selectionOfFields(
     inner: List[(
       String,
-      (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) ⇒ Html
+      (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html
     )]
   )(
     key: List[String],
@@ -94,7 +94,7 @@ We also need an actual action that will invoke the journey.
 
 ```scala
 def myjourney(targetId: String) =
-  Action.async { implicit request: Request[AnyContent] ⇒
+  Action.async { implicit request: Request[AnyContent] =>
 
     // interpret our journey using the play interpreter
     val playJourney = myJourney(
@@ -102,7 +102,7 @@ def myjourney(targetId: String) =
     )
 
     // Run the journey using the request and the targetId
-    run(playJourney, targetId){ output ⇒
+    run(playJourney, targetId){ output =>
         // final code to be run upon successful completion
         // of the journey
         println(output)
@@ -127,7 +127,7 @@ Combining these elements we get an outline of our interpreter setup
 ```scala
 import ltbs.uniform._, interpreters.playframework._
 
-import play.api.i18n.{Messages ⇒ _, _}
+import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import play.twirl.api.{Html, HtmlFormat}
 
@@ -155,7 +155,7 @@ class ExampleController (
   def selectionOfFields(
     inner: List[(
       String,
-      (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) ⇒ Html
+      (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html
     )]
   )(
     key: List[String],
@@ -166,7 +166,7 @@ class ExampleController (
   ): Html = ???
 
   def myjourney(targetId: String) =
-    Action.async { implicit request: Request[AnyContent] ⇒
+    Action.async { implicit request: Request[AnyContent] =>
 
       // interpret our journey using the play interpreter
       val playJourney = myJourney(
@@ -174,7 +174,7 @@ class ExampleController (
       )
 
       // Run the journey using the request and the targetId
-      run(playJourney, targetId){ output ⇒
+      run(playJourney, targetId){ output =>
         // final code to be run upon successful completion
         // of the journey
         println(output)

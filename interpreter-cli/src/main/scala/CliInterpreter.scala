@@ -50,32 +50,32 @@ object CliInterpreter {
     def render(in: A): String = in.toString + "\n"
   }
 
-  def askCliInstance[A](f: String ⇒ Either[String,A]) = new AskCli[A] {
+  def askCliInstance[A](f: String => Either[String,A]) = new AskCli[A] {
     @annotation.tailrec
     def apply(key: String, validation: List[List[Rule[A]]]): A = {
       print(s"$key: ")
       val rawIn = io.StdIn.readLine()
 
       f(rawIn) match {
-        case Left(err) ⇒ println(err); apply(key, validation)
-        case Right(v) ⇒ v
+        case Left(err) => println(err); apply(key, validation)
+        case Right(v) => v
       }
     }
   }
 
-  implicit val askString = askCliInstance[String](x ⇒ Right(x))
-  implicit val askInt = askCliInstance(x ⇒ util.Try(x.toInt)
+  implicit val askString = askCliInstance[String](x => Right(x))
+  implicit val askInt = askCliInstance(x => util.Try(x.toInt)
     .toEither
     .leftMap(_.getLocalizedMessage())
   )
 
   implicit val askBool = askCliInstance{
-    case "Y" ⇒ Right(true)
-    case "N" ⇒ Right(false)
-    case _   ⇒ Left("please enter 'Y' or 'N'")
+    case "Y" => Right(true)
+    case "N" => Right(false)
+    case _   => Left("please enter 'Y' or 'N'")
   }
 
-  implicit val askUnit = askCliInstance { _ ⇒ Right(()) }
+  implicit val askUnit = askCliInstance { _ => Right(()) }
 
 }
 
@@ -91,9 +91,9 @@ object CliApp extends App {
     import interpreter._
 
     for {
-      one ← ask[Int]("one")
-      two ← ask[Int]("two")
-      _   ← interact[String, Boolean]("confirm", tell = s"Confirm you are happy with ${one + two}")
+      one <- ask[Int]("one")
+      two <- ask[Int]("two")
+      _   <- interact[String, Boolean]("confirm", tell = s"Confirm you are happy with ${one + two}")
     } yield (one + two)
   }
 

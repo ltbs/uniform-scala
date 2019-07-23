@@ -75,10 +75,10 @@ lazy val commonSettings = Seq(
     "-Ywarn-numeric-widen",              // Warn when numerics are widened.
     "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
   ) ++ {CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2,11)) ⇒ Seq(
+    case Some((2,11)) => Seq(
       "-Ywarn-unused"
     )
-    case _ ⇒ Seq(
+    case _ => Seq(
       "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
       "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
       "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
@@ -115,7 +115,7 @@ lazy val commonSettings = Seq(
   com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration.value.withOverwrite(isSnapshot.value),
   publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(isSnapshot.value),
   com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration.value.withOverwrite(isSnapshot.value),
-  git.gitTagToVersionNumber := { tag: String ⇒
+  git.gitTagToVersionNumber := { tag: String =>
     if(tag matches "[0-9]+\\..*") Some(tag)
     else None
   },
@@ -280,19 +280,19 @@ lazy val docs = project
     micrositeGitterChannel  := false,
     micrositeHighlightTheme := "color-brewer",
     micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
-      "last-stable-version" → com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
+      "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
     )),
     micrositePalette := Map(
-      "brand-primary"   → "#5236E0",
-      "brand-secondary" → "#32423F",
-      "brand-tertiary"  → "#232F2D",
-      "gray-dark"       → "#3E4645",
-      "gray"            → "#7F8483",
-      "gray-light"      → "#E2E3E3",
-      "gray-lighter"    → "#F3F4F4",
-      "white-color"     → "#FFFFFF"),
+      "brand-primary"   -> "#5236E0",
+      "brand-secondary" -> "#32423F",
+      "brand-tertiary"  -> "#232F2D",
+      "gray-dark"       -> "#3E4645",
+      "gray"            -> "#7F8483",
+      "gray-light"      -> "#E2E3E3",
+      "gray-lighter"    -> "#F3F4F4",
+      "white-color"     -> "#FFFFFF"),
     // micrositeExtraMdFiles := Map(
-    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") → ExtraMdFileConfig(
+    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") -> ExtraMdFileConfig(
     //     "interpreter-js.md",
     //     "docs"
     //   )

@@ -12,7 +12,7 @@ trait QuantityInstances {
     def quantity(in: I): Int = implicitly[Integral[I]].toInt(in)
   }
 
-  implicit def sequenceQuantity[S](implicit ev: S ⇒ Seq[_]) = new Quantity[S] {
+  implicit def sequenceQuantity[S](implicit ev: S => Seq[_]) = new Quantity[S] {
     def quantity(in: S): Int = in.size
   }
 
