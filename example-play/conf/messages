@@ -16,9 +16,9 @@ is-public.inner.forename.heading=Forenames
 is-public.inner.surname.heading=Surname
 is-public.inner.age.heading=Age
 
-beard-style.heading=Beard Style
-beard-style.heading.sycophantic=What style of fashion should the court adopt, your magnificence?
-beard-style.heading.menacing=What manner of degenerate growth do you have upon your wretched face, {0}?
+beard-style=Beard Style
+beard-style-sycophantic=What style of fashion should the court adopt, your magnificence?
+beard-style-menacing=What manner of degenerate growth do you have upon your wretched face, {0}?
 
 beard-length-mm.heading=Beard Length
 beard-length-mm._1.heading=Length at shortest point
@@ -39,4 +39,3 @@ month=Month
 year=Year
 
 back=Back
-
