@@ -82,7 +82,10 @@ trait UniformMessages[A] {
         case Some((newKey, newArgs)) => underlying.get(newKey, newArgs:_*)
         case None => underlying.get(key, args:_*)
       }
-      def list(key: String,args: Any*): List[A] = underlying.list(key, args:_*)
+      def list(key: String,args: Any*): List[A] = customContent.get(key) match {
+        case Some((newKey, newArgs)) => underlying.list(newKey, newArgs:_*)
+        case None => underlying.list(key, args:_*)
+      }
     }
   }
 }
