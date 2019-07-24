@@ -20,7 +20,7 @@ class BeardController @Inject()(
     request: Request[AnyContent],
     customContent: Map[String,(String, List[Any])]
   ): UniformMessages[Html] = (
-    this.convertMessages(messagesApi.preferred(request)) |+|
+    this.convertMessages(messagesApi.preferred(request)).withCustomContent(customContent) |+|
       UniformMessages.bestGuess.map(HtmlFormat.escape)
   )
 
