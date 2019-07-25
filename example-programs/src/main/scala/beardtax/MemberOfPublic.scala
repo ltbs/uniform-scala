@@ -1,7 +1,8 @@
-package ltbs.uniform.examples.beardtax
+package ltbs.uniform
+package examples.beardtax
 
 case class MemberOfPublic(
-  forename: String,
-  surname: String,
+  forename: NonEmptyString,
+  surname: NonEmptyString,
   age: java.time.LocalDate
 )

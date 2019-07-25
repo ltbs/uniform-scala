@@ -3,6 +3,7 @@ package ltbs.uniform
 import org.scalatest._
 import cats._, implicits._
 import scala.language.higherKinds
+import com.github.ghik.silencer.silent
 
 case class SillyEmpty[OUT]()(implicit m: Monoid[OUT]) {
   def empty: OUT = m.empty
@@ -15,10 +16,10 @@ class SyntaxSpec extends FlatSpec with Matchers {
     // the data types that the user can be presented with in a `tell'
     type TellTypes = String :: Option[String] :: NilTypes
 
-    // the data types that the user can be prompted for in an `ask'     
+    // the data types that the user can be prompted for in an `ask'
     type AskTypes = Int :: Option[String] :: NilTypes
 
-    def program[F[_]: Monad](
+    @silent def program[F[_]: Monad](
       interpreter: Language[F, TellTypes, AskTypes]
     ): F[(Int, Option[String])] = {
       import interpreter._

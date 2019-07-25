@@ -81,14 +81,14 @@ trait UniformMessages[A] {
         underlying.get(key, args:_*).getOrElse(f(key))
       }
       override def apply(keys: List[String], args: Any*): A =
-        underlying.get(keys, args:_*).getOrElse(f(keys.head))        
+        underlying.get(keys, args:_*).getOrElse(f(keys.head))
       def get(key: String, args: Any*): Option[A] =
         underlying.get(key, args:_*)
-      def list(key: String, args: Any*): List[A] = 
+      def list(key: String, args: Any*): List[A] =
         underlying.list(key, args:_*)
 
       override def decompose(key: String, args: Any*): A =
-        underlying.decomposeOpt(key, args:_*).getOrElse(f(key))      
+        underlying.decomposeOpt(key, args:_*).getOrElse(f(key))
     }
   }
 
@@ -103,17 +103,31 @@ trait UniformMessages[A] {
         underlying.get(key, args:_*).map(f)
       override def get(keys: List[String], args: Any*): Option[B] =
         underlying.get(keys, args:_*).map(f)
-      def list(key: String, args: Any*): List[B] = 
+      def list(key: String, args: Any*): List[B] =
         underlying.list(key, args:_*).map(f)
 
       override def decompose(key: String, args: Any*): B =
         f(underlying.decompose(key, args:_*))
     }
   }
+
+  def withCustomContent(customContent: Map[String,(String, List[Any])]): UniformMessages[A] = {
+    val underlying = this
+
+    new UniformMessages[A] {
+      def get(key: String,args: Any*): Option[A] = customContent.get(key) match {
+        case Some((newKey, newArgs)) => underlying.get(newKey, newArgs:_*)
+        case None => underlying.get(key, args:_*)
+      }
+      def list(key: String,args: Any*): List[A] = customContent.get(key) match {
+        case Some((newKey, newArgs)) => underlying.list(newKey, newArgs:_*)
+        case None => underlying.list(key, args:_*)
+      }
+    }
+  }
 }
 
 object UniformMessages {
-
   /** Produce a simple UniformMessages from a map. Any arguments
     * supplied are ignored. 
     */
@@ -169,11 +183,11 @@ object UniformMessages {
       def list(key: String, args: Any*): List[A] = a.list(key, args:_*) |+| b.list(key, args:_*)
       override def decompose(key: String, args: Any*): A = a.decomposeOpt(key, args:_*).getOrElse(b.decompose(key, args:_*))
 
-      override def apply(key: String, args: Any*): A = 
+      override def apply(key: String, args: Any*): A =
          a.get(key, args:_*).getOrElse(b(key, args:_*))
 
       override def apply(keys: List[String], args: Any*): A =
-         a.get(keys, args:_*).getOrElse(b(keys, args:_*))        
+         a.get(keys, args:_*).getOrElse(b(keys, args:_*))
     }
   }
 }
@@ -194,7 +208,7 @@ case class MapMessagesWithSubstitutions(underlying: Map[String,List[String]]) ex
     case Nil    => input
     case h :: t => replaceArgs(input.replace(s"[{]$count[}]", h), t, count+1)
   }
-  
+
   def get(key: String, args: Any*): Option[String] =
     underlying.get(key).flatMap{_.headOption}.map{
       replaceArgs(_,args.toList.map(_.toString))
@@ -234,7 +248,7 @@ case class EmptyMessages[A]()(implicit mon: Monoid[A]) extends UniformMessages[A
     mon.empty
   override def apply(keys: List[String], args: Any*): A =
     mon.empty
-  
+
   def get(key: String, args: Any*): Option[A] = None
   def list(key: String, args: Any*): List[A] = Nil
 }
@@ -245,7 +259,7 @@ object BestGuessMessages extends RegexParsers with UniformMessages[String] {
   override def apply(key: String, args: Any*): String =
     bestGuess(key)
   override def apply(keys: List[String], args: Any*): String =
-    bestGuess(keys.head)    
+    bestGuess(keys.head)
 
   override def decompose(key: String, args: Any*): String =
     bestGuess(key)

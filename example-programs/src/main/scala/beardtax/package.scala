@@ -18,12 +18,17 @@ package object beardtax {
   ): F[Int] = {
     import interpreter._
     for {
-      memberOfPublic ← ask[Option[MemberOfPublic]]("is-public")
-      beardStyle     ← ask[BeardStyle]("beard-style")
-      beardLength    ← ask[BeardLength]("beard-length-mm", validation = List(List(
-        Rule.fromPred(x ⇒ x._1 <= x._2, (ErrorMsg("lower.less.than.higher"), NonEmptyList.one(Nil)))
+      memberOfPublic <- ask[Option[MemberOfPublic]]("is-public")
+      beardStyle     <- ask[BeardStyle]("beard-style", customContent = Map(
+        "beard-style" -> {memberOfPublic match {
+          case None                              => ("beard-style-sycophantic", Nil)
+          case Some(MemberOfPublic(_, sname, _)) => ("beard-style-menacing", List(sname))
+        }}
+      ))
+      beardLength    <- ask[BeardLength]("beard-length-mm", validation = List(List(
+        Rule.fromPred(x => x._1 <= x._2, (ErrorMsg("lower.less.than.higher"), NonEmptyList.one(Nil)))
       ))) emptyUnless memberOfPublic.isDefined
-      cost           ← hod.costOfBeard(beardStyle, beardLength)
+      cost           <- hod.costOfBeard(beardStyle, beardLength)
     } yield cost
   }
 

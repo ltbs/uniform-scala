@@ -3,7 +3,7 @@ package controllers
 import cats.implicits._, cats.Monoid
 import javax.inject._
 import ltbs.uniform._, interpreters.playframework._, examples.beardtax._
-import play.api.i18n.{Messages ⇒ _, _}
+import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
@@ -20,7 +20,7 @@ class BeardController @Inject()(
     request: Request[AnyContent],
     customContent: Map[String,(String, List[Any])]
   ): UniformMessages[Html] = (
-    this.convertMessages(messagesApi.preferred(request)) |+|
+    this.convertMessages(messagesApi.preferred(request)).withCustomContent(customContent) |+|
       UniformMessages.bestGuess.map(HtmlFormat.escape)
   )
 
@@ -36,7 +36,7 @@ class BeardController @Inject()(
       views.html.chrome(key, errors, Html(tell.toString + ask.toString), breadcrumbs)(messages, request)
 
   def selectionOfFields(
-    inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) ⇒ Html)]
+    inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html)]
   )(key: List[String], path: Path, values: Option[Input], errors: ErrorTree, messages: UniformMessages[Html]): Html = {
     val value: Option[String] = values.fold(none[String])(_.valueAtRoot.flatMap{_.headOption})
     views.html.uniform.radios(
@@ -46,12 +46,12 @@ class BeardController @Inject()(
       errors,
       messages,
       inner.map{
-        case(subkey,f) ⇒ subkey → f(key :+ subkey, path, values.map{_ / subkey}, errors / subkey, messages)
+        case(subkey,f) => subkey -> f(key :+ subkey, path, values.map{_ / subkey}, errors / subkey, messages)
       }.filter(_._2.toString.trim.nonEmpty).toMap
     )
   }
 
-  implicit val persistence: PersistenceEngine = DebugPersistence(UnsafePersistence())
+  implicit val persistence: PersistenceEngine[Request[AnyContent]] = DebugPersistence(UnsafePersistence())
 
   implicit val twirlBigStringField = new FormField[BigString,Html] {
     import shapeless.tag
@@ -64,8 +64,8 @@ class BeardController @Inject()(
       }
 
       root match {
-        case None ⇒ Left(ErrorMsg("required").toTree)
-        case Some(data) ⇒ Right(data)
+        case None => Left(ErrorMsg("required").toTree)
+        case Some(data) => Right(data)
       }
     }
 
@@ -88,16 +88,16 @@ class BeardController @Inject()(
         .flatMap(_.filter(_.trim.nonEmpty).headOption)
 
       root match {
-        case None ⇒ Left(ErrorMsg("required").toTree)
-        case Some("TRUE") ⇒ Right(true)
-        case Some("FALSE") ⇒ Right(false)
-        case _ ⇒ Left(ErrorMsg("bad.value").toTree)
+        case None => Left(ErrorMsg("required").toTree)
+        case Some("TRUE") => Right(true)
+        case Some("FALSE") => Right(false)
+        case _ => Left(ErrorMsg("bad.value").toTree)
       }
     }
 
     def encode(in: Boolean): Input = in match {
-      case true ⇒ Input.one(List("TRUE"))
-      case false ⇒ Input.one(List("FALSE"))
+      case true => Input.one(List("TRUE"))
+      case false => Input.one(List("FALSE"))
     }
 
     def render(
@@ -114,15 +114,8 @@ class BeardController @Inject()(
 
 
   implicit val twirlStringField = new FormField[String,Html] {
-    def decode(out: Input): Either[ErrorTree,String] = {
-      val root: Option[String] = out.valueAtRoot
-        .flatMap(_.filter(_.trim.nonEmpty).headOption)
-
-      root match {
-        case None ⇒ Left(ErrorMsg("required").toTree)
-        case Some(data) ⇒ Right(data)
-      }
-    }
+    def decode(out: Input): Either[ErrorTree,String] =
+      out.valueAtRoot.flatMap(_.headOption).getOrElse("").asRight
 
     def encode(in: String): Input = Input.one(List(in))
     def render(
@@ -137,10 +130,18 @@ class BeardController @Inject()(
     }
   }
 
+  implicit val twirlNonEmptyStringField: FormField[NonEmptyString, Html] =
+    twirlStringField.simap(x =>
+      NonEmptyString.fromString(x) match {
+        case Some(x) => Right(x)
+        case None    => Left(ErrorMsg("required").toTree)
+      }
+    )(identity)
+
   implicit val twirlIntField2: FormField[Int,Html] =
-    twirlStringField.simap(x ⇒
+    twirlStringField.simap(x =>
       Either.catchOnly[NumberFormatException](x.toInt)
-        .leftMap(_ ⇒ ErrorMsg("bad.value").toTree)
+        .leftMap(_ => ErrorMsg("bad.value").toTree)
     )(_.toString)
 
 
@@ -153,24 +154,24 @@ class BeardController @Inject()(
           out.valueAt(key).flatMap{_.filter(_.trim.nonEmpty).headOption},
           ErrorTree.oneErr(ErrorMsg("required")).prefixWith(key)
         ).andThen{
-            x ⇒ Validated.catchOnly[NumberFormatException](x.toInt).leftMap(_ ⇒ ErrorMsg("badValue").toTree)
+            x => Validated.catchOnly[NumberFormatException](x.toInt).leftMap(_ => ErrorMsg("badValue").toTree)
         }
 
       (
         intAtKey("year"),
         intAtKey("month"),
         intAtKey("day")
-      ).tupled.toEither.flatMap{ case (y,m,d) ⇒
+      ).tupled.toEither.flatMap{ case (y,m,d) =>
         Either.catchOnly[java.time.DateTimeException]{
           LocalDate.of(y,m,d)
-        }.leftMap(_ ⇒ ErrorTree.oneErr(ErrorMsg("badDate")))
+        }.leftMap(_ => ErrorTree.oneErr(ErrorMsg("badDate")))
       }
     }
 
     def encode(in: LocalDate): Input = Map(
-        List("year") → in.getYear(),
-        List("month") → in.getMonthValue(),
-        List("day") → in.getDayOfMonth()
+        List("year") -> in.getYear(),
+        List("month") -> in.getMonthValue(),
+        List("day") -> in.getDayOfMonth()
       ).mapValues(_.toString.pure[List])
 
     def render(
@@ -204,12 +205,12 @@ class BeardController @Inject()(
       FutureAdapter.alwaysRerun.apply(inner.costOfBeard(beardStyle, length))
   }
 
-  def beardAction(targetId: String) = Action.async { implicit request: Request[AnyContent] ⇒
+  def beardAction(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
     val playProgram = beardProgram(
       new FuturePlayInterpreter[TellTypes, AskTypes],
       adaptedHod
     )
-    run(playProgram, targetId){ _ ⇒ Future.successful(Ok("Fin"))}
+    run(playProgram, targetId){ _ => Future.successful(Ok("Fin"))}
   }
 
 }

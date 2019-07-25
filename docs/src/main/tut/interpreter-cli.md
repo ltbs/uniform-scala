@@ -129,7 +129,7 @@ def runHelloProgram2 = helloProgram2[Stack2].
   run
 ```
 
-We must write a `String ⇒ Boolean` function and provide
+We must write a `String => Boolean` function and provide
 it to our interpreter so the interpreter knows how to take the users
 input (a `String`) and convert it into a valid `Boolean`.
 

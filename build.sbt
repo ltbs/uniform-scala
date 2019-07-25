@@ -1,6 +1,10 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import microsites.ExtraMdFileConfig
 
+val scala2_10 = "2.10.7"
+val scala2_11 = "2.11.12"
+val scala2_12 = "2.12.8"
+
 lazy val root = project.in(file("."))
   .aggregate(
     coreJS,
@@ -13,8 +17,8 @@ lazy val root = project.in(file("."))
     `interpreter-play`.projects(Play26),
     `interpreter-play`.projects(Play27),
 //    `interpreter-js`,
-    // exampleProgramsJS,
-    // exampleProgramsJVM,
+    exampleProgramsJS,
+    exampleProgramsJVM,
 //    commonWebJS,
     commonWebJVM,
   )
@@ -25,14 +29,14 @@ lazy val root = project.in(file("."))
     publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo")))
   )
 
-scalaVersion := "2.11.12"
-crossScalaVersions := Seq("2.11.12")
+scalaVersion := scala2_11
+crossScalaVersions := Seq(scala2_11)
 
 enablePlugins(GitVersioning)
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.8",
-  crossScalaVersions := Seq("2.11.12", "2.12.8"),
+  scalaVersion := scala2_12,
+  crossScalaVersions := Seq(scala2_11, scala2_12),
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
@@ -71,10 +75,10 @@ lazy val commonSettings = Seq(
     "-Ywarn-numeric-widen",              // Warn when numerics are widened.
     "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
   ) ++ {CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2,11)) ⇒ Seq(
+    case Some((2,11)) => Seq(
       "-Ywarn-unused"
     )
-    case _ ⇒ Seq(
+    case _ => Seq(
       "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
       "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
       "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
@@ -111,7 +115,7 @@ lazy val commonSettings = Seq(
   com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration.value.withOverwrite(isSnapshot.value),
   publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(isSnapshot.value),
   com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishLocalSignedConfiguration.value.withOverwrite(isSnapshot.value),
-  git.gitTagToVersionNumber := { tag: String ⇒
+  git.gitTagToVersionNumber := { tag: String =>
     if(tag matches "[0-9]+\\..*") Some(tag)
     else None
   },
@@ -136,8 +140,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .enablePlugins(TutPlugin).settings(tutSettings("core"))
   .settings(
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.typelevel" %%% "cats-core" % "1.6.0",
@@ -167,28 +169,18 @@ lazy val commonWebJS = `common-web`.js.dependsOn(coreJS)
 
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8")
-  )
+  .enablePlugins(TutPlugin).settings(tutSettings("other"))
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJS % "test")
 
 lazy val `interpreter-gui` = project
   .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8")
-  )
   .dependsOn(coreJVM)
 
 lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
+  .enablePlugins(TutPlugin).settings(tutSettings("other"))
   .settings(commonSettings)
-  .settings(
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8")
-  )
 
 lazy val interpreterLogictableJS = `interpreter-logictable`.js
   .dependsOn(coreJS)
@@ -204,8 +196,8 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
     .settings(commonSettings)
     .configurePlatform(Play25)(_.settings(
       name := "interpreter-play25",
-      scalaVersion := "2.11.12",
-      crossScalaVersions := Seq("2.11.12")
+      scalaVersion := scala2_11,
+      crossScalaVersions := Seq(scala2_11)
     ).dependsOn(core.jvm, `common-web`.jvm))
     .configurePlatform(Play26)(_.settings(
       name := "interpreter-play26"
@@ -221,7 +213,6 @@ lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play" % "2.6.20" % Tut
-//      "com.lihaoyi" %% "scalatags" % "0.7.0" % Tut
     )
   )
   .dependsOn(exampleProgramsJVM % "test")
@@ -229,10 +220,6 @@ lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
 lazy val `interpreter-js` = project
   .settings(commonSettings)
   .enablePlugins(TutPlugin)
-  .settings(
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8")
-  )
   .settings(
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
@@ -268,8 +255,6 @@ lazy val `example-play` = project.settings(commonSettings)
 lazy val `example-js` = project
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8"),
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= Seq(
       "org.querki" %%% "jquery-facade" % "1.2",
@@ -280,12 +265,11 @@ lazy val `example-js` = project
   .dependsOn(`interpreter-js`, exampleProgramsJS)
 
 lazy val docs = project
-  .dependsOn(coreJVM, `interpreter-play26`, interpreterLogictableJVM, `interpreter-cli`, exampleProgramsJVM)
+  .dependsOn(coreJVM, exampleProgramsJVM)
 //  .aggregate(`interpreter-js`)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.12.8",
     fork in Test := true,
     micrositeName           := "uniform-scala",
     micrositeDescription    := "Purely functional user-interaction",
@@ -296,19 +280,19 @@ lazy val docs = project
     micrositeGitterChannel  := false,
     micrositeHighlightTheme := "color-brewer",
     micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
-      "last-stable-version" → com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
+      "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
     )),
     micrositePalette := Map(
-      "brand-primary"   → "#5236E0",
-      "brand-secondary" → "#32423F",
-      "brand-tertiary"  → "#232F2D",
-      "gray-dark"       → "#3E4645",
-      "gray"            → "#7F8483",
-      "gray-light"      → "#E2E3E3",
-      "gray-lighter"    → "#F3F4F4",
-      "white-color"     → "#FFFFFF"),
+      "brand-primary"   -> "#5236E0",
+      "brand-secondary" -> "#32423F",
+      "brand-tertiary"  -> "#232F2D",
+      "gray-dark"       -> "#3E4645",
+      "gray"            -> "#7F8483",
+      "gray-light"      -> "#E2E3E3",
+      "gray-lighter"    -> "#F3F4F4",
+      "white-color"     -> "#FFFFFF"),
     // micrositeExtraMdFiles := Map(
-    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") → ExtraMdFileConfig(
+    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") -> ExtraMdFileConfig(
     //     "interpreter-js.md",
     //     "docs"
     //   )
@@ -322,25 +306,10 @@ lazy val docs = project
     fork in (Tut, run) := true,
     tut := (tut
       dependsOn tut.in(coreJVM)
+      dependsOn tut.in(interpreterLogictableJVM)
       dependsOn tut.in(`interpreter-play26`)
     ).value,
   )
-
-// older, macro based implementations
-//  lazy val `gforms-parser` = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
-//    .settings(commonSettings)
-//    .settings(
-//      libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test",
-//      libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.9.2" % "compile",
-//      libraryDependencies += "com.github.pureconfig" %% "pureconfig-enumeratum" % "0.9.2" % "compile",
-//      libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1" % "compile",
-//      libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13",
-//      libraryDependencies += "org.atnos" %%% "eff" % "5.4.1",
-//      addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
-//    )
-
-// lazy val `gforms-parserJVM` = `gforms-parser`.jvm.dependsOn(coreJVM, commonWebJVM)
-// lazy val `gforms-parserJS` = `gforms-parser`.js.dependsOn(coreJS, commonWebJS)
 
 lazy val `sbt-gforms-to-uniform-converter` = project
   .settings(commonSettings)
@@ -351,7 +320,7 @@ lazy val `sbt-gforms-to-uniform-converter` = project
     scalacOptions := Seq(),
     scalaVersion := {
       val Some((major,_)) = CrossVersion.partialVersion((sbtVersion in pluginCrossBuild).value)
-      if (major == 0) "2.10.7" else "2.12.8"
+      if (major == 0) scala2_10 else scala2_12
     }
   )
   .enablePlugins(SbtPlugin)

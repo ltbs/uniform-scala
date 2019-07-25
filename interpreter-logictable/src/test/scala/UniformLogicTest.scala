@@ -8,7 +8,7 @@ object UniformLogicTest {
 
   implicit val optMopSamples = new SampleData[Option[MemberOfPublic]] {
     def apply(key: String):List[Option[MemberOfPublic]] = List(
-      Some(MemberOfPublic("john", "johnson", java.time.LocalDate.now))
+      Some(MemberOfPublic(NonEmptyString("john"), NonEmptyString("johnson"), java.time.LocalDate.now))
     )
   }
 

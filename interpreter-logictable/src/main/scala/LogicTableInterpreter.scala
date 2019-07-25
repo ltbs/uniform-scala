@@ -29,7 +29,7 @@ case class LogicTableInterpreter[
 
     EitherT {
       WriterT {
-        askSamples.map { sample ⇒
+        askSamples.map { sample =>
           (
             tellStrings :+ s"$id ask: ${sample.toString}",
             validation.combined.either(sample)
