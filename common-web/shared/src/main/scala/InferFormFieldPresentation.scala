@@ -5,6 +5,7 @@ import shapeless._, labelled._
 import cats.Monoid
 import com.github.ghik.silencer.silent
 
+/** Infer a web representation for a compound field */
 abstract class InferFormFieldPresentation[Html: Monoid] {
 
   type FF[A] = FormFieldPresentation[A, Html]

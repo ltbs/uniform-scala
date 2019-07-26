@@ -6,6 +6,11 @@ import cats.implicits.{catsSyntaxEither => _,_}
 import com.github.ghik.silencer.silent
 
 object InferFormFieldEncoding extends InferFormFieldEncoding
+
+/** Allows the inference of [[FormFieldEncoding]] for any product or
+  * coproduct provided there are instances for it's constituent
+  * parts 
+  */
 trait InferFormFieldEncoding {
 
   implicit val hnilParser = new FormFieldEncoding[HNil] {
