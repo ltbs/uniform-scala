@@ -2,7 +2,7 @@ package ltbs.uniform
 package interpreters.playframework
 
 import play.api._,mvc._,http.Writeable
-import shapeless.{Path ⇒ _,_}
+import shapeless.{Path => _,_}
 import concurrent.{ExecutionContext, Future}
 import cats.data.{EitherT, RWST}
 import cats.implicits._
@@ -53,9 +53,9 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](
       val asker: PlayAsk[Ask] = askSummoner.forType[Ask]
       val teller: PlayTell[Tell] = tellSummoner.forType[Tell]
       EitherT[WebInner, Result, Ask] {
-        RWST { case ((config, currentId, request), (path, db)) ⇒
+        RWST { case ((config, currentId, request), (path, db)) =>
           val input: Option[Input] = request.body.asFormUrlEncoded.map{
-            _.map{ case (k,v) ⇒ (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
+            _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
           }
           import AskResult._
 
@@ -71,16 +71,16 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](
             path,
             db,
             localMessages
-          ).map { case PageOut(newPath, newDb, output) ⇒
+          ).map { case PageOut(newPath, newDb, output) =>
               val result: Either[Result,Ask] = output match {
-                case GotoPath(redirection) ⇒
+                case GotoPath(redirection) =>
                   val path = relativePath(currentId, redirection)
                   log.info(s"redirecting to $path")
                   Left(Redirect(path))
-                case Payload(askHtml, errors) ⇒ Left(Ok(
+                case Payload(askHtml, errors) => Left(Ok(
                   pageChrome(currentId, errors, tellHtml, askHtml, path, request, localMessages)
                 ))
-                case Success(out) ⇒ Right(out)
+                case Success(out) => Right(out)
               }
 
               ((),(newPath,newDb),result)
@@ -96,19 +96,19 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](
     id: String,
     config: JourneyConfig = ""
   )(
-    terminalFold: A ⇒ Future[Result]
+    terminalFold: A => Future[Result]
   )(
     implicit request: B,
     persistence: PersistenceEngine[B]
   ): Future[Result] = {
     val targetId: List[String] = id.split("/").toList.dropWhile(_.isEmpty)
 
-    persistence(request){ db ⇒
+    persistence(request){ db =>
       program.value.run((config,targetId,request),(Monoid[Path].empty,db)) flatMap {
-        case (_, (_,newDb), Left(result)) ⇒
+        case (_, (_,newDb), Left(result)) =>
           Future.successful((newDb,result))
-        case (_, (_,newDb), Right(value)) ⇒
-          terminalFold(value).map{result ⇒ (newDb,result)}
+        case (_, (_,newDb), Right(value)) =>
+          terminalFold(value).map{result => (newDb,result)}
       }
     }
   }

@@ -3,19 +3,29 @@ package common.web
 
 import org.scalatest._
 import cats.implicits._
+import com.github.ghik.silencer.silent
 
 object SampleFormFieldRenderers extends SampleFormFieldRenderers
 trait SampleFormFieldRenderers {
 
-  def selectionOfFields(inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[String]) => String)])(key: List[String], path: Path, values: Option[Input], errors: ErrorTree, messages: UniformMessages[String]):String = key.mkString(".") ++ ":" ++ inner.map(_._1).mkString(",")
+
+  def selectionOfFields(
+    inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[String]) => String)]
+  )(
+    key: List[String],
+    @silent("never used") path: Path,
+    @silent("never used") values: Option[Input],
+    @silent("never used") errors: ErrorTree,
+    @silent("never used") messages: UniformMessages[String]
+  ):String = key.mkString(".") ++ ":" ++ inner.map(_._1).mkString(",")
 
   implicit val stringFieldR = new FormFieldPresentation[String, String] {
     def render(
       key: List[String],
-      path: Path,
-      data: Option[Input],
-      errors: ErrorTree,
-      messages: UniformMessages[String]
+      @silent("never used") path: Path,
+      @silent("never used") data: Option[Input],
+      @silent("never used") errors: ErrorTree,
+      @silent("never used") messages: UniformMessages[String]
     ): String = {
       val k = key.mkString(".")
       s"STRING[$k]"
@@ -25,10 +35,10 @@ trait SampleFormFieldRenderers {
   implicit val intFieldR = new FormFieldPresentation[Int, String] {
     def render(
       key: List[String],
-      path: Path,
-      data: Option[Input],
-      errors: ErrorTree,
-      messages: UniformMessages[String]
+      @silent("never used") path: Path,
+      @silent("never used") data: Option[Input],
+      @silent("never used") errors: ErrorTree,
+      @silent("never used") messages: UniformMessages[String]
     ): String = {
       val k = key.mkString(".")
       s"INT[$k]"
@@ -43,9 +53,6 @@ class InferFormFieldPresentationSpec extends FlatSpec with Matchers {
   import Presenter._
 
   val mon: cats.Monoid[String] = implicitly
-  def selectionOfFields(inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[String]) => String)])(key: List[String],path: Path, values: Option[Input],errors: ErrorTree,messages: UniformMessages[String]): String = {
-    key.mkString(".") ++ ":" ++ inner.map{_._1}.mkString(",")
-  }
 
   def testEncoding[A](in: A)(implicit codec: FormFieldEncoding[A]): org.scalatest.Assertion = {
     import codec._

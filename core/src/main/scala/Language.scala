@@ -6,7 +6,7 @@ import com.github.ghik.silencer.silent
 
 trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
 
-  def subJourney[A](@silent id: String)(sub: => UF[A]): UF[A] = sub
+  def subJourney[A](@silent("never used") id: String)(sub: => UF[A]): UF[A] = sub
 
   def interact[Tell, Ask](
     id: String,

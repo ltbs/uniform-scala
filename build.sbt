@@ -49,7 +49,8 @@ lazy val commonSettings = Seq(
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   scalacOptions ++= Seq(
-//    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
+//    "-P:silencer:checkUnused",           // silencer plugin to fail build if supressing a non-existant warning
+    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.
@@ -57,7 +58,6 @@ lazy val commonSettings = Seq(
     "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
     "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
     "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
-//    "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
     "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
     "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
     "-Xlint:inaccessible",               // Warn about inaccessible types in method signatures.
@@ -71,8 +71,6 @@ lazy val commonSettings = Seq(
     "-Xlint:private-shadow",             // A private field (or class parameter) shadows a superclass field.
     "-Xlint:stars-align",                // Pattern sequence wildcard must align with sequence component.
     "-Xlint:type-parameter-shadow",      // A local type parameter shadows a type already in scope.
-//    "-Xlint:unsound-match",              // Pattern match may not be typesafe.
-//    "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
     "-Ywarn-dead-code",                  // Warn when dead code is identified.
     "-Ywarn-numeric-widen",              // Warn when numerics are widened.
     "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
@@ -89,6 +87,9 @@ lazy val commonSettings = Seq(
     case Some((2,12)) => Seq(
       "-Xfuture",                          // Turn on future language features.
       "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
+      "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
+      "-Xlint:unsound-match",              // Pattern match may not be typesafe.
+      "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
       "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
       "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
       "-Ywarn-unused:locals",              // Warn if a local definition is unused.
@@ -280,7 +281,9 @@ lazy val `example-play` = project.settings(commonSettings)
       guice
     ),
     initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.interpreters.playframework._",
-    initialCommands in consoleQuick := """import cats.implicits._;"""
+    initialCommands in consoleQuick := """import cats.implicits._;""",
+    scalacOptions -= "-Xfatal-warnings", // twirl....
+    crossScalaVersions := Seq(scala2_12)
   )
 
 lazy val `example-js` = project
