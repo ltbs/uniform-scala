@@ -10,7 +10,7 @@ addSbtPlugin("com.47deg"  % "sbt-microsites" % "0.9.1")
 
 addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.6.12")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.2")
+addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
 
 resolvers += Resolver.jcenterRepo
 
