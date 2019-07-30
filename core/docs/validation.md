@@ -55,7 +55,7 @@ import cats.data.NonEmptyList
 val regex = "^[A-Z]{1,2}\\d[A-Z\\d]? ?\\d[A-Z]{2}$"
 
 val postcodeCheck = Rule.pattern[Address] {
-  case x if !x.postcode.matches(regex) ⇒
+  case x if !x.postcode.matches(regex) =>
     (ErrorMsg("bad-postcode"), NonEmptyList.one(List("postcode")))
 }
 ```
@@ -105,9 +105,9 @@ line starts with a number we might be tempted to do something like this -
 
 ```tut:silent
 val dontDoThis = Rule.pattern[Address] {
-    case x if !x.postcode.matches(regex) ⇒
+    case x if !x.postcode.matches(regex) =>
       (ErrorMsg("bad-postcode"), NonEmptyList.one(List("postcode")))
-    case Address(line1, _, _, _, _) if !line1.head.isDigit ⇒
+    case Address(line1, _, _, _, _) if !line1.head.isDigit =>
       (ErrorMsg("line1-too-long"), NonEmptyList.one(List("line1")))
 }
 ```
@@ -132,12 +132,12 @@ rules.
 
 ```tut:silent
 val postcodeCheck = Rule.pattern[Address] {
-  case x if !x.postcode.matches(regex) ⇒
+  case x if !x.postcode.matches(regex) =>
     (ErrorMsg("bad-postcode"), NonEmptyList.one(List("postcode")))
 }
 
 val line1Check = Rule.pattern[Address] {
-    case Address(line1, _, _, _, _) if !line1.head.isDigit ⇒
+    case Address(line1, _, _, _, _) if !line1.head.isDigit =>
       (ErrorMsg("line1-too-long"), NonEmptyList.one(List("line1")))
 }
 
@@ -156,7 +156,7 @@ failFast.combined(testAddress)
 
 ## Special Rules
 
-You may be wondering why the rules are not functions like `A ⇒
+You may be wondering why the rules are not functions like `A =>
 Either[ErrorTree, A]` which could automatically compose without the
 need for the `combined` method above.
 

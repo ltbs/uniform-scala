@@ -108,7 +108,7 @@ import ltbs.uniform._
 
 import cats.implicits._
 import cats.{Id, Monad}
-import shapeless.{Id ⇒ _, _}
+import shapeless.{Id => _, _}
 import scala.language.higherKinds
 
 class ExampleValuesInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
@@ -152,8 +152,8 @@ def program[F[_]: Monad](
 ): F[(String, Int)] = {
   import interpreter._
   for {
-    a ← ask[String]("astring")
-    b ← ask[Int]("anint")
+    a <- ask[String]("astring")
+    b <- ask[Int]("anint")
   } yield ((a, b + 1))
 }
 ```
