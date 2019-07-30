@@ -33,7 +33,9 @@ trait InferFormFieldEncoding {
         tParser.decode(out)
       ) match {
         case (Right(h), Right(t)) => Right((field[K](h) :: t))
-        case (Left(he), Left(te)) => Left(he.prefixWith(fieldName) |+| te)
+        case (Left(he), Left(te)) =>
+          val l = he.prefixWith(fieldName)
+          Left(l |+| te)
         case (_,        Left(te)) => Left(te)
         case (Left(he), _)        => Left(he.prefixWith(fieldName))
       }
