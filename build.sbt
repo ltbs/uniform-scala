@@ -17,10 +17,8 @@ lazy val root = project.in(file("."))
     `interpreter-play`.projects(Play25),
     `interpreter-play`.projects(Play26),
     `interpreter-play`.projects(Play27),
-//    `interpreter-js`,
     exampleProgramsJS,
     exampleProgramsJVM,
-//    commonWebJS,
     commonWebJVM,
   )
   .settings(
@@ -33,9 +31,7 @@ lazy val root = project.in(file("."))
 scalaVersion := scala2_11
 crossScalaVersions := Seq(scala2_11)
 
-enablePlugins(GitVersioning, SiteScaladocPlugin, ScalaUnidocPlugin)
-
-scalacOptions in (ScalaUnidoc, unidoc) += "-Ymacro-expand:none"
+enablePlugins(GitVersioning, SiteScaladocPlugin)
 
 def macroDependencies(scalaVersion: String) =
   CrossVersion.partialVersion(scalaVersion) match {
@@ -60,7 +56,6 @@ lazy val commonSettings = Seq(
     "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
     "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
     "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
-    "-Xfuture",                          // Turn on future language features.
     "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
 //    "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
     "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
@@ -83,6 +78,7 @@ lazy val commonSettings = Seq(
     "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
   ) ++ {CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2,11)) => Seq(
+      "-Xfuture",                          // Turn on future language features.
       "-Ywarn-unused",
       "-Ypartial-unification",             // Enable partial unification in type constructor inference
       "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
@@ -91,6 +87,7 @@ lazy val commonSettings = Seq(
       "-Ywarn-inaccessible"               // Warn about inaccessible types in method signatures.
     )
     case Some((2,12)) => Seq(
+      "-Xfuture",                          // Turn on future language features.
       "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
       "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
       "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
@@ -161,6 +158,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .enablePlugins(TutPlugin).settings(tutSettings("core"))
   .settings(
+    crossScalaVersions += scala2_13,
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core" % "2.0.0-M4",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
@@ -170,14 +168,13 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   )
 
 lazy val coreJS = core.js
-lazy val coreJVM = core.jvm.settings (
-  crossScalaVersions += scala2_13
-)
+lazy val coreJVM = core.jvm
 
 lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
   .settings(commonSettings)
   .settings(
+    crossScalaVersions += scala2_13,
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.github.mpilquist" %%% "simulacrum" % "0.19.0"
@@ -191,16 +188,25 @@ lazy val `interpreter-cli` = project
   .settings(commonSettings)
   .enablePlugins(TutPlugin).settings(tutSettings("other"))
   .dependsOn(coreJVM)
-  .dependsOn(exampleProgramsJS % "test")
+  .dependsOn(exampleProgramsJVM % "test")
+  .settings(
+    crossScalaVersions += scala2_13
+  )
 
 lazy val `interpreter-gui` = project
   .settings(commonSettings)
+  .settings(
+    crossScalaVersions += scala2_13
+  )
   .dependsOn(coreJVM)
 
 lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(TutPlugin).settings(tutSettings("other"))
   .settings(commonSettings)
+  .settings(
+    crossScalaVersions += scala2_13
+  )
 
 lazy val interpreterLogictableJS = `interpreter-logictable`.js
   .dependsOn(coreJS)
@@ -220,10 +226,12 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
       crossScalaVersions := Seq(scala2_11)
     ).dependsOn(core.jvm, `common-web`.jvm))
     .configurePlatform(Play26)(_.settings(
-      name := "interpreter-play26"
+      name := "interpreter-play26",
+      crossScalaVersions := Seq(scala2_11, scala2_12)
     ).dependsOn(core.jvm, `common-web`.jvm))
     .configurePlatform(Play27)(_.settings(
-      name := "interpreter-play27"
+      name := "interpreter-play27",
+      crossScalaVersions := Seq(scala2_11, scala2_12, scala2_13)
     ).dependsOn(core.jvm, `common-web`.jvm))
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
@@ -251,6 +259,9 @@ lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .dependsOn(core)
+  .settings(
+    crossScalaVersions += scala2_13
+  )
 
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
 lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
@@ -285,8 +296,6 @@ lazy val `example-js` = project
   .dependsOn(`interpreter-js`, exampleProgramsJS)
 
 lazy val docs = project
-//  .dependsOn(coreJVM, exampleProgramsJVM)
-//  .aggregate(`interpreter-js`)
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
@@ -311,14 +320,7 @@ lazy val docs = project
       "gray-light"      -> "#E2E3E3",
       "gray-lighter"    -> "#F3F4F4",
       "white-color"     -> "#FFFFFF"),
-    // micrositeExtraMdFiles := Map(
-    //   file("interpreter-js/target/scala-2.12/tut/interpreter-js.md") -> ExtraMdFileConfig(
-    //     "interpreter-js.md",
-    //     "docs"
-    //   )
-    // ),
     scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
-//    scalacOptions in Tut += "-Xfatal-warnings", // play controller scuppers this
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
       "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
@@ -330,19 +332,3 @@ lazy val docs = project
       dependsOn tut.in(`interpreter-play26`)
     ).value,
   )
-
-lazy val `sbt-gforms-to-uniform-converter` = project
-  .settings(commonSettings)
-  .settings(
-    libraryDependencies += "org.typelevel" %% "cats-core" % "1.2.0", // last version to support 2.10
-    libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.9.2", // last version to support 2.10
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full), // needed for Scala 2.10
-    scalacOptions := Seq(),
-    scalaVersion := {
-      val Some((major,_)) = CrossVersion.partialVersion((sbtVersion in pluginCrossBuild).value)
-      if (major == 0) scala2_10 else scala2_12
-    }
-  )
-  .enablePlugins(SbtPlugin)
-
-crossSbtVersions := Vector("0.13.17", "1.2.8")
