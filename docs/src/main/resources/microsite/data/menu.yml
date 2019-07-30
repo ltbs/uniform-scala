@@ -38,9 +38,9 @@ options:
     url: interpreters.html
     nested_options:
      - title: CLI Interpreter
-       url: interpreter-cli.html
+       url: other/interpreter-cli.html
      - title: Logic Table Interpreter
-       url: interpreter-logic-table.html
+       url: other/interpreter-logic-table.html
      - title: Static Site interpreter
        url: interpreter-static-site.html
      - title: Selenium Interpreter

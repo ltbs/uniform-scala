@@ -2,9 +2,12 @@ package ltbs.uniform
 
 import shapeless.HList
 import scala.language.higherKinds
+import com.github.ghik.silencer.silent
 
 /** Abstract representation of an interaction with a user. */
 trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
+
+  def subJourney[A](@silent id: String)(sub: => UF[A]): UF[A] = sub
 
   /** represents both presenting the user with some data and asking
     * the user for some data in return. 

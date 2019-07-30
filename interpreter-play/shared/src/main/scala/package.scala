@@ -16,7 +16,7 @@ package object playframework extends common.web.webcommon {
   type FormField[A,B] = common.web.FormField[A,B]
 
   implicit val tellTwirlUnit = new GenericWebTell[Unit,TwirlHtml] {
-    def render(in: Unit):TwirlHtml = TwirlHtml("")
+    def render(in: Unit, key: String, messages: UniformMessages[TwirlHtml]): TwirlHtml = TwirlHtml("")
   }
 
   implicit val twirlUnitField = new FormField[Unit,TwirlHtml] {

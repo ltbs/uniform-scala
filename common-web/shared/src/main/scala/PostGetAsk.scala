@@ -3,7 +3,10 @@ package common.web
 
 import concurrent.Future
 
-class SimpleForm[A, Html](field: FormField[A, Html]) extends GenericWebAsk[A, Html] {
+/** Implicitly wrap a [[FormField]] into a [[GenericWebAsk]]. */
+class SimpleForm[A, Html](
+  field: FormField[A, Html]
+) extends GenericWebAsk[A, Html] {
 
   def page(
     currentId: List[String], // the current step in the journey

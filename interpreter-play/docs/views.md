@@ -26,7 +26,7 @@ implicit val fragContentType: ContentTypeOf[Frag] = {
 }
 
 implicit def fragWriteable(implicit codec: Codec): Writeable[Frag] = {
-  Writeable(frag ⇒ codec.encode("<!DOCTYPE html>\n" + frag.render))
+  Writeable(frag => codec.encode("<!DOCTYPE html>\n" + frag.render))
 }
 
 implicit val fragMonoid = new Monoid[Frag] {
@@ -52,8 +52,8 @@ implicit val scalatagsStringField = new FormField[String,Frag] {
       .flatMap(_.filter(_.trim.nonEmpty).headOption)
 
     root match {
-      case None ⇒ Left(ErrorMsg("required").toTree)
-      case Some(data) ⇒ Right(data)
+      case None => Left(ErrorMsg("required").toTree)
+      case Some(data) => Right(data)
     }
   }
 
@@ -97,9 +97,9 @@ easy to produce other field types from this -
 
 ```scala
 implicit val scalatagsIntField: FormField[Int,Frag] =
-  scalatagsStringField.simap(x ⇒
+  scalatagsStringField.simap(x =>
     Either.catchOnly[NumberFormatException](x.toInt)
-      .leftMap(_ ⇒ ErrorMsg("bad.value").toTree)
+      .leftMap(_ => ErrorMsg("bad.value").toTree)
   )(_.toString)
 ```
 
@@ -114,9 +114,9 @@ want to append a check and conversion to the `decode` method. The
 we want to turn the `Int` into a `String` _beforehand_.
 
 The `simap` method (named because the transformation is a split
-epimorphism) allows us to prepend a method to `encode` (`Int ⇒ String`
+epimorphism) allows us to prepend a method to `encode` (`Int => String`
 in our case) and append a flatMap transformation to `decode` (
-`String ⇒ Either[ErrorTree, Int]`).
+`String => Either[ErrorTree, Int]`).
 
 ## How views are derived
 
@@ -136,7 +136,7 @@ val luke = Person("Luke", "Tebbs", 38)
 object Inferer extends ltbs.uniform.common.web.InferFormField[Frag] {
 
   def selectionOfFields(
-    inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[Frag]) ⇒ Frag)]
+    inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[Frag]) => Frag)]
   )(
     key: List[String],
     path: Path,

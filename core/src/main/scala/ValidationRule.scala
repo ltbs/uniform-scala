@@ -5,7 +5,7 @@ import cats.Monoid
 import cats.data.NonEmptyList
 
 /** an error, usually constructed into an ErrorTree to provide the
-  * paths to the fields where the errors occurred 
+  * paths to the fields where the errors occurred
   */
 case class ErrorMsg(msg: String, args: Any*) {
 
@@ -24,12 +24,12 @@ case class ErrorMsg(msg: String, args: Any*) {
 trait Rule[A] {
 
   /** give a tree of errors for the input data. ErrorTree.empty is
-    * returned if the data is valid 
+    * returned if the data is valid
     */
   def apply(in: A): ErrorTree
 
   /** check the input and return a Left(ErrorTree) if there is an
-    * error or a Right(a) if the data is valid 
+    * error or a Right(a) if the data is valid
     */
   def either(in: A): Either[ErrorTree, A] = apply(in) match {
     case ErrorTree.empty => Right(in)
@@ -60,11 +60,18 @@ object Rule {
     }
   }
 
-  def apply[A](rules: (A => Boolean, (ErrorMsg, NonEmptyList[InputPath]))*): List[List[Rule[A]]] = 
+  def apply[A](rules: (A => Boolean, (ErrorMsg, NonEmptyList[InputPath]))*): List[List[Rule[A]]] =
     List(rules.toList.map{case (r, msg) => fromPred(r, msg)})
 
   def fromPred[A](pred: A => Boolean, msg: (ErrorMsg, NonEmptyList[InputPath])): Rule[A] = new Rule[A] {
     def apply(in: A) = if (pred(in)) ErrorTree.empty else Map(msg._2 -> NonEmptyList.one(msg._1))
+  }
+
+  def pattern[A](pattern: PartialFunction[A,(ErrorMsg, NonEmptyList[InputPath])]): Rule[A] = new Rule[A] {
+    val f = pattern.andThen{
+      case (msg, paths) => Map(paths -> NonEmptyList.one(msg))
+    }
+    def apply(in: A) = f.applyOrElse(in, {_: A => ErrorTree.empty})
   }
 
   implicit def vrMonoid[A]: Monoid[Rule[A]] = new Monoid[Rule[A]] {
@@ -81,5 +88,9 @@ object Rule {
   def noop[A]: Rule[A] = new Rule[A] {
     def apply(in: A): ErrorTree = ErrorTree.empty
   }
+
+  def size[A: Quantity](min: Int, max: Int) = QuantityRule[A](min, max)
+  def min[A: Quantity](min: Int) = QuantityRule[A](min, Int.MaxValue)
+  def max[A: Quantity](max: Int) = QuantityRule[A](0, max)
 
 }

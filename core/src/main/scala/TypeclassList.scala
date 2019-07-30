@@ -4,6 +4,7 @@ import scala.language.higherKinds
 import shapeless._
 
 /** A KList of F[l] for all l in L, constructed using implicits */
+@annotation.implicitNotFound("Cannot find an implicit ${F}[_] for each type in ${L}")
 trait TypeclassList[L <: HList, F[_]] {
   type Repr <: HList
   protected val list: Repr

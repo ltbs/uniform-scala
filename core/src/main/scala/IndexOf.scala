@@ -3,7 +3,7 @@ package ltbs.uniform
 import shapeless._
 
 /** Find the index of the first instance of a given type in a HList */
-@annotation.implicitNotFound("Cannot find $U in $L")
+@annotation.implicitNotFound("Cannot find ${U} in ${L}")
 trait IndexOf[L <: HList, U] extends DepFn1[L] with Serializable {
 
   /** The index of the type as a value */

@@ -50,18 +50,17 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](
       implicit selectorTell : IndexOf[SupportedTell, Tell],
       selectorAsk : IndexOf[SupportedAsk, Ask]
     ): WebMonad[Ask] = {
-      val tellHtml = tellSummoner.forType[Tell].render(t)
       val asker: PlayAsk[Ask] = askSummoner.forType[Ask]
-
+      val teller: PlayTell[Tell] = tellSummoner.forType[Tell]
       EitherT[WebInner, Result, Ask] {
         RWST { case ((config, currentId, request), (path, db)) ⇒
           val input: Option[Input] = request.body.asFormUrlEncoded.map{
             _.map{ case (k,v) ⇒ (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
           }
-
           import AskResult._
 
           val localMessages = messages(request, customContent)
+          val tellHtml = teller.render(t, id, localMessages)
           asker.page(
             targetId = id.split("/").toList.dropWhile(_.isEmpty),
             currentId,
@@ -92,15 +91,15 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](
     }
   }
 
-  def run[A](
+  def run[A, B <: Request[AnyContent]](
     program: WebMonad[A],
     id: String,
     config: JourneyConfig = ""
   )(
     terminalFold: A ⇒ Future[Result]
   )(
-    implicit request: Request[AnyContent],
-    persistence: PersistenceEngine
+    implicit request: B,
+    persistence: PersistenceEngine[B]
   ): Future[Result] = {
     val targetId: List[String] = id.split("/").toList.dropWhile(_.isEmpty)
 

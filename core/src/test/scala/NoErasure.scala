@@ -1,9 +1,7 @@
 package ltbs.uniform
 
 import org.scalatest._
-import cats._, implicits._
-import scala.language.higherKinds
-import shapeless.{the ⇒ _, _}, ops.hlist.Selector
+import shapeless.{the => _, _}
 
 class NoErasure extends FlatSpec with Matchers {
 

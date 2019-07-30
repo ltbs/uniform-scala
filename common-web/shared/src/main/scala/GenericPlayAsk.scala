@@ -3,19 +3,11 @@ package common.web
 
 import concurrent.Future
 
-sealed trait AskResult[A,Html]
-object AskResult {
-  final case class GotoPath[A,Html](path: List[String]) extends AskResult[A,Html]
-  final case class Payload[A,Html](html: Html, errors: ErrorTree) extends AskResult[A,Html]
-  final case class Success[A,Html](objectOut: A) extends AskResult[A,Html]    
-}
-
-final case class PageOut[A,Html](
-  path: Path,
-  db: DB,
-  output: AskResult[A,Html]
-)
-
+/** The broadest representation of an `ask` interaction in the context
+  * of web interpreters. Extend this if you want the most control over
+  * the interaction, otherwise if you want a simple form consider
+  * providing [[FormField]] instances instead.
+  */
 trait GenericWebAsk[A,Html] {
 
   def page(

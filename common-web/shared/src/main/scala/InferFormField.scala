@@ -1,21 +1,23 @@
 package ltbs.uniform
 package common.web
 
-trait InferFormField[Html] extends InferFormFieldPresentation[Html] with InferFormFieldEncoding {
-
-}
+trait InferFormField[Html]
+    extends InferFormFieldPresentation[Html]
+    with InferFormFieldEncoding
 
 object InferFormField {
 
+  /** Create a FormField from a [[FormFieldEncoding]] and a
+    * [[FormFieldPresentation]] 
+    */
   def combine[A,Html](
     codec: FormFieldEncoding[A],
     renderer: FormFieldPresentation[A, Html]
   ): FormField[A, Html] = new FormField[A, Html] {
-  // Members declared in ltbs.uniform.common.web.FormFieldEncoding
-  def decode(out: Input): Either[ErrorTree,A] = codec.decode(out)
-  def encode(in: A): Input = codec.encode(in)
-   
-  // Members declared in ltbs.uniform.common.web.FormFieldPresentation
+
+    def decode(out: Input): Either[ErrorTree,A] = codec.decode(out)
+    def encode(in: A): Input = codec.encode(in)
+
     def render(
       key: List[String],
       path: Path,
