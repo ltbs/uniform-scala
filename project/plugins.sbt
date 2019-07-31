@@ -18,4 +18,4 @@ addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.23")
 
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.1")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.3.15")
+addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.4.2")
