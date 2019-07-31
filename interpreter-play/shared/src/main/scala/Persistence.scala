@@ -29,17 +29,17 @@ case class DebugPersistence(underlying: UUIDPersistence)(implicit ec: ExecutionC
 abstract class UUIDPersistence()(implicit ec: ExecutionContext) extends PersistenceEngine[Request[AnyContent]] {
   def load(uuid: UUID): Future[DB]
   def save(uuid: UUID, db: DB): Future[Unit]
-  def apply(request: Request[AnyContent])(f: DB ⇒ Future[(DB,Result)]): Future[Result] = {
+  def apply(request: Request[AnyContent])(f: DB => Future[(DB,Result)]): Future[Result] = {
 
     val uuid: UUID = request.session.get("uuid").map{UUID.fromString}
       .getOrElse( UUID.randomUUID )
 
     for {
-      db              ← load(uuid)
-      (newDb, result) ← f(db)
-      _               ← save(uuid, newDb)
+      db              <- load(uuid)
+      (newDb, result) <- f(db)
+      _               <- save(uuid, newDb)
     } yield result.withSession(
-      request.session + ("uuid" → uuid.toString)
+      request.session + ("uuid" -> uuid.toString)
     )
   }
 }

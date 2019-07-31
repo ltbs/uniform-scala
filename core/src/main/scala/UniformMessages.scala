@@ -211,7 +211,7 @@ object BestGuessMessages extends RegexParsers with UniformMessages[String] {
 
   def titleCase(word: String) = word match {
     case "" => ""
-    case a => a.head.toUpper + a.tail
+    case a => s"${a.head.toUpper}${a.tail}"
   }
 
   private def bestGuess(key: String): String = {

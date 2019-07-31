@@ -2,7 +2,6 @@ package ltbs.uniform
 package interpreters.playframework
 
 import org.scalatest._
-import cats.implicits._
 
 class PackageSpec extends FlatSpec with Matchers {
 
