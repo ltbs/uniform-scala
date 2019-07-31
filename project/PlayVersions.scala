@@ -10,11 +10,11 @@ object Play25 extends Platform {
       scalaVersion := "2.11.12",
       crossScalaVersions := Seq("2.11.12"),
       libraryDependencies ++= Seq(
-        "com.typesafe.play" %% "play-server"       % "2.5.19" % "provided",
-        "com.typesafe.play" %% "play-omnidoc"      % "2.5.19" % "provided",
-        "com.typesafe.play" %% "play-netty-server" % "2.5.19" % "provided",
-        "com.typesafe.play" %% "play-logback"      % "2.5.19" % "provided",
-        "com.typesafe.play" %% "play-ws"           % "2.5.19" % "provided"
+        "com.typesafe.play" %% "play-server"       % "2.7.3" % "provided",
+        "com.typesafe.play" %% "play-omnidoc"      % "2.7.3" % "provided",
+        "com.typesafe.play" %% "play-netty-server" % "2.7.3" % "provided",
+        "com.typesafe.play" %% "play-logback"      % "2.7.3" % "provided",
+        "com.typesafe.play" %% "play-ws"           % "2.7.3" % "provided"
       )
     )
 }
