@@ -217,6 +217,18 @@ lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJVM % "test")
 
+lazy val `interpreter-asterisk` = project
+  .settings(commonSettings)
+  .settings(
+    resolvers += Resolver.jcenterRepo,
+    libraryDependencies ++= Seq(
+      "org.asteriskjava" % "asterisk-java" % "2.0.2",
+      "de.dfki.mary" % "voice-cmu-slt-hsmm" % "5.2"
+    ),
+    crossScalaVersions += scala2_13
+  )
+  .dependsOn(coreJVM)
+
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
   crossProject(Play25, Play26, Play27)
     .crossType(CrossType.Full)
