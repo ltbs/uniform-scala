@@ -38,19 +38,53 @@ abstract class InferFormFieldPresentation[Html: Monoid] {
       tField.render(key, path, data, errors, messages)
     )
   }
-  
+
   implicit def genericField[A, H, T](implicit
     @silent generic: LabelledGeneric.Aux[A,T],
     hGenParser: Lazy[FF[T]],
     @silent lp: LowPriority
   ): FF[A] = hGenParser.value.mapToType
 
+  /** We get this from coproduct anyway, but want `Some` to appear
+    * above `None`. In the future once there is a way to easily
+    * override the order this (and
+    * [[InferFormFieldEncoding.optionParser]]) will no longer be
+    * needed.
+    */
+  implicit def optionField[A](
+    implicit ffSome: FF[A]
+  ) = new FF[Option[A]] {
+    def render(
+      key: List[String],
+      path: Path,
+      data: Option[Input],
+      errors: ErrorTree,
+      messages: UniformMessages[Html]
+    ): Html = {
+      val options: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html)] =
+        List(
+          "Some" -> {case (subKey, subPath, subOpt, subErr, subMsg) =>
+            ffSome.render(
+              subKey :+ "value",
+              subPath,
+              subOpt.map{_ / "value"},
+              subErr / "value",
+              subMsg
+            )},
+          "None" -> {case _ => Monoid[Html].empty}
+        )
+
+      selectionOfFields(options)(key,path, data,errors,messages)
+    }
+  }
+
+
   // COPRODUCTS
   def selectionOfFields(
     inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html)]
   )(
     key: List[String],
-    path: Path, 
+    path: Path,
     values: Option[Input],
     errors: ErrorTree,
     messages: UniformMessages[Html]
