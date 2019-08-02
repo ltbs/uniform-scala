@@ -14,7 +14,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
 
 resolvers += Resolver.jcenterRepo
 
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.23")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.3")
 
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.1")
 
