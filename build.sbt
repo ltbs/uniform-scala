@@ -142,8 +142,8 @@ lazy val commonSettings = Seq(
   licenses += ("GPL-3", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
     "org.scalatest" %%% "scalatest" % "3.0.8" % "test",
-    compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.1"),
-    "com.github.ghik" %% "silencer-lib" % "1.4.1" % Provided
+    compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.2"),
+    "com.github.ghik" %% "silencer-lib" % "1.4.2" % Provided
   )
 )
 
