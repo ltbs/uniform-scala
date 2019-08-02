@@ -1,5 +1,6 @@
 package ltbs.uniform
 package common.web
+import com.github.ghik.silencer.silent
 
 import concurrent.Future
 
@@ -10,7 +11,7 @@ class SimpleForm[A, Html](field: FormField[A, Html]) extends GenericWebAsk[A, Ht
     targetId: List[String], // the uri the user agent is asking for
     default: Option[A],
     validation: List[List[Rule[A]]],
-    config: JourneyConfig,
+    @silent("never used") config: JourneyConfig,
     submittedData: Option[Input],
     path: Path, // previous steps, maybe this should be a chain?
     db: DB,

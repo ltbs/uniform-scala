@@ -48,6 +48,31 @@ trait InferFormFieldEncoding {
     }
   }
 
+  /** We get this from coproduct anyway, but we've done this
+    * explicitly as the name of the field in `Some` changed from 'x'
+    * to 'value' between scala 2.11 and 2.12 and we're overriding the
+    * presentation. If it is no longer necessary to override the
+    * presentation then this will no longer be needed
+    */
+  implicit def optionParser[A](
+    implicit encInner: FormFieldEncoding[A]
+  ) = new FormFieldEncoding[Option[A]] {
+    def decode(out: Input): Either[ErrorTree,Option[A]] = out.valueAtRoot.headOption match {
+      case Some(List("Some")) => encInner.decode(out / "Some" / "value").map{x => x.some} match {
+            case Left(e) => Left(e.prefixWith("value").prefixWith("Some"))
+            case r@Right(_) => r
+          }
+      case Some(List("None")) => None.asRight
+      case _                  => Left(ErrorMsg("required").toTree)
+    }
+    def encode(in: Option[A]): Input = in match {
+      case Some(inner) => Map(
+        List.empty[String] -> List("Some")
+      ) ++ encInner.encode(inner).prefixWith("value").prefixWith("Some")
+      case None        => Input.one(List("None"))
+    }
+  }
+
   implicit def coproductParser[K <: Symbol, H, T <: Coproduct](
     implicit
       witness: Witness.Aux[K],
