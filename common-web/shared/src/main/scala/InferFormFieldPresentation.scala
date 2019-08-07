@@ -13,7 +13,7 @@ abstract class InferFormFieldPresentation[Html: Monoid] {
     def render(
       key: List[String],
       path: Path,
-      data: Option[Input],
+      data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
     ): Html = Monoid[Html].empty
@@ -30,11 +30,11 @@ abstract class InferFormFieldPresentation[Html: Monoid] {
     def render(
       key: List[String],
       path: Path,
-      data: Option[Input],
+      data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
     ): Html = Monoid[Html].combine(
-      hField.value.render(key :+ fieldName, path, data.map{_ / fieldName}, errors / fieldName, messages),
+      hField.value.render(key :+ fieldName, path, data / fieldName, errors / fieldName, messages),
       tField.render(key, path, data, errors, messages)
     )
   }
@@ -57,17 +57,17 @@ abstract class InferFormFieldPresentation[Html: Monoid] {
     def render(
       key: List[String],
       path: Path,
-      data: Option[Input],
+      data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
     ): Html = {
-      val options: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html)] =
+      val options: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)] =
         List(
           "Some" -> {case (subKey, subPath, subOpt, subErr, subMsg) =>
             ffSome.render(
               subKey :+ "value",
               subPath,
-              subOpt.map{_ / "value"},
+              subOpt / "value",
               subErr / "value",
               subMsg
             )},
@@ -81,17 +81,17 @@ abstract class InferFormFieldPresentation[Html: Monoid] {
 
   // COPRODUCTS
   def selectionOfFields(
-    inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html)]
+    inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
   )(
     key: List[String],
     path: Path,
-    values: Option[Input],
+    values: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html]
   ): Html
 
   case class CoproductFieldList[A](
-    inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html)]
+    inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
   )
 
   implicit val cnilField: CoproductFieldList[CNil] = CoproductFieldList(List.empty)
@@ -107,7 +107,7 @@ abstract class InferFormFieldPresentation[Html: Monoid] {
 
   implicit def coproductField[A](implicit coproductFields: CoproductFieldList[A]) =
     new FormFieldPresentation[A, Html] {
-      def render(key: List[String], path: Path, values: Option[Input], errors: ErrorTree, messages: UniformMessages[Html]): Html =
+      def render(key: List[String], path: Path, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html =
         selectionOfFields(coproductFields.inner)(key,path, values,errors,messages)
     }
 }

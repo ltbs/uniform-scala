@@ -6,7 +6,7 @@ trait FormFieldEncoding[A]{
   def encode(in: A): Input
   def decode(out: Input): Either[ErrorTree,A]
 
-  def imap[B](f: A => B)(g: B => A): FormFieldEncoding[B] = 
+  def imap[B](f: A => B)(g: B => A): FormFieldEncoding[B] =
     simap[B](f(_).asRight)(g)
 
   def simap[B](f: A => Either[ErrorTree,B])(g: B => A): FormFieldEncoding[B] = {
@@ -24,7 +24,7 @@ trait FormFieldPresentation[A, Html]{
   def render(
     key: List[String],
     path: Path,
-    data: Option[Input],
+    data: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html]
   ): Html
@@ -35,7 +35,7 @@ trait FormFieldPresentation[A, Html]{
       def render(
         key: List[String],
         path: Path,
-        data: Option[Input],
+        data: Input,
         errors: ErrorTree,
         messages: UniformMessages[Html]
       ): Html = orig.render(key, path, data, errors, messages)
@@ -56,7 +56,7 @@ trait FormField[A, Html] extends FormFieldEncoding[A] with FormFieldPresentation
       def render(
         key: List[String],
         path: Path,
-        data: Option[Input],
+        data: Input,
         errors: ErrorTree,
         messages: UniformMessages[Html]
       ): Html = orig.render(key, path, data, errors, messages)
@@ -75,7 +75,7 @@ object FormField {
     def render(
       key: List[String],
       path: Path,
-      data: Option[Input],
+      data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
     ) = renderer.render(key, path, data, errors, messages)

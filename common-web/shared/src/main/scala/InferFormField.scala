@@ -14,12 +14,12 @@ object InferFormField {
   // Members declared in ltbs.uniform.common.web.FormFieldEncoding
   def decode(out: Input): Either[ErrorTree,A] = codec.decode(out)
   def encode(in: A): Input = codec.encode(in)
-   
+
   // Members declared in ltbs.uniform.common.web.FormFieldPresentation
     def render(
       key: List[String],
       path: Path,
-      data: Option[Input],
+      data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
     ): Html = renderer.render(key, path, data, errors, messages)

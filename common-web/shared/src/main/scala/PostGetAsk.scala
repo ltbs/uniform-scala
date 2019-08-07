@@ -41,7 +41,7 @@ class SimpleForm[A, Html](field: FormField[A, Html]) extends GenericWebAsk[A, Ht
               .flatMap(_.toOption)
               .orElse(default.map{x => field.encode(x)})
 
-          val result = field.render(currentId, path, prepopulatedData, errors, messages)
+          val result = field.render(currentId, path, prepopulatedData.getOrElse(Input.empty), errors, messages)
           Future.successful(PageOut(path, db, AskResult.Payload(result, errors)))
         case Some(rawPostData) =>
           val postObject: Either[ErrorTree,A] =
@@ -49,7 +49,7 @@ class SimpleForm[A, Html](field: FormField[A, Html]) extends GenericWebAsk[A, Ht
 
           postObject match {
             case Left(errors) =>
-              val result = field.render(currentId, path, Some(rawPostData), errors, messages)
+              val result = field.render(currentId, path, rawPostData, errors, messages)
               Future.successful(PageOut(path, db, AskResult.Payload(result, errors)))
             case Right(o) =>
               Future.successful(PageOut(currentId :: path, db + (currentId -> rawPostData.toUrlEncodedString), AskResult.Success(o)))

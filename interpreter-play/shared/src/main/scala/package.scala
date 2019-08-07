@@ -25,7 +25,7 @@ package object playframework extends common.web.webcommon {
     def render(
       key: List[String],
       path: Path,
-      data: Option[Input],
+      data: Input,
       errors: ErrorTree,
       messages: UniformMessages[TwirlHtml]
     ): TwirlHtml = TwirlHtml("")

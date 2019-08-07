@@ -1,6 +1,6 @@
 package controllers
 
-import cats.implicits._, cats.Monoid
+import cats.implicits._
 import javax.inject._
 import ltbs.uniform._, interpreters.playframework._, examples.beardtax._
 import play.api.i18n.{Messages => _, _}
@@ -10,19 +10,16 @@ import scala.concurrent._
 import play.twirl.api.{Html, HtmlFormat}
 import java.time.LocalDate
 import cats.data.Validated
+import ltbs.uniform.common.web.{InterpreterFactory, InferFormField}
 
 @Singleton
-class BeardController @Inject()(
+class BeardController2 @Inject()(
   implicit val messagesApi: MessagesApi
-) extends PlayInterpreter[Html] with I18nSupport {
+) extends InferFormField[Html] with play.api.mvc.ControllerHelpers with I18nSupport {
 
   def messages(
-    request: Request[AnyContent],
-    customContent: Map[String,(String, List[Any])]
-  ): UniformMessages[Html] = (
-    this.convertMessages(messagesApi.preferred(request)).withCustomContent(customContent) |+|
-      UniformMessages.bestGuess.map(HtmlFormat.escape)
-  )
+    request: Request[AnyContent]
+  ): UniformMessages[Html] = UniformMessages.attentionSeeker.map{HtmlFormat.escape}
 
   def pageChrome(
     key: List[String],
@@ -198,18 +195,56 @@ class BeardController @Inject()(
       }
   }
 
-  def adaptedHod = new Hod[WebMonad] {
+  def adaptedHod = new Hod[common.web.WebMonad[?, Html]] {
     val inner = new HodConnector
-    def costOfBeard(beardStyle: BeardStyle, length: BeardLength): WebMonad[Int] =
-      FutureAdapter.alwaysRerun.apply(inner.costOfBeard(beardStyle, length))
+    def costOfBeard(beardStyle: BeardStyle, length: BeardLength): common.web.WebMonad[Int, Html] =
+      common.web.FutureAdapter[Html].alwaysRerun.apply(inner.costOfBeard(beardStyle, length))
   }
 
+  implicit val tellTwirlUnit = new common.web.GenericWebTell[Unit,Html] {
+    def render(in: Unit, key: String, messages: UniformMessages[Html]): Html = Html("")
+  }
+
+  implicit val mon: cats.Monoid[Html] = new cats.Monoid[Html] {
+    def empty: Html = Html("")
+    def combine(a: Html, b: Html) = Html(a.toString + b.toString)
+  }
+
+  def terminalFold(out: Int): Result = Ok(s" Fin - $out")
+
   def beardAction(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
-    val playProgram = beardProgram(
-      new FuturePlayInterpreter[TellTypes, AskTypes],
+
+    val blahdy = InterpreterFactory[Html]()
+    import blahdy._
+
+    type WMHtml[A] = common.web.WebMonad[A,Html]
+
+    val playProgram = beardProgram[WMHtml](
+      new GenericWebInterpreter[TellTypes, AskTypes](messages(request)),
       adaptedHod
     )
-    run(playProgram, targetId){ _ => Future.successful(Ok("Fin"))}
+
+    val data: Option[Input] = request.body.asFormUrlEncoded.map {
+      _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
+    }
+
+    import common.web.{AskResult => AR}
+    val key = targetId.split("/").filter(_.nonEmpty).toList
+
+
+    playProgram(new common.web.PageIn(key, Nil, data, db)) map {
+      case common.web.PageOut(path, dbOut, pageOut) =>
+        db = dbOut
+        pageOut match {
+          case AR.GotoPath(targetPath) => Redirect(relativePath(key, targetPath))
+          case AR.Payload(html, errors) =>
+            Ok(pageChrome(key, errors, Html(""), html, path, request, messages(request)))
+          case AR.Success(result) => terminalFold(result)
+        }
+    }
+
   }
+
+  var db: DB = DB.empty
 
 }
