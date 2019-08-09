@@ -1,22 +1,11 @@
 package ltbs.uniform
 package common.web
 
-import cats.{Monad, Monoid}
+import cats.Monoid
 import cats.implicits._
 import concurrent.Future
 import scala.concurrent.ExecutionContext
 import shapeless._
-
-case class PageIn(
-  targetId: List[String],
-  path: Path,
-  request: Option[Input],
-  state: DB
-)
-
-abstract class WebMonad[A,Html: Monoid] {
-  def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]]
-}
 
 trait WebMonadConstructor[A, Html] {
   def apply(
@@ -106,58 +95,21 @@ abstract class PostAndGetPage[A, Html: Monoid] extends WebMonadConstructor[A, Ht
       }
     }
   }
-
 }
 
-object WebMonad {
-
-  implicit def webMonadMonadInstance[Html: Monoid] =
-    new Monad[WebMonad[?, Html]] {
-
-      def pure[A](x: A): WebMonad[A,Html] = new WebMonad[A, Html] {
-        def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] = {
-          import pageIn._
-          PageOut(path,state,AskResult.Success[A,Html](x)).pure[Future]
-        }
-      }
-
-      def flatMap[A, B](fa: WebMonad[A,Html])(f: A => WebMonad[B,Html]): WebMonad[B,Html] = {
-        new WebMonad[B,Html] {
-          def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[B,Html]] = {
-            fa.apply(pageIn).flatMap[PageOut[B,Html]] { _ match {
-              case PageOut(p,db,AskResult.Success(a)) =>
-                f(a).apply(pageIn.copy(state = db, path = p))
-              case PageOut(p,db,gp: AskResult.GotoPath[A, Html]) =>
-                PageOut(p,db,gp.map[B]).pure[Future]
-              case PageOut(p,db,pl: AskResult.Payload[A, Html]) =>
-                PageOut(p,db,pl.map[B]).pure[Future]
-            } }
-          }
-        }
-      }
-
-      // may not be stack-safe
-      def tailRecM[A, B](a: A)(f: A => WebMonad[Either[A, B], Html]): WebMonad[B, Html] = flatMap(f(a)) {
-        case Left(a)  => tailRecM(a)(f)
-        case Right(b) => pure(b)
-      }
-    }
-}
-
-case class InterpreterFactory[
-  Html: Monoid
-]() {
+trait GenericWebInterpreter[Html] {
 
   type WebTell[A] = GenericWebTell[A, Html]
-  type WM[A] = WebMonadConstructor[A, Html]
+  type WMC[A] = WebMonadConstructor[A, Html]
+  type WM[A] = WebMonad[A, Html]
 
-  case class GenericWebInterpreter[
+  def create[
     SupportedTell <: HList,
     SupportedAsk  <: HList
   ](messages: UniformMessages[Html])(
     implicit tellSummoner : TypeclassList[SupportedTell, WebTell],
-    webMonadSummoner      : TypeclassList[SupportedAsk, WM]
-  ) extends Language[WebMonad[?,Html], SupportedTell, SupportedAsk]{
+    webMonadSummoner      : TypeclassList[SupportedAsk, WMC]
+  ) = new Language[WebMonad[?,Html], SupportedTell, SupportedAsk]{
     def interact[Tell, Ask](
       id: String,
       tell: Tell,

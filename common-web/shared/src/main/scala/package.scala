@@ -29,11 +29,6 @@ package web {
       case a => a
     }
 
-    implicit def formToWebAsk[A, Html](
-      implicit codec: FormFieldEncoding[A],
-       renderer: FormFieldPresentation[A,Html]
-    ): GenericWebAsk[A, Html] = new SimpleForm(InferFormField.combine(codec,renderer))
-
     implicit def formToWebMonad[A, Html: cats.Monoid](
       implicit codec: FormFieldEncoding[A],
        renderer: FormFieldPresentation[A,Html]

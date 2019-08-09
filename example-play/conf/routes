@@ -5,15 +5,10 @@
 
 # An example controller showing a sample home page
 
-GET         /beardtax/           controllers.BeardController.beardAction(id = "")
-GET         /beardtax/*id        controllers.BeardController.beardAction(id: String)
-POST        /beardtax/           controllers.BeardController.beardAction(id = "")
-POST        /beardtax/*id        controllers.BeardController.beardAction(id: String)
-
-GET         /beardtax2/           controllers.BeardController2.beardAction(id = "")
-GET         /beardtax2/*id        controllers.BeardController2.beardAction(id: String)
-POST        /beardtax2/           controllers.BeardController2.beardAction(id = "")
-POST        /beardtax2/*id        controllers.BeardController2.beardAction(id: String)
+GET         /beardtax/           controllers.BeardController2.beardAction(id = "")
+GET         /beardtax/*id        controllers.BeardController2.beardAction(id: String)
+POST        /beardtax/           controllers.BeardController2.beardAction(id = "")
+POST        /beardtax/*id        controllers.BeardController2.beardAction(id: String)
 
 
 # Map static resources from the /public folder to the /assets URL path

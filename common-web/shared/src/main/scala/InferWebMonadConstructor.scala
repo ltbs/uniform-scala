@@ -3,9 +3,9 @@ package common.web
 
 import concurrent._
 
-trait InferWebMonadConstructor[Html] extends InferFormFieldPresentation[Html] with InferFormFieldEncoding {
-
-}
+trait InferWebMonadConstructor[Html]
+    extends InferFormFieldPresentation[Html]
+    with InferFormFieldEncoding
 
 object InferWebMonadConstructor {
 

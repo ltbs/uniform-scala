@@ -1,9 +1,7 @@
 package ltbs.uniform
 package common.web
 
-trait InferFormField[Html] extends InferFormFieldPresentation[Html] with InferFormFieldEncoding {
-
-}
+trait InferFormField[Html] extends InferFormFieldPresentation[Html] with InferFormFieldEncoding
 
 object InferFormField {
 

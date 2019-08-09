@@ -1,57 +1,16 @@
 package controllers
 
-import cats.implicits._, cats.Monoid
-import javax.inject._
-import ltbs.uniform._, interpreters.playframework._, examples.beardtax._
-import play.api.i18n.{Messages => _, _}
-import play.api.mvc._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent._
-import play.twirl.api.{Html, HtmlFormat}
+import cats.implicits._
+
+import ltbs.uniform._, interpreters.playframework._
+import ltbs.uniform.common.web.FormField
+import play.twirl.api.Html
 import java.time.LocalDate
 import cats.data.Validated
 
-@Singleton
-class BeardController @Inject()(
-  implicit val messagesApi: MessagesApi
-) extends PlayInterpreter[Html] with I18nSupport {
+object Widgets extends Widgets
 
-  def messages(
-    request: Request[AnyContent],
-    customContent: Map[String,(String, List[Any])]
-  ): UniformMessages[Html] = (
-    this.convertMessages(messagesApi.preferred(request)).withCustomContent(customContent) |+|
-      UniformMessages.bestGuess.map(HtmlFormat.escape)
-  )
-
-  def pageChrome(
-    key: List[String],
-    errors: ErrorTree,
-    tell: Html,
-    ask: Html,
-    breadcrumbs: Path,
-    request: Request[AnyContent],
-    messages: UniformMessages[Html]
-  ): Html =
-      views.html.chrome(key, errors, Html(tell.toString + ask.toString), breadcrumbs)(messages, request)
-
-  def selectionOfFields(
-    inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
-  )(key: List[String], path: Path, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html = {
-    val value: Option[String] = values.valueAtRoot.flatMap{_.headOption}
-    views.html.uniform.radios(
-      key,
-      inner.map{_._1},
-      value,
-      errors,
-      messages,
-      inner.map{
-        case(subkey,f) => subkey -> f(key :+ subkey, path, {values / subkey}, errors / subkey, messages)
-      }.filter(_._2.toString.trim.nonEmpty).toMap
-    )
-  }
-
-  implicit val persistence: PersistenceEngine[Request[AnyContent]] = DebugPersistence(UnsafePersistence())
+trait Widgets {
 
   implicit val twirlBigStringField = new FormField[BigString,Html] {
     import shapeless.tag
@@ -188,28 +147,6 @@ class BeardController @Inject()(
         messages
       )
     }
-  }
-
-  class HodConnector extends Hod[Future] {
-    def costOfBeard(beardStyle: BeardStyle, length: BeardLength): Future[Int] =
-      Future{
-        Thread.sleep(2000)
-        IdDummyHod.costOfBeard(beardStyle, length)
-      }
-  }
-
-  def adaptedHod = new Hod[WebMonad] {
-    val inner = new HodConnector
-    def costOfBeard(beardStyle: BeardStyle, length: BeardLength): WebMonad[Int] =
-      FutureAdapter.alwaysRerun.apply(inner.costOfBeard(beardStyle, length))
-  }
-
-  def beardAction(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
-    val playProgram = beardProgram(
-      new FuturePlayInterpreter[TellTypes, AskTypes],
-      adaptedHod
-    )
-    run(playProgram, targetId){ _ => Future.successful(Ok("Fin"))}
   }
 
 }

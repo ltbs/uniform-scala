@@ -5,11 +5,11 @@ import shapeless._, labelled._
 import cats.Monoid
 import com.github.ghik.silencer.silent
 
-abstract class InferFormFieldPresentation[Html: Monoid] {
+trait InferFormFieldPresentation[Html] {
 
   type FF[A] = FormFieldPresentation[A, Html]
 
-  implicit val hnilField = new FF[HNil] {
+  implicit def hnilField(implicit mon: Monoid[Html]) = new FF[HNil] {
     def render(
       key: List[String],
       path: Path,
@@ -23,7 +23,8 @@ abstract class InferFormFieldPresentation[Html: Monoid] {
     implicit
       witness: Witness.Aux[K],
     hField: Lazy[FF[H]],
-    tField: FF[T]
+    tField: FF[T],
+    mon: Monoid[Html]
   ): FF[FieldType[K,H] :: T] = new FF[FieldType[K,H] :: T] {
     val fieldName: String = witness.value.name
 
@@ -52,7 +53,8 @@ abstract class InferFormFieldPresentation[Html: Monoid] {
     * needed.
     */
   implicit def optionField[A](
-    implicit ffSome: FF[A]
+    implicit ffSome: FF[A],
+    mon: Monoid[Html]
   ) = new FF[Option[A]] {
     def render(
       key: List[String],

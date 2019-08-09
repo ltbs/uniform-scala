@@ -10,27 +10,12 @@ import scala.concurrent._
 import play.twirl.api.{Html, HtmlFormat}
 import java.time.LocalDate
 import cats.data.Validated
-import ltbs.uniform.common.web.{InterpreterFactory, InferFormField}
+import ltbs.uniform.common.web.{InferFormField, FormField}
 
 @Singleton
 class BeardController2 @Inject()(
   implicit val messagesApi: MessagesApi
-) extends InferFormField[Html] with play.api.mvc.ControllerHelpers with I18nSupport {
-
-  def messages(
-    request: Request[AnyContent]
-  ): UniformMessages[Html] = UniformMessages.attentionSeeker.map{HtmlFormat.escape}
-
-  def pageChrome(
-    key: List[String],
-    errors: ErrorTree,
-    tell: Html,
-    ask: Html,
-    breadcrumbs: Path,
-    request: Request[AnyContent],
-    messages: UniformMessages[Html]
-  ): Html =
-      views.html.chrome(key, errors, Html(tell.toString + ask.toString), breadcrumbs)(messages, request)
+) extends InferFormField[Html] with ControllerHelpers with I18nSupport {
 
   def selectionOfFields(
     inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
@@ -214,37 +199,38 @@ class BeardController2 @Inject()(
 
   def beardAction(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
 
-    val blahdy = InterpreterFactory[Html]()
-    import blahdy._
+    val blahdy = new PlayInterpreter[Html] {
 
-    type WMHtml[A] = common.web.WebMonad[A,Html]
+      def messages(
+        request: Request[AnyContent]
+      ): UniformMessages[Html] = UniformMessages.attentionSeeker.map{HtmlFormat.escape}
 
-    val playProgram = beardProgram[WMHtml](
-      new GenericWebInterpreter[TellTypes, AskTypes](messages(request)),
+      def pageChrome(
+        key: List[String],
+        errors: ErrorTree,
+        tell: Html,
+        ask: Html,
+        breadcrumbs: Path,
+        request: Request[AnyContent],
+        messages: UniformMessages[Html]
+      ): Html =
+        views.html.chrome(key, errors, Html(tell.toString + ask.toString), breadcrumbs)(messages, request)
+
+    }
+
+    val playProgram = beardProgram[blahdy.WM](
+      blahdy.create[TellTypes, AskTypes](blahdy.messages(request)),
       adaptedHod
     )
 
-    val data: Option[Input] = request.body.asFormUrlEncoded.map {
-      _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
-    }
-
-    import common.web.{AskResult => AR}
     val key = targetId.split("/").filter(_.nonEmpty).toList
 
+    import blahdy.PlayWebMonad
 
-    playProgram(new common.web.PageIn(key, Nil, data, db)) map {
-      case common.web.PageOut(path, dbOut, pageOut) =>
-        db = dbOut
-        pageOut match {
-          case AR.GotoPath(targetPath) => Redirect(relativePath(key, targetPath))
-          case AR.Payload(html, errors) =>
-            Ok(pageChrome(key, errors, Html(""), html, path, request, messages(request)))
-          case AR.Success(result) => terminalFold(result)
-        }
+    playProgram.run(key) {
+      i: Int => Ok(s"$i").pure[Future]
     }
 
   }
-
-  var db: DB = DB.empty
 
 }
