@@ -7,9 +7,9 @@ import cats.Monoid
 import cats.implicits._
 import common.web._
 
-abstract class PlayInterpreter[Html: Writeable: Monoid](
+abstract class PlayInterpreter[Html: Writeable: Monoid](controller: Results)(
   implicit ec: ExecutionContext
-) extends GenericWebInterpreter[Html] with Compatibility.PlayController {
+) extends GenericWebInterpreter[Html] {
 
   def messages(
     request: Request[AnyContent]
@@ -28,28 +28,28 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](
   val log: Logger = Logger("uniform")
 
   implicit class PlayWebMonad[A](wm: WebMonad[A, Html]) {
-    def run(id: List[String])(
+    def run(path: String)(
       f: A => Future[Result]
     )(implicit
       request: Request[AnyContent],
       persistence: PersistenceEngine[Request[AnyContent]]
     ): Future[Result] = {
 
+      val id = path.split("/").filter(_.nonEmpty).toList
+
       val data: Option[Input] = request.body.asFormUrlEncoded.map {
         _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
       }
-
-      import common.web.{AskResult => AR}
 
       persistence.apply(request) { db =>
         wm(PageIn(id, Nil, data, db)) flatMap {
           case common.web.PageOut(path, dbOut, pageOut) =>
             pageOut match {
-              case AR.GotoPath(targetPath) =>
-                (dbOut, Redirect(relativePath(id, targetPath))).pure[Future]
-              case AR.Payload(html, errors) =>
-                (db, Ok(pageChrome(id, errors, Monoid[Html].empty, html, path, request, messages(request)))).pure[Future]
-              case AR.Success(result) =>
+              case AskResult.GotoPath(targetPath) =>
+                (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]
+              case AskResult.Payload(html, errors) =>
+                (db, controller.Ok(pageChrome(id, errors, Monoid[Html].empty, html, path, request, messages(request)))).pure[Future]
+              case AskResult.Success(result) =>
                 f(result).map{ (db, _) }
             }
         }

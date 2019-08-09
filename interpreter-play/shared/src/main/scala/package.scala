@@ -1,15 +1,15 @@
 package ltbs.uniform
 package interpreters
 
-import cats.data._
 import common.web._
-import play.api._, mvc.{ Request, Result, AnyContent }
+import play.api._
 import play.twirl.api.{Html => TwirlHtml}
-import scala.concurrent.Future
 
 package object playframework extends common.web.webcommon {
 
   type Encoded = String
+
+  type WebMonad[A,Html] = common.web.WebMonad[A, Html]
 
   implicit val tellTwirlUnit = new GenericWebTell[Unit,TwirlHtml] {
     def render(in: Unit, key: String, messages: UniformMessages[TwirlHtml]): TwirlHtml = TwirlHtml("")
