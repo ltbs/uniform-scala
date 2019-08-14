@@ -11,16 +11,16 @@ trait PersistenceEngine[A <: Request[AnyContent]] {
 
 case class DebugPersistence(underlying: UUIDPersistence)(implicit ec: ExecutionContext) extends UUIDPersistence {
 
-  val log: Logger = Logger("persistence")  
+  val log: Logger = Logger("persistence")
 
-  def load(uuid: UUID): Future[DB] = 
-    underlying.load(uuid).map{ r => 
+  def load(uuid: UUID): Future[DB] =
+    underlying.load(uuid).map{ r =>
       log.info(s"load($uuid): ${r.toString}")
       r
     }
 
   def save(uuid: UUID, db: DB): Future[Unit] = {
-    underlying.save(uuid, db).map{ case _ => 
+    underlying.save(uuid, db).map{ case _ =>
       log.info(s"save($uuid, ${db.toString})")
     }
   }

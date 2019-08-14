@@ -25,7 +25,7 @@ class MonoidInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
 
 class TestInterpreter extends FlatSpec with Matchers {
 
-  "An interpreter" should "not suffer type erasure" in {
+  "A simple interpreter" should "be able to compose Id monad instances" in {
 
     type TellTypes = String :: Option[String] :: NilTypes
     type AskTypes = Int :: Option[String] :: NilTypes

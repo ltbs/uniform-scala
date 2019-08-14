@@ -8,8 +8,11 @@ package web {
 
     type Path = List[List[String]]
     type JourneyConfig = String
-
     type DB = Map[List[String],String]
+
+    object DB {
+      def empty: DB = Map()
+    }
 
     def relativePath(from: List[String], to: List[String]): String = {
       import cats.instances.string._
@@ -26,10 +29,10 @@ package web {
       case a => a
     }
 
-    implicit def formToWebAsk[A, Html](
-      implicit codec: FormFieldEncoding[A],
-       renderer: FormFieldPresentation[A,Html]
-    ): GenericWebAsk[A, Html] = new SimpleForm(InferFormField.combine(codec,renderer))
+    implicit def formToWebMonad[A, Html](
+      implicit ff: FormField[A, Html]
+    ): WebMonadConstructor[A, Html] = PostAndGetPage(ff)
+
 
   }
 }

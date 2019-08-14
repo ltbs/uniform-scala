@@ -1,19 +1,15 @@
 package ltbs.uniform
 package interpreters
 
-import cats.data._
-import common.web.GenericWebTell
-import play.api._, mvc.{ Request, Result, AnyContent }
+import common.web._
+import play.api._
 import play.twirl.api.{Html => TwirlHtml}
-import scala.concurrent.Future
 
 package object playframework extends common.web.webcommon {
 
   type Encoded = String
-  type WebInner[A] = RWST[Future, (JourneyConfig, List[String], Request[AnyContent]), Unit, (Path, DB), A]
-  type WebMonad[A] = EitherT[WebInner, Result, A]
 
-  type FormField[A,B] = common.web.FormField[A,B]
+  type WebMonad[A,Html] = common.web.WebMonad[A, Html]
 
   implicit val tellTwirlUnit = new GenericWebTell[Unit,TwirlHtml] {
     def render(in: Unit, key: String, messages: UniformMessages[TwirlHtml]): TwirlHtml = TwirlHtml("")
@@ -25,14 +21,13 @@ package object playframework extends common.web.webcommon {
     def render(
       key: List[String],
       path: Path,
-      data: Option[Input],
+      data: Input,
       errors: ErrorTree,
       messages: UniformMessages[TwirlHtml]
     ): TwirlHtml = TwirlHtml("")
   }
 
-
-  implicit class RichTwirlInterpreter(interpreter: PlayInterpreter[TwirlHtml]) {
+  implicit class RichTwirlInterpreter(interpreter: GenericWebInterpreter[TwirlHtml]) {
     def convertMessages(input: i18n.Messages, escapeHtml: Boolean = false): UniformMessages[TwirlHtml] = {
       val stringMessages = new UniformMessages[String]{
         override def apply(key: List[String],args: Any*): String = {

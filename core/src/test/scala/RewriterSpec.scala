@@ -5,7 +5,7 @@ import cats.implicits._
 import cats.Monad
 import scala.language.higherKinds
 
-class RewriterSpec extends FlatSpec with Matchers {
+class RewriterSpec extends FlatSpec with Matchers with OptTC {
 
   "A rewriter" should "change a journey" in {
 

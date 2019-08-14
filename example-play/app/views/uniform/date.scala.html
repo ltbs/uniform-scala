@@ -4,7 +4,7 @@
 
 <div class="govuk-date-input @if(errors.definedAtRoot) {govuk-form-group--error}" id="@key">
 
-  @errors.valueAtRootList.map { error => 
+  @errors.valueAtRootList.map { error =>
     <span id="@{key.mkString("_")}_error" class="govuk-error-message">
       <span class="govuk-visually-hidden">@messages("error"):</span> @error.prefixWith(key).render(messages)
     </span>
@@ -14,15 +14,15 @@
     <div class="govuk-date-input__item">
       <div class="govuk-form-group">
         <label class="govuk-label govuk-date-input__label" for="@key-@field">
-          @messages(List(s"$key.$field",field))
+          @messages((key :+ field).mkString(".") ,field)
         </label>
         <input
-	  class="govuk-input govuk-date-input__input govuk-input--width-@if(field=="year"){4}else{2} @if(errors.definedAt(field)) {govuk-input--error}"
-	  id="@{(key :+ field).mkString("_") }"
-	  name="@{(key :+ field).mkString(".") }"
-	  type="number"
-	  pattern="[0-9]*"
-	  value="@{values.valueAt(field).headOption}" />
+          class="govuk-input govuk-date-input__input govuk-input--width-@if(field=="year"){4}else{2} @if(errors.definedAt(field)) {govuk-input--error}"
+          id="@{(key :+ field).mkString("_") }"
+          name="@{(key :+ field).mkString(".") }"
+          type="number"
+          pattern="[0-9]*"
+          value="@{values.valueAt(field).headOption}" />
       </div>
     </div>
   }

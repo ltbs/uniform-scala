@@ -34,8 +34,7 @@ function to populate our messages like so -
 
 ```tut:silent
   def messages(
-    request: Request[AnyContent],
-    customContent: Map[String,(String, List[Any])]
+    request: Request[AnyContent]
   ): UniformMessages[Html] =
     UniformMessages.bestGuess.map(HtmlFormat.escape)
 ```
@@ -77,12 +76,12 @@ active.
   def selectionOfFields(
     inner: List[(
       String,
-      (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html
+      (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html
     )]
   )(
     key: List[String],
     path: Path,
-    values: Option[Input],
+    values: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html]
   ): Html = ???
@@ -137,8 +136,7 @@ class ExampleController (
 ) extends PlayInterpreter[Html] with I18nSupport {
 
   def messages(
-    request: Request[AnyContent],
-    customContent: Map[String,(String, List[Any])]
+    request: Request[AnyContent]
   ): UniformMessages[Html] =
     UniformMessages.bestGuess.map(HtmlFormat.escape)
 
@@ -155,12 +153,12 @@ class ExampleController (
   def selectionOfFields(
     inner: List[(
       String,
-      (List[String], Path, Option[Input], ErrorTree, UniformMessages[Html]) => Html
+      (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html
     )]
   )(
     key: List[String],
     path: Path,
-    values: Option[Input],
+    values: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html]
   ): Html = ???
