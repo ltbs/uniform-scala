@@ -9,7 +9,7 @@ trait InferWebMonadConstructor[Html]
 
 object InferWebMonadConstructor {
 
-  def combine[A,Html: cats.Monoid](
+  def combine[A,Html](
     codecIn: FormFieldEncoding[A],
     renderer: FormFieldPresentation[A, Html]
   ): WebMonadConstructor[A, Html] = new PostAndGetPage[A, Html] {

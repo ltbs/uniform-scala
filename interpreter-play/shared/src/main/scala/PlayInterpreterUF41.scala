@@ -7,9 +7,11 @@ import cats.Monoid
 import cats.implicits._
 import common.web._
 
-abstract class PlayInterpreter[Html: Writeable: Monoid](controller: Results)(
+abstract class PlayInterpreter[Html: Writeable](controller: Results)(
   implicit ec: ExecutionContext
 ) extends GenericWebInterpreter[Html] {
+
+  val mon: Monoid[Html]
 
   def messages(
     request: Request[AnyContent]
@@ -27,12 +29,20 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](controller: Results)(
 
   val log: Logger = Logger("uniform")
 
-  implicit class PlayWebMonad[A](wm: WebMonad[A, Html]) {
+  implicit class PlayWebMonad[A, Req <: Request[AnyContent]](wm: WebMonad[A, Html]) {
+
+    def runSync(path: String)(
+      f: A => Result
+    )(implicit
+      request: Req,
+      persistence: PersistenceEngine[Req]
+    ): Future[Result] = run(path){f.map{_.pure[Future]}}
+
     def run(path: String)(
       f: A => Future[Result]
     )(implicit
-      request: Request[AnyContent],
-      persistence: PersistenceEngine[Request[AnyContent]]
+      request: Req,
+      persistence: PersistenceEngine[Req]
     ): Future[Result] = {
 
       val id = path.split("/").filter(_.nonEmpty).toList
@@ -48,7 +58,7 @@ abstract class PlayInterpreter[Html: Writeable: Monoid](controller: Results)(
               case AskResult.GotoPath(targetPath) =>
                 (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]
               case AskResult.Payload(html, errors) =>
-                (db, controller.Ok(pageChrome(id, errors, Monoid[Html].empty, html, path, request, messages(request)))).pure[Future]
+                (db, controller.Ok(pageChrome(id, errors, mon.empty, html, path, request, messages(request)))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (db, _) }
             }

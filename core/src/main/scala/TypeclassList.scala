@@ -7,8 +7,8 @@ import shapeless._
 trait TypeclassList[L <: HList, F[_]] {
   type Repr <: HList
   protected val list: Repr
-  def forType[T](implicit sel: IndexOf[L, T]): F[T] =
-      HList.unsafeGet(list, sel.index).asInstanceOf[F[T]]
+  def forType[T](implicit sel: Cached[IndexOf[L, T]]): F[T] =
+      HList.unsafeGet(list, sel.value.index).asInstanceOf[F[T]]
 }
 
 object TypeclassList {

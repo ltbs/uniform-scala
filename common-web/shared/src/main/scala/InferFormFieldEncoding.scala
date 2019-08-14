@@ -3,7 +3,6 @@ package common.web
 
 import shapeless._, labelled._
 import cats.implicits.{catsSyntaxEither => _,_}
-import com.github.ghik.silencer.silent
 
 object InferFormFieldEncoding extends InferFormFieldEncoding
 trait InferFormFieldEncoding {
@@ -106,8 +105,7 @@ trait InferFormFieldEncoding {
   implicit def genericParser[A, H, T]
     (implicit
        generic: LabelledGeneric.Aux[A,T],
-      hGenParser: Lazy[FormFieldEncoding[T]],
-      @silent lp: LowPriority
+      hGenParser: Lazy[FormFieldEncoding[T]]
     ): FormFieldEncoding[A] = new FormFieldEncoding[A]
   {
     def decode(in: Input): Either[ErrorTree,A] =

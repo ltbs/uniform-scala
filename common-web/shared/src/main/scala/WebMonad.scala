@@ -5,13 +5,13 @@ import cats.{Monoid, Monad}
 import cats.implicits._
 import concurrent._
 
-abstract class WebMonad[A,Html: Monoid] {
+abstract class WebMonad[A,Html] {
   def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]]
 }
 
 object WebMonad {
 
-  implicit def webMonadMonadInstance[Html: Monoid] =
+  implicit def webMonadMonadInstance[Html] =
     new Monad[WebMonad[?, Html]] {
 
       def pure[A](x: A): WebMonad[A,Html] = new WebMonad[A, Html] {

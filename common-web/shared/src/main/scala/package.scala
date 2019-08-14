@@ -29,7 +29,7 @@ package web {
       case a => a
     }
 
-    implicit def formToWebMonad[A, Html: cats.Monoid](
+    implicit def formToWebMonad[A, Html](
       implicit codec: FormFieldEncoding[A],
        renderer: FormFieldPresentation[A,Html]
     ): WebMonadConstructor[A, Html] = InferWebMonadConstructor.combine(

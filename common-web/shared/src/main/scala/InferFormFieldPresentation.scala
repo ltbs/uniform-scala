@@ -42,8 +42,7 @@ trait InferFormFieldPresentation[Html] {
 
   implicit def genericField[A, H, T](implicit
     @silent generic: LabelledGeneric.Aux[A,T],
-    hGenParser: Lazy[FF[T]],
-    @silent lp: LowPriority
+    hGenParser: Lazy[FF[T]]
   ): FF[A] = hGenParser.value.mapToType
 
   /** We get this from coproduct anyway, but want `Some` to appear

@@ -10,7 +10,6 @@ import uniform.Quantity.ToQuantityOps
 package object uniform extends TreeLike.ToTreeLikeOps
     with TreeLikeInstances
     with ScalaVersionCompatibility
-    with OptTC
     with ToQuantityOps
     with QuantityInstances
 {

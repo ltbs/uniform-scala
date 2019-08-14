@@ -1,13 +1,16 @@
 package controllers
 
 import cats.implicits._
+import cats.Monoid
 import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc._
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.twirl.api.{Html, HtmlFormat}
-import ltbs.uniform.common.web.InferFormField
+import ltbs.uniform.common.web.InferFormField2
 
-case class HmrcPlayInterpreter(results: Results) extends PlayInterpreter[Html](results) with InferFormField[Html] with Widgets {
+case class HmrcPlayInterpreter(results: Results) extends PlayInterpreter[Html](results) with InferFormField2[Html] with Widgets {
+
+  val mon: Monoid[Html] = interpreters.playframework.mon
 
     def messages(
       request: Request[AnyContent]

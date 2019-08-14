@@ -1,7 +1,6 @@
 package ltbs.uniform
 package common.web
 
-import cats.Monoid
 import cats.implicits._
 import concurrent.Future
 import scala.concurrent.ExecutionContext
@@ -17,7 +16,7 @@ trait WebMonadConstructor[A, Html] {
   ): WebMonad[A, Html]
 }
 
-abstract class PostAndGetPage[A, Html: Monoid] extends WebMonadConstructor[A, Html] {
+abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
 
   def codec: FormFieldEncoding[A]
 
@@ -116,7 +115,8 @@ trait GenericWebInterpreter[Html] {
       defaultIn: Option[Ask],
       validationIn: List[List[Rule[Ask]]],
       customContent: Map[String,(String, List[Any])]
-    )(implicit selectorTell: IndexOf[SupportedTell,Tell],
+    )(implicit
+      selectorTell: IndexOf[SupportedTell,Tell],
       selectorAsk: IndexOf[SupportedAsk,Ask]
     ): WebMonad[Ask,Html] = {
       val customMessages = messages withCustomContent customContent
