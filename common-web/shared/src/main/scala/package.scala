@@ -30,11 +30,9 @@ package web {
     }
 
     implicit def formToWebMonad[A, Html](
-      implicit codec: FormFieldEncoding[A],
-       renderer: FormFieldPresentation[A,Html]
-    ): WebMonadConstructor[A, Html] = InferWebMonadConstructor.combine(
-      codec, renderer
-    )
+      implicit ff: FormField[A, Html]
+    ): WebMonadConstructor[A, Html] = PostAndGetPage(ff)
+
 
   }
 }

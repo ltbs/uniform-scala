@@ -6,7 +6,7 @@ import cats.Monoid
 import com.github.ghik.silencer.silent
 import cats.implicits.{catsSyntaxEither => _,_}
 
-trait InferFormField2[Html] {
+trait InferFormField[Html] {
 
   val mon: Monoid[Html]
 

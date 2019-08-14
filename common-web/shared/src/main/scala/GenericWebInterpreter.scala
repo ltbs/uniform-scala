@@ -96,6 +96,35 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
   }
 }
 
+object PostAndGetPage {
+
+  def apply[A,Html](
+    fieldIn: FormField[A, Html]
+  ): WebMonadConstructor[A, Html] = new PostAndGetPage[A, Html] {
+    def codec: FormFieldEncoding[A] = fieldIn
+
+    def getPage(
+      key: List[String],
+      state: DB,
+      existing: Input,
+      path: Path,
+      messages: UniformMessages[Html]
+    )(implicit ec: ExecutionContext): Html =
+      fieldIn.render(key, path, existing, ErrorTree.empty, messages)
+
+    def postPage(
+      key: List[String],
+      state: DB,
+      request: Input,
+      errors: ErrorTree,
+      path: Path,
+      messages: UniformMessages[Html]
+    )(implicit ec: ExecutionContext): Html =
+      fieldIn.render(key, path, request, errors, messages)
+  }
+
+}
+
 trait GenericWebInterpreter[Html] {
 
   type WebTell[A] = GenericWebTell[A, Html]
