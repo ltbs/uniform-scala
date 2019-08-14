@@ -11,9 +11,3 @@ object AskResult {
   }
   final case class Success[A,Html](objectOut: A) extends AskResult[A,Html]
 }
-
-final case class PageOut[+A,Html](
-  path: Path,
-  db: DB,
-  output: AskResult[A,Html]
-)

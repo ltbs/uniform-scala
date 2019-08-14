@@ -8,10 +8,9 @@ import cats.implicits._
 import common.web._
 
 abstract class PlayInterpreter[Html: Writeable](controller: Results)(
-  implicit ec: ExecutionContext
-) extends GenericWebInterpreter[Html] {
-
+  implicit ec: ExecutionContext,
   val mon: Monoid[Html]
+) extends GenericWebInterpreter[Html] {
 
   def messages(
     request: Request[AnyContent]

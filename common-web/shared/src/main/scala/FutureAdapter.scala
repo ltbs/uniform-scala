@@ -30,7 +30,7 @@ case class FutureAdapter[Html: Monoid]() {
       String.format("%032x", new BigInteger(1, digest))
     }
 
-    def apply[A](fa: Future[A])(implicit codec: FormFieldEncoding[A]): WM[A] = new WM[A] {
+    def apply[A](fa: Future[A])(implicit codec: Codec[A]): WM[A] = new WM[A] {
 
       def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] = {
         import pageIn._
