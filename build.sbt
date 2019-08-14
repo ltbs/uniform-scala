@@ -148,10 +148,11 @@ lazy val commonSettings = Seq(
 )
 
 def tutSettings(name: String) = Seq(
-    tutSourceDirectory := baseDirectory.value.getParentFile / "docs",
-    tutTargetDirectory := baseDirectory.value.getParentFile.getParentFile / "docs" / "src" / "main" / "tut" / name,
-    scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
-    fork in (Tut, run) := true
+  tutSourceDirectory := baseDirectory.value.getParentFile / "docs",
+  tutTargetDirectory := baseDirectory.value.getParentFile.getParentFile / "docs" / "src" / "main" / "tut" / name,
+  scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
+  fork in (Tut, run) := true,
+  scalacOptions in Tut -= "-Xfatal-warnings"
 )
 
 lazy val core = crossProject(JSPlatform, JVMPlatform)
