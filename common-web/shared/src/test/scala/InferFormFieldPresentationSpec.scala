@@ -10,11 +10,11 @@ trait SampleFormFieldRenderers {
 
 
   def selectionOfFields(
-    inner: List[(String, (List[String], Path, Option[Input], ErrorTree, UniformMessages[String]) => String)]
+    inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[String]) => String)]
   )(
     key: List[String],
     @silent("never used") path: Path,
-    @silent("never used") values: Option[Input],
+    @silent("never used") values: Input,
     @silent("never used") errors: ErrorTree,
     @silent("never used") messages: UniformMessages[String]
   ):String = key.mkString(".") ++ ":" ++ inner.map(_._1).mkString(",")
@@ -23,7 +23,7 @@ trait SampleFormFieldRenderers {
     def render(
       key: List[String],
       @silent("never used") path: Path,
-      @silent("never used") data: Option[Input],
+      @silent("never used") data: Input,
       @silent("never used") errors: ErrorTree,
       @silent("never used") messages: UniformMessages[String]
     ): String = {
@@ -36,7 +36,7 @@ trait SampleFormFieldRenderers {
     def render(
       key: List[String],
       @silent("never used") path: Path,
-      @silent("never used") data: Option[Input],
+      @silent("never used") data: Input,
       @silent("never used") errors: ErrorTree,
       @silent("never used") messages: UniformMessages[String]
     ): String = {
@@ -61,7 +61,7 @@ class InferFormFieldPresentationSpec extends FlatSpec with Matchers {
 
   "FormFieldPresentation" should "infer a renderer for a case class" in {
     val renderer = implicitly[FormFieldPresentation[TestCaseClass, String]]
-    renderer.render(List("testRecord"), Nil, None, ErrorTree.empty, UniformMessages.noop) should be (
+    renderer.render(List("testRecord"), Nil, Input.empty, ErrorTree.empty, UniformMessages.noop) should be (
       "INT[testRecord.a]STRING[testRecord.b]INT[testRecord.c._1]INT[testRecord.c._2]"
     )
   }
@@ -70,7 +70,7 @@ class InferFormFieldPresentationSpec extends FlatSpec with Matchers {
     type TestType = Either[String, Int]
     val presentation = implicitly[FormFieldPresentation[TestType, String]]
 
-    presentation.render(List("testRecord"), Nil, None, ErrorTree.empty, UniformMessages.noop) should be (
+    presentation.render(List("testRecord"), Nil, Input.empty, ErrorTree.empty, UniformMessages.noop) should be (
       "testRecord:Left,Right"
     )
   }

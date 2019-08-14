@@ -1,7 +1,7 @@
 package ltbs.uniform
 package common.web
 
-import cats.{Monoid, Monad}
+import cats.Monad
 import cats.implicits._
 import concurrent._
 
