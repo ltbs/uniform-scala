@@ -5,12 +5,18 @@ import play.api.mvc.{Results, Request, AnyContent}
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.twirl.api.{Html, HtmlFormat}
 import ltbs.uniform.common.web.InferFormField
+import cats.syntax.semigroup._
 
-case class HmrcPlayInterpreter(results: Results) extends PlayInterpreter[Html](results) with InferFormField[Html] with Widgets {
+case class HmrcPlayInterpreter(
+  results: Results,
+  messagesApi: play.api.i18n.MessagesApi
+) extends PlayInterpreter[Html](results) with InferFormField[Html] with Widgets {
 
   def messages(
     request: Request[AnyContent]
-  ): UniformMessages[Html] = UniformMessages.attentionSeeker.map{HtmlFormat.escape}
+  ): UniformMessages[Html] =
+    this.convertMessages(messagesApi.preferred(request)) |+|
+      UniformMessages.attentionSeeker.map{HtmlFormat.escape}
 
   def pageChrome(
     key: List[String],
