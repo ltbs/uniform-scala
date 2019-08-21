@@ -54,7 +54,8 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
               case Left(error) =>
                 PageOut(currentId :: path, state, AskResult.Payload[A, Html](
                   postPage(currentId, state, localData, error, path, messages),
-                  error
+                  error,
+                  messages
                 )).pure[Future]
             }
 
@@ -69,7 +70,8 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
                 path,
                 messages
               ),
-              ErrorTree.empty
+              ErrorTree.empty,
+              messages
             )).pure[Future]
         }
       } else {

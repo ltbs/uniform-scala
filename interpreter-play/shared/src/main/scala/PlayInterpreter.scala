@@ -56,8 +56,8 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
                 (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]
-              case AskResult.Payload(html, errors) =>
-                (db, controller.Ok(pageChrome(id, errors, mon.empty, html, path, request, messages(request)))).pure[Future]
+              case AskResult.Payload(html, errors, messagesOut) =>
+                (db, controller.Ok(pageChrome(id, errors, mon.empty, html, path, request, messagesOut))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (db, _) }
             }
