@@ -5,5 +5,6 @@ case class PageIn(
   targetId: List[String],
   path: Path,
   request: Option[Input],
-  state: DB
+  state: DB,
+  pathPrefix: List[String]
 )

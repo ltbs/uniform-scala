@@ -51,8 +51,9 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
       }
 
       persistence.apply(request) { db =>
-        wm(PageIn(id, Nil, data, db)) flatMap {
-          case common.web.PageOut(path, dbOut, pageOut) =>
+        wm(PageIn(id, Nil, data, db, Nil)) flatMap {
+          case common.web.PageOut(path, dbOut, pageOut, pp) =>
+            println(s"PP:$pp")
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
                 (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]

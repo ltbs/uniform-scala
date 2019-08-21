@@ -50,13 +50,13 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
             val parsed = (codec.decode(localData) >>= validation.combined.either)
             parsed match {
               case Right(valid) =>
-                PageOut(currentId :: path, state + (currentId -> localData.toUrlEncodedString), AskResult.Success[A, Html](valid)).pure[Future]
+                PageOut(currentId :: path, state + (currentId -> localData.toUrlEncodedString), AskResult.Success[A, Html](valid), pageIn.pathPrefix).pure[Future]
               case Left(error) =>
                 PageOut(currentId :: path, state, AskResult.Payload[A, Html](
                   tell |+| postPage(currentId, state, localData, error, path, messages),
                   error,
                   messages
-                )).pure[Future]
+                ), pageIn.pathPrefix).pure[Future]
             }
 
           case None =>
@@ -73,15 +73,15 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
               ),
               ErrorTree.empty,
               messages
-            )).pure[Future]
+            ), pageIn.pathPrefix).pure[Future]
         }
       } else {
         dbObject match {
           case Some(Right(data)) if targetId =!= Nil && !path.contains(targetId) =>
             // they're replaying the journey
-            Future.successful(PageOut(currentId :: path, state, AskResult.Success(data)))
+            Future.successful(PageOut(currentId :: path, state, AskResult.Success(data), pageIn.pathPrefix))
           case _ =>
-            Future.successful(PageOut(path, state, AskResult.GotoPath(currentId)))
+            Future.successful(PageOut(path, state, AskResult.GotoPath(currentId), pageIn.pathPrefix))
         }
       }
     }

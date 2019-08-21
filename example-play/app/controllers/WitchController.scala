@@ -19,11 +19,26 @@ class WitchController @Inject()(
   lazy val interpreter = HmrcPlayInterpreter(this, messagesApi)
 
   import interpreter._
-  // implicit val evidenceListing = interpreter.listingPage[examples.witchcraft.Evidence]
-  //   {x => play.twirl.api.Html(x.toString) }
-
-  implicit val familiarListing = interpreter.listingPage[examples.witchcraft.Familiar]
+  implicit val evidenceListing = interpreter.listingPage[examples.witchcraft.Evidence]
     {x => play.twirl.api.Html(x.toString) }
+
+  def familiarProgram[F[_]: cats.Monad](
+    existing: List[Familiar],
+    editIndex: Option[Int],
+  )(
+    int: Language[F, NilTypes, Boolean :: String :: NilTypes]
+  ): F[Familiar] = {
+    import int._
+    for {
+      name <- ask[String]("fam-name")
+      isBlack <- ask[Boolean]("fam-isblack")
+    } yield (Familiar.Cat(name, isBlack))
+  }
+
+  implicit def familiarListing(implicit request: Request[AnyContent]) = interpreter.listingPageWM[Familiar](
+    {(x: Familiar, i: Int) => play.twirl.api.Html(x.toString) },
+    familiarProgram[interpreter.WM](_,_)(create[NilTypes, Boolean :: String :: NilTypes](interpreter.messages(request)))
+  )
 
   def reportWitch(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
 
