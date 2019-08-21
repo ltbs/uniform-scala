@@ -3,6 +3,7 @@ package common.web
 
 import shapeless._
 import scala.concurrent._
+import cats.syntax.functor._
 
 trait GenericWebInterpreter[Html] {
 
@@ -64,26 +65,28 @@ trait GenericWebInterpreter[Html] {
         )
     }
 
-    def apply[A](key: List[String])(implicit codec: Codec[A]): WM[Either[ErrorTree,A]] =
-      new WebMonad[Either[ErrorTree,A], Html] {
-        def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Either[ErrorTree,A],Html]] =
+    def get[A](key: List[String])(implicit codec: Codec[A]): WM[Option[Either[ErrorTree,A]]] =
+      new WebMonad[Option[Either[ErrorTree,A]], Html] {
+        def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Option[Either[ErrorTree,A]],Html]] =
           Future.successful(
-            PageOut[Either[ErrorTree,A],Html](
+            PageOut[Option[Either[ErrorTree,A]],Html](
               path = pageIn.path,
               db = pageIn.state,
               output = AskResult.Success(
                 pageIn.state.get(key).
-                  map {Input.fromUrlEncodedString(_) flatMap codec.decode}.
-                  getOrElse {Left(ErrorTree.oneErr(ErrorMsg("not-in-db")))}
+                  map {Input.fromUrlEncodedString(_) flatMap codec.decode}
               )
             )
           )
       }
+
+    def apply[A](key: List[String])(implicit codec: Codec[A]): WM[Either[ErrorTree,A]] =
+      get(key).map{_.getOrElse {Left(ErrorTree.oneErr(ErrorMsg("not-in-db")))}}
 
     def update[A](key: List[String], value: A)(implicit codec: Codec[A]): WM[Unit] =
       updateF{_ + (key -> codec.encode(value).toUrlEncodedString)}
     def delete(key: List[String]): WM[Unit] =
       updateF{_ - key}
   }
-  
+
 }

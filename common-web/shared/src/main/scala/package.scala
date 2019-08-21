@@ -29,13 +29,19 @@ package web {
       case a => a
     }
 
-    implicit def formToWebMonad[A, Html](
+    implicit def formToWebMonad[A, Html: cats.Monoid](
       implicit ff: FormField[A, Html]
     ): WebMonadConstructor[A, Html] = PostAndGetPage(ff)
 
-
   }
+
 }
 
-
-package object web extends webcommon
+package object web extends webcommon {
+  implicit class RichList[A](value: List[A]) {
+    def deleteAtIndex(i: Int): List[A] =
+      value.take(i) ++ value.drop(i + 1)
+    def replaceAtIndex(i: Int, a: A): List[A] =
+      value.take(i) ++ {a :: value.drop(i + 1)}
+  }
+}

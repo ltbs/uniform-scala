@@ -5,7 +5,7 @@ import cats.implicits._
 import concurrent.Future
 import scala.concurrent.ExecutionContext
 
-abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
+abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[A, Html] {
 
   def codec: Codec[A]
 
@@ -53,7 +53,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
                 PageOut(currentId :: path, state + (currentId -> localData.toUrlEncodedString), AskResult.Success[A, Html](valid)).pure[Future]
               case Left(error) =>
                 PageOut(currentId :: path, state, AskResult.Payload[A, Html](
-                  postPage(currentId, state, localData, error, path, messages),
+                  tell |+| postPage(currentId, state, localData, error, path, messages),
                   error,
                   messages
                 )).pure[Future]
@@ -61,6 +61,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
 
           case None =>
             PageOut(currentId :: path, state, AskResult.Payload[A, Html](
+              tell |+|
               getPage(
                 currentId,
                 state,
@@ -89,7 +90,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
 
 object PostAndGetPage {
 
-  def apply[A,Html](
+  def apply[A,Html: cats.Monoid](
     fieldIn: FormField[A, Html]
   ): WebMonadConstructor[A, Html] = new PostAndGetPage[A, Html] {
     def codec: Codec[A] = fieldIn

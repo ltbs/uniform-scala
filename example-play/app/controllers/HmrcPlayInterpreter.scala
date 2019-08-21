@@ -6,11 +6,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import play.twirl.api.{Html, HtmlFormat}
 import ltbs.uniform.common.web.InferFormField
 import cats.syntax.semigroup._
+import ltbs.uniform.common.web.ListingGenerator
 
 case class HmrcPlayInterpreter(
   results: Results,
   messagesApi: play.api.i18n.MessagesApi
-) extends PlayInterpreter[Html](results) with InferFormField[Html] with Widgets {
+) extends PlayInterpreter[Html](results) with InferFormField[Html] with Widgets with ListingGenerator[Html] {
+
+  def genericListingPage(
+    rows: List[(Html, Int)]
+  ): Html = cats.Monoid[Html].combineAll(rows.map{_._1})
 
   def messages(
     request: Request[AnyContent]
