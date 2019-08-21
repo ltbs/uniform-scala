@@ -42,7 +42,7 @@ class BeardController2 @Inject()(
       adaptedHod
     )
 
-    playProgram.run(targetId) {
+    playProgram.run(targetId, purgeStateUponCompletion = true) {
       i: Int => Ok(s"$i").pure[Future]
     }
 
