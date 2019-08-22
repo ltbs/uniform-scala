@@ -76,17 +76,19 @@ trait UniformMessages[A] {
 
   def withCustomContent(customContent: Map[String,(String, List[Any])]): UniformMessages[A] = {
     val underlying = this
+    UniformMessages.contentMonoidInstance[A].combine(
+      {new UniformMessages[A] {
+        def get(key: String,args: Any*): Option[A] = customContent.get(key) flatMap {
+          case (newKey, newArgs) =>
+            Either.catchOnly[NoSuchElementException](underlying(newKey, newArgs:_*)).toOption
+        }
 
-    new UniformMessages[A] {
-      def get(key: String,args: Any*): Option[A] = customContent.get(key) match {
-        case Some((newKey, newArgs)) => underlying.get(newKey, newArgs:_*)
-        case None => underlying.get(key, args:_*)
-      }
-      def list(key: String,args: Any*): List[A] = customContent.get(key) match {
-        case Some((newKey, newArgs)) => underlying.list(newKey, newArgs:_*)
-        case None => underlying.list(key, args:_*)
-      }
-    }
+        def list(key: String,args: Any*): List[A] = {customContent.get(key) map {
+          case (newKey, newArgs) => underlying.list(newKey, newArgs:_*)
+        }}.getOrElse(Nil)
+      }},
+      underlying
+    )
   }
 }
 
