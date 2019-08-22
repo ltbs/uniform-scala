@@ -21,7 +21,7 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
     errors: ErrorTree,
     tell: Html,
     ask: Html,
-    breadcrumbs: Path,
+    breadcrumbs: Breadcrumbs,
     request: Request[AnyContent],
     messages: UniformMessages[Html]
   ): Html
@@ -52,13 +52,13 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
 
       persistence.apply(request) { db =>
         wm(PageIn(id, Nil, data, db, Nil)) flatMap {
-          case common.web.PageOut(path, dbOut, pageOut, pp) =>
+          case common.web.PageOut(breadcrumbs, dbOut, pageOut, pp) =>
             println(s"PP:$pp")
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
                 (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]
               case AskResult.Payload(html, errors, messagesOut) =>
-                (db, controller.Ok(pageChrome(id, errors, mon.empty, html, path, request, messagesOut))).pure[Future]
+                (db, controller.Ok(pageChrome(id, errors, mon.empty, html, breadcrumbs, request, messagesOut))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (db, _) }
             }

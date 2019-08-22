@@ -31,7 +31,7 @@ trait Widgets {
     def encode(in: BigString): Input = Input.one(List(in))
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
@@ -61,7 +61,7 @@ trait Widgets {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
@@ -79,7 +79,7 @@ trait Widgets {
     def encode(in: String): Input = Input.one(List(in))
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
@@ -135,7 +135,7 @@ trait Widgets {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]

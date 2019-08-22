@@ -50,22 +50,18 @@ trait GenericWebInterpreter[Html] {
   }
 
   def pushPathPrefix(key: String) = new WM[Unit] {
-    def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] =
-      Future.successful(
-        PageOut[Unit,Html](
-          path = pageIn.path,
-          db = pageIn.state,
-          output = AskResult.Success(()),
-          pathPrefix = key :: pageIn.pathPrefix
-        )
+    def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] = Future.successful(
+      pageIn.toPageOut(AskResult.Success[Unit, Html](())).copy(
+        pathPrefix = key :: pageIn.pathPrefix
       )
+    )
   }
 
   def popPathPrefix = new WM[String] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[String,Html]] =
       Future.successful(
         PageOut[String,Html](
-          path = pageIn.path,
+          breadcrumbs = pageIn.breadcrumbs,
           db = pageIn.state,
           output = AskResult.Success(pageIn.pathPrefix.head),
           pathPrefix = pageIn.pathPrefix.tail
@@ -77,7 +73,7 @@ trait GenericWebInterpreter[Html] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] =
       Future.successful(
         PageOut[A,Html](
-          path = pageIn.path,
+          breadcrumbs = pageIn.breadcrumbs,
           db = pageIn.state,
           output = AskResult.GotoPath(List(target)),
           pathPrefix = pageIn.pathPrefix
@@ -91,7 +87,7 @@ trait GenericWebInterpreter[Html] {
       def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] =
         Future.successful(
           PageOut[Unit,Html](
-            path = pageIn.path,
+            breadcrumbs = pageIn.breadcrumbs,
             db = dbf(pageIn.state),
             output = AskResult.Success(()),
             pathPrefix = pageIn.pathPrefix
@@ -104,7 +100,7 @@ trait GenericWebInterpreter[Html] {
         def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Option[Either[ErrorTree,A]],Html]] =
           Future.successful(
             PageOut[Option[Either[ErrorTree,A]],Html](
-              path = pageIn.path,
+              breadcrumbs = pageIn.breadcrumbs,
               db = pageIn.state,
               output = AskResult.Success(
                 pageIn.state.get(key).

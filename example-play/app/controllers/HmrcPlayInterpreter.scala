@@ -28,15 +28,15 @@ case class HmrcPlayInterpreter(
     errors: ErrorTree,
     tell: Html,
     ask: Html,
-    breadcrumbs: Path,
+    breadcrumbs: Breadcrumbs,
     request: Request[AnyContent],
     messages: UniformMessages[Html]
   ): Html =
     views.html.chrome(key, errors, Html(tell.toString + ask.toString), breadcrumbs)(messages, request)
 
   def selectionOfFields(
-    inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
-  )(key: List[String], path: Path, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html = {
+    inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
+  )(key: List[String], breadcrumbs: Breadcrumbs, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html = {
     val value: Option[String] = values.valueAtRoot.flatMap{_.headOption}
     views.html.uniform.radios(
       key,
@@ -45,7 +45,7 @@ case class HmrcPlayInterpreter(
       errors,
       messages,
       inner.map{
-        case(subkey,f) => subkey -> f(key :+ subkey, path, {values / subkey}, errors / subkey, messages)
+        case(subkey,f) => subkey -> f(key :+ subkey, breadcrumbs, {values / subkey}, errors / subkey, messages)
       }.filter(_._2.toString.trim.nonEmpty).toMap
     )
   }

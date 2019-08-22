@@ -6,7 +6,7 @@ import cats.syntax.eq._
 package web {
   trait webcommon {
 
-    type Path = List[List[String]]
+    type Breadcrumbs = List[List[String]]
     type JourneyConfig = String
     type DB = Map[List[String],String]
 

@@ -17,7 +17,7 @@ object WebMonad {
       def pure[A](x: A): WebMonad[A,Html] = new WebMonad[A, Html] {
         def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] = {
           import pageIn._
-          PageOut(path,state,AskResult.Success[A,Html](x), pageIn.pathPrefix).pure[Future]
+          PageOut(breadcrumbs,state,AskResult.Success[A,Html](x), pageIn.pathPrefix).pure[Future]
         }
       }
 
@@ -26,7 +26,7 @@ object WebMonad {
           def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[B,Html]] = {
             fa.apply(pageIn).flatMap[PageOut[B,Html]] { _ match {
               case PageOut(p,db,AskResult.Success(a), pp) =>
-                f(a).apply(pageIn.copy(state = db, path = p, pathPrefix = pp))
+                f(a).apply(pageIn.copy(state = db, breadcrumbs = p, pathPrefix = pp))
               case PageOut(p,db,gp: AskResult.GotoPath[A, Html], pp) =>
                 PageOut(p,db,gp.map[B], pathPrefix = pp).pure[Future]
               case PageOut(p,db,pl: AskResult.Payload[A, Html], pp) =>

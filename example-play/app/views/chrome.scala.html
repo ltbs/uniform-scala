@@ -1,6 +1,6 @@
 @import uniform._, interpreters.playframework._
 
-@(key: List[String], errors: ErrorTree, content: Html, breadcrumbs: Path)(implicit messages: ltbs.uniform.UniformMessages[Html], request: Request[AnyContent])
+@(key: List[String], errors: ErrorTree, content: Html, breadcrumbs: Breadcrumbs)(implicit messages: ltbs.uniform.UniformMessages[Html], request: Request[AnyContent])
 <!DOCTYPE html>
 <html lang="en" class="govuk-template js-enabled">
   <head>

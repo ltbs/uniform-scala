@@ -19,7 +19,7 @@ trait InferFormField[Html] {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
@@ -56,13 +56,13 @@ trait InferFormField[Html] {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
     ): Html = mon.combine(
-      hField.value.render(key :+ fieldName, path, data / fieldName, errors / fieldName, messages),
-      tField.render(key, path, data, errors, messages)
+      hField.value.render(key :+ fieldName, breadcrumbs, data / fieldName, errors / fieldName, messages),
+      tField.render(key, breadcrumbs, data, errors, messages)
     )
   }
 
@@ -79,19 +79,19 @@ trait InferFormField[Html] {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
-    ): Html = hlist.render(key, path, data, errors, messages)
+    ): Html = hlist.render(key, breadcrumbs, data, errors, messages)
   }
 
   // COPRODUCTS
   def selectionOfFields(
-    inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
+    inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
   )(
     key: List[String],
-    path: Path,
+    breadcrumbs: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html]
@@ -100,7 +100,7 @@ trait InferFormField[Html] {
   trait CoproductFieldList[A]{
     def decode(out: Input): Either[ErrorTree,A]
     def encode(in: A): Input
-    val inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
+    val inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
   }
 
   implicit val cnilField: CoproductFieldList[CNil] = new CoproductFieldList[CNil]{
@@ -142,8 +142,8 @@ trait InferFormField[Html] {
 
   implicit def coproductField[A](implicit coproductFields: CoproductFieldList[A]) =
     new FormField[A, Html] {
-      def render(key: List[String], path: Path, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html =
-        selectionOfFields(coproductFields.inner)(key,path, values,errors,messages)
+      def render(key: List[String], breadcrumbs: Breadcrumbs, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html =
+        selectionOfFields(coproductFields.inner)(key,breadcrumbs, values,errors,messages)
 
       def decode(out: Input): Either[ErrorTree,A] = coproductFields.decode(out)
       def encode(in: A): Input = coproductFields.encode(in)

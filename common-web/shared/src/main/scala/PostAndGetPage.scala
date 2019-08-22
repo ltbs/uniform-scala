@@ -13,7 +13,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
     key: List[String],
     state: DB,
     existing: Input,
-    path: Path,
+    breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
   )(implicit ec: ExecutionContext): Html
 
@@ -22,7 +22,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
     state: DB,
     request: Input,
     errors: ErrorTree,
-    path: Path,
+    breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
   )(implicit ec: ExecutionContext): Html
 
@@ -50,17 +50,17 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
             val parsed = (codec.decode(localData) >>= validation.combined.either)
             parsed match {
               case Right(valid) =>
-                PageOut(currentId :: path, state + (currentId -> localData.toUrlEncodedString), AskResult.Success[A, Html](valid), pageIn.pathPrefix).pure[Future]
+                PageOut(currentId :: breadcrumbs, state + (currentId -> localData.toUrlEncodedString), AskResult.Success[A, Html](valid), pageIn.pathPrefix).pure[Future]
               case Left(error) =>
-                PageOut(currentId :: path, state, AskResult.Payload[A, Html](
-                  tell |+| postPage(currentId, state, localData, error, path, messages),
+                PageOut(currentId :: breadcrumbs, state, AskResult.Payload[A, Html](
+                  tell |+| postPage(currentId, state, localData, error, breadcrumbs, messages),
                   error,
                   messages
                 ), pageIn.pathPrefix).pure[Future]
             }
 
           case None =>
-            PageOut(currentId :: path, state, AskResult.Payload[A, Html](
+            PageOut(currentId :: breadcrumbs, state, AskResult.Payload[A, Html](
               tell |+|
               getPage(
                 currentId,
@@ -68,7 +68,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
                 dbInput.flatMap{_.toOption} orElse            // db
                   default.map{x => codec.encode(x)} getOrElse // default
                   Input.empty,                                // neither
-                path,
+                breadcrumbs,
                 messages
               ),
               ErrorTree.empty,
@@ -77,11 +77,11 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
         }
       } else {
         dbObject match {
-          case Some(Right(data)) if targetId =!= Nil && !path.contains(targetId) =>
+          case Some(Right(data)) if targetId =!= Nil && !breadcrumbs.contains(targetId) =>
             // they're replaying the journey
-            Future.successful(PageOut(currentId :: path, state, AskResult.Success(data), pageIn.pathPrefix))
+            Future.successful(PageOut(currentId :: breadcrumbs, state, AskResult.Success(data), pageIn.pathPrefix))
           case _ =>
-            Future.successful(PageOut(path, state, AskResult.GotoPath(currentId), pageIn.pathPrefix))
+            Future.successful(PageOut(breadcrumbs, state, AskResult.GotoPath(currentId), pageIn.pathPrefix))
         }
       }
     }
@@ -99,20 +99,20 @@ object PostAndGetPage {
       key: List[String],
       state: DB,
       existing: Input,
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       messages: UniformMessages[Html]
     )(implicit ec: ExecutionContext): Html =
-      fieldIn.render(key, path, existing, ErrorTree.empty, messages)
+      fieldIn.render(key, breadcrumbs, existing, ErrorTree.empty, messages)
 
     def postPage(
       key: List[String],
       state: DB,
       request: Input,
       errors: ErrorTree,
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       messages: UniformMessages[Html]
     )(implicit ec: ExecutionContext): Html =
-      fieldIn.render(key, path, request, errors, messages)
+      fieldIn.render(key, breadcrumbs, request, errors, messages)
   }
 
 }
