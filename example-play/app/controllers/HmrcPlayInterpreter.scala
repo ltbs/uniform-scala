@@ -21,7 +21,7 @@ case class HmrcPlayInterpreter(
     request: Request[AnyContent]
   ): UniformMessages[Html] =
     this.convertMessages(messagesApi.preferred(request)) |+|
-      UniformMessages.attentionSeeker.map{HtmlFormat.escape}
+      UniformMessages.bestGuess.map{HtmlFormat.escape}
 
   def pageChrome(
     key: List[String],

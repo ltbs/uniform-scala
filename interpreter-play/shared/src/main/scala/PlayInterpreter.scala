@@ -50,10 +50,10 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
         _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
       }
 
-      persistence.apply(request) { db =>
+      persistence(request) { db =>
         wm(PageIn(id, Nil, data, db, Nil)) flatMap {
-          case common.web.PageOut(breadcrumbs, dbOut, pageOut, pp) =>
-            println(s"PP:$pp")
+          case common.web.PageOut(breadcrumbs, dbOut, pageOut, _) =>
+            println(pageOut)
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
                 (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]

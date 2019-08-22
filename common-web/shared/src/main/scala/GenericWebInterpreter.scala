@@ -50,11 +50,12 @@ trait GenericWebInterpreter[Html] {
   }
 
   def pushPathPrefix(key: String) = new WM[Unit] {
-    def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] = Future.successful(
-      pageIn.toPageOut(AskResult.Success[Unit, Html](())).copy(
-        pathPrefix = key :: pageIn.pathPrefix
+    def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] =
+      Future.successful(
+        pageIn.toPageOut(AskResult.Success[Unit, Html](())).copy(
+          pathPrefix = key :: pageIn.pathPrefix
+        )
       )
-    )
   }
 
   def popPathPrefix = new WM[String] {

@@ -35,7 +35,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
   ): WebMonad[A, Html] = new WebMonad[A, Html] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A, Html]] = {
       import pageIn._
-      val currentId = List(id) // no subjourneys at present
+      val currentId = pageIn.pathPrefix :+ id
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}
 
@@ -43,10 +43,11 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
         dbInput map {_ >>= codec.decode >>= validation.combined.either}
 
       if (currentId === targetId) {
-
+        println(s"MATCH: $currentId === ${targetId}")
         request match {
           case Some(post) =>
-            val localData = post / id
+            println(s"posted")
+            val localData = post.atPath(currentId)
             val parsed = (codec.decode(localData) >>= validation.combined.either)
             parsed match {
               case Right(valid) =>
@@ -76,6 +77,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
             ), pageIn.pathPrefix).pure[Future]
         }
       } else {
+        println(s"DIFFER: $currentId === ${targetId}")
         dbObject match {
           case Some(Right(data)) if targetId =!= Nil && !breadcrumbs.contains(targetId) =>
             // they're replaying the journey
