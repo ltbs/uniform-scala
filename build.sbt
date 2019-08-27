@@ -162,7 +162,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     crossScalaVersions += scala2_13,
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core" % "2.0.0-RC1",
+      "org.typelevel" %%% "cats-core" % "2.0.0-RC2",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.github.mpilquist" %%% "simulacrum" % "0.19.0"
