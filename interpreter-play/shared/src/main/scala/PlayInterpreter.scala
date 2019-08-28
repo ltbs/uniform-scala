@@ -37,7 +37,7 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
       persistence: PersistenceEngine[Req]
     ): Future[Result] = run(path){f.map{_.pure[Future]}}
 
-    def run(path: String)(
+    def run(path: String, purgeStateUponCompletion: Boolean = false)(
       f: A => Future[Result]
     )(implicit
       request: Req,
@@ -53,14 +53,13 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
       persistence(request) { db =>
         wm(PageIn(id, Nil, data, db, Nil)) flatMap {
           case common.web.PageOut(breadcrumbs, dbOut, pageOut, _) =>
-            println(pageOut)
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
                 (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]
               case AskResult.Payload(html, errors, messagesOut) =>
                 (db, controller.Ok(pageChrome(id, errors, mon.empty, html, breadcrumbs, request, messagesOut))).pure[Future]
               case AskResult.Success(result) =>
-                f(result).map{ (db, _) }
+                f(result).map{ (if (purgeStateUponCompletion) DB.empty else db, _) }
             }
         }
       }
