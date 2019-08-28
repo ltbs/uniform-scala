@@ -6,7 +6,7 @@ addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.2")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
 
-addSbtPlugin("com.47deg"  % "sbt-microsites" % "0.9.2")
+addSbtPlugin("com.47deg"  % "sbt-microsites" % "0.9.3")
 
 addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.6.12")
 
