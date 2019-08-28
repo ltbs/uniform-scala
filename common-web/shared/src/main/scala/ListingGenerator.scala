@@ -50,7 +50,7 @@ trait ListingGenerator[Html] {
             for {
               newRecord <- wmca.apply(s"${id}-add", Monoid[Html].empty, None, Nil, messages): WM[A]
               _ <- db(List(s"${id}-zzdata")) = data :+ newRecord
-              _ <- db.delete(List(s"${id}-add")) >> db.delete(List(id))
+              _ <- db.deleteRecursive(List(s"${id}-add")) >> db.delete(List(id))
               x <- goto[List[A]](id)
             } yield (x)
 
@@ -116,7 +116,7 @@ trait ListingGenerator[Html] {
             for {
               newRecord <- genericSubJourney(s"${id}-add")(addEditJourney(data, None))
               _         <- db(List(s"${id}-zzdata")) = data :+ newRecord
-              _         <- db.delete(List(s"${id}-add")) >> db.delete(List(id))
+              _         <- db.deleteRecursive(List(s"${id}-add")) >> db.delete(List(id))
               x         <- goto[List[A]](id)
             } yield (x)
 

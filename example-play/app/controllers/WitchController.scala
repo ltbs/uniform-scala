@@ -29,9 +29,13 @@ class WitchController @Inject()(
     int: Language[F, NilTypes, Boolean :: String :: NilTypes]
   ): F[Familiar] = {
     import int._
+    val existingCat: Option[Familiar.Cat] = editIndex.map{existing(_)} collect {
+      case c: Familiar.Cat => c
+    }
+
     for {
-      name <- ask[String]("fam-name")
-      isBlack <- ask[Boolean]("fam-isblack")
+      name <- ask[String]("fam-name", default = existingCat.map{_.name})
+      isBlack <- ask[Boolean]("fam-isblack", default = existingCat.map{_.isBlack})
     } yield (Familiar.Cat(name, isBlack))
   }
 
