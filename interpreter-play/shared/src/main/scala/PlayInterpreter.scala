@@ -51,7 +51,6 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
       }
 
       persistence.apply(request) { db =>
-        println(db)
         wm(PageIn(id, Nil, data, db)) flatMap {
           case common.web.PageOut(path, dbOut, pageOut) =>
             pageOut match {
@@ -60,7 +59,7 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
               case AskResult.Payload(html, errors, messagesOut) =>
                 (db, controller.Ok(pageChrome(id, errors, mon.empty, html, path, request, messagesOut))).pure[Future]
               case AskResult.Success(result) =>
-                f(result).map{ (if (purgeStateUponCompletion) DB.empty else db, _) }
+                f(result).map{ (if (purgeStateUponCompletion) DB.empty else dbOut, _) }
             }
         }
       }
