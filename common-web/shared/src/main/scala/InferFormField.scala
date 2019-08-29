@@ -26,6 +26,58 @@ trait InferFormField[Html] {
     ): Html = mon.empty
   }
 
+  /** We get this from coproduct anyway, but we've done this
+    * explicitly as the name of the field in `Some` changed from 'x'
+    * to 'value' between scala 2.11 and 2.12 and we're overriding the
+    * presentation. If it is no longer necessary to override the
+    * presentation then this will no longer be needed
+    */
+  implicit def optionField[A](
+    implicit encInner: Lazy[FF[A]]//FormFieldEncoding[A]
+  ) = new FF[Option[A]] {
+
+    def decode(out: Input): Either[ErrorTree,Option[A]] = out.valueAtRoot.headOption match {
+      case Some(List("Some")) => encInner.value.decode(out / "Some" / "value").map{x => x.some} match {
+        case Left(e) => Left(e.prefixWith("value").prefixWith("Some"))
+        case r@Right(_) => r
+      }
+      case Some(List("None")) => None.asRight
+      case _                  => Left(ErrorMsg("required").toTree)
+    }
+
+    def encode(in: Option[A]): Input = in match {
+      case Some(inner) => Map(
+        List.empty[String] -> List("Some")
+      ) ++ encInner.value.encode(inner).prefixWith("value").prefixWith("Some")
+      case None        => Input.one(List("None"))
+    }
+
+    def render(
+      key: List[String],
+      path: Path,
+      data: Input,
+      errors: ErrorTree,
+      messages: UniformMessages[Html]
+    ): Html = {
+      val options: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)] =
+        List(
+          "Some" -> {case (subKey, subPath, subOpt, subErr, subMsg) =>
+            encInner.value.render(
+              subKey :+ "value",
+              subPath,
+              subOpt / "value",
+              subErr / "value",
+              subMsg
+            )},
+          "None" -> {case _ => mon.empty}
+        )
+
+      selectionOfFields(options)(key,path, data ,errors,messages)
+    }
+
+  }
+
+
   implicit def hConsField[K <: Symbol, H, T <: HList](
     implicit
       witness: Witness.Aux[K],
