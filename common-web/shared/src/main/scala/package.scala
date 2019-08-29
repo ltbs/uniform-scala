@@ -16,8 +16,9 @@ package web {
 
     def relativePath(from: List[String], to: List[String]): String = {
       import cats.instances.string._
-      val (rem, add) = removeCommon(from, to)
-        (rem.drop(1).map{_ => ".."} ++ add).mkString("/")
+      removeCommon(from, to) match {
+        case (rem, add)           => (rem.map{_ => ".."} ++ add).mkString("/")
+      }
     }
 
     @annotation.tailrec

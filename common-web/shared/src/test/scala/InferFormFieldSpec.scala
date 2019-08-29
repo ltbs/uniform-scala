@@ -10,10 +10,10 @@ object Presenter extends InferFormField[String] with SampleFormFields {
   val mon: cats.Monoid[String] = implicitly
 
   def selectionOfFields(
-    inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[String]) => String)]
+    inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[String]) => String)]
   )(
     key: List[String],
-    @silent("never used") path: Path,
+    @silent("never used") path: Breadcrumbs,
     @silent("never used") values: Input,
     @silent("never used") errors: ErrorTree,
     @silent("never used") messages: UniformMessages[String]

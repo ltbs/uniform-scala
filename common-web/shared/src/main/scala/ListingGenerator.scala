@@ -5,11 +5,19 @@ import cats.implicits._
 import cats.Monoid
 
 sealed trait ListAction
+
+sealed trait ListActionRow extends ListAction
+sealed trait ListActionGeneral extends ListAction
+
 object ListAction {
-  case object Continue extends ListAction
-  case object Add extends ListAction
-  case class Delete(index: Int) extends ListAction
-  case class Edit(index: Int) extends ListAction
+  case class Delete(index: Int) extends ListActionRow
+  case class Edit(index: Int) extends ListActionRow
+  case object Continue extends ListActionGeneral
+  case object Add extends ListActionGeneral
+}
+
+trait ListingRowHtml[Html, A] {
+  def apply(index: Int, value: A, editLink: Option[Html], deleteLink: Option[Html]): Html
 }
 
 trait ListingGenerator[Html] {
@@ -19,13 +27,12 @@ trait ListingGenerator[Html] {
     rows: List[(Html, Int)]
   ): Html
 
-  def listingPage[A](
-    row: A => Html
-  )(implicit
+  def listingPage[A](implicit
     wmcbranch: WMC[ListAction],
     wmca: WMC[A],
     mon: Monoid[Html],
-    codec: Codec[List[A]]
+    codec: Codec[List[A]],
+    listingRowHtml: ListingRowHtml[Html, A]
   ) = new WMC[List[A]] {
 
     def apply(
@@ -43,7 +50,7 @@ trait ListingGenerator[Html] {
           case _ => defaultIn.getOrElse(Nil)
         }
 
-        {wmcbranch(id, genericListingPage(data.map(row).zipWithIndex), None, Nil, messages): WM[ListAction]} flatMap {
+        {wmcbranch(id, genericListingPage(data.map(listingRowHtml(0, _, None, None)).zipWithIndex), None, Nil, messages): WM[ListAction]} flatMap {
           case ListAction.Continue => data.pure[WM]
 
           case ListAction.Add =>
@@ -73,14 +80,20 @@ trait ListingGenerator[Html] {
   }
 
   def listingPageWM[A](
-    row: (A, Int) => Html,
     addEditJourney: (List[A], Option[Int]) => WM[A],
     deleteJourney: (List[A], Int) => WM[Boolean] = {(_: List[A], _: Int) => true.pure[WM]},
     customOrdering: Option[cats.Order[A]] = None
   )(implicit
-    wmcbranch: WMC[ListAction],
-    codec: Codec[List[A]]
+    wmcbranchff: FormField[ListActionGeneral, Html],
+    codec: Codec[List[A]],
+    mon: Monoid[Html],
+    listingRowHtml: ListingRowHtml[Html, A]
   ) = new WMC[List[A]] {
+
+    val wmcbranch = formToWebMonad(
+      mon,
+      wmcbranchff.simap[ListAction](Right(_))(_.asInstanceOf[ListActionGeneral])
+    )
 
     def apply(
       id: String,
@@ -106,7 +119,7 @@ trait ListingGenerator[Html] {
 
         val indexedRows = data.zipWithIndex.
           sorted(orderWithIndex).
-          map{x => (row(x._1, x._2), x._2)}
+          map{x => (listingRowHtml(x._2, x._1, None, None), x._2)}
 
         {wmcbranch(id, genericListingPage(indexedRows), None, Nil, messages): WM[ListAction]} flatMap {
           case ListAction.Continue =>

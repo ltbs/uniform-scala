@@ -1,4 +1,4 @@
-@import uniform._, interpreters.playframework._
+@import uniform._, interpreters.playframework._, common.web.relativePath
 
 @(key: List[String], errors: ErrorTree, content: Html, breadcrumbs: Breadcrumbs)(implicit messages: ltbs.uniform.UniformMessages[Html], request: Request[AnyContent])
 <!DOCTYPE html>
@@ -27,9 +27,8 @@
     <div class="govuk-width-container">
       <main class="govuk-main-wrapper " id="main-content" role="main">
         <div id="mainBody">
-
           @for(back <- breadcrumbs.drop(1).headOption) {
-            <a href="@back" class="govuk-back-link">@messages({back :+ "back"}.mkString("."))</a>
+            <a href="@{relativePath(breadcrumbs.head.dropRight(1), back)}" class="govuk-back-link">@messages({back :+ "back"}.mkString("."))</a>
           }
 
           @*****************************************

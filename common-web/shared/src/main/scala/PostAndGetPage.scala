@@ -9,6 +9,8 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
 
   def codec: Codec[A]
 
+  val customRouting: PartialFunction[List[String], A] = Map.empty
+
   def getPage(
     key: List[String],
     state: DB,
@@ -42,11 +44,10 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
       lazy val dbObject: Option[Either[ErrorTree,A]] =
         dbInput map {_ >>= codec.decode >>= validation.combined.either}
 
-      if (currentId === targetId) {
-        println(s"MATCH: $currentId === ${targetId}")
+      lazy val residual = targetId.drop(currentId.size)
+      if (targetId === currentId) {
         request match {
           case Some(post) =>
-            println(s"posted")
             val localData = post.atPath(currentId)
             val parsed = (codec.decode(localData) >>= validation.combined.either)
             parsed match {
@@ -63,28 +64,40 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
           case None =>
             PageOut(currentId :: breadcrumbs, state, AskResult.Payload[A, Html](
               tell |+|
-              getPage(
-                currentId,
-                state,
-                dbInput.flatMap{_.toOption} orElse            // db
-                  default.map{x => codec.encode(x)} getOrElse // default
-                  Input.empty,                                // neither
-                breadcrumbs,
-                messages
-              ),
+                getPage(
+                  currentId,
+                  state,
+                  dbInput.flatMap{_.toOption} orElse            // db
+                    default.map{x => codec.encode(x)} getOrElse // default
+                    Input.empty,                                // neither
+                  breadcrumbs,
+                  messages
+                ),
               ErrorTree.empty,
               messages
             ), pageIn.pathPrefix).pure[Future]
         }
+      } else if (targetId.startsWith(currentId) && customRouting.isDefinedAt(residual)) {
+        println("residual")
+        val residualData = customRouting(residual)
+        Future.successful(
+          PageOut(
+            breadcrumbs,
+            state + (currentId -> codec.encode(residualData).toUrlEncodedString),
+            AskResult.Success(residualData),
+            pageIn.pathPrefix
+          )
+        )
       } else {
-        println(s"DIFFER: $currentId === ${targetId}")
-        dbObject match {
-          case Some(Right(data)) if targetId =!= Nil && !breadcrumbs.contains(targetId) =>
-            // they're replaying the journey
-            Future.successful(PageOut(currentId :: breadcrumbs, state, AskResult.Success(data), pageIn.pathPrefix))
-          case _ =>
-            Future.successful(PageOut(breadcrumbs, state, AskResult.GotoPath(currentId), pageIn.pathPrefix))
-        }
+        Future.successful(
+          dbObject match {
+            case Some(Right(data)) if targetId =!= Nil && !breadcrumbs.contains(targetId) =>
+              // they're replaying the journey
+              PageOut(currentId :: breadcrumbs, state, AskResult.Success(data), pageIn.pathPrefix)
+            case _ =>
+              PageOut(breadcrumbs, state, AskResult.GotoPath(currentId), pageIn.pathPrefix)
+          }
+        )
       }
     }
   }

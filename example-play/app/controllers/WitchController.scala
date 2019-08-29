@@ -6,6 +6,7 @@ import ltbs.uniform._, interpreters.playframework._, examples.witchcraft._
 import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
+import play.twirl.api.Html
 
 @Singleton
 class WitchController @Inject()(
@@ -18,9 +19,16 @@ class WitchController @Inject()(
 
   lazy val interpreter = HmrcPlayInterpreter(this, messagesApi)
 
+  implicit val familiarRow = new common.web.ListingRowHtml[Html, Familiar] {
+    def apply(index: Int, value: Familiar, editLink: Option[Html], deleteLink: Option[Html]): Html = Html(value.toString)
+  }
+
+  implicit val evidenceRow = new common.web.ListingRowHtml[Html, Evidence] {
+    def apply(index: Int, value: Evidence, editLink: Option[Html], deleteLink: Option[Html]): Html = Html(value.toString)
+  }
+
   import interpreter._
   implicit val evidenceListing = interpreter.listingPage[examples.witchcraft.Evidence]
-    {x => play.twirl.api.Html(x.toString) }
 
   def familiarProgram[F[_]: cats.Monad](
     existing: List[Familiar],
@@ -40,7 +48,6 @@ class WitchController @Inject()(
   }
 
   implicit def familiarListing(implicit request: Request[AnyContent]) = interpreter.listingPageWM[Familiar](
-    {(x: Familiar, i: Int) => play.twirl.api.Html(x.toString) },
     familiarProgram[interpreter.WM](_,_)(create[NilTypes, Boolean :: String :: NilTypes](interpreter.messages(request)))
   )
 

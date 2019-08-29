@@ -55,9 +55,10 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
           case common.web.PageOut(breadcrumbs, dbOut, pageOut, _) =>
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
-                (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]
+                log.info(s"redirecting to ${relativePath(id, targetPath)} (relativePath($id, $targetPath))")
+                (dbOut, controller.Redirect(relativePath(id.dropRight(1), targetPath))).pure[Future]
               case AskResult.Payload(html, errors, messagesOut) =>
-                (db, controller.Ok(pageChrome(id, errors, mon.empty, html, breadcrumbs, request, messagesOut))).pure[Future]
+                (db, controller.Ok(pageChrome(breadcrumbs.head, errors, mon.empty, html, breadcrumbs, request, messagesOut))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (if (purgeStateUponCompletion) DB.empty else db, _) }
             }
