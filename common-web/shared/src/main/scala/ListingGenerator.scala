@@ -20,6 +20,11 @@ trait ListingRowHtml[Html, A] {
   def apply(index: Int, value: A, editLink: Option[Html], deleteLink: Option[Html]): Html
 }
 
+object Pos {
+  def unapply(value: String): Option[Int] =
+    Either.catchOnly[NumberFormatException](value.toInt).toOption
+}
+
 trait ListingGenerator[Html] {
   this: GenericWebInterpreter[Html] =>
 
@@ -50,7 +55,9 @@ trait ListingGenerator[Html] {
           case _ => defaultIn.getOrElse(Nil)
         }
 
-        {wmcbranch(id, genericListingPage(data.map(listingRowHtml(0, _, None, None)).zipWithIndex), None, Nil, messages): WM[ListAction]} flatMap {
+        val listingPage = genericListingPage(data.map(listingRowHtml(0, _, None, None)).zipWithIndex)
+
+        {wmcbranch(id, listingPage, None, Nil, messages): WM[ListAction]} flatMap {
           case ListAction.Continue => data.pure[WM]
 
           case ListAction.Add =>
@@ -84,16 +91,38 @@ trait ListingGenerator[Html] {
     deleteJourney: (List[A], Int) => WM[Boolean] = {(_: List[A], _: Int) => true.pure[WM]},
     customOrdering: Option[cats.Order[A]] = None
   )(implicit
-    wmcbranchff: FormField[ListActionGeneral, Html],
+    wmcbranchffg: FormField[ListActionGeneral, Html],
+    wmcbranchffa: FormField[ListAction, Html],    
     codec: Codec[List[A]],
     mon: Monoid[Html],
     listingRowHtml: ListingRowHtml[Html, A]
   ) = new WMC[List[A]] {
 
-    val wmcbranch = formToWebMonad(
-      mon,
-      wmcbranchff.simap[ListAction](Right(_))(_.asInstanceOf[ListActionGeneral])
-    )
+    val wmcbranchff = new FormField[ListAction, Html] {
+      def decode(out: Input): Either[ErrorTree,common.web.ListAction] =
+        wmcbranchffa.decode(out)
+
+      def encode(in: common.web.ListAction): Input =
+        wmcbranchffa.encode(in)
+
+      def render(
+        key: List[String],
+        breadcrumbs: common.web.Breadcrumbs,
+        data: Input,
+        errors: ErrorTree,
+        messages: UniformMessages[Html]
+      ): Html =
+        wmcbranchffg.render(key, breadcrumbs, data, errors, messages)
+    }
+
+    val wmcbranch = new SimplePostAndGetPage[ListAction, Html](
+      wmcbranchff
+    ) {
+      override val customRouting = {
+        case "edit" :: Pos(x) :: Nil   => ListAction.Edit(x)
+        case "delete" :: Pos(x) :: Nil => ListAction.Delete(x)
+      }
+    }
 
     def apply(
       id: String,
@@ -127,9 +156,9 @@ trait ListingGenerator[Html] {
 
           case ListAction.Add =>
             for {
-              newRecord <- genericSubJourney(s"${id}-add")(addEditJourney(data, None))
+              newRecord <- genericSubJourney(Seq(id, "add"))(addEditJourney(data, None))
               _         <- db(List(s"${id}-zzdata")) = data :+ newRecord
-              _         <- db.deleteRecursive(List(s"${id}-add")) >> db.delete(List(id))
+              _         <- db.deleteRecursive(List(id)) >> db.delete(List(id))
               x         <- goto[List[A]](id)
             } yield (x)
 
@@ -144,9 +173,9 @@ trait ListingGenerator[Html] {
 
           case ListAction.Edit(index) =>
             for {
-              newRecord <- addEditJourney(data, Some(index))
+              newRecord <- genericSubJourney(Seq(id, "edit", index.toString))(addEditJourney(data, Some(index)))
               _         <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, newRecord)
-              _         <- db.delete(List(s"${id}-edit")) >> db.delete(List(id))
+              _         <- db.deleteRecursive(List(s"${id}-edit")) >> db.delete(List(id))
               x         <- goto[List[A]](id)
             } yield (x)
 

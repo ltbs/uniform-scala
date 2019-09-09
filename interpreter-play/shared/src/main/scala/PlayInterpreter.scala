@@ -44,7 +44,15 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
       persistence: PersistenceEngine[Req]
     ): Future[Result] = {
 
-      val id = path.split("/").filter(_.nonEmpty).toList
+      val id = path.split("/", -1).toList
+
+      // this is a nasty bodge to prevent hitting URL's with a trailing slash
+      // which seem to be caused by the UA handling '..' in the redirection target. 
+      if (id.lastOption == Some("")) {
+        return (controller.Redirect(
+          "../" + path.split("/").lastOption.getOrElse("")
+        )).pure[Future]
+      }
 
       val data: Option[Input] = request.body.asFormUrlEncoded.map {
         _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }

@@ -78,7 +78,6 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
             ), pageIn.pathPrefix).pure[Future]
         }
       } else if (targetId.startsWith(currentId) && customRouting.isDefinedAt(residual)) {
-        println("residual")
         val residualData = customRouting(residual)
         Future.successful(
           PageOut(
@@ -103,11 +102,9 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
   }
 }
 
-object PostAndGetPage {
-
-  def apply[A,Html: cats.Monoid](
-    fieldIn: FormField[A, Html]
-  ): WebMonadConstructor[A, Html] = new PostAndGetPage[A, Html] {
+class SimplePostAndGetPage[A,Html: cats.Monoid](
+  fieldIn: FormField[A, Html]
+) extends PostAndGetPage[A, Html] {
     def codec: Codec[A] = fieldIn
 
     def getPage(
@@ -128,6 +125,12 @@ object PostAndGetPage {
       messages: UniformMessages[Html]
     )(implicit ec: ExecutionContext): Html =
       fieldIn.render(key, breadcrumbs, request, errors, messages)
-  }
+}
+
+object PostAndGetPage {
+
+  def apply[A,Html: cats.Monoid](
+    fieldIn: FormField[A, Html]
+  ): WebMonadConstructor[A, Html] = new SimplePostAndGetPage[A, Html](fieldIn)
 
 }

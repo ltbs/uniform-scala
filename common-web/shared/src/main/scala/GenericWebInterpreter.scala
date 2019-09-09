@@ -40,20 +40,20 @@ trait GenericWebInterpreter[Html] {
       )
     }
 
-    override def subJourney[A](id: String)(sub: => WM[A]): WM[A] =
+    override def subJourney[A](id: String*)(sub: => WM[A]): WM[A] =
       genericSubJourney[A](id)(sub)
   }
 
-  def genericSubJourney[A](id: String)(sub: => WM[A]): WM[A] = {
+  def genericSubJourney[A](id: Seq[String])(sub: => WM[A]): WM[A] = {
     import cats.implicits._
     pushPathPrefix(id) >> sub <* popPathPrefix
   }
 
-  def pushPathPrefix(key: String) = new WM[Unit] {
+  def pushPathPrefix(key: Seq[String]) = new WM[Unit] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] =
       Future.successful(
         pageIn.toPageOut(AskResult.Success[Unit, Html](())).copy(
-          pathPrefix = key :: pageIn.pathPrefix
+          pathPrefix = key.toList ++ pageIn.pathPrefix
         )
       )
   }
