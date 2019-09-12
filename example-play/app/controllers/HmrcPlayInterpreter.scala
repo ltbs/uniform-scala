@@ -25,9 +25,11 @@ case class HmrcPlayInterpreter(
     ask: Html,
     breadcrumbs: Path,
     request: Request[AnyContent],
-    messages: UniformMessages[Html]
-  ): Html =
+    messages: UniformMessages[Html],
+    isCompound: Boolean
+  ): Html = {
     views.html.chrome(key, errors, Html(tell.toString + ask.toString), breadcrumbs)(messages, request)
+  }
 
   def selectionOfFields(
     inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
