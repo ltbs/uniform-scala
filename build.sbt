@@ -31,7 +31,7 @@ lazy val root = project.in(file("."))
 scalaVersion := scala2_11
 crossScalaVersions := Seq(scala2_11)
 
-enablePlugins(GitVersioning, SiteScaladocPlugin)
+enablePlugins(SemVerPlugin, SiteScaladocPlugin)
 
 def macroDependencies(scalaVersion: String) =
   CrossVersion.partialVersion(scalaVersion) match {
