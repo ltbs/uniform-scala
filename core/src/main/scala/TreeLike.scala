@@ -3,6 +3,7 @@ package ltbs.uniform
 import simulacrum._
 import scala.language.implicitConversions
 import cats.data.{NonEmptyList => NEL}
+import collection.immutable.ListMap
 
 @typeclass trait TreeLike[T] {
 
@@ -97,12 +98,12 @@ trait TreeLikeInstances {
       }
     }
 
-    val empty: ErrorTree = Map.empty
-    def one(in: NEL[ErrorMsg]): ErrorTree = Map (
+    val empty: ErrorTree = ListMap.empty
+    def one(in: NEL[ErrorMsg]): ErrorTree = ListMap (
       NEL.one(Nil) -> in
     )
 
-    def oneErr(in: ErrorMsg): ErrorTree = Map (
+    def oneErr(in: ErrorMsg): ErrorTree = ListMap (
       NEL.one(Nil) -> NEL.one(in)
     )
 

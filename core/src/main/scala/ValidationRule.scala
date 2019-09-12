@@ -1,8 +1,8 @@
 package ltbs.uniform
 
-import cats.implicits._
 import cats.Monoid
 import cats.data.NonEmptyList
+import collection.immutable.ListMap
 
 case class ErrorMsg(msg: String, args: Any*) {
 
@@ -10,7 +10,7 @@ case class ErrorMsg(msg: String, args: Any*) {
     ErrorMsg(in.mkString(".") ++ "." ++ msg, args:_*)
 
   def render[A](msgProvider: UniformMessages[A]): A =
-    msgProvider(msg, args:_*)
+    msgProvider.decompose(msg, args:_*)
 
   def toTree: ErrorTree = {
     ErrorTree.one(NonEmptyList.one(this))
@@ -45,7 +45,7 @@ object Rule {
       def apply(in: A) = if (pred(in))
         ErrorTree.empty
       else
-        Map(paths -> NonEmptyList.one(error))
+        ListMap(paths -> NonEmptyList.one(error))
     }
   }
 
@@ -53,12 +53,12 @@ object Rule {
     List(rules.toList.map{case (r, msg) => fromPred(r, msg)})
 
   def fromPred[A](pred: A => Boolean, msg: (ErrorMsg, NonEmptyList[InputPath])): Rule[A] = new Rule[A] {
-    def apply(in: A) = if (pred(in)) ErrorTree.empty else Map(msg._2 -> NonEmptyList.one(msg._1))
+    def apply(in: A) = if (pred(in)) ErrorTree.empty else ListMap(msg._2 -> NonEmptyList.one(msg._1))
   }
 
   def pattern[A](pattern: PartialFunction[A,(ErrorMsg, NonEmptyList[InputPath])]): Rule[A] = new Rule[A] {
     val f = pattern.andThen{
-      case (msg, paths) => Map(paths -> NonEmptyList.one(msg))
+      case (msg, paths) => ListMap(paths -> NonEmptyList.one(msg))
     }
     def apply(in: A) = f.applyOrElse(in, {_: A => ErrorTree.empty})
   }
@@ -66,7 +66,7 @@ object Rule {
   implicit def vrMonoid[A]: Monoid[Rule[A]] = new Monoid[Rule[A]] {
     def empty: Rule[A] = noop
     def combine(x: Rule[A], y: Rule[A]) = new Rule[A] {
-      def apply(in: A): ErrorTree = x.apply(in) |+| y.apply(in)
+      def apply(in: A): ErrorTree = x.apply(in) ++ y.apply(in)
     }
   }
 

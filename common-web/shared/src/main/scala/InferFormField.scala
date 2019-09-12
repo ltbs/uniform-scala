@@ -94,7 +94,7 @@ trait InferFormField[Html] {
         case (Right(h), Right(t)) => Right((field[K](h) :: t))
         case (Left(he), Left(te)) =>
           val l = he.prefixWith(fieldName)
-          Left(l |+| te)
+          Left(l ++ te)
         case (_,        Left(te)) => Left(te)
         case (Left(he), _)        => Left(he.prefixWith(fieldName))
       }
