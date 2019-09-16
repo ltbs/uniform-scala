@@ -1,5 +1,7 @@
 package controllers
 
+import scala.language.higherKinds
+
 import cats.implicits._
 import javax.inject._
 import ltbs.uniform._, interpreters.playframework._, examples.witchcraft._
@@ -20,11 +22,19 @@ class WitchController @Inject()(
   lazy val interpreter = HmrcPlayInterpreter(this, messagesApi)
 
   implicit val familiarRow = new common.web.ListingRowHtml[Html, Familiar] {
-    def apply(index: Int, value: Familiar, editLink: Option[Html], deleteLink: Option[Html]): Html = Html(value.toString)
+    def apply(index: Int, value: Familiar, editLink: String, deleteLink: String, messages: UniformMessages[Html]): Html = {
+      val cell = value match {
+        case Familiar.Cat(name, true) => s"Black cat called $name"
+        case Familiar.Cat(name, false) => s"Cat called $name"          
+        case _ => "Non-cat pet"
+      }
+
+      Html(s"""<tr><th>$cell</th><td><a href="${editLink}">Edit</a></td><td><a href="${deleteLink}">Delete</a></td></tr>""")
+    }
   }
 
   implicit val evidenceRow = new common.web.ListingRowHtml[Html, Evidence] {
-    def apply(index: Int, value: Evidence, editLink: Option[Html], deleteLink: Option[Html]): Html = Html(value.toString)
+    def apply(index: Int, value: Evidence, editLink: String, deleteLink: String, messages: UniformMessages[Html]): Html = Html(value.toString)
   }
 
   import interpreter._

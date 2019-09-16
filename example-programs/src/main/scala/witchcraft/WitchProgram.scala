@@ -13,10 +13,10 @@ package object witchcraft {
 
   def witchProgram[F[_] : Monad](
     i: Language[F, TellTypes, AskTypes]
-  ): F[WitchReport] = (
-    i.ask[Accused]("accused"),
-    i.ask[List[Evidence]]("evidence"),
-    i.ask[List[Familiar]]("familiars")
-  ).mapN(WitchReport)
+  ): F[WitchReport] = for {
+    f <- i.ask[List[Familiar]]("familiars")
+    a <- i.ask[Accused]("accused")
+    e <- i.ask[List[Evidence]]("evidence")
+  } yield WitchReport(a,e,f)
 
 }

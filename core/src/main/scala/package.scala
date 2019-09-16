@@ -60,10 +60,18 @@ package object uniform extends TreeLike.ToTreeLikeOps
   }
 
   implicit class RichErrorTree(a: ErrorTree) {
-    def valueAtRootList: List[ErrorMsg] = a.valueAtRoot match {
-      case None      => Nil
-      case Some(nel) => nel.toList
-    }
+
+    def valueAtRootList: List[ErrorMsg] =
+      a.valueAtRoot.fold(List.empty[ErrorMsg])(_.toList)
+
+    def errorsAtRoot = valueAtRootList
+
+    def errorsAt(key: String): List[ErrorMsg] =
+      a.valueAt(key).fold(List.empty[ErrorMsg])(_.toList)
+
+    def errorsAtPath(key: List[String]): List[ErrorMsg] =
+      a.valueAtPath(key).fold(List.empty[ErrorMsg])(_.toList)
+
   }
 
   implicit class RichAppOps[F[_]: Applicative, A](e: F[A]) {

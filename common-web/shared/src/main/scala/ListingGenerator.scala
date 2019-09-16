@@ -5,7 +5,6 @@ import cats.implicits._
 import cats.Monoid
 
 sealed trait ListAction
-
 sealed trait ListActionRow extends ListAction
 sealed trait ListActionGeneral extends ListAction
 
@@ -17,7 +16,7 @@ object ListAction {
 }
 
 trait ListingRowHtml[Html, A] {
-  def apply(index: Int, value: A, editLink: Option[Html], deleteLink: Option[Html]): Html
+  def apply(index: Int, value: A, editLink: String, deleteLink: String, messages: UniformMessages[Html]): Html
 }
 
 object Pos {
@@ -55,7 +54,7 @@ trait ListingGenerator[Html] {
           case _ => defaultIn.getOrElse(Nil)
         }
 
-        val listingPage = genericListingPage(data.map(listingRowHtml(0, _, None, None)).zipWithIndex)
+        val listingPage = genericListingPage(data.map(listingRowHtml(0, _, "", "", messages)).zipWithIndex)
 
         {wmcbranch(id, listingPage, None, Nil, messages): WM[ListAction]} flatMap {
           case ListAction.Continue => data.pure[WM]
@@ -148,7 +147,13 @@ trait ListingGenerator[Html] {
 
         val indexedRows = data.zipWithIndex.
           sorted(orderWithIndex).
-          map{x => (listingRowHtml(x._2, x._1, None, None), x._2)}
+          map{case (v, index) =>
+
+            val editLink = s"$id/edit/$index"
+            val deleteLink = s"$id/delete/$index"
+
+            (listingRowHtml(index, v, editLink, deleteLink, messages), index)
+          }
 
         {wmcbranch(id, genericListingPage(indexedRows), None, Nil, messages): WM[ListAction]} flatMap {
           case ListAction.Continue =>
@@ -175,14 +180,12 @@ trait ListingGenerator[Html] {
             for {
               newRecord <- genericSubJourney(Seq(id, "edit", index.toString))(addEditJourney(data, Some(index)))
               _         <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, newRecord)
-              _         <- db.deleteRecursive(List(s"${id}-edit")) >> db.delete(List(id))
+              _         <- db.deleteRecursive(List(id, "edit")) >> db.delete(List(id))
               x         <- goto[List[A]](id)
             } yield (x)
 
         }
       }
     }
-
   }
-
 }
