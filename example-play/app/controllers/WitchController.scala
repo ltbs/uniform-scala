@@ -21,20 +21,34 @@ class WitchController @Inject()(
 
   lazy val interpreter = HmrcPlayInterpreter(this, messagesApi)
 
-  implicit val familiarRow = new common.web.ListingRowHtml[Html, Familiar] {
-    def apply(index: Int, value: Familiar, editLink: String, deleteLink: String, messages: UniformMessages[Html]): Html = {
-      val cell = value match {
-        case Familiar.Cat(name, true) => s"Black cat called $name"
-        case Familiar.Cat(name, false) => s"Cat called $name"          
-        case _ => "Non-cat pet"
+  implicit val familiarRows = new common.web.ListingTell[Html, Familiar] {
+    def apply(rows: List[common.web.ListingTellRow[Familiar]], messages: UniformMessages[Html]): Html = {
+
+
+      val famRow: common.web.ListingTellRow[Familiar] => String = {
+        case common.web.ListingTellRow(value, editLink, deleteLink) =>
+          val cell = value match {
+            case Familiar.Cat(name, true) => s"Black cat called $name"
+            case Familiar.Cat(name, false) => s"Cat called $name"
+            case _ => "Non-cat pet"
+          }
+
+          s"""<tr><td>$cell</td><td><a href="${editLink}">Edit</a></td><td><a href="${deleteLink}">Delete</a></td></tr>"""
       }
 
-      Html(s"""<tr><th>$cell</th><td><a href="${editLink}">Edit</a></td><td><a href="${deleteLink}">Delete</a></td></tr>""")
+      val h =
+        s"""|<table>
+            |  <tr><th>Familiar</th><th>Edit</th><th>Delete</th></tr>
+            |  ${rows.map(famRow).mkString}
+            |</table>""".stripMargin
+      Html(h)
     }
   }
 
-  implicit val evidenceRow = new common.web.ListingRowHtml[Html, Evidence] {
-    def apply(index: Int, value: Evidence, editLink: String, deleteLink: String, messages: UniformMessages[Html]): Html = Html(value.toString)
+  implicit val evidenceRows = new common.web.ListingTell[Html, Evidence] {
+    def apply(rows: List[common.web.ListingTellRow[Evidence]], messages: UniformMessages[Html]): Html = {
+      ???
+    }
   }
 
   import interpreter._
@@ -43,6 +57,7 @@ class WitchController @Inject()(
   def familiarProgram[F[_]: cats.Monad](
     existing: List[Familiar],
     editIndex: Option[Int],
+    messages: UniformMessages[Html]
   )(
     int: Language[F, NilTypes, Boolean :: String :: NilTypes]
   ): F[Familiar] = {
@@ -58,7 +73,7 @@ class WitchController @Inject()(
   }
 
   implicit def familiarListing(implicit request: Request[AnyContent]) = interpreter.listingPageWM[Familiar](
-    familiarProgram[interpreter.WM](_,_)(create[NilTypes, Boolean :: String :: NilTypes](interpreter.messages(request)))
+    familiarProgram[interpreter.WM](_,_,_)(create[NilTypes, Boolean :: String :: NilTypes](interpreter.messages(request)))
   )
 
   def reportWitch(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
