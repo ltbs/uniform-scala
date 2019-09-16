@@ -4,6 +4,8 @@ import cats.implicits._
 
 trait FormField[A, Html] extends Codec[A] {
 
+  def isCompound: Boolean = false
+
   def render(
     key: List[String],
     path: Path,

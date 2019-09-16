@@ -36,6 +36,8 @@ trait InferFormField[Html] {
     implicit encInner: Lazy[FF[A]]//FormFieldEncoding[A]
   ) = new FF[Option[A]] {
 
+    override def isCompound = true
+
     def decode(out: Input): Either[ErrorTree,Option[A]] = out.valueAtRoot.headOption match {
       case Some(List("Some")) => encInner.value.decode(out / "Some" / "value").map{x => x.some} match {
         case Left(e) => Left(e.prefixWith("value").prefixWith("Some"))
@@ -122,6 +124,9 @@ trait InferFormField[Html] {
     @silent generic: LabelledGeneric.Aux[A,T],
     hlistInstance: Lazy[FF[T]]
   ): FF[A] = new FF[A] {
+
+    override def isCompound = true
+
     val hlist = hlistInstance.value
     def decode(in: Input): Either[ErrorTree,A] =
       hlist.decode(in).map(generic.from)
