@@ -46,29 +46,40 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
           x => validation.combined.either(x).some
         }
 
+      println(s"######################################################## $id")
       if (currentId === targetId) {
 
         request match {
           case Some(post) =>
             val localData = post / id
+            println(s"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX $localData")
             val parsed = (codec.decode(localData) >>= validation.combined.either)
             parsed match {
-              case Right(valid) =>
+              case Right(valid) => {
+                println("AAAAAAAAAAAAAAAAAAAAAAAAAAA")
                 PageOut(currentId :: path, state + (currentId -> localData.toUrlEncodedString), AskResult.Success[A, Html](valid)).pure[Future]
-              case Left(error) =>
+              }
+              case Left(error) => {
+                println("BBBBBBBBBBBBBBBBBBBBBBBBBBB")
                 PageOut(currentId :: path, state, AskResult.Payload[A, Html](
                   postPage(currentId, state, localData, error, path, messages),
                   error,
                   messages,
                   isCompound
                 )).pure[Future]
+              }
             }
 
           case None =>
+            println(s"YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY $dbInput")
             PageOut(currentId :: path, state, AskResult.Payload[A, Html](
               getPage(
                 currentId,
                 state,
+//                default.map{ x => codec.encode(x).some } orElse
+//                  dbInput.map{_.toOption} getOrElse
+//                  Input.empty,
+//
                 dbInput.flatMap{_.toOption} orElse            // db
                   default.map{x => codec.encode(x)} getOrElse // default
                   Input.empty,                                // neither
@@ -81,11 +92,15 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
             )).pure[Future]
         }
       } else {
+        println(s"ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ targetId: $targetId, path: $path")
         dbObject match {
-          case Some(Right(data)) if targetId =!= Nil && !path.contains(targetId) =>
+          case Some(Right(data)) if targetId =!= Nil && !path.contains(targetId) => {
             // they're replaying the journey
+            println("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
             Future.successful(PageOut(currentId :: path, state, AskResult.Success(data)))
+          }
           case _ =>
+            println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
             Future.successful(PageOut(path, state, AskResult.GotoPath(currentId)))
         }
       }
