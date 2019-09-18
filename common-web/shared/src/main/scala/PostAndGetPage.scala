@@ -42,7 +42,8 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
         state.get(currentId).map{Input.fromUrlEncodedString}
 
       lazy val dbObject: Option[Either[ErrorTree,A]] =
-        dbInput map {_ >>= codec.decode >>= validation.combined.either}
+        dbInput map {_ >>= codec.decode >>= validation.combined.either} orElse
+          default.map(x => validation.combined.either(x))
 
       if (currentId === targetId) {
 
