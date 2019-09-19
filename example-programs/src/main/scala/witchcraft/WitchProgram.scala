@@ -15,8 +15,8 @@ package object witchcraft {
     i: Language[F, TellTypes, AskTypes]
   ): F[WitchReport] = for {
     f <- i.ask[List[Familiar]]("familiars")
-    a <- i.ask[Accused]("accused")
     e <- i.ask[List[Evidence]]("evidence")
+    a <- i.ask[Accused]("accused")
   } yield WitchReport(a,e,f)
 
 }

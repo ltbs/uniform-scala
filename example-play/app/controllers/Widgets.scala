@@ -3,14 +3,31 @@ package controllers
 import cats.implicits._
 
 import ltbs.uniform._, interpreters.playframework._
-import ltbs.uniform.common.web.FormField
+import ltbs.uniform.common.web.{FormField, GenericWebTell, ListingTell, ListingTellRow}
 import play.twirl.api.Html
 import java.time.LocalDate
 import cats.data.Validated
 
 object Widgets extends Widgets
 
-trait Widgets {
+trait Widgets extends InferTellTwirlDL {
+
+  implicit def tellToListingTell[A: GenericWebTell[?, Html]] = new ListingTell[Html, A] {
+
+    def apply(rows: List[ListingTellRow[A]], messages: UniformMessages[Html]): Html = {
+      def tellRow: ListingTellRow[A] => String = {
+        case ListingTellRow(value, editLink, deleteLink) =>        
+        s"""<tr><td>${implicitly[common.web.GenericWebTell[A, Html]].render(value, "list", messages)}</td><td><a href="${editLink}">Edit</a></td><td><a href="${deleteLink}">Delete</a></td></tr>"""
+      }
+
+      Html(
+        s"""|<table>
+            |  <tr><th>Item</th><th>Edit</th><th>Delete</th></tr>
+            |  ${rows.map(tellRow).mkString}
+            |</table>""".stripMargin
+      )
+    }
+  }
 
   implicit val twirlBigStringField = new FormField[BigString,Html] {
     import shapeless.tag
@@ -70,7 +87,6 @@ trait Widgets {
       views.html.uniform.radios(key, List("TRUE","FALSE"), existingValue, errors, messages)
     }
   }
-
 
   implicit val twirlStringField = new FormField[String,Html] {
     def decode(out: Input): Either[ErrorTree,String] =

@@ -11,8 +11,8 @@ import ltbs.uniform.common.web.ListingGenerator
 case class HmrcPlayInterpreter(
   results: Results,
   messagesApi: play.api.i18n.MessagesApi
-) extends PlayInterpreter[Html](results) with InferFormField[Html] with Widgets with ListingGenerator[Html] {
-
+) extends PlayTwirlInterpreter(results) with InferFormField[Html] with Widgets with ListingGenerator[Html] {
+  
   def genericListingPage(
     rows: List[(Html, Int)]
   ): Html = cats.Monoid[Html].combineAll(rows.map{_._1})

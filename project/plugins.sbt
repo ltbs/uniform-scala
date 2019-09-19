@@ -19,3 +19,5 @@ addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.3")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.4.2")
+
+addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.8")

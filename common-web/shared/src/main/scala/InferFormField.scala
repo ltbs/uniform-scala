@@ -68,7 +68,8 @@ trait InferFormField[Html] {
 
   implicit def genericField[A, H, T](implicit
     @silent generic: LabelledGeneric.Aux[A,T],
-    hlistInstance: Lazy[FF[T]]
+    hlistInstance: Lazy[FF[T]],
+    @silent("never used") notAnIterable: A <:!< Iterable[_]
   ): FF[A] = new FF[A] {
     val hlist = hlistInstance.value
     def decode(in: Input): Either[ErrorTree,A] =

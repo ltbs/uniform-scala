@@ -34,7 +34,7 @@ trait ListingGenerator[Html] {
     rows: List[(Html, Int)]
   ): Html
 
-  def listingPage[A](implicit
+  implicit def listingPage[A](implicit
     wmca: WMC[A],
     mon: Monoid[Html],
     codec: Codec[List[A]],

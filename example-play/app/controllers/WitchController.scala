@@ -45,14 +45,7 @@ class WitchController @Inject()(
     }
   }
 
-  implicit val evidenceRows = new common.web.ListingTell[Html, Evidence] {
-    def apply(rows: List[common.web.ListingTellRow[Evidence]], messages: UniformMessages[Html]): Html = {
-      ???
-    }
-  }
-
   import interpreter._
-  implicit val evidenceListing = interpreter.listingPage[examples.witchcraft.Evidence]
 
   def familiarProgram[F[_]: cats.Monad](
     existing: List[Familiar],
