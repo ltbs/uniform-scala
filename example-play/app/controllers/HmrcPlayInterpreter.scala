@@ -26,9 +26,14 @@ case class HmrcPlayInterpreter(
     breadcrumbs: Path,
     request: Request[AnyContent],
     messages: UniformMessages[Html],
-    isCompound: Boolean
+    isCompound: Boolean,
+    children: Int,
+    compoundChildren: Int
   ): Html = {
-    views.html.chrome(key, errors, Html(tell.toString + ask.toString), breadcrumbs)(messages, request)
+    views.html.chrome(key, errors, Html(
+      s"""<div style="border: 1px dotted blue">$isCompound $children $compoundChildren</div>""" + 
+      tell.toString + ask.toString
+    ), breadcrumbs)(messages, request)
   }
 
   def selectionOfFields(

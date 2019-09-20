@@ -11,9 +11,11 @@ object AskResult {
     html: Html,
     errors: ErrorTree,
     messages: UniformMessages[Html],
-    isCompound: Boolean
+    isCompound: Boolean,
+    children: Int,
+    compoundChildren: Int
   ) extends AskResult[A,Html] {
-    def map[B] = Payload[B,Html](html, errors, messages, isCompound)
+    def map[B] = Payload[B,Html](html, errors, messages, isCompound, children, compoundChildren)
   }
 
   final case class Success[A,Html](objectOut: A) extends AskResult[A,Html]

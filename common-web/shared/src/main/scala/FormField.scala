@@ -4,7 +4,9 @@ import cats.implicits._
 
 trait FormField[A, Html] extends Codec[A] {
 
-  def isCompound: Boolean = false
+  final def isCompound: Boolean = children != 0
+  def children: Int = 0
+  def compoundChildren: Int = 0
 
   def render(
     key: List[String],
@@ -30,6 +32,9 @@ trait FormField[A, Html] extends Codec[A] {
         errors: ErrorTree,
         messages: UniformMessages[Html]
       ): Html = orig.render(key, path, data, errors, messages)
+
+      override def children = orig.children
+      override def compoundChildren = orig.compoundChildren
     }
   }
 }

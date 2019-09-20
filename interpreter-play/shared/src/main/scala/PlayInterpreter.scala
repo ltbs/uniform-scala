@@ -24,7 +24,9 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
     breadcrumbs: Path,
     request: Request[AnyContent],
     messages: UniformMessages[Html],
-    isCompoundField: Boolean
+    isCompoundField: Boolean,
+    children: Int,
+    compoundChildren: Int
   ): Html
 
   val log: Logger = Logger("uniform")
@@ -57,8 +59,8 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
                 (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]
-              case AskResult.Payload(html, errors, messagesOut, isCompound) =>
-                (db, controller.Ok(pageChrome(id, errors, mon.empty, html, path, request, messagesOut, isCompound))).pure[Future]
+              case AskResult.Payload(html, errors, messagesOut, isCompound, children, compoundChildren) =>
+                (db, controller.Ok(pageChrome(id, errors, mon.empty, html, path, request, messagesOut, isCompound, children, compoundChildren))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (if (purgeStateUponCompletion) DB.empty else dbOut, _) }
             }

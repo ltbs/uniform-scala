@@ -25,6 +25,9 @@ package object playframework extends common.web.webcommon {
       errors: ErrorTree,
       messages: UniformMessages[TwirlHtml]
     ): TwirlHtml = TwirlHtml("")
+
+    override def children = 0
+    override def compoundChildren = 0
   }
 
   implicit class RichPlayMessages(input: i18n.Messages) {

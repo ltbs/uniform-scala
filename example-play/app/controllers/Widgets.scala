@@ -84,6 +84,8 @@ trait Widgets extends InputOps {
 
   implicit val twirlDateField = new FormField[LocalDate,Html] {
 
+    override def children: Int = 3
+
     def decode(out: Input): Either[ErrorTree,LocalDate] = {
 
       def intAtKey(key: String): Validated[ErrorTree, Int] =
