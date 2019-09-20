@@ -2,11 +2,16 @@ package ltbs.uniform
 package common.web
 import cats.implicits._
 
+case class FormFieldStats(
+  children: Int = 0,
+  compoundChildren: Int = 0
+) {
+  final def isCompound: Boolean = children != 0
+}
+
 trait FormField[A, Html] extends Codec[A] {
 
-  final def isCompound: Boolean = children != 0
-  def children: Int = 0
-  def compoundChildren: Int = 0
+  def stats: FormFieldStats = FormFieldStats()
 
   def render(
     key: List[String],
@@ -33,8 +38,7 @@ trait FormField[A, Html] extends Codec[A] {
         messages: UniformMessages[Html]
       ): Html = orig.render(key, path, data, errors, messages)
 
-      override def children = orig.children
-      override def compoundChildren = orig.compoundChildren
+      override def stats = orig.stats
     }
   }
 }

@@ -3,7 +3,7 @@ package controllers
 import cats.implicits._
 
 import ltbs.uniform._, interpreters.playframework._
-import ltbs.uniform.common.web.FormField
+import ltbs.uniform.common.web.{FormField, FormFieldStats}
 import play.twirl.api.Html
 import java.time.LocalDate
 import cats.data.Validated
@@ -84,7 +84,7 @@ trait Widgets extends InputOps {
 
   implicit val twirlDateField = new FormField[LocalDate,Html] {
 
-    override def children: Int = 3
+    override def stats = FormFieldStats(children = 3)
 
     def decode(out: Input): Either[ErrorTree,LocalDate] = {
 
