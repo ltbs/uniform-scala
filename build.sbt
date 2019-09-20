@@ -121,6 +121,11 @@ lazy val commonSettings = Seq(
       name          = "Luke Tebbs",
       email         = "luke@luketebbs.com",
       url           = url("http://www.luketebbs.com/")
+    ),
+    Developer(
+      id            = "mattrobertsky",
+      name          = "Matt Roberts",
+      email         = "matt.roberts2@digital.hmrc.gov.uk"
     )
   ),
   publishTo := {
