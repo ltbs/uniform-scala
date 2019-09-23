@@ -1,6 +1,7 @@
-package ltbs.uniform.examples.beardtax
+package ltbs.uniform.examples
+package beardtax
 
-sealed trait BeardStyle
+sealed trait BeardStyle 
 
 object BeardStyle {
   final case object Goatee           extends BeardStyle
