@@ -124,13 +124,19 @@ trait InferFormField[Html] {
     )
   }
 
-  implicit def defaultFormGrouping[A]: FormGrouping[A, Html] =
-    new FormGrouping[A, Html] {
+  def defaultFormGrouping: FormGrouping[Any, Html] =
+    new FormGrouping[Any, Html] {
       def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html = in
     }
 
+  implicit def defaultFormGroupingImplicit[A]: FormGrouping[A, Html] =
+    new FormGrouping[A, Html] {
+      def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html =
+        defaultFormGrouping.wrap(in, key, messages)
+    }
+
   implicit def genericField[A, H, T](implicit
-    @silent generic: LabelledGeneric.Aux[A,T],
+    @silent("never used") generic: LabelledGeneric.Aux[A,T],
     hlistInstance: Lazy[FF[T]],
     wrapper: FormGrouping[A, Html]
   ): FF[A] = new FF[A] {
