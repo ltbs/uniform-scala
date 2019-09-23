@@ -6,7 +6,7 @@ case class FormFieldStats(
   children: Int = 0,
   compoundChildren: Int = 0
 ) {
-  final def isCompound: Boolean = children != 0
+  final def isCompound: Boolean = children >= 2
 }
 
 trait FormField[A, Html] extends Codec[A] {
