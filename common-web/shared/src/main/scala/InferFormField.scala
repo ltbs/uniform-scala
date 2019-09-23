@@ -156,8 +156,13 @@ trait InferFormField[Html] {
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
-    ): Html =
-      wrapper.wrap(hlist.render(key, path, data, errors, messages), key, messages)
+    ): Html = {
+      val core = hlist.render(key, path, data, errors, messages)
+      if (isCompound)
+        wrapper.wrap(core, key, messages)
+      else
+        core
+    }
   }
 
   // COPRODUCTS
