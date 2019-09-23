@@ -40,7 +40,10 @@ trait InferFormField[Html] {
     implicit encInner: Lazy[FF[A]]//FormFieldEncoding[A]
   ) = new FF[Option[A]] {
 
-    override def isCompound = true
+    override def stats = FormFieldStats(
+      children = 1,
+      compoundChildren = if (encInner.value.stats.isCompound) 1 else 0
+    )
 
     def decode(out: Input): Either[ErrorTree,Option[A]] = out.valueAtRoot.headOption match {
       case Some(List("Some")) => encInner.value.decode(out / "Some" / "value").map{x => x.some} match {
@@ -90,6 +93,13 @@ trait InferFormField[Html] {
     hField: Lazy[FF[H]],
     tField: FF[T]
   ): FF[FieldType[K,H] :: T] = new FF[FieldType[K,H] :: T] {
+
+    override def stats = FormFieldStats(
+      children = tField.stats.children + 1,
+      compoundChildren =
+        tField.stats.compoundChildren + {if (hField.value.stats.isCompound) 1 else 0}
+    )
+
     val fieldName: String = witness.value.name
 
     def decode(out: Input): Either[ErrorTree,FieldType[K,H] :: T] = {
@@ -141,8 +151,6 @@ trait InferFormField[Html] {
     wrapper: FormGrouping[A, Html]
   ): FF[A] = new FF[A] {
 
-    override def isCompound = true
-
     val hlist = hlistInstance.value
     def decode(in: Input): Either[ErrorTree,A] =
       hlist.decode(in).map(generic.from)
@@ -158,11 +166,13 @@ trait InferFormField[Html] {
       messages: UniformMessages[Html]
     ): Html = {
       val core = hlist.render(key, path, data, errors, messages)
-      if (isCompound)
+      if (stats.isCompound)
         wrapper.wrap(core, key, messages)
       else
         core
     }
+
+    override def stats = hlist.stats
   }
 
   // COPRODUCTS
@@ -179,6 +189,7 @@ trait InferFormField[Html] {
   trait CoproductFieldList[A]{
     def decode(out: Input): Either[ErrorTree,A]
     def encode(in: A): Input
+    def stats: FormFieldStats
     val inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
   }
 
@@ -188,6 +199,7 @@ trait InferFormField[Html] {
       Left(ErrorMsg("required").toTree)
     override def encode(a: CNil): Input = Input.empty
     override val inner = List.empty
+    def stats = FormFieldStats()
   }
 
   implicit def coproductFieldList[K <: Symbol, H, T <: Coproduct](
@@ -217,6 +229,13 @@ trait InferFormField[Html] {
         hField.encode(l).prefixWith(fname) ++ Map(Nil -> List(fname))
       case Inr(r) => tFields.encode(r)
     }
+
+    override def stats = FormFieldStats(
+      children = tFields.stats.children + 1,
+      compoundChildren =
+        tFields.stats.compoundChildren + {if (hField.stats.isCompound) 1 else 0}
+    )
+    
   }
 
   implicit def coproductField[A](implicit coproductFields: CoproductFieldList[A]) =
@@ -226,5 +245,7 @@ trait InferFormField[Html] {
 
       def decode(out: Input): Either[ErrorTree,A] = coproductFields.decode(out)
       def encode(in: A): Input = coproductFields.encode(in)
+
+      override def stats = coproductFields.stats
     }
 }

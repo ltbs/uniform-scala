@@ -4,7 +4,7 @@ import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc.{Results, Request, AnyContent}
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.twirl.api.{Html, HtmlFormat}
-import ltbs.uniform.common.web.{InferFormField, FormGrouping}
+import ltbs.uniform.common.web.{InferFormField, FormGrouping, FormFieldStats}
 import cats.syntax.semigroup._
 import ltbs.uniform.examples.{beardtax, LooselyRelatedTC}, beardtax._
 
@@ -27,9 +27,12 @@ case class HmrcPlayInterpreter(
     breadcrumbs: Path,
     request: Request[AnyContent],
     messages: UniformMessages[Html],
-    isCompound: Boolean
+    stats: FormFieldStats
   ): Html = {
-    views.html.chrome(key, errors, Html(tell.toString + ask.toString), breadcrumbs)(messages, request)
+    views.html.chrome(key, errors, Html(
+      s"""<div style="border: 1px dotted blue">${stats.isCompound} ${stats.children} ${stats.compoundChildren}</div>""" + 
+      tell.toString + ask.toString
+    ), breadcrumbs)(messages, request)
   }
 
   def selectionOfFields(

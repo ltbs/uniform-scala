@@ -25,6 +25,7 @@ package object playframework extends common.web.webcommon {
       errors: ErrorTree,
       messages: UniformMessages[TwirlHtml]
     ): TwirlHtml = TwirlHtml("")
+
   }
 
   implicit class RichPlayMessages(input: i18n.Messages) {
