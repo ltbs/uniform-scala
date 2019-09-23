@@ -4,8 +4,9 @@ import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc.{Results, Request, AnyContent}
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.twirl.api.{Html, HtmlFormat}
-import ltbs.uniform.common.web.InferFormField
+import ltbs.uniform.common.web.{InferFormField, FormGrouping}
 import cats.syntax.semigroup._
+import ltbs.uniform.examples.{beardtax, LooselyRelatedTC}, beardtax._
 
 case class HmrcPlayInterpreter(
   results: Results,
@@ -45,6 +46,14 @@ case class HmrcPlayInterpreter(
         case(subkey,f) => subkey -> f(key :+ subkey, path, {values / subkey}, errors / subkey, messages)
       }.filter(_._2.toString.trim.nonEmpty).toMap
     )
+  }
+
+  /** This tells uniform to wrap or transform anything that is loosely related with the supplied HTML 
+    * note however this will be overwritten if you use a custom view
+    */
+  implicit def genericFormGroupingForLooselyRelated[A: LooselyRelatedTC] = new FormGrouping[A, Html] {
+    def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html =
+      Html("""<div style="border:1px solid red;"> """) |+| in |+| Html("""</div>""")
   }
 
 }

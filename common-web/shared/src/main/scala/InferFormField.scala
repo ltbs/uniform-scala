@@ -6,6 +6,10 @@ import cats.Monoid
 import com.github.ghik.silencer.silent
 import cats.implicits.{catsSyntaxEither => _,_}
 
+trait FormGrouping[A, Html] {
+  def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html
+}
+
 trait InferFormField[Html] {
 
   val mon: Monoid[Html]
@@ -120,9 +124,15 @@ trait InferFormField[Html] {
     )
   }
 
+  implicit def defaultFormGrouping[A]: FormGrouping[A, Html] =
+    new FormGrouping[A, Html] {
+      def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html = in
+    }
+
   implicit def genericField[A, H, T](implicit
     @silent generic: LabelledGeneric.Aux[A,T],
-    hlistInstance: Lazy[FF[T]]
+    hlistInstance: Lazy[FF[T]],
+    wrapper: FormGrouping[A, Html]
   ): FF[A] = new FF[A] {
 
     override def isCompound = true
@@ -131,7 +141,7 @@ trait InferFormField[Html] {
     def decode(in: Input): Either[ErrorTree,A] =
       hlist.decode(in).map(generic.from)
 
-    def encode(a:A): Input =
+    def encode(a: A): Input =
       hlist.encode(generic.to(a))
 
     def render(
@@ -140,7 +150,8 @@ trait InferFormField[Html] {
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
-    ): Html = hlist.render(key, path, data, errors, messages)
+    ): Html =
+      wrapper.wrap(hlist.render(key, path, data, errors, messages), key, messages)
   }
 
   // COPRODUCTS
