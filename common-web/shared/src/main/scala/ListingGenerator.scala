@@ -34,13 +34,13 @@ trait ListingGenerator[Html] {
     rows: List[(Html, Int)]
   ): Html
 
-  implicit def listingPage[A](implicit
+  def listingPage[A](implicit
     wmca: WMC[A],
     mon: Monoid[Html],
     codec: Codec[List[A]],
     listingTell: ListingTell[Html, A],
     wmcbranchffg: FormField[ListActionGeneral, Html],
-    wmcbranchffa: FormField[ListAction, Html]    
+    wmcbranchffa: FormField[ListAction, Html]
   ): WMC[List[A]] = listingPageWM(
     addEditJourney = {(existing: List[A], edit: Option[Int], messages: UniformMessages[Html]) =>
       wmca.apply(

@@ -4,7 +4,7 @@ package common.web
 import shapeless._, labelled._
 import cats.Monoid
 import com.github.ghik.silencer.silent
-import cats.implicits.{catsSyntaxEither => _,_}
+import cats.implicits._
 
 trait InferFormField[Html] {
 
@@ -64,6 +64,22 @@ trait InferFormField[Html] {
       hField.value.render(key :+ fieldName, breadcrumbs, data / fieldName, errors / fieldName, messages),
       tField.render(key, breadcrumbs, data, errors, messages)
     )
+  }
+
+
+  implicit def listCodec[A](implicit @silent subcodec: Codec[A]) = new Codec[List[A]]{
+    import cats.data.Validated
+    def decode(out: Input): Either[ErrorTree,List[A]] = {
+      val s: List[Validated[ErrorTree,A]] =
+        out.listSubtrees.sorted map { key: String =>
+          subcodec.decode(out / key).leftMap{_.prefixWith(key)}.toValidated
+        }
+      s.sequence.toEither
+    }
+
+    def encode(in: List[A]): Input = in.zipWithIndex.foldLeft(Input.empty) {
+      case (acc,(value, index)) => acc ++ subcodec.encode(value).prefixWith(index.toString)
+    }
   }
 
   implicit def genericField[A, H, T](implicit

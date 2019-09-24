@@ -11,9 +11,15 @@ trait InferTell[Html] {
 
   type FieldMap = ListMap[List[String], Html] @@ FieldMapTag
 
+  object FieldMap {
+    def apply(m: ListMap[List[String], Html]): FieldMap =
+      tag[FieldMapTag][ListMap[List[String], Html]](m)
+  }
+
   type FieldFunction[A] = (A, UniformMessages[Html]) => FieldMap
+
   protected implicit def toFieldMap(m: ListMap[List[String], Html]): FieldMap =
-    tag[FieldMapTag][ListMap[List[String], Html]](m)
+    FieldMap(m)
 
   implicit def hnilTellField: FieldFunction[HNil] =
     (_,_) => ListMap.empty[List[String], Html]
