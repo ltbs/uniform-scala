@@ -5,13 +5,12 @@ import cats.Monad
 import cats.implicits._
 import scala.language.higherKinds
 import cats.data.NonEmptyList
-import java.time.LocalDate
 
 package object beardtax {
 
   type BeardLength = (Int,Int)
   type TellTypes = NilTypes
-  type AskTypes = LocalDate :: (LocalDate, LocalDate) :: Option[MemberOfPublic] :: BeardStyle :: BeardLength :: NilTypes
+  type AskTypes = Option[MemberOfPublic] :: BeardStyle :: BeardLength :: NilTypes
 
   def beardProgram[F[_] : Monad](
     interpreter: Language[F, TellTypes, AskTypes],
@@ -19,8 +18,6 @@ package object beardtax {
   ): F[Int] = {
     import interpreter._
     for {
-      _              <- ask[LocalDate]("single-date")
-      _              <- ask[(LocalDate,LocalDate)]("compound-dates")      
       memberOfPublic <- ask[Option[MemberOfPublic]]("is-public")
       beardStyle     <- ask[BeardStyle]("beard-style", customContent = Map(
         "beard-style" -> {memberOfPublic match {
