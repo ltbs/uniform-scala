@@ -50,13 +50,15 @@ trait ListingGenerator[Html] {
         validationIn = List.empty,
         messages = messages
       )
-    }
+    },
+    useSubjourneys = false
   )
 
   def listingPageWM[A](
     addEditJourney: (List[A], Option[Int], UniformMessages[Html]) => WM[A],
     deleteJourney: (List[A], Int) => WM[Boolean] = {(_: List[A], _: Int) => true.pure[WM]},
-    customOrdering: Option[cats.Order[A]] = None
+    customOrdering: Option[cats.Order[A]] = None,
+    useSubjourneys: Boolean = true
   )(implicit
     wmcbranchffg: FormField[ListActionGeneral, Html],
     wmcbranchffa: FormField[ListAction, Html],    
@@ -99,6 +101,12 @@ trait ListingGenerator[Html] {
       messages: UniformMessages[Html]
     ): WM[List[A]] = {
 
+      def subJourney[S](id: Seq[String])(sub: => WM[S]): WM[S] =
+        if (useSubjourneys)
+          genericSubJourney[S](id)(sub)
+        else
+          genericSubJourney[S](id.init)(sub)
+
       db.get[List[A]](List(s"${id}-zzdata")).flatMap{ dataRead =>
 
         val data: List[A] = dataRead match {
@@ -127,30 +135,30 @@ trait ListingGenerator[Html] {
             data.pure[WM]
 
           case ListAction.Add =>
-            for {
-              newRecord <- genericSubJourney(Seq(id, "add"))(addEditJourney(data, None, messages))
-              _         <- db(List(s"${id}-zzdata")) = data :+ newRecord
-              _         <- db.deleteRecursive(List(id)) >> db.delete(List(id))
-              x         <- goto[List[A]](id)
-            } yield (x)
+            subJourney(Seq(id, "add"))( for {
+              r <- addEditJourney(data, None, messages)
+              _ <- db(List(s"${id}-zzdata")) = data :+ r
+              _ <- db.deleteRecursive(List(id))
+            } yield (List.empty[A]))
 
           case ListAction.Delete(index) =>
-            val action = deleteJourney(data,index) flatMap {
-            case true =>
-                db(List(s"${id}-zzdata")) = data.deleteAtIndex(index)
-            case false =>
-                ().pure[WM]
-            }
-            action >> db.delete(List(id)) >> goto[List[A]](id)
+            subJourney(Seq(id, "delete"))( for {
+              confirm <- deleteJourney(data,index)
+              _       <- confirm match {
+                case true =>
+                  db(List(s"${id}-zzdata")) = data.deleteAtIndex(index)
+                case false =>
+                  ().pure[WM]
+              }
+              _ <- db.deleteRecursive(List(id))
+            } yield (List.empty[A]))
 
           case ListAction.Edit(index) =>
-            for {
-              newRecord <- genericSubJourney(Seq(id, "edit", index.toString))(addEditJourney(data, Some(index), messages))
-              _         <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, newRecord)
-              _         <- db.deleteRecursive(List(id, "edit")) >> db.delete(List(id))
-              x         <- goto[List[A]](id)
-            } yield (x)
-
+            subJourney(Seq(id, "edit"))( for {
+              r <- addEditJourney(data, Some(index), messages)
+              _ <- db(List(s"${id}-zzdata")) = data :+ r
+              _ <- db.deleteRecursive(List(id))
+            } yield (List.empty[A]))
         }
       }
     }

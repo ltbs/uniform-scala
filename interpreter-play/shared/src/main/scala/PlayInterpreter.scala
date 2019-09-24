@@ -63,8 +63,9 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
           case common.web.PageOut(breadcrumbs, dbOut, pageOut, _) =>
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
-                log.info(s"redirecting to ${relativePath(id, targetPath)} (relativePath($id, $targetPath))")
-                (dbOut, controller.Redirect(relativePath(id.dropRight(1), targetPath))).pure[Future]
+                val path = relativePath(id.dropRight(1), targetPath)
+                log.info(s"redirecting to ${path} (relativePath(${id.toString}.dropRight(1), $targetPath))")
+                (dbOut, controller.Redirect(path)).pure[Future]
               case AskResult.Payload(html, errors, messagesOut) =>
                 (db, controller.Ok(pageChrome(breadcrumbs.head, errors, mon.empty, html, breadcrumbs, request, messagesOut))).pure[Future]
               case AskResult.Success(result) =>
