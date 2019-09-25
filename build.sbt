@@ -165,7 +165,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.typelevel" %%% "cats-core" % "2.0.0",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.github.mpilquist" %%% "simulacrum" % "0.19.0"
+      "org.typelevel" %%% "simulacrum" % "1.0.0"
     ) ++ macroDependencies(scalaVersion.value)
   )
 
@@ -179,7 +179,7 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
     crossScalaVersions += scala2_13,
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.github.mpilquist" %%% "simulacrum" % "0.19.0"
+      "org.typelevel" %%% "simulacrum" % "1.0.0"
     ) ++ macroDependencies(scalaVersion.value)
   )
 
