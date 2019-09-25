@@ -41,7 +41,7 @@ trait InferFormField[Html] {
   ) = new FF[Option[A]] {
 
     override def stats = FormFieldStats(
-      children = 1,
+      children = 2,
       compoundChildren = if (encInner.value.stats.isCompound) 1 else 0
     )
 
