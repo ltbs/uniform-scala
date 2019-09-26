@@ -7,7 +7,7 @@ import scala.concurrent.ExecutionContext
 
 abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
 
-  def isCompound: Boolean
+  def stats: FormFieldStats
 
   def codec: Codec[A]
 
@@ -59,7 +59,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
                   postPage(currentId, state, localData, error, path, messages),
                   error,
                   messages,
-                  isCompound
+                  stats
                 )).pure[Future]
             }
 
@@ -76,7 +76,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
               ),
               ErrorTree.empty,
               messages,
-              isCompound
+              stats
             )).pure[Future]
         }
       } else {
@@ -98,7 +98,7 @@ object PostAndGetPage {
     fieldIn: FormField[A, Html]
   ): WebMonadConstructor[A, Html] = new PostAndGetPage[A, Html] {
 
-    def isCompound: Boolean = fieldIn.isCompound
+    def stats: FormFieldStats = fieldIn.stats
 
     def codec: Codec[A] = fieldIn
 
