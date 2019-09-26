@@ -24,6 +24,7 @@ lazy val root = project.in(file("."))
   .settings(
     publishLocal := {},
     publish := {},
+    test := {},
     publishArtifact := false,
     publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo")))
   )
