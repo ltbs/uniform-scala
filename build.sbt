@@ -125,7 +125,8 @@ lazy val commonSettings = Seq(
     Developer(
       id            = "mattrobertsky",
       name          = "Matt Roberts",
-      email         = "matt.roberts2@digital.hmrc.gov.uk"
+      email         = "matt.roberts2@digital.hmrc.gov.uk",
+      url           = url("https://github.com/mattrobertsky")
     )
   ),
   publishTo := {
