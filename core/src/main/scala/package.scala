@@ -1,19 +1,16 @@
 package ltbs
 
-import language.{higherKinds, implicitConversions}
+import language.higherKinds
 
 import cats.implicits._
 import cats.{Monoid, Applicative, Monad}
 import cats.data.{NonEmptyList, Validated}
 import shapeless.tag.{@@}
-import uniform.Quantity.ToQuantityOps
 import collection.immutable.ListMap
 
 package object uniform extends TreeLike.ToTreeLikeOps
     with TreeLikeInstances
     with ScalaVersionCompatibility
-    with ToQuantityOps
-    with QuantityInstances
 {
 
   /** Used to represent multi-line input.
@@ -115,18 +112,6 @@ package object uniform extends TreeLike.ToTreeLikeOps
     } yield ret
 
   }
-
-  implicit class RichRuleListList[A](inner: List[List[Rule[A]]]) {
-    def combined: Rule[A] = {
-      inner match {
-        case Nil => Rule.noop
-        case x   => x.map{_.combineAll}.reduce(_ andThen _)
-      }
-    }
-  }
-
-  implicit def soloRuleToListList[A](in: Rule[A]): List[List[Rule[A]]] = in.pure[List].pure[List]
-  implicit def listOfRulesToListList[A](in: List[Rule[A]]): List[List[Rule[A]]] = in.pure[List]
 
   implicit def monListMap[K,V] = new Monoid[ListMap[K,V]] {
     def empty = ListMap.empty

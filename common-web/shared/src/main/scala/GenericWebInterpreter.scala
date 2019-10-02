@@ -2,6 +2,7 @@ package ltbs.uniform
 package common.web
 
 import shapeless._
+import validation.Rule
 
 trait GenericWebInterpreter[Html] {
 
@@ -20,7 +21,7 @@ trait GenericWebInterpreter[Html] {
       id: String,
       tell: Tell,
       defaultIn: Option[Ask],
-      validationIn: List[List[Rule[Ask]]],
+      validationIn: List[Rule[Ask]],
       customContent: Map[String,(String, List[Any])]
     )(implicit
       selectorTell: IndexOf[SupportedTell,Tell],
