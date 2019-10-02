@@ -5,6 +5,9 @@ import scala.language.implicitConversions
 import cats.data.{NonEmptyList => NEL}
 import collection.immutable.ListMap
 
+/** Can be navigated like a tree. Has a `Value` at branches and
+  * leaves, and edges are labelled with `Key`.
+  */
 @typeclass trait TreeLike[T] {
 
   type Key
@@ -37,8 +40,10 @@ import collection.immutable.ListMap
   def isEmpty(a: T): Boolean = a == empty
   def isNonEmpty(a: T): Boolean = !isEmpty(a)
 
+  /** create an empty tree (no verticies) */
   def empty: T
 
+  /** create a tree with a single vertex */  
   def one(in: Value): T
 
   def atPath(a: T, path: List[Key]): T = {
