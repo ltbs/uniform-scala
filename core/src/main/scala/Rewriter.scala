@@ -3,6 +3,12 @@ package ltbs.uniform
 import language.higherKinds
 import shapeless._
 
+/** Allows rewriting existing user journey without running them. 
+  * 
+  * This could be to optimise or otherwise transform a journey, for
+  * example to swap one type of interaction with another (such as a
+  * subjourney). 
+  */
 class Rewriter[TC[_], SupportedTell <: HList, SupportedAsk <: HList](
   val naive: Language[TC, SupportedTell, SupportedAsk]
 ) {
