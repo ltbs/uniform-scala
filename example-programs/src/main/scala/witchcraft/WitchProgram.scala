@@ -3,7 +3,6 @@ package examples
 
 import cats.Monad
 import cats.implicits._
-import scala.language.higherKinds
 
 package object witchcraft {
 

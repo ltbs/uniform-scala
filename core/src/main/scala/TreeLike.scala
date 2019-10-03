@@ -1,7 +1,6 @@
 package ltbs.uniform
 
 import simulacrum._
-import scala.language.implicitConversions
 import cats.data.{NonEmptyList => NEL}
 
 @typeclass trait TreeLike[T] {

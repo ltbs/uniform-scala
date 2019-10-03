@@ -87,7 +87,7 @@ trait ListingGenerator[Html] {
     val wmcbranch = new SimplePostAndGetPage[ListAction, Html](
       wmcbranchff
     ) {
-      override val customRouting = {
+      override val customRouting: PartialFunction[List[String],ListAction] = {
         case "edit" :: Pos(x) :: Nil   => ListAction.Edit(x)
         case "delete" :: Pos(x) :: Nil => ListAction.Delete(x)
       }

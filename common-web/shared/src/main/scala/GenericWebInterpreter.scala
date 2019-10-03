@@ -3,7 +3,7 @@ package common.web
 
 import shapeless._
 import scala.concurrent._
-import cats.syntax.functor._
+import cats.implicits._
 
 trait GenericWebInterpreter[Html] {
 

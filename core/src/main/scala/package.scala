@@ -1,7 +1,5 @@
 package ltbs
 
-import language.{higherKinds, implicitConversions}
-
 import cats.implicits._
 import cats.{Monoid, Applicative, Monad}
 import cats.data.NonEmptyList

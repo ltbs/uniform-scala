@@ -1,10 +1,10 @@
 package ltbs.uniform
 package common.web
 
-import shapeless._, labelled._
+import cats.implicits._
+import shapeless._, shapeless.labelled._
 import cats.Monoid
 import com.github.ghik.silencer.silent
-import cats.implicits._
 
 trait InferFormField[Html] {
 

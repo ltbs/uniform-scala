@@ -3,9 +3,8 @@ package ltbs.uniform
 import org.scalatest._
 import cats.implicits._
 import cats.Monad
-import scala.language.higherKinds
 
-class RewriterSpec extends FlatSpec with Matchers with OptTC {
+class RewriterSpec extends FlatSpec with Matchers with OptTCOps {
 
   "A rewriter" should "change a journey" in {
 

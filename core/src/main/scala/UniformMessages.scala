@@ -2,7 +2,7 @@ package ltbs.uniform
 
 import scala.util.parsing.combinator._
 import cats.Monoid
-import cats.implicits._
+import cats.syntax.either._
 
 trait UniformMessages[A] {
 
@@ -120,7 +120,7 @@ object UniformMessages {
     def combine(a: UniformMessages[A], b: UniformMessages[A]):UniformMessages[A] = new UniformMessages[A] {
       def get(key: String, args: Any*): Option[A] = a.get(key, args:_*).orElse(b.get(key, args:_*))
       override def get(key: List[String], args: Any*): Option[A] = a.get(key, args:_*).orElse(b.get(key, args:_*))
-      def list(key: String, args: Any*): List[A] = a.list(key, args:_*) |+| b.list(key, args:_*)
+      def list(key: String, args: Any*): List[A] = a.list(key, args:_*) ++ b.list(key, args:_*)
       override def decompose(key: String, args: Any*): A = a.decomposeOpt(key, args:_*).getOrElse(b.decompose(key, args:_*))
 
       override def apply(key: String, args: Any*): A =

@@ -1,7 +1,6 @@
 package ltbs.uniform
 
 import simulacrum._
-import scala.language.implicitConversions
 
 @typeclass trait Quantity[A] {
   def quantity(in: A): Int

@@ -2,12 +2,11 @@ package ltbs.uniform
 
 import com.github.ghik.silencer.silent
 import shapeless.LowPriority
-import shapeless.tag, tag.@@
-import language.higherKinds
+import shapeless.tag, tag.{@@}
 
-object OptTCSyntax extends OptTCSyntax
+object OptTCSyntax extends OptTCOps
 
-trait OptTCSyntax {
+trait OptTCOps {
 
   trait OptTCTag
   type OptTC[A] = Option[A] @@ OptTCTag

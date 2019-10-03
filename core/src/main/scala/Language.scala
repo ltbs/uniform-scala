@@ -1,7 +1,6 @@
 package ltbs.uniform
 
 import shapeless.HList
-import scala.language.higherKinds
 import com.github.ghik.silencer.silent
 
 trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{

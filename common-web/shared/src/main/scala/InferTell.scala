@@ -1,8 +1,6 @@
 package ltbs.uniform
 package common.web
 
-import language.implicitConversions
-
 import shapeless._, labelled._, tag._
 import collection.immutable.ListMap
 

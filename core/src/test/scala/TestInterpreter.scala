@@ -4,7 +4,6 @@ import org.scalatest._
 import cats.implicits._
 import cats.{Id, Monad}
 import shapeless.{Id => _, _}
-import scala.language.higherKinds
 
 class MonoidInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
   implicit askSummoner: TypeclassList[SupportedAsk, cats.Monoid]

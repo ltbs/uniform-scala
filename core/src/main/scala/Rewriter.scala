@@ -1,6 +1,5 @@
 package ltbs.uniform
 
-import language.higherKinds
 import shapeless._
 
 class Rewriter[TC[_], SupportedTell <: HList, SupportedAsk <: HList](

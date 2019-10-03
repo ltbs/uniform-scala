@@ -3,7 +3,6 @@ package interpreters.cli
 
 import cats.implicits._
 import shapeless._
-import language.higherKinds
 import com.github.ghik.silencer.silent
 
 trait TellCli[A] {
