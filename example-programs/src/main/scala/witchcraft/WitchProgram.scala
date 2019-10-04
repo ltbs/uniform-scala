@@ -6,7 +6,6 @@ import cats.implicits._
 
 package object witchcraft {
 
-  type BeardLength = (Int,Int)
   type TellTypes = NilTypes
   type AskTypes = Accused :: List[Evidence] :: List[Familiar] :: NilTypes
 

@@ -4,7 +4,7 @@ import microsites.ExtraMdFileConfig
 val scala2_10 = "2.10.7"
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.10"
-val scala2_13 = "2.13.1"
+val scala2_13 = "2.13.0"
 
 lazy val root = project.in(file("."))
   .aggregate(
@@ -272,6 +272,7 @@ lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
   .dependsOn(`interpreter-play`.projects(Play26), core.jvm, `example-programs`.jvm)
   .settings(
+//    scalacOptions += "-Xprint:typer",
     TwirlKeys.templateImports ++= Seq(
       "ltbs.uniform._",
       "ltbs.uniform.interpreters.playframework._"

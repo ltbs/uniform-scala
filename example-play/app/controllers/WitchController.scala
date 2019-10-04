@@ -23,7 +23,7 @@ class WitchController @Inject()(
 ) extends ControllerHelpers with I18nSupport with CrapAutoTell {
 
   implicit val persistence: PersistenceEngine[Request[AnyContent]] =
-    DebugPersistence(UnsafePersistence())
+    UnsafePersistence()
 
   lazy val interpreter = HmrcPlayInterpreter(this, messagesApi)
 
@@ -52,18 +52,6 @@ class WitchController @Inject()(
   ) = interpreter.listingPageWM[Familiar](
     familiarProgram[interpreter.WM](_,_,_)(create[NilTypes, Boolean :: String :: NilTypes](interpreter.messages(request)))
   )
-
-  /* why does this not work inside ListingGenerator.scala? */
-  implicit def autoListing[A](implicit
-    wmca: WMC[A],
-    mon: cats.Monoid[Html],
-    codec: common.web.Codec[List[A]],
-    listingTell: ListingTell[Html, A],
-    wmcbranchffg: FormField[ListActionGeneral, Html],
-    wmcbranchffa: FormField[ListAction, Html]
-  ) = interpreter.listingPage[A]
-
-  implicit val evidenceListing = interpreter.listingPage[Evidence]
 
   def reportWitch(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
 

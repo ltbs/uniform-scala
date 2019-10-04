@@ -3,6 +3,7 @@ package common.web
 
 import cats.implicits._
 import cats.Monoid
+import shapeless.Lazy
 
 sealed trait ListAction
 sealed trait ListActionRow extends ListAction
@@ -27,15 +28,15 @@ object Pos {
     Either.catchOnly[NumberFormatException](value.toInt).toOption
 }
 
-trait ListingGenerator[Html] {
+trait InferListingPages[Html] {
   this: GenericWebInterpreter[Html] =>
 
   def genericListingPage(
     rows: List[(Html, Int)]
   ): Html
 
-  def listingPage[A](implicit
-    wmca: WMC[A],
+  implicit def listingPage[A](implicit
+    wmca: Lazy[WMC[A]],
     mon: Monoid[Html],
     codec: Codec[List[A]],
     listingTell: ListingTell[Html, A],
@@ -43,7 +44,7 @@ trait ListingGenerator[Html] {
     wmcbranchffa: FormField[ListAction, Html]
   ): WMC[List[A]] = listingPageWM(
     addEditJourney = {(existing: List[A], edit: Option[Int], messages: UniformMessages[Html]) =>
-      wmca.apply(
+      wmca.value.apply(
         id = if (edit.isDefined) "edit" else "add", 
         tell = Monoid[Html].empty,
         defaultIn = edit.map(existing.apply),
@@ -154,9 +155,9 @@ trait ListingGenerator[Html] {
             } yield (List.empty[A]))
 
           case ListAction.Edit(index) =>
-            subJourney(Seq(id, "edit"))( for {
+            subJourney(Seq(id, "edit", index.toString))( for {
               r <- addEditJourney(data, Some(index), messages)
-              _ <- db(List(s"${id}-zzdata")) = data :+ r
+              _ <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, r)
               _ <- db.deleteRecursive(List(id))
             } yield (List.empty[A]))
         }

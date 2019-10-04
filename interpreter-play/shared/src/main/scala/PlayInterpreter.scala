@@ -45,14 +45,13 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
     ): Future[Result] = {
 
       val id = path.split("/", -1).toList
-
       // this is a nasty bodge to prevent hitting URL's with a trailing slash
       // which seem to be caused by the UA handling '..' in the redirection target. 
-      if (id.lastOption == Some("")) {
-        return (controller.Redirect(
-          "../" + path.split("/").lastOption.getOrElse("")
-        )).pure[Future]
-      }
+      // if (id.lastOption == Some("")) {
+      //   return (controller.Redirect(
+      //     request.path.dropRight(1)
+      //   )).pure[Future]
+      // }
 
       val data: Option[Input] = request.body.asFormUrlEncoded.map {
         _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
@@ -63,8 +62,7 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
           case common.web.PageOut(breadcrumbs, dbOut, pageOut, _) =>
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
-                val path = relativePath(id.dropRight(1), targetPath)
-                log.info(s"redirecting to ${path} (relativePath(${id.toString}.dropRight(1), $targetPath))")
+                val path = relativePath(id, targetPath)
                 (dbOut, controller.Redirect(path)).pure[Future]
               case AskResult.Payload(html, errors, messagesOut) =>
                 (db, controller.Ok(pageChrome(breadcrumbs.head, errors, mon.empty, html, breadcrumbs, request, messagesOut))).pure[Future]

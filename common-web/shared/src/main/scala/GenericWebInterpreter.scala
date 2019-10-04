@@ -46,7 +46,7 @@ trait GenericWebInterpreter[Html] {
 
   def genericSubJourney[A](id: Seq[String])(sub: => WM[A]): WM[A] = {
     import cats.implicits._
-    pushPathPrefix(id) >> sub <* popPathPrefix
+    pushPathPrefix(id) >> sub <* popPathPrefix(id.size)
   }
 
   def pushPathPrefix(key: Seq[String]) = new WM[Unit] {
@@ -58,14 +58,14 @@ trait GenericWebInterpreter[Html] {
       )
   }
 
-  def popPathPrefix = new WM[String] {
-    def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[String,Html]] =
+  def popPathPrefix(qty: Int) = new WM[Seq[String]] {
+    def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Seq[String],Html]] =
       Future.successful(
-        PageOut[String,Html](
+        PageOut[Seq[String],Html](
           breadcrumbs = pageIn.breadcrumbs,
           db = pageIn.state,
-          output = AskResult.Success(pageIn.pathPrefix.head),
-          pathPrefix = pageIn.pathPrefix.tail
+          output = AskResult.Success(pageIn.pathPrefix.take(qty)),
+          pathPrefix = pageIn.pathPrefix.drop(qty)
         )
       )
   }

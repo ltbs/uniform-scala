@@ -4,14 +4,14 @@ import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc.{Results, Request, AnyContent}
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.twirl.api.{Html, HtmlFormat}
-import ltbs.uniform.common.web.InferFormField
+import ltbs.uniform.common.web.{InferFormField, ListingTell, FormField, ListActionGeneral, ListAction, InferListingPages}
 import cats.syntax.semigroup._
-import ltbs.uniform.common.web.ListingGenerator
+import ltbs.uniform.common.web.InferListingPages
 
 case class HmrcPlayInterpreter(
   results: Results,
   messagesApi: play.api.i18n.MessagesApi
-) extends PlayTwirlInterpreter(results) with InferFormField[Html] with Widgets with ListingGenerator[Html] {
+) extends PlayTwirlInterpreter(results) with InferFormField[Html] with Widgets with InferListingPages[Html] {
   
   def genericListingPage(
     rows: List[(Html, Int)]

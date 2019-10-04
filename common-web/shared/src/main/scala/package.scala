@@ -13,13 +13,24 @@ package web {
     object DB {
       def empty: DB = Map()
     }
-
+    
     def relativePath(from: List[String], to: List[String]): String = {
       import cats.instances.string._
-      removeCommon(from, to) match {
-        case (rem, add)           => (rem.map{_ => ".."} ++ add).mkString("/")
+      val frags = removeCommon(from, to) match {
+        case (Nil, Nil) => "." :: Nil
+        case (back, Nil) => back.map(_ => "..")
+        case (Nil, up) => (from.takeRight(1) ++ up)
+        case (back, up) => (back.drop(1).map(_ => "..") ++ up)
       }
+      frags.mkString("/")
     }
+
+    // def relativePath(from: List[String], to: List[String]): String = {
+    //   import cats.instances.string._
+    //   removeCommon(from, to) match {
+    //     case (rem, add)           => (rem.map{_ => ".."} ++ add).mkString("/")
+    //   }
+    // }
 
     @annotation.tailrec
     final def removeCommon[B: cats.Eq](
