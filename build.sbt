@@ -252,9 +252,11 @@ lazy val `interpreter-js` = project
   .enablePlugins(TutPlugin)
   .settings(
     scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
+    libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2",
+    scalacOptions -= "-Xfatal-warnings" // twirl....
   )
   .enablePlugins(ScalaJSPlugin)
+
   .dependsOn(commonWebJS, `exampleProgramsJS` % Tut)
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)

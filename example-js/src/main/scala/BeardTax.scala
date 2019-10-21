@@ -5,11 +5,9 @@ import examples.beardtax._
 
 import cats.implicits._
 import org.querki.jquery._
-import JsImplementations._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import cats.Monoid
 import ltbs.uniform.web.parser._
-import ltbs.uniform.widgets.govuk._
 import play.twirl.api.{Html,HtmlFormat}
 
 object BeardTaxApp {

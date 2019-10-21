@@ -1,71 +1,72 @@
 package ltbs.uniform
 package interpreters.js
 
-import ltbs.uniform._
-import ltbs.uniform._
-import shapeless.{Path => _, _}
 import common.web._
 import cats.implicits._
-import cats.data._
 import org.querki.jquery._
 import concurrent._
 
-abstract class JsInterpreter[Html](domSelector: String) {
+abstract class JsInterpreter[Html](
+  domSelector: String
+)( implicit
+  ec: ExecutionContext
+) extends GenericWebInterpreter[Html]{
 
-  type DomMonad[A] = RWST[
-    Future,
-    (JourneyConfig, List[String], Option[Input]),
-    Unit,
-    (Path, DB),
-    PageOut[A,Html]
-  ]
+  var state: DB = DB.empty
+  var breadcrumbs: Path = List.empty
+  var currentId: List[String] = Nil
 
   val dom = $(domSelector)
 
-  type JsAsk[A]  = GenericWebAsk[A, Html]
-  type JsTell[A] = GenericWebTell[A, Html]
+  def pageChrome(
+    html: Html,
+    errors: ErrorTree,
+    messages: UniformMessages[Html],
+    isCompoundField: Boolean    
+  ): Html
 
-  def messages(
-    customContent: Map[String,(String,List[Any])]
-  ): UniformMessages[Html]
+  def messages: UniformMessages[Html]
 
-  class FutureJSInterpreter[
-    SupportedTell <: HList,
-    SupportedAsk  <: HList
-  ]( implicit
-    tellSummoner : TypeclassList[SupportedTell, JsTell],
-    askSummoner  : TypeclassList[SupportedAsk, JsAsk],
-    ec           : concurrent.ExecutionContext
-  ) extends Language[DomMonad, SupportedTell, SupportedAsk] {
-
-    override def interact[Tell, Ask](
-      id            : String,
-      t             : Tell,
-      default       : Option[Ask],
-      validation    : List[List[Rule[Ask]]],
-      customContent : Map[String,(String,List[Any])]
-    )(
-      implicit selectorTell : IndexOf[SupportedTell, Tell],
-      selectorAsk : IndexOf[SupportedAsk, Ask]
-    ): DomMonad[Ask] = {
-      val asker = askSummoner.forType[Ask]
-      val teller = tellSummoner.forType[Tell]
-      RWST { case ((config, currentId, input), (path, db)) =>
-        val localMessages = messages(customContent)
-        val tellHtml = teller.render(t, id, localMessages)
-        asker.page(
-          targetId = id.split("/").toList.dropWhile(_.isEmpty),
-          currentId,
-          default,
-          validation,
-          config,
-          input,
-          path,
-          db,
-          localMessages
-        ).map { ((), (path, db), _) }
-      }
+  def readData: Input = {
+    val fields = dom.serialize()
+    Input.fromUrlEncodedString(fields) match {
+      case Left(e) => throw new IllegalStateException(e.toString)
+      case Right(r) => r
     }
   }
 
+  implicit class JsWebMonad[A](wm: WebMonad[A, Html]) {
+
+    case class withFinalAction(
+      f: A => Html
+    ) {
+
+      def submit = run(currentId, Some(readData))
+      def initial = run(currentId, None)
+      def goto(targetId: List[String]) = run(targetId, None)
+      def back = run(breadcrumbs.lastOption.getOrElse(Nil), None)
+
+      def run(
+        targetId: List[String],
+        data: Option[Input]
+      ): Future[Unit] = {
+
+        wm(PageIn(targetId, Nil, data, state)) flatMap {
+          case common.web.PageOut(pathOut, dbOut, pageOut) =>
+            state = dbOut
+            breadcrumbs = pathOut
+            pageOut match {
+              case AskResult.GotoPath(targetPath) =>
+                run(targetPath, None)
+              case AskResult.Payload(html, errors, msg, isCompound) =>
+                dom.html(pageChrome(html, errors, msg, isCompound).toString)
+                ().pure[Future]
+              case AskResult.Success(result) =>
+                dom.html(f(result).toString)
+                ().pure[Future]
+            }
+        }
+      }
+    }
+  }
 }
