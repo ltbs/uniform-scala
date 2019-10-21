@@ -24,6 +24,7 @@ lazy val root = project.in(file("."))
   .settings(
     publishLocal := {},
     publish := {},
+    test := {},
     publishArtifact := false,
     publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo")))
   )
@@ -31,7 +32,7 @@ lazy val root = project.in(file("."))
 scalaVersion := scala2_11
 crossScalaVersions := Seq(scala2_11)
 
-enablePlugins(GitVersioning, SiteScaladocPlugin)
+enablePlugins(SemVerPlugin, SiteScaladocPlugin)
 
 def macroDependencies(scalaVersion: String) =
   CrossVersion.partialVersion(scalaVersion) match {
@@ -121,6 +122,12 @@ lazy val commonSettings = Seq(
       name          = "Luke Tebbs",
       email         = "luke@luketebbs.com",
       url           = url("http://www.luketebbs.com/")
+    ),
+    Developer(
+      id            = "mattrobertsky",
+      name          = "Matt Roberts",
+      email         = "matt.roberts2@digital.hmrc.gov.uk",
+      url           = url("https://github.com/mattrobertsky")
     )
   ),
   publishTo := {
@@ -162,10 +169,10 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     crossScalaVersions += scala2_13,
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core" % "2.0.0-RC1",
+      "org.typelevel" %%% "cats-core" % "2.0.0",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.github.mpilquist" %%% "simulacrum" % "0.19.0"
+      "org.typelevel" %%% "simulacrum" % "1.0.0"
     ) ++ macroDependencies(scalaVersion.value)
   )
 
@@ -179,7 +186,7 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
     crossScalaVersions += scala2_13,
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.github.mpilquist" %%% "simulacrum" % "0.19.0"
+      "org.typelevel" %%% "simulacrum" % "1.0.0"
     ) ++ macroDependencies(scalaVersion.value)
   )
 

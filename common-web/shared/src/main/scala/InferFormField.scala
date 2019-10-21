@@ -6,6 +6,10 @@ import shapeless._, shapeless.labelled._
 import cats.Monoid
 import com.github.ghik.silencer.silent
 
+trait FormGrouping[A, Html] {
+  def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html
+}
+
 trait InferFormField[Html] {
 
   val mon: Monoid[Html]
@@ -26,12 +30,76 @@ trait InferFormField[Html] {
     ): Html = mon.empty
   }
 
+  /** We get this from coproduct anyway, but we've done this
+    * explicitly as the name of the field in `Some` changed from 'x'
+    * to 'value' between scala 2.11 and 2.12 and we're overriding the
+    * presentation. If it is no longer necessary to override the
+    * presentation then this will no longer be needed
+    */
+  implicit def optionField[A](
+    implicit encInner: Lazy[FF[A]]//FormFieldEncoding[A]
+  ) = new FF[Option[A]] {
+
+    override def stats = FormFieldStats(
+      children = 2,
+      compoundChildren = if (encInner.value.stats.isCompound) 1 else 0
+    )
+
+    def decode(out: Input): Either[ErrorTree,Option[A]] = out.valueAtRoot.headOption match {
+      case Some(List("Some")) => encInner.value.decode(out / "Some" / "value").map{x => x.some} match {
+        case Left(e) => Left(e.prefixWith("value").prefixWith("Some"))
+        case r@Right(_) => r
+      }
+      case Some(List("None")) => None.asRight
+      case _                  => Left(ErrorMsg("required").toTree)
+    }
+
+    def encode(in: Option[A]): Input = in match {
+      case Some(inner) => Map(
+        List.empty[String] -> List("Some")
+      ) ++ encInner.value.encode(inner).prefixWith("value").prefixWith("Some")
+      case None        => Input.one(List("None"))
+    }
+
+    def render(
+      key: List[String],
+      path: Breadcrumbs,
+      data: Input,
+      errors: ErrorTree,
+      messages: UniformMessages[Html]
+    ): Html = {
+      val options: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)] =
+        List(
+          "Some" -> {case (subKey, subPath, subOpt, subErr, subMsg) =>
+            encInner.value.render(
+              subKey :+ "value",
+              subPath,
+              subOpt / "value",
+              subErr / "value",
+              subMsg
+            )},
+          "None" -> {case _ => mon.empty}
+        )
+
+      selectionOfFields(options)(key,path, data ,errors,messages)
+    }
+
+  }
+
+
   implicit def hConsField[K <: Symbol, H, T <: HList](
     implicit
       witness: Witness.Aux[K],
     hField: Lazy[FF[H]],
     tField: FF[T]
   ): FF[FieldType[K,H] :: T] = new FF[FieldType[K,H] :: T] {
+
+    override def stats = FormFieldStats(
+      children = tField.stats.children + 1,
+      compoundChildren =
+        tField.stats.compoundChildren + {if (hField.value.stats.isCompound) 1 else 0}
+    )
+
     val fieldName: String = witness.value.name
 
     def decode(out: Input): Either[ErrorTree,FieldType[K,H] :: T] = {
@@ -42,7 +110,7 @@ trait InferFormField[Html] {
         case (Right(h), Right(t)) => Right((field[K](h) :: t))
         case (Left(he), Left(te)) =>
           val l = he.prefixWith(fieldName)
-          Left(l |+| te)
+          Left(l ++ te)
         case (_,        Left(te)) => Left(te)
         case (Left(he), _)        => Left(he.prefixWith(fieldName))
       }
@@ -66,6 +134,16 @@ trait InferFormField[Html] {
     )
   }
 
+  def defaultFormGrouping: FormGrouping[Any, Html] =
+    new FormGrouping[Any, Html] {
+      def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html = in
+    }
+
+  implicit def defaultFormGroupingImplicit[A]: FormGrouping[A, Html] =
+    new FormGrouping[A, Html] {
+      def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html =
+        defaultFormGrouping.wrap(in, key, messages)
+    }
 
   implicit def listCodec[A](implicit @silent subcodec: Codec[A]) = new Codec[List[A]]{
     import cats.data.Validated
@@ -85,13 +163,15 @@ trait InferFormField[Html] {
   implicit def genericField[A, H, T](implicit
     @silent generic: LabelledGeneric.Aux[A,T],
     hlistInstance: Lazy[FF[T]],
-    @silent("never used") notAnIterable: A <:!< Iterable[_]
+    @silent("never used") notAnIterable: A <:!< Iterable[_],
+    wrapper: FormGrouping[A, Html]
   ): FF[A] = new FF[A] {
+
     val hlist = hlistInstance.value
     def decode(in: Input): Either[ErrorTree,A] =
       hlist.decode(in).map(generic.from)
 
-    def encode(a:A): Input =
+    def encode(a: A): Input =
       hlist.encode(generic.to(a))
 
     def render(
@@ -100,7 +180,15 @@ trait InferFormField[Html] {
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
-    ): Html = hlist.render(key, breadcrumbs, data, errors, messages)
+    ): Html = {
+      val core = hlist.render(key, breadcrumbs, data, errors, messages)
+      if (stats.isCompound)
+        wrapper.wrap(core, key, messages)
+      else
+        core
+    }
+
+    override def stats = hlist.stats
   }
 
   // COPRODUCTS
@@ -117,6 +205,7 @@ trait InferFormField[Html] {
   trait CoproductFieldList[A]{
     def decode(out: Input): Either[ErrorTree,A]
     def encode(in: A): Input
+    def stats: FormFieldStats
     val inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
   }
 
@@ -126,6 +215,7 @@ trait InferFormField[Html] {
       Left(ErrorMsg("required").toTree)
     override def encode(a: CNil): Input = Input.empty
     override val inner = List.empty
+    def stats = FormFieldStats()
   }
 
   implicit def coproductFieldList[K <: Symbol, H, T <: Coproduct](
@@ -155,6 +245,13 @@ trait InferFormField[Html] {
         hField.encode(l).prefixWith(fname) ++ Map(Nil -> List(fname))
       case Inr(r) => tFields.encode(r)
     }
+
+    override def stats = FormFieldStats(
+      children = tFields.stats.children + 1,
+      compoundChildren =
+        tFields.stats.compoundChildren + {if (hField.stats.isCompound) 1 else 0}
+    )
+    
   }
 
   implicit def coproductField[A](implicit coproductFields: CoproductFieldList[A]) =
@@ -164,5 +261,7 @@ trait InferFormField[Html] {
 
       def decode(out: Input): Either[ErrorTree,A] = coproductFields.decode(out)
       def encode(in: A): Input = coproductFields.encode(in)
+
+      override def stats = coproductFields.stats
     }
 }

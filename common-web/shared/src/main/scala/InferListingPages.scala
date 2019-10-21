@@ -158,7 +158,7 @@ trait InferListingPages[Html] {
             subJourney(Seq(id, "edit", index.toString))( for {
               r <- addEditJourney(data, Some(index), messages)
               _ <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, r)
-              _ <- db.deleteRecursive(List(id))
+              _ <- db.deleteRecursive(List(id, "edit"))
             } yield (List.empty[A]))
         }
       }

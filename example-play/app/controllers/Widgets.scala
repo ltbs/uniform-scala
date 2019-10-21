@@ -3,14 +3,14 @@ package controllers
 import cats.implicits._
 
 import ltbs.uniform._, interpreters.playframework._
-import ltbs.uniform.common.web.{FormField, GenericWebTell, ListingTell, ListingTellRow}
+import ltbs.uniform.common.web.{FormField, GenericWebTell, ListingTell, ListingTellRow, FormFieldStats}
 import play.twirl.api.Html
 import java.time.LocalDate
 import cats.data.Validated
 
 object Widgets extends Widgets
 
-trait Widgets extends InferTellTwirlDL {
+trait Widgets extends InferTellTwirlDL with InputOps {
 
   implicit def tellToListingTell[A: GenericWebTell[?, Html]] = new ListingTell[Html, A] {
 
@@ -31,19 +31,10 @@ trait Widgets extends InferTellTwirlDL {
 
   implicit val twirlBigStringField = new FormField[BigString,Html] {
     import shapeless.tag
-    def decode(out: Input): Either[ErrorTree,BigString] = {
-      val root: Option[BigString] = {
-        val asString = out.valueAtRoot
-          .flatMap(_.filter(_.trim.nonEmpty).headOption)
-
-        asString.map{tag[BigStringTag][String]}
-      }
-
-      root match {
-        case None => Left(ErrorMsg("required").toTree)
-        case Some(data) => Right(data)
-      }
-    }
+    def decode(out: Input): Either[ErrorTree,BigString] =
+      out.toField[BigString](
+        x => Validated.Valid(tag[BigStringTag][String](x))
+      ).toEither
 
     def encode(in: BigString): Input = Input.one(List(in))
     def render(
@@ -59,22 +50,12 @@ trait Widgets extends InferTellTwirlDL {
   }
 
   implicit val twirlBooleanField = new FormField[Boolean,Html] {
-    def decode(out: Input): Either[ErrorTree,Boolean] = {
-      val root: Option[String] = out.valueAtRoot
-        .flatMap(_.filter(_.trim.nonEmpty).headOption)
+    def decode(out: Input): Either[ErrorTree,Boolean] =
+      out.toField[Boolean]{x: String =>
+        Validated.catchOnly[IllegalArgumentException](x.toBoolean).leftMap(_ => ErrorMsg("invalid").toTree)
+      }.toEither
 
-      root match {
-        case None => Left(ErrorMsg("required").toTree)
-        case Some("TRUE") => Right(true)
-        case Some("FALSE") => Right(false)
-        case _ => Left(ErrorMsg("bad.value").toTree)
-      }
-    }
-
-    def encode(in: Boolean): Input = in match {
-      case true => Input.one(List("TRUE"))
-      case false => Input.one(List("FALSE"))
-    }
+    def encode(in: Boolean): Input = Input.one(List(in.toString))
 
     def render(
       key: List[String],
@@ -84,15 +65,14 @@ trait Widgets extends InferTellTwirlDL {
       messages: UniformMessages[Html]
     ): Html = {
       val existingValue: Option[String] = data.valueAtRoot.flatMap{_.headOption}
-      views.html.uniform.radios(key, List("TRUE","FALSE"), existingValue, errors, messages)
+      views.html.uniform.radios(key, List(true.toString,false.toString), existingValue, errors, messages)
     }
   }
 
   implicit val twirlStringField = new FormField[String,Html] {
-    def decode(out: Input): Either[ErrorTree,String] =
-      out.valueAtRoot.flatMap(_.headOption).getOrElse("").asRight
-
+    def decode(out: Input): Either[ErrorTree,String] = out.toStringField().toEither
     def encode(in: String): Input = Input.one(List(in))
+
     def render(
       key: List[String],
       breadcrumbs: Breadcrumbs,
@@ -119,24 +99,22 @@ trait Widgets extends InferTellTwirlDL {
         .leftMap(_ => ErrorMsg("bad.value").toTree)
     )(_.toString)
 
-
   implicit val twirlDateField = new FormField[LocalDate,Html] {
+
+    override def stats = FormFieldStats(children = 3)
 
     def decode(out: Input): Either[ErrorTree,LocalDate] = {
 
       def intAtKey(key: String): Validated[ErrorTree, Int] =
-        Validated.fromOption(
-          out.valueAt(key).flatMap{_.filter(_.trim.nonEmpty).headOption},
-          ErrorTree.oneErr(ErrorMsg("required")).prefixWith(key)
-        ).andThen{
-            x => Validated.catchOnly[NumberFormatException](x.toInt).leftMap(_ => ErrorMsg("badValue").toTree)
-        }
+        out.subField(key, nonEmptyString(_) andThen {x: String =>
+          Validated.catchOnly[NumberFormatException](x.toInt).leftMap(_ => ErrorMsg("badValue").toTree)
+        } andThen min(0))
 
       (
-        intAtKey("year"),
+        intAtKey("day"),
         intAtKey("month"),
-        intAtKey("day")
-      ).tupled.toEither.flatMap{ case (y,m,d) =>
+        intAtKey("year")
+      ).tupled.toEither.flatMap{ case (d,m,y) =>
         Either.catchOnly[java.time.DateTimeException]{
           LocalDate.of(y,m,d)
         }.leftMap(_ => ErrorTree.oneErr(ErrorMsg("badDate")))

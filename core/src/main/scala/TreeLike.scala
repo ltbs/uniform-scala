@@ -2,7 +2,11 @@ package ltbs.uniform
 
 import simulacrum._
 import cats.data.{NonEmptyList => NEL}
+import collection.immutable.ListMap
 
+/** Can be navigated like a tree. Has a `Value` at branches and
+  * leaves, and edges are labelled with `Key`.
+  */
 @typeclass trait TreeLike[T] {
 
   type Key
@@ -37,8 +41,10 @@ import cats.data.{NonEmptyList => NEL}
   def isEmpty(a: T): Boolean = a == empty
   def isNonEmpty(a: T): Boolean = !isEmpty(a)
 
+  /** create an empty tree (no verticies) */
   def empty: T
 
+  /** create a tree with a single vertex */  
   def one(in: Value): T
 
   def atPath(a: T, path: List[Key]): T = {
@@ -105,12 +111,12 @@ trait TreeLikeInstances {
       }
     }
 
-    val empty: ErrorTree = Map.empty
-    def one(in: NEL[ErrorMsg]): ErrorTree = Map (
+    val empty: ErrorTree = ListMap.empty
+    def one(in: NEL[ErrorMsg]): ErrorTree = ListMap (
       NEL.one(Nil) -> in
     )
 
-    def oneErr(in: ErrorMsg): ErrorTree = Map (
+    def oneErr(in: ErrorMsg): ErrorTree = ListMap (
       NEL.one(Nil) -> NEL.one(in)
     )
 

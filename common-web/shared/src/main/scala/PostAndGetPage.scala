@@ -7,6 +7,8 @@ import scala.concurrent.ExecutionContext
 
 abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[A, Html] {
 
+  def stats: FormFieldStats
+
   def codec: Codec[A]
 
   val customRouting: PartialFunction[List[String], A] = Map.empty
@@ -42,7 +44,8 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
         state.get(currentId).map{Input.fromUrlEncodedString}
 
       lazy val dbObject: Option[Either[ErrorTree,A]] =
-        dbInput map {_ >>= codec.decode >>= validation.combined.either}
+        dbInput map {_ >>= codec.decode >>= validation.combined.either} orElse
+          default.map(x => validation.combined.either(x))
 
       lazy val residual = targetId.drop(currentId.size)
       if (targetId === currentId) {
@@ -57,7 +60,8 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
                 PageOut(currentId :: breadcrumbs, state, AskResult.Payload[A, Html](
                   tell |+| postPage(currentId, state, localData, error, breadcrumbs, messages),
                   error,
-                  messages
+                  messages,
+                  stats
                 ), pageIn.pathPrefix).pure[Future]
             }
 
@@ -74,7 +78,8 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
                   messages
                 ),
               ErrorTree.empty,
-              messages
+              messages,
+              stats
             ), pageIn.pathPrefix).pure[Future]
         }
       } else if (targetId.startsWith(currentId) && customRouting.isDefinedAt(residual)) {
@@ -105,6 +110,9 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
 class SimplePostAndGetPage[A,Html: cats.Monoid](
   fieldIn: FormField[A, Html]
 ) extends PostAndGetPage[A, Html] {
+
+    def stats: FormFieldStats = fieldIn.stats
+
     def codec: Codec[A] = fieldIn
 
     def getPage(

@@ -23,7 +23,8 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
     ask: Html,
     breadcrumbs: Breadcrumbs,
     request: Request[AnyContent],
-    messages: UniformMessages[Html]
+    messages: UniformMessages[Html],
+    fieldStats: FormFieldStats
   ): Html
 
   val log: Logger = Logger("uniform")
@@ -64,10 +65,10 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
               case AskResult.GotoPath(targetPath) =>
                 val path = relativePath(id, targetPath)
                 (dbOut, controller.Redirect(path)).pure[Future]
-              case AskResult.Payload(html, errors, messagesOut) =>
-                (db, controller.Ok(pageChrome(breadcrumbs.head, errors, mon.empty, html, breadcrumbs, request, messagesOut))).pure[Future]
+              case AskResult.Payload(html, errors, messagesOut, stats) =>
+                (db, controller.Ok(pageChrome(breadcrumbs.head, errors, mon.empty, html, breadcrumbs, request, messagesOut,stats))).pure[Future]
               case AskResult.Success(result) =>
-                f(result).map{ (if (purgeStateUponCompletion) DB.empty else db, _) }
+                f(result).map{ (if (purgeStateUponCompletion) DB.empty else dbOut, _) }
             }
         }
       }
