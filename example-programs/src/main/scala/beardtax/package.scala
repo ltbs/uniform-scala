@@ -4,6 +4,7 @@ package examples
 import cats.Monad
 import cats.implicits._
 import scala.language.higherKinds
+import validation._
 
 package object beardtax {
 
@@ -25,7 +26,7 @@ package object beardtax {
         }}
       ))
       beardLength    <- ask[BeardLength]("beard-length-mm", validation = List(
-        validation.Rule.cond(x => x._1 <= x._2, "lower.less.than.higher")
+        Rule.condAtPath("_2")(x => x._1 <= x._2, "lower.less.than.higher")
       )) emptyUnless memberOfPublic.isDefined
       cost           <- hod.costOfBeard(beardStyle, beardLength)
     } yield cost

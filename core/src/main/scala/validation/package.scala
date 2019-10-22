@@ -22,17 +22,9 @@ package object validation extends validation.Compat {
     }
   }
 
-  implicit class RichTransformation[A, B](trans: Transformation[A, B]) {
-    def atPath(p: String, px: String*): Transformation[A, B] =
-      trans(_).leftMap(_.atPath(p::px.toList))
-    def atPath(p: List[String]): Transformation[A, B] =
-      trans(_).leftMap(_.atPath(p))
-  }
-
   implicit class RichRule[A](rule: Rule[A]) {
     def either(in: A): Either[ErrorTree, A] = rule.apply(in).toEither
   }
-
 }
 
 package validation {
