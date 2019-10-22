@@ -34,7 +34,6 @@ case class HmrcPlayInterpreter(
     stats: FormFieldStats
   ): Html = {
     views.html.chrome(key, errors, Html(
-      s"""<div style="border: 1px dotted blue">${stats.isCompound} ${stats.children} ${stats.compoundChildren}</div>""" + 
       tell.toString + ask.toString
     ), breadcrumbs)(messages, request)
   }

@@ -125,9 +125,8 @@ trait InferListingPages[Html] {
         val indexedRows = data.zipWithIndex.
           sorted(orderWithIndex).
           map{case (v, index) =>
-
-            val editLink = s"$id/edit/$index"
-            val deleteLink = s"$id/delete/$index"
+            val editLink = s"$id/edit/$index" + (if (useSubjourneys) "/" else "")
+            val deleteLink = s"$id/delete/$index/"
             ListingTellRow(v, editLink, deleteLink)
           }
 
@@ -158,7 +157,7 @@ trait InferListingPages[Html] {
             subJourney(Seq(id, "edit", index.toString))( for {
               r <- addEditJourney(data, Some(index), messages)
               _ <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, r)
-              _ <- db.deleteRecursive(List(id, "edit"))
+              _ <- db.deleteRecursive(List(id))
             } yield (List.empty[A]))
         }
       }

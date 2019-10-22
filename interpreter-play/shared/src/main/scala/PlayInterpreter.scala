@@ -46,8 +46,9 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
     ): Future[Result] = {
 
       val id = path.split("/", -1).toList
-      // this is a nasty bodge to prevent hitting URL's with a trailing slash
-      // which seem to be caused by the UA handling '..' in the redirection target. 
+      
+      // //this is a nasty bodge to prevent hitting URL's with a trailing slash
+      // //which seem to be caused by the UA handling '..' in the redirection target. 
       // if (id.lastOption == Some("")) {
       //   return (controller.Redirect(
       //     request.path.dropRight(1)

@@ -44,11 +44,14 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
         state.get(currentId).map{Input.fromUrlEncodedString}
 
       lazy val dbObject: Option[Either[ErrorTree,A]] =
-        dbInput map {_ >>= codec.decode >>= validation.combined.either} orElse
-          default.map(x => validation.combined.either(x))
+        dbInput map {_ >>= codec.decode >>= validation.combined.either}  orElse default.map(validation.combined.either)
 
-      lazy val residual = targetId.drop(currentId.size)
-      if (targetId === currentId) {
+      // we need to ignore cases with a trailing slash 
+      val targetIdP = targetId.reverse.dropWhile(_ == "").reverse
+
+      lazy val residual = targetIdP.drop(currentId.size)
+      println(s"residual: $residual")
+      if (targetIdP === currentId) {
         request match {
           case Some(post) =>
             val localData = post.atPath(currentId)
@@ -82,7 +85,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
               stats
             ), pageIn.pathPrefix).pure[Future]
         }
-      } else if (targetId.startsWith(currentId) && customRouting.isDefinedAt(residual)) {
+      } else if (targetIdP.startsWith(currentId) && customRouting.isDefinedAt(residual)) {
         val residualData = customRouting(residual)
         Future.successful(
           PageOut(
@@ -93,15 +96,21 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
           )
         )
       } else {
-        Future.successful(
+        Future.successful{
+
+          println(s"targetId: $targetId")
+          println(s"currentId: $currentId")          
+
           dbObject match {
-            case Some(Right(data)) if targetId =!= Nil && !breadcrumbs.contains(targetId) =>
+            case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && currentId.drop(targetId.size).isEmpty && !breadcrumbs.contains(targetId) =>
               // they're replaying the journey
+              println(s"success")
               PageOut(currentId :: breadcrumbs, state, AskResult.Success(data), pageIn.pathPrefix)
             case _ =>
+              println(s"redirection $currentId")              
               PageOut(breadcrumbs, state, AskResult.GotoPath(currentId), pageIn.pathPrefix)
           }
-        )
+        }
       }
     }
   }

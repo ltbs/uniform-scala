@@ -27,11 +27,12 @@
     <div class="govuk-width-container">
       <main class="govuk-main-wrapper " id="main-content" role="main">
         <div id="mainBody">
+
           @for(back <- breadcrumbs.drop(1).headOption) {
-            <a href="@{relativePath(breadcrumbs.head.dropRight(1), back)}" class="govuk-back-link">@messages({back :+ "back"}.mkString("."))</a>
+            <a href="@{relativePath(breadcrumbs.head, back)}" class="govuk-back-link">@messages({back :+ "back"}.mkString("."))</a>
           }
 
-          @*****************************************
+            @*****************************************
           *   Uncomment to enable breadcrumbs
           ******************************************
             <div class="govuk-breadcrumbs">

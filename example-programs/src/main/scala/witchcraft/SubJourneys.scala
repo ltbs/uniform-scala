@@ -12,16 +12,20 @@ package object subjourneys {
   def subjourneyProg[F[_] : Monad](
     i: Language[F, TellTypes, AskTypes]
   ): F[Unit] = for {
-    _ <- i.ask[String]("begin")
+    _ <- i.ask[String]("begin", default = Some("x"))
     _ <- i.subJourney("one") { for {
-      _ <- i.ask[String]("a")
-      _ <- i.ask[String]("b")
+      _ <- i.ask[String]("a", default = Some("x"))
+      _ <- i.ask[String]("b", default = Some("x"))
+      _ <- i.subJourney("half") { for {
+        _ <- i.ask[String]("a", default = Some("x"))
+        _ <- i.ask[String]("b", default = Some("x"))
+      } yield (()) }
     } yield (()) }
-    _ <- i.subJourney("two","two") { for {
-      _ <- i.ask[String]("a")
-      _ <- i.ask[String]("b")
+    _ <- i.subJourney("twoa","twob") { for {
+      _ <- i.ask[String]("a", default = Some("x"))
+      _ <- i.ask[String]("b", default = Some("x"))
     } yield (()) }
-    _ <- i.subJourney("three","three", "three") { i.ask[String]("a") }
+    _ <- i.subJourney("threea","threeb", "threec") { i.ask[String]("a") }
     _ <- i.subJourney("solo") { i.ask[String]("a") }
     _ <- i.ask[String]("end")    
   } yield ()

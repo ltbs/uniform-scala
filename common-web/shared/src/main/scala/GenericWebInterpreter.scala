@@ -53,7 +53,7 @@ trait GenericWebInterpreter[Html] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] =
       Future.successful(
         pageIn.toPageOut(AskResult.Success[Unit, Html](())).copy(
-          pathPrefix = key.toList ++ pageIn.pathPrefix
+          pathPrefix = pageIn.pathPrefix ++ key.toList
         )
       )
   }
