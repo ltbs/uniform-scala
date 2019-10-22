@@ -1,8 +1,8 @@
 package ltbs.uniform
 package interpreter.asterisk
 
-import cats.implicits._
-import language.higherKinds
+//import cats.implicits._
+//import language.higherKinds
 import javax.sound.sampled.AudioInputStream
 import concurrent.Future
 import shapeless._
@@ -31,8 +31,8 @@ class CliInterpreter[
     selectorTell : IndexOf[SupportedTell, Tell],
     selectorAsk  : IndexOf[SupportedAsk, Ask]
   ): Future[Ask] = {
-    val teller = the[TypeclassList[SupportedTell,TellAsterisk]].
-      forType[Tell].say(id, t)
+    // val teller = the[TypeclassList[SupportedTell,TellAsterisk]].
+    //   forType[Tell].say(id, t)
     val asker = the[TypeclassList[SupportedAsk,AskAsterisk]].
       forType[Ask]
     asker(id, validation)
