@@ -18,7 +18,7 @@ object Rule extends Quantifiable.ToQuantifiableOps {
     condError(predicate, error(errorMsg, args: _*))
 
   def condAtPath[A](pathHead: String, pathTail: String*)(predicate: A => Boolean, errorMsg: String, args: Any*): Rule[A] =
-    condError(predicate, error(errorMsg, args: _*).atPath(pathHead :: pathTail.toList))
+    condError(predicate, error(errorMsg, args: _*).prefixWithMany(pathHead :: pathTail.toList))
 
   case class minLength[A: Quantifiable](len: Int, errorMsg: String = "minLength") extends Rule[A] {
     def apply(in: A): Validated[ErrorTree, A] =

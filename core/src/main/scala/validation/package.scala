@@ -18,7 +18,13 @@ package object validation extends validation.Compat {
     def empty: Rule[A] = Rule.alwaysPass[A]()
    
     def combine(x: Rule[A],y: Rule[A]): Rule[A] = new Rule[A] {
-      def apply(in: A) = (x.apply(in),y.apply(in)).mapN{case x => x._1}
+      import Validated.{Valid, Invalid}
+      def apply(in: A) = (x.apply(in),y.apply(in)) match {
+        case (Valid(_), Valid(_)) => Valid(in)
+        case (Invalid(e), Valid(_)) => Invalid(e)
+        case (Valid(_), Invalid(e)) => Invalid(e)
+        case (Invalid(e1), Invalid(e2)) => Invalid(e1 |+| e2)
+      }
     }
   }
 
