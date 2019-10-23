@@ -1,8 +1,8 @@
 package ltbs.uniform
 
-import org.scalatest._
+import org.scalatest._, funspec.AnyFunSpec, matchers.should.Matchers
 
-class UniformMessagesSpec extends FunSpec with Matchers {
+class UniformMessagesSpec extends AnyFunSpec with Matchers {
 
   // def argInsensitive[A](msg: UniformMessages[A]): Unit = {
   //   it("stuff") {

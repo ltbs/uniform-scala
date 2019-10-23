@@ -1,6 +1,6 @@
 package ltbs.uniform
 
-import org.scalatest._
+import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 import cats.implicits._
 import cats.{Id, Monad}
 import shapeless.{Id => _, _}
@@ -24,7 +24,7 @@ class MonoidInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
   ): Ask = askSummoner.forType[Ask].empty
 }
 
-class TestInterpreter extends FlatSpec with Matchers {
+class TestInterpreter extends AnyFlatSpec with Matchers {
 
   "A simple interpreter" should "be able to compose Id monad instances" in {
 

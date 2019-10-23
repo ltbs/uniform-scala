@@ -1,8 +1,8 @@
 package ltbs.uniform
 
-import org.scalatest._
+import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 
-class BestGuessMessagesSpec extends FlatSpec with Matchers {
+class BestGuessMessagesSpec extends AnyFlatSpec with Matchers {
   "BestGuessMessages" should "remove initial parts" in {
     BestGuessMessages.apply("one.two.three") shouldBe ("Three")
   }
