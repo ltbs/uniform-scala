@@ -223,7 +223,8 @@ lazy val `interpreter-asterisk` = project
     resolvers += Resolver.jcenterRepo,
     libraryDependencies ++= Seq(
       "org.asteriskjava" % "asterisk-java" % "2.0.2",
-      "de.dfki.mary" % "voice-cmu-slt-hsmm" % "5.2"
+      "de.dfki.mary" % "voice-cmu-slt-hsmm" % "5.2",
+      "org.typelevel" %% "cats-effect" % "2.0.0"
     ),
     crossScalaVersions += scala2_13
   )
