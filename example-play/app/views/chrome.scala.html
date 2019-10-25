@@ -28,6 +28,23 @@
       <main class="govuk-main-wrapper " id="main-content" role="main">
         <div id="mainBody">
 
+	  <ul>
+          @for(crumb <- breadcrumbs) {
+            <li>@{crumb.mkString("/")}</li>
+          }
+	  </ul>
+
+	  <dl>
+	    <dt>breadcrumbs.drop(1).headOption</dt>
+	    <dd>@{breadcrumbs.drop(1).headOption.toString}</dd>
+	    <dt>breadcrumbs.head</dt>
+	    <dd>@{breadcrumbs.head.toString}</dd>
+	    @for(back <- breadcrumbs.drop(1).headOption) {
+	    <dt>relativePath(breadcrumbs.head, back)</dt>
+	    <dd>@{relativePath(breadcrumbs.head, back)}</dd>
+	    }
+	  </dl>
+	      
           @for(back <- breadcrumbs.drop(1).headOption) {
             <a href="@{relativePath(breadcrumbs.head, back)}" class="govuk-back-link">@messages({back :+ "back"}.mkString("."))</a>
           }

@@ -1,10 +1,10 @@
 package ltbs.uniform
 
-import org.scalatest._
+import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 import cats.implicits._
 import cats.Monad
 
-class RewriterSpec extends FlatSpec with Matchers with OptTCOps {
+class RewriterSpec extends AnyFlatSpec with Matchers with OptTCOps {
 
   "A rewriter" should "change a journey" in {
 

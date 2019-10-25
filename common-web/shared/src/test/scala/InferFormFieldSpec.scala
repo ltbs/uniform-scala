@@ -1,7 +1,8 @@
 package ltbs.uniform
 package common.web
 
-import org.scalatest._
+import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
+
 import cats.implicits._
 import com.github.ghik.silencer.silent
 
@@ -21,7 +22,7 @@ object Presenter extends InferFormField[String] with SampleFormFields {
 
 }
 
-class InferFormFieldSpec extends FlatSpec with Matchers {
+class InferFormFieldSpec extends AnyFlatSpec with Matchers {
 
   import Presenter._
 

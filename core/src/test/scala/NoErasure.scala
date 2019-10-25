@@ -1,8 +1,8 @@
 package ltbs.uniform
 
-import org.scalatest._
+import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 
-class NoErasure extends FlatSpec with Matchers {
+class NoErasure extends AnyFlatSpec with Matchers {
 
   "A TypeclassList" should "not suffer type erasure" in {
     trait TC[A] { val i: A }
