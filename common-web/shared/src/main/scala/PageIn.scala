@@ -6,7 +6,8 @@ case class PageIn(
   breadcrumbs: Breadcrumbs,
   request: Option[Input],
   state: DB,
-  pathPrefix: List[String]
+  pathPrefix: List[String],
+  config: JourneyConfig
 ) {
   def toPageOut[A, Html](
     output: AskResult[A, Html],
@@ -15,6 +16,7 @@ case class PageIn(
     breadcrumbs,
     stateManipulation(state),
     output,
-    pathPrefix
+    pathPrefix,
+    config
   )
 }

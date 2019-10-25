@@ -38,7 +38,7 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
       persistence: PersistenceEngine[Req]
     ): Future[Result] = run(path){f.map{_.pure[Future]}}
 
-    def run(path: String, purgeStateUponCompletion: Boolean = false)(
+    def run(path: String, purgeStateUponCompletion: Boolean = false, config: JourneyConfig = JourneyConfig())(
       f: A => Future[Result]
     )(implicit
       request: Req,
@@ -60,8 +60,8 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
       }
 
       persistence(request) { db =>
-        wm(PageIn(id, Nil, data, db, Nil)) flatMap {
-          case common.web.PageOut(breadcrumbs, dbOut, pageOut, _) =>
+        wm(PageIn(id, Nil, data, db, Nil, config)) flatMap {
+          case common.web.PageOut(breadcrumbs, dbOut, pageOut, _, _) =>
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
                 val path = relativePath(id, targetPath)

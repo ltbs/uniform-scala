@@ -104,9 +104,9 @@ trait InferListingPages[Html] {
 
       def subJourney[S](id: Seq[String])(sub: => WM[S]): WM[S] =
         if (useSubjourneys)
-          genericSubJourney[S](id)(sub)
+          genericSubJourney[S](id, c => c.copy(leapAhead = false))(sub)
         else
-          genericSubJourney[S](id.init)(sub)
+          genericSubJourney[S](id, c => c.copy(leapAhead = false))(sub)
 
       db.get[List[A]](List(s"${id}-zzdata")).flatMap{ dataRead =>
 

@@ -15,7 +15,7 @@ case class FutureAdapter[Html: Monoid]() {
       def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] =
         fa.map{ x =>
           import pageIn._
-          PageOut(breadcrumbs, state, AskResult.Success(x), pageIn.pathPrefix)
+          PageOut(breadcrumbs, state, AskResult.Success(x), pageIn.pathPrefix, pageIn.config)
         }
     }
   }
@@ -43,7 +43,7 @@ case class FutureAdapter[Html: Monoid]() {
             Input.fromUrlEncodedString(state(List(cacheId, "value"))) >>= codec.decode
 
           val Right(oldie) = oldValue
-          PageOut(breadcrumbs, state, AskResult.Success[A, Html](oldie), pageIn.pathPrefix).pure[Future]
+          PageOut(breadcrumbs, state, AskResult.Success[A, Html](oldie), pageIn.pathPrefix, pageIn.config).pure[Future]
         } else {
           fa.map{ result =>
 
@@ -51,7 +51,7 @@ case class FutureAdapter[Html: Monoid]() {
               List(cacheId, "value") -> codec.encode(result).toUrlEncodedString,
               List(cacheId, "trigger") -> trigger
             )
-            PageOut(breadcrumbs, state ++ newData, AskResult.Success[A, Html](result), pageIn.pathPrefix)
+            PageOut(breadcrumbs, state ++ newData, AskResult.Success[A, Html](result), pageIn.pathPrefix, pageIn.config)
 
           }
         }

@@ -43,8 +43,10 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}
 
-      lazy val dbObject: Option[Either[ErrorTree,A]] =
-        dbInput map {_ >>= codec.decode >>= validation.combined.either}  orElse default.map(validation.combined.either)
+      lazy val dbObject: Option[Either[ErrorTree,A]] = if (config.leapAhead) {
+        dbInput map {_ >>= codec.decode >>= validation.combined.either} orElse
+          default.map(validation.combined.either)
+      } else { None }
 
       // we need to ignore cases with a trailing slash 
       val targetIdP = targetId.reverse.dropWhile(_ == "").reverse
@@ -58,14 +60,14 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
             val parsed = (codec.decode(localData) >>= validation.combined.either)
             parsed match {
               case Right(valid) =>
-                PageOut(currentId :: breadcrumbs, state + (currentId -> localData.toUrlEncodedString), AskResult.Success[A, Html](valid), pageIn.pathPrefix).pure[Future]
+                PageOut(currentId :: breadcrumbs, state + (currentId -> localData.toUrlEncodedString), AskResult.Success[A, Html](valid), pageIn.pathPrefix, pageIn.config).pure[Future]
               case Left(error) =>
                 PageOut(currentId :: breadcrumbs, state, AskResult.Payload[A, Html](
                   tell |+| postPage(currentId, state, localData, error, breadcrumbs, messages),
                   error,
                   messages,
                   stats
-                ), pageIn.pathPrefix).pure[Future]
+                ), pageIn.pathPrefix, pageIn.config).pure[Future]
             }
 
           case None =>
@@ -83,7 +85,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
               ErrorTree.empty,
               messages,
               stats
-            ), pageIn.pathPrefix).pure[Future]
+            ), pageIn.pathPrefix, pageIn.config).pure[Future]
         }
       } else if (targetIdP.startsWith(currentId) && customRouting.isDefinedAt(residual)) {
         val residualData = customRouting(residual)
@@ -92,7 +94,8 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
             breadcrumbs,
             state + (currentId -> codec.encode(residualData).toUrlEncodedString),
             AskResult.Success(residualData),
-            pageIn.pathPrefix
+            pageIn.pathPrefix,
+            pageIn.config
           )
         )
       } else {
@@ -104,11 +107,9 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
           dbObject match {
             case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && currentId.drop(targetId.size).isEmpty && !breadcrumbs.contains(targetId) =>
               // they're replaying the journey
-              println(s"success")
-              PageOut(currentId :: breadcrumbs, state, AskResult.Success(data), pageIn.pathPrefix)
+              PageOut(currentId :: breadcrumbs, state, AskResult.Success(data), pageIn.pathPrefix, pageIn.config)
             case _ =>
-              println(s"redirection $currentId")              
-              PageOut(breadcrumbs, state, AskResult.GotoPath(currentId), pageIn.pathPrefix)
+              PageOut(breadcrumbs, state, AskResult.GotoPath(currentId), pageIn.pathPrefix, pageIn.config)
           }
         }
       }

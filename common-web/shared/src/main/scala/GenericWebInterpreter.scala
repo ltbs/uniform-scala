@@ -44,9 +44,12 @@ trait GenericWebInterpreter[Html] {
       genericSubJourney[A](id)(sub)
   }
 
-  def genericSubJourney[A](id: Seq[String])(sub: => WM[A]): WM[A] = {
+  def genericSubJourney[A](
+    id: Seq[String],
+    config: JourneyConfig => JourneyConfig = identity
+  )(sub: => WM[A]): WM[A] = {
     import cats.implicits._
-    pushPathPrefix(id) >> sub <* popPathPrefix(id.size)
+    getConfig() >>= {origConf => mutateConfig(config) >> pushPathPrefix(id) >> sub <* popPathPrefix(id.size) <* mutateConfig{_ => origConf}}
   }
 
   def pushPathPrefix(key: Seq[String]) = new WM[Unit] {
@@ -58,6 +61,22 @@ trait GenericWebInterpreter[Html] {
       )
   }
 
+  def mutateConfig(f: JourneyConfig => JourneyConfig) = new WM[Unit] {
+    def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] =
+      Future.successful(
+        pageIn.toPageOut(AskResult.Success[Unit, Html](())).copy(
+          config = f(pageIn.config)
+        )
+      )
+  }
+
+  def getConfig() = new WM[JourneyConfig] {
+    def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[JourneyConfig,Html]] =
+      Future.successful(
+        pageIn.toPageOut(AskResult.Success[JourneyConfig, Html](pageIn.config))
+      )
+  }
+
   def popPathPrefix(qty: Int) = new WM[Seq[String]] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Seq[String],Html]] =
       Future.successful(
@@ -65,7 +84,8 @@ trait GenericWebInterpreter[Html] {
           breadcrumbs = pageIn.breadcrumbs,
           db = pageIn.state,
           output = AskResult.Success(pageIn.pathPrefix.take(qty)),
-          pathPrefix = pageIn.pathPrefix.drop(qty)
+          pathPrefix = pageIn.pathPrefix.drop(qty),
+          config = pageIn.config
         )
       )
   }
@@ -77,7 +97,8 @@ trait GenericWebInterpreter[Html] {
           breadcrumbs = pageIn.breadcrumbs,
           db = pageIn.state,
           output = AskResult.GotoPath(List(target)),
-          pathPrefix = pageIn.pathPrefix
+          pathPrefix = pageIn.pathPrefix,
+          config = pageIn.config
         )
       )
   }
@@ -91,7 +112,8 @@ trait GenericWebInterpreter[Html] {
             breadcrumbs = pageIn.breadcrumbs,
             db = dbf(pageIn.state),
             output = AskResult.Success(()),
-            pathPrefix = pageIn.pathPrefix
+            pathPrefix = pageIn.pathPrefix,
+            config = pageIn.config
           )
         )
     }
@@ -107,7 +129,8 @@ trait GenericWebInterpreter[Html] {
                 pageIn.state.get(key).
                   map {Input.fromUrlEncodedString(_) flatMap codec.decode}
               ),
-              pathPrefix = pageIn.pathPrefix
+              pathPrefix = pageIn.pathPrefix,
+              config = pageIn.config
             )
           )
       }

@@ -7,7 +7,6 @@ package web {
   trait webcommon {
 
     type Breadcrumbs = List[List[String]]
-    type JourneyConfig = String
     type DB = Map[List[String],String]
 
     object DB {
