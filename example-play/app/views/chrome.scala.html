@@ -1,6 +1,6 @@
 @import uniform._, interpreters.playframework._, common.web.relativePath
 
-@(key: List[String], errors: ErrorTree, content: Html, breadcrumbs: Breadcrumbs)(implicit messages: ltbs.uniform.UniformMessages[Html], request: Request[AnyContent])
+@(key: List[String], errors: ErrorTree, content: Html, breadcrumbs: List[String])(implicit messages: ltbs.uniform.UniformMessages[Html], request: Request[AnyContent])
 <!DOCTYPE html>
 <html lang="en" class="govuk-template js-enabled">
   <head>
@@ -28,25 +28,8 @@
       <main class="govuk-main-wrapper " id="main-content" role="main">
         <div id="mainBody">
 
-	  <ul>
-          @for(crumb <- breadcrumbs) {
-            <li>@{crumb.mkString("/")}</li>
-          }
-	  </ul>
-
-	  <dl>
-	    <dt>breadcrumbs.drop(1).headOption</dt>
-	    <dd>@{breadcrumbs.drop(1).headOption.toString}</dd>
-	    <dt>breadcrumbs.head</dt>
-	    <dd>@{breadcrumbs.head.toString}</dd>
-	    @for(back <- breadcrumbs.drop(1).headOption) {
-	    <dt>relativePath(breadcrumbs.head, back)</dt>
-	    <dd>@{relativePath(breadcrumbs.head, back)}</dd>
-	    }
-	  </dl>
-	      
           @for(back <- breadcrumbs.drop(1).headOption) {
-            <a href="@{relativePath(breadcrumbs.head, back)}" class="govuk-back-link">@messages({back :+ "back"}.mkString("."))</a>
+            <a href="@{back}" class="govuk-back-link">@messages("back")</a>
           }
 
             @*****************************************

@@ -21,7 +21,7 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
     errors: ErrorTree,
     tell: Html,
     ask: Html,
-    breadcrumbs: Breadcrumbs,
+    breadcrumbs: List[String],
     request: Request[AnyContent],
     messages: UniformMessages[Html],
     fieldStats: FormFieldStats
@@ -44,7 +44,7 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
       request: Req,
       persistence: PersistenceEngine[Req]
     ): Future[Result] = {
-
+      val baseUrl = request.path.dropRight(path.size)
       val id = path.split("/", -1).toList
       
       // //this is a nasty bodge to prevent hitting URL's with a trailing slash
@@ -64,10 +64,14 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
           case common.web.PageOut(breadcrumbs, dbOut, pageOut, _, _) =>
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
-                val path = relativePath(id, targetPath)
+                val path = baseUrl + targetPath.mkString("/")
                 (dbOut, controller.Redirect(path)).pure[Future]
               case AskResult.Payload(html, errors, messagesOut, stats) =>
-                (db, controller.Ok(pageChrome(breadcrumbs.head, errors, mon.empty, html, breadcrumbs, request, messagesOut,stats))).pure[Future]
+                val convertedBreadcrumbs = breadcrumbs.map { c => 
+                  baseUrl + c.mkString("/")
+                }
+
+                (db, controller.Ok(pageChrome(breadcrumbs.head, errors, mon.empty, html, convertedBreadcrumbs, request, messagesOut,stats))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (if (purgeStateUponCompletion) DB.empty else dbOut, _) }
             }

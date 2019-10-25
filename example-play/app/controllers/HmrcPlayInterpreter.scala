@@ -28,7 +28,7 @@ case class HmrcPlayInterpreter(
     errors: ErrorTree,
     tell: Html,
     ask: Html,
-    breadcrumbs: Breadcrumbs,
+    breadcrumbs: List[String],
     request: Request[AnyContent],
     messages: UniformMessages[Html],
     stats: FormFieldStats

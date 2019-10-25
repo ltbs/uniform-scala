@@ -43,10 +43,14 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}
 
-      lazy val dbObject: Option[Either[ErrorTree,A]] = if (config.leapAhead) {
-        dbInput map {_ >>= codec.decode >>= validation.combined.either} orElse
-          default.map(validation.combined.either)
-      } else { None }
+      lazy val dbObject: Option[Either[ErrorTree,A]] = {
+        val fromState = dbInput map {_ >>= codec.decode >>= validation.combined.either}
+        if (config.leapAhead) {
+          fromState orElse default.map(validation.combined.either)
+        } else {
+          fromState
+        }
+      }
 
       // we need to ignore cases with a trailing slash 
       val targetIdP = targetId.reverse.dropWhile(_ == "").reverse
