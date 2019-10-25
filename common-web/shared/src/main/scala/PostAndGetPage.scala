@@ -60,18 +60,24 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
             val parsed = (codec.decode(localData) >>= validation.combined.either)
             parsed match {
               case Right(valid) =>
-                PageOut(currentId :: breadcrumbs, state + (currentId -> localData.toUrlEncodedString), AskResult.Success[A, Html](valid), pageIn.pathPrefix, pageIn.config).pure[Future]
+                pageIn.toPageOut(AskResult.Success[A, Html](valid)).copy (
+                  breadcrumbs = currentId :: pageIn.breadcrumbs,
+                  db = pageIn.state + (currentId -> localData.toUrlEncodedString)
+                ).pure[Future]
               case Left(error) =>
-                PageOut(currentId :: breadcrumbs, state, AskResult.Payload[A, Html](
+                val html = AskResult.Payload[A, Html](
                   tell |+| postPage(currentId, state, localData, error, breadcrumbs, messages),
                   error,
                   messages,
                   stats
-                ), pageIn.pathPrefix, pageIn.config).pure[Future]
+                )
+                pageIn.toPageOut(html).copy(
+                  breadcrumbs = currentId :: pageIn.breadcrumbs
+                ).pure[Future]
             }
 
           case None =>
-            PageOut(currentId :: breadcrumbs, state, AskResult.Payload[A, Html](
+            val html = AskResult.Payload[A, Html](
               tell |+|
                 getPage(
                   currentId,
@@ -85,31 +91,26 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
               ErrorTree.empty,
               messages,
               stats
-            ), pageIn.pathPrefix, pageIn.config).pure[Future]
+            )
+            pageIn.toPageOut(html).copy(
+              breadcrumbs =  currentId :: pageIn.breadcrumbs
+            ).pure[Future]
         }
       } else if (targetIdP.startsWith(currentId) && customRouting.isDefinedAt(residual)) {
         val residualData = customRouting(residual)
-        Future.successful(
-          PageOut(
-            breadcrumbs,
-            state + (currentId -> codec.encode(residualData).toUrlEncodedString),
-            AskResult.Success(residualData),
-            pageIn.pathPrefix,
-            pageIn.config
-          )
-        )
+        pageIn.toPageOut(AskResult.Success[A, Html](residualData)).copy(
+          db = state + (currentId -> codec.encode(residualData).toUrlEncodedString)
+        ).pure[Future]
       } else {
         Future.successful{
-
-          println(s"targetId: $targetId")
-          println(s"currentId: $currentId")          
-
           dbObject match {
             case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && currentId.drop(targetId.size).isEmpty && !breadcrumbs.contains(targetId) =>
               // they're replaying the journey
-              PageOut(currentId :: breadcrumbs, state, AskResult.Success(data), pageIn.pathPrefix, pageIn.config)
+              pageIn.toPageOut(AskResult.Success[A,Html](data)).copy(
+                breadcrumbs = currentId :: pageIn.breadcrumbs
+              )
             case _ =>
-              PageOut(breadcrumbs, state, AskResult.GotoPath(currentId), pageIn.pathPrefix, pageIn.config)
+              pageIn.toPageOut(AskResult.GotoPath[A,Html](currentId))
           }
         }
       }

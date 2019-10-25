@@ -80,41 +80,22 @@ trait GenericWebInterpreter[Html] {
   def popPathPrefix(qty: Int) = new WM[Seq[String]] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Seq[String],Html]] =
       Future.successful(
-        PageOut[Seq[String],Html](
-          breadcrumbs = pageIn.breadcrumbs,
-          db = pageIn.state,
-          output = AskResult.Success(pageIn.pathPrefix.take(qty)),
-          pathPrefix = pageIn.pathPrefix.drop(qty),
-          config = pageIn.config
+        pageIn.toPageOut(AskResult.Success[Seq[String],Html](pageIn.pathPrefix.take(qty))) copy (
+          pathPrefix = pageIn.pathPrefix.drop(qty)
         )
       )
   }
 
   def goto[A](target: String): WM[A] = new WM[A] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] =
-      Future.successful(
-        PageOut[A,Html](
-          breadcrumbs = pageIn.breadcrumbs,
-          db = pageIn.state,
-          output = AskResult.GotoPath(List(target)),
-          pathPrefix = pageIn.pathPrefix,
-          config = pageIn.config
-        )
-      )
+      Future.successful(pageIn.toPageOut(AskResult.GotoPath[A,Html](List(target))))
   }
 
   object db {
-
     def updateF(dbf: DB => DB): WM[Unit] = new WebMonad[Unit, Html] {
       def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] =
         Future.successful(
-          PageOut[Unit,Html](
-            breadcrumbs = pageIn.breadcrumbs,
-            db = dbf(pageIn.state),
-            output = AskResult.Success(()),
-            pathPrefix = pageIn.pathPrefix,
-            config = pageIn.config
-          )
+          pageIn.toPageOut(AskResult.Success[Unit,Html](())).copy(db = dbf(pageIn.state))
         )
     }
 
@@ -122,16 +103,10 @@ trait GenericWebInterpreter[Html] {
       new WebMonad[Option[Either[ErrorTree,A]], Html] {
         def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[Option[Either[ErrorTree,A]],Html]] =
           Future.successful(
-            PageOut[Option[Either[ErrorTree,A]],Html](
-              breadcrumbs = pageIn.breadcrumbs,
-              db = pageIn.state,
-              output = AskResult.Success(
+            pageIn.toPageOut(AskResult.Success(
                 pageIn.state.get(key).
                   map {Input.fromUrlEncodedString(_) flatMap codec.decode}
-              ),
-              pathPrefix = pageIn.pathPrefix,
-              config = pageIn.config
-            )
+            ))
           )
       }
 

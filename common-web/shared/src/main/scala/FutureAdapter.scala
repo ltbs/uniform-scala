@@ -13,10 +13,7 @@ case class FutureAdapter[Html: Monoid]() {
   def alwaysRerun = new ~>[Future, WM] {
     def apply[A](fa: Future[A]): WM[A] = new WM[A] {
       def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] =
-        fa.map{ x =>
-          import pageIn._
-          PageOut(breadcrumbs, state, AskResult.Success(x), pageIn.pathPrefix, pageIn.config)
-        }
+        fa.map{ x => pageIn.toPageOut(AskResult.Success[A,Html](x)) }
     }
   }
 
@@ -43,16 +40,16 @@ case class FutureAdapter[Html: Monoid]() {
             Input.fromUrlEncodedString(state(List(cacheId, "value"))) >>= codec.decode
 
           val Right(oldie) = oldValue
-          PageOut(breadcrumbs, state, AskResult.Success[A, Html](oldie), pageIn.pathPrefix, pageIn.config).pure[Future]
+          pageIn.toPageOut(AskResult.Success[A, Html](oldie)).pure[Future]
         } else {
           fa.map{ result =>
-
             val newData = Map(
               List(cacheId, "value") -> codec.encode(result).toUrlEncodedString,
               List(cacheId, "trigger") -> trigger
             )
-            PageOut(breadcrumbs, state ++ newData, AskResult.Success[A, Html](result), pageIn.pathPrefix, pageIn.config)
-
+            pageIn.toPageOut(AskResult.Success[A, Html](result)).copy (
+              db = pageIn.state ++ newData
+            )
           }
         }
       }
