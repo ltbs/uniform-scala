@@ -1,10 +1,10 @@
 package ltbs.uniform
 package common.web
 
-import org.scalatest._
+import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 import cats.implicits._
 
-class RelativePathSpec extends FlatSpec with Matchers {
+class RelativePathSpec extends AnyFlatSpec with Matchers {
 
   "removeCommon" should "be correct for example cases" in {
     removeCommon(List("is-public", "aoeu"), List("is-public")) should be ((List("aoeu"),Nil))
@@ -23,4 +23,8 @@ class RelativePathSpec extends FlatSpec with Matchers {
   it should "be correct for sibling" in {
     relativePath(List("is-public"), List("beard-style")) should be ("beard-style")
   }
+
+  it should "be correct for example case" in {
+    relativePath(List("evidence", "add", "add"), List("evidence")) should be ("../..")
+  }  
 }
