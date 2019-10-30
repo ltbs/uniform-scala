@@ -14,23 +14,16 @@ fundamentals of uniform in action.</p>
 
 <p>First of all you need a program. Lets start with a simple greeting application -</p>
 
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">ltbs.uniform._</span>
-<span class="k">import</span> <span class="nn">cats.implicits._</span>
-<span class="k">import</span> <span class="nn">scala.language.higherKinds</span>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import org.atnos.eff._
+import ltbs.uniform._
 
-<span class="k">type</span> <span class="kt">TellTypes</span> <span class="o">=</span> <span class="nc">NilTypes</span>
-<span class="k">type</span> <span class="kt">AskTypes</span> <span class="o">=</span> <span class="nc">String</span> <span class="o">::</span> <span class="nc">NilTypes</span>
-
-<span class="k">def</span> <span class="n">helloProgram</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span> <span class="kt">:</span> <span class="kt">cats.Applicative</span><span class="o">](</span>
-  <span class="n">interpreter</span><span class="k">:</span> <span class="kt">Language</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">TellTypes</span>, <span class="kt">AskTypes</span><span class="o">]</span>
-<span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
-  <span class="k">import</span> <span class="nn">interpreter._</span>
-
-  <span class="o">(</span>
-    <span class="n">ask</span><span class="o">[</span><span class="kt">String</span><span class="o">](</span><span class="s">"forename"</span><span class="o">),</span>
-    <span class="n">ask</span><span class="o">[</span><span class="kt">String</span><span class="o">](</span><span class="s">"surname"</span><span class="o">)</span>
-  <span class="o">).</span><span class="n">mapN</span><span class="o">(</span><span class="s">"Hello "</span> <span class="o">+</span> <span class="k">_</span> <span class="o">+</span> <span class="s">" "</span> <span class="o">+</span> <span class="k">_</span><span class="o">)</span>
-<span class="o">}</span>
+def helloProgram[S
+  : _uniformCore
+  : _uniformAsk[String,?]
+] : Eff[S,String] = for {
+  forename &lt;- ask[String]("forename")
+  surname  &lt;- ask[String]("surname")
+} yield s"Hello $forename $surname"
 </code></pre></div></div>
 
 <p>Notice we are only using a single data type here - <code class="highlighter-rouge">String</code>. While you
@@ -40,10 +33,6 @@ can operate on your program.</p>
 
 <p>Generally therefore it’s best to start off with just a few basic
 data-types and add more specialisation as you go.</p>
-
-<p>Some interpreters (such as the Play interpreter) will infer compound
-data-types, but the CLI interpreter does not have this capability at
-present.</p>
 
 <h2 id="importing-the-interpreter">Importing the interpreter</h2>
 
@@ -57,17 +46,85 @@ present.</p>
 
 <p>We need to import the interpreter -</p>
 
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="k">import</span> <span class="nn">ltbs.uniform.interpreters.cli._</span>
-<span class="k">import</span> <span class="nn">ltbs.uniform.interpreters.cli._</span>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import ltbs.uniform.interpreters.cli._
+</code></pre></div></div>
+
+<p>We also need to define a value for the Stack we are using. This will
+consist of all the <code class="highlighter-rouge">UniformAsk</code> and <code class="highlighter-rouge">UniformSelect</code> usages, plus
+possibly some other monads that the interpreter itself needs. Our CLI
+interpreter uses the <code class="highlighter-rouge">Eval</code> monad from the cats library.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>type Stack = Fx.fx3[
+  UniformAsk[String,?],
+  cats.Eval,
+  cats.data.State[UniformCore,?]
+]
 </code></pre></div></div>
 
 <p>The program can now be executed using the interpreter.</p>
 
-<p>If invoked <code class="highlighter-rouge">helloProgram</code> will now prompt the user for a forename,
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import org.atnos.eff.syntax.all._ // provides runEval and run
+
+def runHelloProgram = helloProgram[Stack].
+  using(identity). // String =&gt; String
+  runState(UniformCore()).
+  runEval.
+  run
+</code></pre></div></div>
+
+<p>If invoked <code class="highlighter-rouge">runHelloProgram</code> will now prompt the user for a forename,
 then a surname and then give the expected greeting.</p>
 
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="n">helloProgram</span><span class="o">(</span><span class="k">new</span> <span class="nc">CliInterpreter</span><span class="o">[</span><span class="kt">TellTypes</span>, <span class="kt">AskTypes</span><span class="o">])</span>
-<span class="n">forename</span><span class="k">:</span> <span class="kt">surname:</span> <span class="kt">res0:</span> <span class="kt">shapeless.Id</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Hello</span> <span class="kc">null</span> <span class="kc">null</span>
+<h2 id="adding-new-field-types">Adding new field types</h2>
+
+<p>We’ll update our program to include a new field type -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>def helloProgram2[S
+  : _uniformCore
+  : _uniformAsk[String,?]
+  : _uniformAsk[Boolean,?]
+] : Eff[S,String] = for {
+  forename &lt;- ask[String]("forename")
+  surname  &lt;- ask[String]("surname")
+  cheese  &lt;- ask[Boolean]("likeCheese")
+} yield {
+  if (cheese)
+    s"Here $forename $surname, have some stilton!"
+  else
+    s"Hello $forename $surname"
+}
+</code></pre></div></div>
+
+<p>And add a new stack -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>type Stack2 = Fx.fx4[
+  UniformAsk[Boolean,?],
+  UniformAsk[String,?],
+  cats.Eval,
+  cats.data.State[UniformCore, ?]
+]
+</code></pre></div></div>
+
+<p>The program is perfectly valid, but our interpreter doesn’t know how
+to handle a boolean -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>def runHelloProgram2 = helloProgram2[Stack2].
+  using(identity). // String =&gt; String
+  runState(UniformCore()).
+  runEval.
+  run
+</code></pre></div></div>
+
+<p>We must write a <code class="highlighter-rouge">String =&gt; Boolean</code> function and provide
+it to our interpreter so the interpreter knows how to take the users
+input (a <code class="highlighter-rouge">String</code>) and convert it into a valid <code class="highlighter-rouge">Boolean</code>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>def runHelloProgram2 = helloProgram2[Stack2].
+  using(identity).			// String =&gt; String
+  using(_.toLowerCase.startsWith("y")). // Boolean =&gt; String
+  runState(UniformCore()).
+  runEval.
+  run
 </code></pre></div></div>
 </section></div></div></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script><script src="/uniform-scala/highlight/highlight.pack.js"></script><script>hljs.configure({languages:['scala','java','bash']});
 hljs.initHighlighting();
