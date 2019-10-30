@@ -5,6 +5,8 @@ import cats.implicits._
 import concurrent.Future
 import scala.concurrent.ExecutionContext
 
+import validation._
+
 abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
 
   def stats: FormFieldStats
@@ -32,7 +34,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
     id: String,
     tell: Html,
     default: Option[A],
-    validation: List[List[Rule[A]]],
+    validationRules: List[Rule[A]],
     messages: UniformMessages[Html]
   ): WebMonad[A, Html] = new WebMonad[A, Html] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A, Html]] = {
@@ -41,16 +43,18 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}
 
+      val validation: Rule[A] = validationRules.combineAll
+
       lazy val dbObject: Option[Either[ErrorTree,A]] =
-        dbInput map {_ >>= codec.decode >>= validation.combined.either} orElse
-          default.map(x => validation.combined.either(x))
+        dbInput map {_ >>= codec.decode >>= validation.either} orElse
+          default.map(x => validation.either(x))
 
       if (currentId === targetId) {
 
         request match {
           case Some(post) =>
             val localData = post / id
-            val parsed = (codec.decode(localData) >>= validation.combined.either)
+            val parsed = (codec.decode(localData) >>= validation.either)
             parsed match {
               case Right(valid) =>
                 PageOut(currentId :: path, state + (currentId -> localData.toUrlEncodedString), AskResult.Success[A, Html](valid)).pure[Future]

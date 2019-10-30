@@ -5,6 +5,7 @@ import cats.implicits._
 import cats.{Id, Monad}
 import shapeless.{Id => _, _}
 import scala.language.higherKinds
+import validation.Rule
 
 class MonoidInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
   implicit askSummoner: TypeclassList[SupportedAsk, cats.Monoid]
@@ -14,7 +15,7 @@ class MonoidInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
     id: String,
     tell: Tell,
     default: Option[Ask] = None,
-    validation: List[List[Rule[Ask]]] = Nil,
+    validation: List[Rule[Ask]] = Nil,
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit
