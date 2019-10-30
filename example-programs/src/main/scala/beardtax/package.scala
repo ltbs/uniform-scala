@@ -26,7 +26,7 @@ package object beardtax {
         }}
       ))
       beardLength    <- ask[BeardLength]("beard-length-mm", validation = List(List(
-        Rule.fromPred(x => x._1 <= x._2, (ErrorMsg("lower.less.than.higher"), NonEmptyList.one(Nil)))
+        Rule.fromPred(x => x._1 <= x._2, (ErrorMsg("lower-less-than-higher"), NonEmptyList.one(Nil)))
       ))) emptyUnless memberOfPublic.isDefined
       cost           <- hod.costOfBeard(beardStyle, beardLength)
     } yield cost
