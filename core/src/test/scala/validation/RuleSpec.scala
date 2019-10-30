@@ -16,15 +16,10 @@ class RuleSpec extends AnyFunSpec with Matchers with OptTCOps {
       result shouldBe (expectedError)
     }
 
-    it("should be sane") {
-      Map(1 -> List('a')) |+| Map(1 -> List('b')) shouldBe (Map(1 -> List('a','b')))
-    }
-
     {
-
       val input = ""
       val rulea = Rule.nonEmpty[String]()
-      val ruleb = Rule.minLength(1)
+      val ruleb = Rule.minLength[String](1)
 
       val Invalid(ruleaError) = rulea(input)
       val Invalid(rulebError) = ruleb(input)

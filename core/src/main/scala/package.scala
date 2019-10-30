@@ -3,12 +3,13 @@ package ltbs
 import language.higherKinds
 
 import cats.implicits._
-import cats.{Monoid, Applicative, Monad, Semigroup}
+import cats.{Monoid, Applicative, Monad, Eq, Semigroup}
 import cats.data.{NonEmptyList, Validated}
-import shapeless.tag.{@@}
+import shapeless.tag, tag.{@@}
 import collection.immutable.ListMap
 
-package object uniform extends TreeLike.ToTreeLikeOps
+package object uniform
+    extends TreeLike.ToTreeLikeOps
     with TreeLikeInstances
     with ScalaVersionCompatibility
 {
@@ -129,4 +130,9 @@ package object uniform extends TreeLike.ToTreeLikeOps
         }
       }
   }
+
+  def taggedEqInstance[A, Tag](eqBase: Eq[A]) = new Eq[A @@ Tag]{
+    def eqv(x: A @@ Tag, y: A @@ Tag): Boolean = eqBase.eqv(x,y)
+  }
+
 }

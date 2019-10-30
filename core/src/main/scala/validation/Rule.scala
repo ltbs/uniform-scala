@@ -2,7 +2,7 @@ package ltbs.uniform
 package validation
 
 import cats.implicits._
-import cats.{Eq, Monoid, Order}
+import cats.Order
 import cats.data.Validated
 
 object Rule extends Quantifiable.ToQuantifiableOps {
@@ -40,7 +40,7 @@ object Rule extends Quantifiable.ToQuantifiableOps {
       minLength[A](min).apply(in) andThen (maxLength[A](max).apply(_))
   }
 
-  case class nonEmpty[A: Monoid: Eq]() extends Rule[A] {
+  case class nonEmpty[A: Empty]() extends Rule[A] {
     def apply(in: A): Validated[ErrorTree, A] =
       Validated.cond(!in.isEmpty, in, error("required"))
   }

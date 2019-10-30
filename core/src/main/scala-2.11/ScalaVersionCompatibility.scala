@@ -24,9 +24,9 @@ trait ScalaVersionCompatibility {
 
 package validation {
 
-  trait Compat {
+  trait Compat extends QuantifiableInstances {
     implicit def quantGenTranversable[A <: collection.GenTraversableOnce[_]] =
-      Quantifiable.instance[A](x => x.size)
+      instance[A](x => x.size)
   }
 
 }
