@@ -40,14 +40,14 @@ object Rule extends Quantifiable.ToQuantifiableOps {
       minLength[A](min).apply(in) andThen (maxLength[A](max).apply(_))
   }
 
-  case class nonEmpty[A: Empty]() extends Rule[A] {
+  case class nonEmpty[A: Empty](errorMsg: String = "required") extends Rule[A] {
     def apply(in: A): Validated[ErrorTree, A] =
-      Validated.cond(!in.isEmpty, in, error("required"))
+      Validated.cond(!in.isEmpty, in, error(errorMsg))
   }
 
-  case class matchesRegex(regex: String) extends Rule[String] {
+  case class matchesRegex(regex: String, errorMsg: String = "format") extends Rule[String] {
     def apply(in: String): Validated[ErrorTree, String] =
-      Validated.cond(in matches regex, in, error("format"))
+      Validated.cond(in matches regex, in, error(errorMsg))
   }
 
   case class min[A: Order](minValue: A) extends Rule[A]{
