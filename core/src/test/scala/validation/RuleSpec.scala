@@ -18,7 +18,7 @@ class RuleSpec extends AnyFunSpec with Matchers with OptTCOps {
 
     {
       val input = ""
-      val rulea = Rule.nonEmpty[String]()
+      val rulea = Rule.nonEmpty[String]
       val ruleb = Rule.minLength[String](1)
 
       val Invalid(ruleaError) = rulea(input)
@@ -32,9 +32,9 @@ class RuleSpec extends AnyFunSpec with Matchers with OptTCOps {
         combinedErrors.valueAtRoot.get.size shouldBe (2)
       }
 
-      it("should run rules sequentially using andThen") {
-        val Invalid(sequentialErrorsForward) = (rulea(input) andThen ruleb)
-        val Invalid(sequentialErrorsBack)    = (ruleb(input) andThen rulea)
+      it("should run rules sequentially using followedBy") {
+        val Invalid(sequentialErrorsForward) = (rulea followedBy ruleb)(input)
+        val Invalid(sequentialErrorsBack)    = (ruleb followedBy rulea)(input)
         sequentialErrorsForward shouldBe (ruleaError)
         sequentialErrorsBack    shouldBe (rulebError)        
       }

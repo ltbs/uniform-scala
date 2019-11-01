@@ -15,7 +15,7 @@ package object validation
   type Rule[A] = Transformation[A,A]
 
   implicit def ruleMonoidInstance[A] = new Monoid[Rule[A]] {
-    def empty: Rule[A] = Rule.alwaysPass[A]()
+    def empty: Rule[A] = Rule.alwaysPass[A]
    
     def combine(x: Rule[A],y: Rule[A]): Rule[A] = new Rule[A] {
       import Validated.{Valid, Invalid}
@@ -30,5 +30,6 @@ package object validation
 
   implicit class RichRule[A](rule: Rule[A]) {
     def either(in: A): Either[ErrorTree, A] = rule.apply(in).toEither
+    def followedBy(ruleB: Rule[A]): Rule[A] = rule(_) andThen ruleB
   }
 }
