@@ -118,16 +118,9 @@ package object uniform
     def empty = ListMap.empty
 
     def combine(xs: ListMap[K, V], ys: ListMap[K, V]): ListMap[K, V] =
-      if (xs.size <= ys.size) {
-        xs.foldLeft(ys) {
-          case (my, (k, x)) =>
-            my.updated(k, Semigroup.maybeCombine(x, my.get(k)))
-        }
-      } else {
-        ys.foldLeft(xs) {
-          case (mx, (k, y)) =>
-            mx.updated(k, Semigroup.maybeCombine(mx.get(k), y))
-        }
+      ys.foldLeft(xs) {
+        case (mx, (k, y)) =>
+          mx.updated(k, Semigroup.maybeCombine(mx.get(k), y))
       }
   }
 
