@@ -107,8 +107,7 @@ care must be taken when using web-based interpreters as they may need
 to memoise the result to avoid hammering the server. For example the
 Play Framework Interpreter will replay the logic on every page load -
 generally this is desirable but a `Server[WebMonad]` that makes a
-remote call and wraps and returns the result would hit the server on
-step after that point in the program unless memoisation is used. 
+remote call and wraps and returns the result would hit the server on every step after that point in the program unless memoisation is used.
 
 In the example of the Play Interpreter Uniform provides special
 methods to support memoising the result within the play interpreters
