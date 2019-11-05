@@ -3,12 +3,13 @@ package ltbs
 import language.higherKinds
 
 import cats.implicits._
-import cats.{Monoid, Applicative, Monad, Semigroup}
+import cats.{Monoid, Applicative, Monad, Eq, Semigroup}
 import cats.data.{NonEmptyList, Validated}
-import shapeless.tag.{@@}
+import shapeless.tag, tag.{@@}
 import collection.immutable.ListMap
 
-package object uniform extends TreeLike.ToTreeLikeOps
+package object uniform
+    extends TreeLike.ToTreeLikeOps
     with TreeLikeInstances
     with ScalaVersionCompatibility
 {
@@ -117,16 +118,14 @@ package object uniform extends TreeLike.ToTreeLikeOps
     def empty = ListMap.empty
 
     def combine(xs: ListMap[K, V], ys: ListMap[K, V]): ListMap[K, V] =
-      if (xs.size <= ys.size) {
-        xs.foldLeft(ys) {
-          case (my, (k, x)) =>
-            my.updated(k, Semigroup.maybeCombine(x, my.get(k)))
-        }
-      } else {
-        ys.foldLeft(xs) {
-          case (mx, (k, y)) =>
-            mx.updated(k, Semigroup.maybeCombine(mx.get(k), y))
-        }
+      ys.foldLeft(xs) {
+        case (mx, (k, y)) =>
+          mx.updated(k, Semigroup.maybeCombine(mx.get(k), y))
       }
   }
+
+  def taggedEqInstance[A, Tag](eqBase: Eq[A]) = new Eq[A @@ Tag]{
+    def eqv(x: A @@ Tag, y: A @@ Tag): Boolean = eqBase.eqv(x,y)
+  }
+
 }

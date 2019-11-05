@@ -2,7 +2,7 @@ package ltbs.uniform
 package validation
 
 import cats.implicits._
-import cats.{Eq, Monoid, Order}
+import cats.Order
 import cats.data.Validated
 
 object Rule extends Quantifiable.ToQuantifiableOps {
@@ -20,48 +20,65 @@ object Rule extends Quantifiable.ToQuantifiableOps {
   def condAtPath[A](pathHead: String, pathTail: String*)(predicate: A => Boolean, errorMsg: String, args: Any*): Rule[A] =
     condError(predicate, error(errorMsg, args: _*).prefixWithMany(pathHead :: pathTail.toList))
 
-  case class minLength[A: Quantifiable](len: Int, errorMsg: String = "minLength") extends Rule[A] {
+  case class MinLength[A: Quantifiable](len: Int, errorMsg: String) extends Rule[A] {
     def apply(in: A): Validated[ErrorTree, A] =
       Validated.cond(in.qty >= len, in, error(errorMsg, in.qty, len))
   }
+  def minLength[A: Quantifiable](len: Int, errorMsg: String = "minLength"): Rule[A] =
+    MinLength[A](len, errorMsg)
 
-  case class maxLength[A: Quantifiable](len: Int, errorMsg: String = "maxLength") extends Rule[A] {
+  case class MaxLength[A: Quantifiable](len: Int, errorMsg: String) extends Rule[A] {
     def apply(in: A): Validated[ErrorTree, A] =
       Validated.cond(in.qty <= len, in, error(errorMsg, in.qty, len))
   }
+  def maxLength[A: Quantifiable](len: Int, errorMsg: String = "maxLength"): Rule[A] =
+    MaxLength[A](len, errorMsg)
 
-  case class alwaysPass[A]() extends Rule[A] {
+  case class AlwaysPass[A]() extends Rule[A] {
     def apply(in: A): Validated[ErrorTree, A] =
       Validated.Valid(in)
   }
+  def alwaysPass[A]: Rule[A] = AlwaysPass[A]()
 
-  case class lengthBetween[A: Quantifiable](min: Int, max: Int) extends Rule[A] {
+  case class LengthBetween[A: Quantifiable](min: Int, max: Int) extends Rule[A] {
     def apply(in: A): Validated[ErrorTree, A] =
       minLength[A](min).apply(in) andThen (maxLength[A](max).apply(_))
   }
+  def lengthBetween[A: Quantifiable](min: Int, max: Int): Rule[A] = LengthBetween[A](min, max)
 
-  case class nonEmpty[A: Monoid: Eq](errorMsg: String = "required") extends Rule[A] {
+  case class NonEmpty[A: Empty](errorMsg: String) extends Rule[A] {
     def apply(in: A): Validated[ErrorTree, A] =
       Validated.cond(!in.isEmpty, in, error(errorMsg))
   }
 
-  case class matchesRegex(regex: String, errorMsg: String = "format") extends Rule[String] {
+  def nonEmpty[A: Empty](errorMsg: String): Rule[A] = NonEmpty[A](errorMsg)
+  def nonEmpty[A: Empty]: Rule[A] = nonEmpty("required")
+
+  case class MatchesRegex(regex: String, errorMsg: String) extends Rule[String] {
     def apply(in: String): Validated[ErrorTree, String] =
       Validated.cond(in matches regex, in, error(errorMsg))
   }
+  def matchesRegex(regex: String, errorMsg: String = "format"): Rule[String] =
+    MatchesRegex(regex, errorMsg)
 
-  case class min[A: Order](minValue: A) extends Rule[A]{
+  case class Min[A: Order](minValue: A, errorMsg: String) extends Rule[A]{
     def apply(in: A): Validated[ErrorTree, A] =
-      Validated.cond(in >= minValue, in, error("min"))
+      Validated.cond(in >= minValue, in, error(errorMsg))
   }
+  def min[A: Order](minValue: A, errorMsg: String = "min"): Rule[A] =
+    Min[A](minValue, errorMsg)
 
-  case class max[A: Order](maxValue: A) extends Rule[A]{
+  case class Max[A: Order](maxValue: A, errorMsg: String = "max") extends Rule[A]{
     def apply(in: A): Validated[ErrorTree, A] =
-      Validated.cond(in <= maxValue, in, error("max"))
+      Validated.cond(in <= maxValue, in, error(errorMsg))
   }
+  def max[A: Order](maxValue: A, errorMsg: String = "max"): Rule[A] =
+    Max[A](maxValue, errorMsg)
 
-  case class between[A: Order](minValue: A, maxValue: A) extends Rule[A] {
+  case class Between[A: Order](minValue: A, maxValue: A) extends Rule[A] {
     def apply(in: A): Validated[ErrorTree, A] =
       min(minValue).apply(in) andThen (max(maxValue).apply(_))
   }
+  def between[A: Order](minValue: A, maxValue: A): Rule[A] =
+    Between[A](minValue, maxValue)
 }
