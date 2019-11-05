@@ -1,11 +1,12 @@
 package ltbs.uniform
 
-import org.scalatest._
+import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 import cats.implicits._
 import cats.Monad
 import scala.language.higherKinds
+import validation.Rule
 
-class RewriterSpec extends FlatSpec with Matchers {
+class RewriterSpec extends AnyFlatSpec with Matchers with OptTCOps {
 
   "A rewriter" should "change a journey" in {
 
@@ -32,7 +33,7 @@ class RewriterSpec extends FlatSpec with Matchers {
           id: String,
           tell: Tell,
           default: Option[String] = None,
-          validation: List[List[Rule[String]]] = Nil,
+          validation: List[Rule[String]] = Nil,
           customContent: Map[String,(String,List[Any])] = Map.empty
         ): String = naive.ask[Int]("test").map{_.toString}
       }

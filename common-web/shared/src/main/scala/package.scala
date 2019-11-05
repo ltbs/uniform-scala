@@ -16,8 +16,11 @@ package web {
 
     type Path = List[List[String]]
     type JourneyConfig = String
-
     type DB = Map[List[String],String]
+
+    object DB {
+      def empty: DB = Map()
+    }
 
     /** Returns a relative path as used in a URI or *nix directory -
       * with '..' used to denote navigating up one element in the tree. 
@@ -53,10 +56,10 @@ package web {
       case a => a
     }
 
-    implicit def formToWebAsk[A, Html](
-      implicit codec: FormFieldEncoding[A],
-       renderer: FormFieldPresentation[A,Html]
-    ): GenericWebAsk[A, Html] = new SimpleForm(InferFormField.combine(codec,renderer))
+    implicit def formToWebMonad[A, Html](
+      implicit ff: FormField[A, Html]
+    ): WebMonadConstructor[A, Html] = PostAndGetPage(ff)
+
 
   }
 }

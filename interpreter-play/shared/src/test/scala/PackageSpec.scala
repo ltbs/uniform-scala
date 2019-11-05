@@ -1,10 +1,9 @@
 package ltbs.uniform
 package interpreters.playframework
 
-import org.scalatest._
-import cats.implicits._
+import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 
-class PackageSpec extends FlatSpec with Matchers {
+class PackageSpec extends AnyFlatSpec with Matchers {
 
   "relativePath" should "move to sibling correctly" in {
     relativePath(List("one"), List("two")) shouldBe ("two")

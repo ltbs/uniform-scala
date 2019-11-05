@@ -2,8 +2,25 @@ package ltbs.uniform
 package common.web
 import cats.implicits._
 
+case class FormFieldStats(
+  children: Int = 0,
+  compoundChildren: Int = 0
+) {
+  final def isCompound: Boolean = children >= 2
+}
+
 /** Defines both the rendering and the encoding for a given datatype */
-trait FormField[A, Html] extends FormFieldEncoding[A] with FormFieldPresentation[A, Html] {
+trait FormField[A, Html] extends Codec[A] {
+
+  def stats: FormFieldStats = FormFieldStats()
+
+  def render(
+    key: List[String],
+    path: Path,
+    data: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Html]
+  ): Html
 
   /** Produce a new `FormField` from this one by mapping the types */
   override def imap[B](f: A => B)(g: B => A): FormField[B, Html] =
@@ -21,29 +38,12 @@ trait FormField[A, Html] extends FormFieldEncoding[A] with FormFieldPresentation
       def render(
         key: List[String],
         path: Path,
-        data: Option[Input],
+        data: Input,
         errors: ErrorTree,
         messages: UniformMessages[Html]
       ): Html = orig.render(key, path, data, errors, messages)
+
+      override def stats = orig.stats
     }
-  }
-}
-
-object FormField {
-
-  /** Create a new [[FormField]] from a [[FormFieldPresentation]] and a [[FormFieldEncoding]] */
-  def build[A,Html](
-    codec: FormFieldEncoding[A],
-    renderer: FormFieldPresentation[A, Html]
-  ) = new FormField[A, Html] {
-    def encode(in: A) = codec.encode(in)
-    def decode(out: Input) = codec.decode(out)
-    def render(
-      key: List[String],
-      path: Path,
-      data: Option[Input],
-      errors: ErrorTree,
-      messages: UniformMessages[Html]
-    ) = renderer.render(key, path, data, errors, messages)
   }
 }

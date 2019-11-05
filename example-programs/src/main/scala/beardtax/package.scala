@@ -4,7 +4,7 @@ package examples
 import cats.Monad
 import cats.implicits._
 import scala.language.higherKinds
-import cats.data.NonEmptyList
+import validation._
 
 package object beardtax {
 
@@ -25,9 +25,9 @@ package object beardtax {
           case Some(MemberOfPublic(_, sname, _)) => ("beard-style-menacing", List(sname))
         }}
       ))
-      beardLength    <- ask[BeardLength]("beard-length-mm", validation = List(List(
-        Rule.fromPred(x => x._1 <= x._2, (ErrorMsg("lower.less.than.higher"), NonEmptyList.one(Nil)))
-      ))) emptyUnless memberOfPublic.isDefined
+      beardLength    <- ask[BeardLength]("beard-length-mm", validation = List(
+        Rule.condAtPath("_2")(x => x._1 <= x._2, "lower.less.than.higher")
+      )) emptyUnless memberOfPublic.isDefined
       cost           <- hod.costOfBeard(beardStyle, beardLength)
     } yield cost
   }

@@ -18,7 +18,7 @@ package object cli {
 
   def askCliInstance[A](f: String => Either[String,A]) = new AskCli[A] {
     @annotation.tailrec
-    def apply(key: String, validation: List[List[Rule[A]]]): A = {
+    def apply(key: String, validation: List[ltbs.uniform.validation.Rule[A]]): A = {
       print(s"$key: ")
       val rawIn = io.StdIn.readLine()
 

@@ -1,18 +1,17 @@
 package ltbs
 
-import language.{higherKinds, implicitConversions}
+import language.higherKinds
 
 import cats.implicits._
-import cats.{Monoid, Applicative, Monad}
-import cats.data.NonEmptyList
-import shapeless.tag.{@@}
-import uniform.Quantity.ToQuantityOps
-package object uniform extends TreeLike.ToTreeLikeOps
+import cats.{Monoid, Applicative, Monad, Eq, Semigroup}
+import cats.data.{NonEmptyList, Validated}
+import shapeless.tag, tag.{@@}
+import collection.immutable.ListMap
+
+package object uniform
+    extends TreeLike.ToTreeLikeOps
     with TreeLikeInstances
     with ScalaVersionCompatibility
-    with OptTC
-    with ToQuantityOps
-    with QuantityInstances
 {
 
   /** Used to represent multi-line input.
@@ -29,7 +28,7 @@ package object uniform extends TreeLike.ToTreeLikeOps
 
   type InputPath = List[String]
   type Input = Map[InputPath, List[String]]
-  type ErrorTree = Map[NonEmptyList[InputPath], NonEmptyList[ErrorMsg]]
+  type ErrorTree = ListMap[NonEmptyList[InputPath], NonEmptyList[ErrorMsg]]
   type ::[H,T <: shapeless.HList] = shapeless.::[H,T]
   type NilTypes = Unit :: shapeless.HNil
 
@@ -58,6 +57,32 @@ package object uniform extends TreeLike.ToTreeLikeOps
         }
         .mkString("&")
     }
+
+    def toField[A](
+      pipeline: String => Validated[ErrorTree, A]
+    ): Validated[ErrorTree, A] =
+      pipeline(
+        input.valueAtRoot.flatMap(_.headOption.map(_.trim)).getOrElse("")
+      )
+
+    def toStringField(
+      pipeline: String => Validated[ErrorTree, String] = {Validated.Valid(_)}
+    ): Validated[ErrorTree, String] = toField[String](pipeline)
+
+    def subField[A](
+      key: String,
+      pipeline: String => Validated[ErrorTree, A]
+    ): Validated[ErrorTree, A] =
+      pipeline(
+        input.valueAt(key).flatMap(_.headOption.map(_.trim)).getOrElse("")
+      ).leftMap(_.prefixWith(key))
+
+    def stringSubField(
+      key: String,
+      pipeline: String => Validated[ErrorTree, String] = {Validated.Valid(_)}
+    ): Validated[ErrorTree, String] = subField(key, pipeline)
+
+
   }
 
   implicit class RichErrorTree(a: ErrorTree) {
@@ -89,16 +114,18 @@ package object uniform extends TreeLike.ToTreeLikeOps
 
   }
 
-  implicit class RichRuleListList[A](inner: List[List[Rule[A]]]) {
-    def combined: Rule[A] = {
-      inner match {
-        case Nil => Rule.noop
-        case x   => x.map{_.combineAll}.reduce(_ andThen _)
+  implicit def monListMap[K,V: Semigroup] = new Monoid[ListMap[K,V]] {
+    def empty = ListMap.empty
+
+    def combine(xs: ListMap[K, V], ys: ListMap[K, V]): ListMap[K, V] =
+      ys.foldLeft(xs) {
+        case (mx, (k, y)) =>
+          mx.updated(k, Semigroup.maybeCombine(mx.get(k), y))
       }
-    }
   }
 
-  implicit def soloRuleToListList[A](in: Rule[A]): List[List[Rule[A]]] = in.pure[List].pure[List]
-  implicit def listOfRulesToListList[A](in: List[Rule[A]]): List[List[Rule[A]]] = in.pure[List]
+  def taggedEqInstance[A, Tag](eqBase: Eq[A]) = new Eq[A @@ Tag]{
+    def eqv(x: A @@ Tag, y: A @@ Tag): Boolean = eqBase.eqv(x,y)
+  }
 
 }

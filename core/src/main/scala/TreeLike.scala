@@ -3,15 +3,27 @@ package ltbs.uniform
 import simulacrum._
 import scala.language.implicitConversions
 import cats.data.{NonEmptyList => NEL}
+import collection.immutable.ListMap
 
-/** A typeclass used for data structures that can be navigated like trees */
+/** Can be navigated like a tree. Has a `Value` at branches and
+  * leaves, and edges are labelled with `Key`.
+  */
 @typeclass trait TreeLike[T] {
 
   type Key
   type Value
 
   def appendWith(a: T, key: Key): T
-  def prefixWith(a: T, key: Key): T  
+  def prefixWith(a: T, key: Key): T
+
+  def prefixWithMany(value: T, key: List[Key]): T = {
+    @annotation.tailrec
+    def inner(x: T, innerKey: List[Key]): T = innerKey match {
+      case Nil => x
+      case (k::ks) => inner(prefixWith(x, k), ks)
+    }
+    inner(value, key.reverse)
+  }
 
   def subTree(a: T, key: Key): T
   def /(a: T, key: Key): T = subTree(a,key)
@@ -37,8 +49,10 @@ import cats.data.{NonEmptyList => NEL}
   def isEmpty(a: T): Boolean = a == empty
   def isNonEmpty(a: T): Boolean = !isEmpty(a)
 
+  /** create an empty tree (no verticies) */
   def empty: T
 
+  /** create a tree with a single vertex */  
   def one(in: Value): T
 
   def atPath(a: T, path: List[Key]): T = {
@@ -98,12 +112,12 @@ trait TreeLikeInstances {
       }
     }
 
-    val empty: ErrorTree = Map.empty
-    def one(in: NEL[ErrorMsg]): ErrorTree = Map (
+    val empty: ErrorTree = ListMap.empty
+    def one(in: NEL[ErrorMsg]): ErrorTree = ListMap (
       NEL.one(Nil) -> in
     )
 
-    def oneErr(in: ErrorMsg): ErrorTree = Map (
+    def oneErr(in: ErrorMsg): ErrorTree = ListMap (
       NEL.one(Nil) -> NEL.one(in)
     )
 

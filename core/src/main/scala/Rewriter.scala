@@ -2,7 +2,14 @@ package ltbs.uniform
 
 import language.higherKinds
 import shapeless._
+import validation.Rule
 
+/** Allows rewriting existing user journey without running them. 
+  * 
+  * This could be to optimise or otherwise transform a journey, for
+  * example to swap one type of interaction with another (such as a
+  * subjourney). 
+  */
 class Rewriter[TC[_], SupportedTell <: HList, SupportedAsk <: HList](
   val naive: Language[TC, SupportedTell, SupportedAsk]
 ) {
@@ -13,7 +20,7 @@ class Rewriter[TC[_], SupportedTell <: HList, SupportedAsk <: HList](
       id: String,
       tell: Tell,
       default: Option[Ask] = None,
-      validation: List[List[Rule[Ask]]] = Nil,
+      validation: List[Rule[Ask]] = Nil,
       customContent: Map[String,(String,List[Any])] = Map.empty
     ): TC[Ask]
 
@@ -28,7 +35,7 @@ class Rewriter[TC[_], SupportedTell <: HList, SupportedAsk <: HList](
       id: String,
       tell: Tell,
       default: Option[Ask] = None,
-      validation: List[List[Rule[Ask]]] = Nil,
+      validation: List[Rule[Ask]] = Nil,
       customContent: Map[String,(String,List[Any])] = Map.empty
     )(
       implicit

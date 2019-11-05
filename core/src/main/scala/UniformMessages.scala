@@ -1,35 +1,91 @@
 package ltbs.uniform
 
-import scala.util.parsing.combinator._
 import cats.Monoid
 import cats.implicits._
 
-/** Content/internationalisation messages to be used by the interpreter. */
+/** A content bundle
+  * 
+  * Typically used for internationalisation but also for customisation
+  * of content on given steps of a user-journey. 
+  * 
+  * This is modelled largely around the `Messages` object in the play
+  * framework - albeit with some extra capabilities (such as
+  * decomposition), but as such although it can take arguments
+  * (`Any*`)it is not typesafe and has no way of knowing ahead-of-time if
+  * content is missing.  
+  * 
+  * Unlike play Messages however, UniformMessages are typed, can be
+  * mapped to different types and are also Monoids allowing them to be
+  * combined. 
+  * 
+  * {{{
+  * val m = UniformMessages.fromMap(
+  *   Map("page1.field2.dateOfBirth" -> List("When were you born?"), 
+  *       "dateOfBirth" -> List("Date of birth"))
+  * )
+  * 
+  * scala> m.get("page1.field2.dateOfBirth")
+  * res1: Option[String] = Some(When were you born?)
+  * 
+  * scala> m.decomposeOpt("dateOfBirth")
+  * res2: Option[String] = Some(Date of birth)
+  * 
+  * scala> import cats.implicits._
+  * scala> {m |+| UniformMessages.bestGuess}.apply("page1.step2.EnterYourBillingAddress")
+  * res3: String = Enter Your Billing Address
+  * 
+  * scala> case class PoorMansHtml(value: String)
+  * defined class PoorMansHtml
+  * scala> m.map(PoorMansHtml)
+  * res4: ltbs.uniform.UniformMessages[PoorMansHtml] = ...
+  * }}}
+  */
 trait UniformMessages[A] {
 
-  /** fetch the message for the key, supplying any arguments. Throw an
-    * exception if it not found
+  /** Retrieve a single message for the `key`, replacing any arguments with the
+    * values supplied. Throws an exception if the message is not
+    * found.
+    * @param key the lookup identifier for the message
+    * @param args any arguments to be supplied, how they are handled
+    *   depends upon the `UniformMessages1 implementation, but
+    *   generally they are injected into the response. 
     */
   def apply(key: String, args: Any*): A =
-    get(key, args:_*).getOrElse(
-      throw new NoSuchElementException(s"key not found: $key")
-    )
+    get(key, args:_*).getOrElse(throw new NoSuchElementException(s"key not found: $key"))
 
-  /** fetch a message for the list of keys, supplying any arguments
-    * against the first match. Throw an exception if none of the keys
-    * are found
+  /** Retrieve a single message against the `keys`, replacing any
+    * arguments with the values supplied. Throws an exception if no 
+    * message is found against any of the keys. If there are multiple
+    * matches the first one will be used. 
+    * 
+    * @param keys lookup identifiers for the message, each is tried in turn
+    * @param args any arguments to be supplied, how they are handled
+    *   depends upon the `UniformMessages1 implementation, but
+    *   generally they are injected into the response. 
     */
   def apply(keys: List[String], args: Any*): A =
-    get(keys, args:_*).getOrElse(throw new NoSuchElementException(
-      s"""keys not found: ${keys.mkString(",")}"""
-    ))
+    get(keys, args:_*).getOrElse(throw new NoSuchElementException(s"""keys not found: ${keys.mkString(",")}"""))
 
-  /** fetch the message for the key, supplying any arguments. */
+  /** Retrieve a single message for the `key`, replacing any arguments with the
+    * values supplied. Returns `None` if the message is not found.
+    * 
+    * @param key the lookup identifier for the message
+    * @param args any arguments to be supplied, how they are handled
+    *   depends upon the `UniformMessages1 implementation, but
+    *   generally they are injected into the response. 
+    */  
   def get(key: String, args: Any*): Option[A]
 
-  /** fetch a message for the list of keys, supplying any arguments
-    * against the first match. 
-    */  
+  /** Retrieve a single message against the `keys`, replacing any
+    * arguments with the values supplied. Returns `None` if no 
+    * message is found against any of the keys. If there are multiple
+    * matches the first one will be used. 
+    * 
+    * @param keys lookup identifiers for the message, each is tried in turn
+    * @param args any arguments to be supplied, how they are handled
+    *   depends upon the `UniformMessages1 implementation, but
+    *   generally they are injected into the response. 
+    */
   def get(keys: List[String], args: Any*): Option[A] = {
     @annotation.tailrec
     def inner(keys: List[String], args: Seq[Any]): Option[A] = keys match {
@@ -42,37 +98,92 @@ trait UniformMessages[A] {
     inner(keys, args)
   }
 
-  /** fetch the messages for the key, supplying any arguments. Expect
-    * multiple entries. 
+  /** Retrieve a list of values against a single key, if the key is
+    * not found in the messages this will return `Nil`
     */
   def list(key: String, args: Any*): List[A]
 
-  /** The same as decompose, except returning an None rather than an
-    * exception in the event of there being no match 
+  /** Attempt to match against `key`, if a match is found return it,
+    * otherwise attempt to find fallback values by splitting the `key`
+    * into substrings using '.' (full-stop) as a separator.
+    * 
+    * {{{
+    * val m = UniformMessages.fromMap(
+    *   Map("a1.b1.c1" -> List("Match1"), 
+    *       "b1.c1"    -> List("Match2"),
+    *       "c1"       -> List("Match3"))
+    * )
+    * scala> m.decomposeOpt("a1.b1.c1")
+    * res1: Option[String] = Some(Match1)
+    * 
+    * scala> m.decomposeOpt("amodified.b1.c1")
+    * res2: Option[String] = Some(Match2)
+    * 
+    * scala> m.decomposeOpt("amodified.bmodified.c1")
+    * res3: Option[String] = Some(Match3)
+    * 
+    * scala> m.decomposeOpt("amodified.bmodified.cmodified")
+    * res4: Option[String] = None
+    * 
+    * scala> m.decomposeOpt("a1.b1.cmodified")
+    * res5: Option[String] = None
+    * }}}
+    * 
+    * If still no match is found return `None`.
     */
-  def decomposeOpt(key: String, args: Any*): Option[A] = 
+  def decomposeOpt(key: String, args: Any*): Option[A] =
     get(
       key.split("[.]").tails.collect{
         case c if c.nonEmpty => c.mkString(".")
       }.toList,
       args:_*)
 
-  /** search for the 'tails' of the keys split by full-stops. For
-    * example if the supplied key is 'a.b.c' a match for 'a.b.c' would
-    * be preferred, followed by 'b.c', followed by just 'c'. This is
-    * used to allow general messages - such as
-    * 'deliveryaddress.postcode' matching against 'postcode'. Will
-    * throw an exception if there are no matches against any of the
-    * keys 
+  /** Attempt to match against `key`, if a match is found return it,
+    * otherwise attempt to find fallback values by splitting the `key`
+    * into substrings using '.' (full-stop) as a separator.
+    * 
+    * {{{
+    * val m = UniformMessages.fromMap(
+    *   Map("a1.b1.c1" -> List("Specific"), 
+    *       "b1.c1"    -> List("Match2"),
+    *       "c1"       -> List("Very General"))
+    * )
+    * 
+    * scala> m.decompose("a1.b1.c1")
+    * res1: String = "Specific"
+    * 
+    * scala> m.decompose("amodified.b1.c1")
+    * res2: String = "Match2"
+    * 
+    * scala> m.decompose("amodified.bmodified.c1")
+    * res3: String = "Very General"
+    * 
+    * scala> m.decompose("nonexistant") // throws exception
+    * }}}
+    * 
+    * If still no match is found an exception is thrown.
     */
   def decompose(key: String, args: Any*): A =
     decomposeOpt(key, args:_*).getOrElse(
       throw new NoSuchElementException(s"""key not found: $key""")
     )
 
-  /** create a new UniformMessages based on the existing one. Uses a
-    * fallback function to provide the content in the event of no
-    * match being found 
+  /** provides another instance using a fallback function.
+    * 
+    * As a consequence this should never throw a
+    * NoSuchElementException.
+    * 
+    * {{{
+    * scala> val m = UniformMessages.noop[Int].withDefault(_.size)
+    * m: ltbs.uniform.UniformMessages[Int] = ...
+    * 
+    * scala> m.get("non-existant")
+    * res0: Option[Int] = None
+    * 
+    * scala> m("non-existant")
+    * res1: Int = 12
+    * }}}
+    * 
     */
   def withDefault(f: String => A): UniformMessages[A] = {
     val underlying = this
@@ -113,41 +224,44 @@ trait UniformMessages[A] {
 
   def withCustomContent(customContent: Map[String,(String, List[Any])]): UniformMessages[A] = {
     val underlying = this
+    UniformMessages.contentMonoidInstance[A].combine(
+      new UniformMessages[A] {
+        def get(key: String,args: Any*): Option[A] = customContent.get(key) flatMap {
+          case (newKey, newArgs) =>
+            Either.catchOnly[NoSuchElementException](underlying(newKey, newArgs:_*)).toOption
+        }
 
-    new UniformMessages[A] {
-      def get(key: String,args: Any*): Option[A] = customContent.get(key) match {
-        case Some((newKey, newArgs)) => underlying.get(newKey, newArgs:_*)
-        case None => underlying.get(key, args:_*)
-      }
-      def list(key: String,args: Any*): List[A] = customContent.get(key) match {
-        case Some((newKey, newArgs)) => underlying.list(newKey, newArgs:_*)
-        case None => underlying.list(key, args:_*)
-      }
-    }
+        def list(key: String,args: Any*): List[A] =
+          customContent.get(key).map{
+            case (newKey, newArgs) => underlying.list(newKey, newArgs:_*)
+          }.getOrElse(Nil)
+      },
+      underlying
+    )
   }
 }
 
 object UniformMessages {
-  /** Produce a simple UniformMessages from a map. Any arguments
-    * supplied are ignored. 
-    */
-  def fromMap[A](msg: Map[String,List[A]]): UniformMessages[A] =
-    SimpleMapMessages[A](msg)
+  def fromMap[A](msg: Map[String,List[A]]) = new UniformMessages[A] {
+    def get(key: String, args: Any*): Option[A] = list(key, args:_*).headOption
+    def list(key: String, args: Any*): List[A] = msg.get(key).getOrElse(Nil)
+  }
 
-  /** Produce a simple UniformMessages from a map. Substitutes
-    * arguments similiarly to Play Messages.
-    */
-  def fromMapWithSubstitutions(
-    msg: Map[String,List[String]]
-  ): UniformMessages[String] = MapMessagesWithSubstitutions(msg)
+  def fromMapWithSubstitutions(msg: Map[String,List[String]]): UniformMessages[String] = MapMessagesWithSubstitutions(msg)
+  def noop[A] = new UniformMessages[A] {
+    def get(key: String, args: Any*): Option[A] = None
+    def list(key: String, args: Any*): List[A] = Nil
+  }
 
-  /** A messages provider that has no values. */
-  def noop[A]: UniformMessages[A] = NoopMessages[A]
+  def empty[A](implicit mon: Monoid[A]) = new UniformMessages[A] {
+    override def apply(key: String, args: Any*): A =
+      mon.empty
+    override def apply(keys: List[String], args: Any*): A =
+      mon.empty
+    def get(key: String, args: Any*): Option[A] = None
+    def list(key: String, args: Any*): List[A] = Nil
+  }
 
-  /** A messages provider that will echo the keys back in the event of
-    * being asked for a mandatory (apply) value. Will return None for
-    * non-mandatory values. 
-    */
   def echo: UniformMessages[String] = new UniformMessages[String] {
     def get(key: String, args: Any*): Option[String] = None
     def list(key: String, args: Any*): List[String] = Nil
@@ -156,9 +270,6 @@ object UniformMessages {
     override def decompose(key: String, args: Any*): String = key
   }
 
-  /** A messages provider that will echo the key back, even if asked
-    * for an optional value 
-    */
   def attentionSeeker: UniformMessages[String] = new UniformMessages[String] {
     def get(key: String, args: Any*): Option[String] = Some(key)
     def list(key: String, args: Any*): List[String] = List(key)
@@ -167,16 +278,10 @@ object UniformMessages {
     override def decompose(key: String, args: Any*): String = key
   }
 
-  /** A messages provider that attempts to deconstruct a keyword into
-    * a sentence and apply sensible capitalisation for non-optional
-    * values. 
-    * 
-    * For example 'get('yetAnotherField')' would yield 'Get Another Field'
-    */
   def bestGuess: UniformMessages[String] = BestGuessMessages
 
   implicit def contentMonoidInstance[A] = new Monoid[UniformMessages[A]] {
-    def empty: UniformMessages[A] = NoopMessages[A]
+    def empty: UniformMessages[A] = noop[A]
     def combine(a: UniformMessages[A], b: UniformMessages[A]):UniformMessages[A] = new UniformMessages[A] {
       def get(key: String, args: Any*): Option[A] = a.get(key, args:_*).orElse(b.get(key, args:_*))
       override def get(key: List[String], args: Any*): Option[A] = a.get(key, args:_*).orElse(b.get(key, args:_*))
@@ -190,98 +295,5 @@ object UniformMessages {
          a.get(keys, args:_*).getOrElse(b(keys, args:_*))
     }
   }
-}
 
-case class SimpleMapMessages[A](msg: Map[String,List[A]]) extends UniformMessages[A] {
-  def get(key: String, args: Any*): Option[A] = list(key, args:_*).headOption
-  def list(key: String, args: Any*): List[A] = msg.get(key).getOrElse(Nil)
-}
-
-case class MapMessagesWithSubstitutions(underlying: Map[String,List[String]]) extends UniformMessages[String] {
-
-  @annotation.tailrec
-  private def replaceArgs(
-    input: String,
-    args: List[String],
-    count: Int = 0
-  ): String = args match {
-    case Nil    => input
-    case h :: t => replaceArgs(input.replace(s"[{]$count[}]", h), t, count+1)
-  }
-
-  def get(key: String, args: Any*): Option[String] =
-    underlying.get(key).flatMap{_.headOption}.map{
-      replaceArgs(_,args.toList.map(_.toString))
-    }
-
-  override def get(key: List[String], args: Any*): Option[String] = {
-
-    @annotation.tailrec
-    def inner(innerkey: List[String]): Option[String] = {
-      innerkey match {
-        case Nil => None
-        case x::xs =>
-          get(x, args:_*) match {
-            case Some(o) => Some(o)
-            case None => inner(xs)
-          }
-      }
-    }
-    inner(key)
-  }
-
-
-  def list(key: String, args: Any*): List[String] =
-    underlying.getOrElse(key,Nil).map{ x =>
-      replaceArgs(x,args.toList.map(_.toString))
-    }
-}
-
-case class NoopMessages[A]() extends UniformMessages[A] {
-  def get(key: String, args: Any*): Option[A] = None
-  def list(key: String, args: Any*): List[A] = Nil
-}
-
-case class EmptyMessages[A]()(implicit mon: Monoid[A]) extends UniformMessages[A] {
-
-  override def apply(key: String, args: Any*): A =
-    mon.empty
-  override def apply(keys: List[String], args: Any*): A =
-    mon.empty
-
-  def get(key: String, args: Any*): Option[A] = None
-  def list(key: String, args: Any*): List[A] = Nil
-}
-
-
-object BestGuessMessages extends RegexParsers with UniformMessages[String] {
-
-  override def apply(key: String, args: Any*): String =
-    bestGuess(key)
-  override def apply(keys: List[String], args: Any*): String =
-    bestGuess(keys.head)
-
-  override def decompose(key: String, args: Any*): String =
-    bestGuess(key)
-
-  def get(key: String, args: Any*): Option[String] = None
-  def list(key: String, args: Any*): List[String] = Nil
-  def titleWord: Parser[String]    = """[A-Z][a-z]+""".r ^^ { _.toString }
-  def lowerWord: Parser[String]    = """[a-z]+""".r ^^ { _.toString }
-  def numberS: Parser[String]    = """([0-9]+)""".r ^^ { _.toString }
-  def camel: Parser[List[String]] = phrase(rep1(titleWord | lowerWord | numberS))
-
-  def titleCase(word: String) = word match {
-    case "" => ""
-    case a => a.head.toUpper + a.tail
-  }
-
-  private def bestGuess(key: String): String = {
-    parse(camel,key.replaceFirst("[.](heading|option)$","").split("[.]").last) match {
-      case Success(Nil,_) => key
-      case Success((firstWord::rest),_) => (titleCase(firstWord) :: rest).mkString(" ")
-      case Failure(_,_) => key
-      case Error(_,_) =>   key
-    }
-  }
 }
