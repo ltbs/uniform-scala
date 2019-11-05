@@ -7,10 +7,11 @@ import ltbs.uniform.common.web.{FormField, FormFieldStats}
 import play.twirl.api.Html
 import java.time.LocalDate
 import cats.data.Validated
+import validation.Rule
 
 object Widgets extends Widgets
 
-trait Widgets extends InputOps {
+trait Widgets {
 
   implicit val twirlBigStringField = new FormField[BigString,Html] {
     import shapeless.tag
@@ -89,9 +90,9 @@ trait Widgets extends InputOps {
     def decode(out: Input): Either[ErrorTree,LocalDate] = {
 
       def intAtKey(key: String): Validated[ErrorTree, Int] =
-        out.subField(key, nonEmptyString(_) andThen {x: String =>
+        out.subField(key, Rule.nonEmpty[String].apply(_) andThen {x: String =>
           Validated.catchOnly[NumberFormatException](x.toInt).leftMap(_ => ErrorMsg("badValue").toTree)
-        } andThen min(0))
+        } andThen Rule.min(0))
 
       (
         intAtKey("day"),

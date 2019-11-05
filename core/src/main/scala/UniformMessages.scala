@@ -1,6 +1,5 @@
 package ltbs.uniform
 
-import scala.util.parsing.combinator._
 import cats.Monoid
 import cats.implicits._
 
@@ -297,75 +296,4 @@ object UniformMessages {
     }
   }
 
-}
-
-private case class MapMessagesWithSubstitutions(underlying: Map[String,List[String]]) extends UniformMessages[String] {
-
-  @annotation.tailrec
-  private def replaceArgs(
-    input: String,
-    args: List[String],
-    count: Int = 0
-  ): String = args match {
-    case Nil    => input
-    case h :: t => replaceArgs(input.replace(s"[{]$count[}]", h), t, count+1)
-  }
-
-  def get(key: String, args: Any*): Option[String] =
-    underlying.get(key).flatMap{_.headOption}.map{
-      replaceArgs(_,args.toList.map(_.toString))
-    }
-
-  override def get(key: List[String], args: Any*): Option[String] = {
-
-    @annotation.tailrec
-    def inner(innerkey: List[String]): Option[String] = {
-      innerkey match {
-        case Nil => None
-        case x::xs =>
-          get(x, args:_*) match {
-            case Some(o) => Some(o)
-            case None => inner(xs)
-          }
-      }
-    }
-    inner(key)
-  }
-
-  def list(key: String, args: Any*): List[String] =
-    underlying.getOrElse(key,Nil).map{ x =>
-      replaceArgs(x,args.toList.map(_.toString))
-    }
-}
-
-private object BestGuessMessages extends RegexParsers with UniformMessages[String] {
-
-  override def apply(key: String, args: Any*): String =
-    bestGuess(key)
-  override def apply(keys: List[String], args: Any*): String =
-    bestGuess(keys.head)
-
-  override def decompose(key: String, args: Any*): String =
-    bestGuess(key)
-
-  def get(key: String, args: Any*): Option[String] = None
-  def list(key: String, args: Any*): List[String] = Nil
-  def titleWord: Parser[String]    = """[A-Z][a-z]+""".r ^^ { _.toString }
-  def lowerWord: Parser[String]    = """[a-z]+""".r ^^ { _.toString }
-  def numberS: Parser[String]    = """([0-9]+)""".r ^^ { _.toString }
-  def camel: Parser[List[String]] = phrase(rep1(titleWord | lowerWord | numberS))
-
-  def titleCase(word: String) = word match {
-    case "" => ""
-    case a => s"${a.head.toUpper}${a.tail}"
-  }
-
-  private def bestGuess(key: String): String = {
-    parse(camel,key.replaceFirst("[.](heading|option)$","").split("[.]").last) match {
-      case Success(Nil,_) => key
-      case Success((firstWord::rest),_) => (titleCase(firstWord) :: rest).mkString(" ")
-      case Failure(_,_) => key
-      case Error(_,_) =>   key
-    }
-  }
 }
