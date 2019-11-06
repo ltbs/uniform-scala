@@ -1,5 +1,7 @@
 package ltbs.uniform
 
+import scala.language.implicitConversions
+
 import simulacrum._
 import cats.data.{NonEmptyList => NEL}
 import collection.immutable.ListMap
@@ -15,7 +17,16 @@ import collection.immutable.ListMap
   def listSubtrees(a: T): List[Key]
 
   def appendWith(a: T, key: Key): T
-  def prefixWith(a: T, key: Key): T  
+  def prefixWith(a: T, key: Key): T
+
+  def prefixWithMany(value: T, key: List[Key]): T = {
+    @annotation.tailrec
+    def inner(x: T, innerKey: List[Key]): T = innerKey match {
+      case Nil => x
+      case (k::ks) => inner(prefixWith(x, k), ks)
+    }
+    inner(value, key.reverse)
+  }
 
   def subTree(a: T, key: Key): T
   def /(a: T, key: Key): T = subTree(a,key)

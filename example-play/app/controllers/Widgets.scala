@@ -7,10 +7,11 @@ import ltbs.uniform.common.web.{FormField, GenericWebTell, ListingTell, ListingT
 import play.twirl.api.Html
 import java.time.LocalDate
 import cats.data.Validated
+import validation.Rule
 
 object Widgets extends Widgets
 
-trait Widgets extends InferTellTwirlDL with InputOps {
+trait Widgets extends InferTellTwirlDL {
 
   implicit def tellToListingTell[A: GenericWebTell[?, Html]] = new ListingTell[Html, A] {
 
@@ -106,9 +107,9 @@ trait Widgets extends InferTellTwirlDL with InputOps {
     def decode(out: Input): Either[ErrorTree,LocalDate] = {
 
       def intAtKey(key: String): Validated[ErrorTree, Int] =
-        out.subField(key, nonEmptyString(_) andThen {x: String =>
+        out.subField(key, Rule.nonEmpty[String].apply(_) andThen {x: String =>
           Validated.catchOnly[NumberFormatException](x.toInt).leftMap(_ => ErrorMsg("badValue").toTree)
-        } andThen min(0))
+        } andThen Rule.min(0))
 
       (
         intAtKey("day"),

@@ -4,6 +4,7 @@ package common.web
 import cats.implicits._
 import concurrent.Future
 import scala.concurrent.ExecutionContext
+import validation._
 
 abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[A, Html] {
 
@@ -34,7 +35,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
     id: String,
     tell: Html,
     default: Option[A],
-    validation: List[List[Rule[A]]],
+    validationRules: List[Rule[A]],
     messages: UniformMessages[Html]
   ): WebMonad[A, Html] = new WebMonad[A, Html] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A, Html]] = {
@@ -43,10 +44,12 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}
 
+      val validation: Rule[A] = validationRules.combineAll
+
       lazy val dbObject: Option[Either[ErrorTree,A]] = {
-        val fromState = dbInput map {_ >>= codec.decode >>= validation.combined.either}
+        val fromState = dbInput map {_ >>= codec.decode >>= validation.either}
         if (config.leapAhead) {
-          fromState orElse default.map(validation.combined.either)
+          fromState orElse default.map(validation.either)
         } else {
           fromState
         }
@@ -56,12 +59,12 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
       val targetIdP = targetId.reverse.dropWhile(_ == "").reverse
 
       lazy val residual = targetIdP.drop(currentId.size)
-      println(s"residual: $residual")
       if (targetIdP === currentId) {
         request match {
           case Some(post) =>
             val localData = post.atPath(currentId)
-            val parsed = (codec.decode(localData) >>= validation.combined.either)
+            val parsed = (codec.decode(localData) >>= validation.either)
+
             parsed match {
               case Right(valid) =>
                 pageIn.toPageOut(AskResult.Success[A, Html](valid)).copy (

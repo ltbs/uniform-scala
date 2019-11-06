@@ -1,6 +1,9 @@
 package ltbs.uniform
 
+import scala.language.higherKinds
+
 import shapeless._
+import validation.Rule
 
 /** Allows rewriting existing user journey without running them. 
   * 
@@ -18,7 +21,7 @@ class Rewriter[TC[_], SupportedTell <: HList, SupportedAsk <: HList](
       id: String,
       tell: Tell,
       default: Option[Ask] = None,
-      validation: List[List[Rule[Ask]]] = Nil,
+      validation: List[Rule[Ask]] = Nil,
       customContent: Map[String,(String,List[Any])] = Map.empty
     ): TC[Ask]
 
@@ -33,7 +36,7 @@ class Rewriter[TC[_], SupportedTell <: HList, SupportedAsk <: HList](
       id: String,
       tell: Tell,
       default: Option[Ask] = None,
-      validation: List[List[Rule[Ask]]] = Nil,
+      validation: List[Rule[Ask]] = Nil,
       customContent: Map[String,(String,List[Any])] = Map.empty
     )(
       implicit

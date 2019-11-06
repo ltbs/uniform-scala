@@ -1,6 +1,8 @@
 package ltbs.uniform
 package common.web
 
+import scala.language.implicitConversions
+
 import shapeless._, labelled._, tag._
 import collection.immutable.ListMap
 

@@ -1,6 +1,8 @@
 package ltbs.uniform
 package examples
 
+import scala.language.higherKinds
+
 import cats.Monad
 import cats.implicits._
 

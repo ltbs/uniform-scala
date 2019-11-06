@@ -29,8 +29,17 @@ package object playframework extends common.web.webcommon {
   }
 
   implicit class RichPlayMessages(input: i18n.Messages) {
-    def convertMessages(escapeHtml: Boolean = false): UniformMessages[TwirlHtml] = {
-      val stringMessages = new UniformMessages[String] {
+
+    def convertMessagesTwirlHtml(escapeHtml: Boolean = false): UniformMessages[TwirlHtml] = {
+      val stringMessages = convertMessages()
+
+      if (escapeHtml) stringMessages.map(
+        play.twirl.api.HtmlFormat.escape
+      ) else
+        stringMessages.map(TwirlHtml.apply)    
+    }
+
+    def convertMessages() = new UniformMessages[String] {
         override def apply(key: List[String], args: Any*): String = {
           input(key, args: _*)
         }
@@ -59,17 +68,12 @@ package object playframework extends common.web.webcommon {
           List(key, s"$key.1").map(get(_, args: _*)).flatten ++ inner().reverse
         }
       }
-      if (escapeHtml) stringMessages.map(
-        play.twirl.api.HtmlFormat.escape
-      ) else
-        stringMessages.map(TwirlHtml.apply)
-    }
   }
 
   implicit class RichTwirlInterpreter(interpreter: GenericWebInterpreter[TwirlHtml]) {
     @deprecated("Please use RichPlayMessages instead", "4.5.2")
     def convertMessages(input: i18n.Messages, escapeHtml: Boolean = false): UniformMessages[TwirlHtml] =
-      RichPlayMessages(input).convertMessages(escapeHtml)
+      RichPlayMessages(input).convertMessagesTwirlHtml(escapeHtml)
   }
 
   implicit val mon: cats.Monoid[TwirlHtml] = new cats.Monoid[TwirlHtml] {

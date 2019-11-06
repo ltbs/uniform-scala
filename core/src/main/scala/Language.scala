@@ -1,7 +1,10 @@
 package ltbs.uniform
 
+import scala.language.higherKinds
+
 import shapeless.HList
 import com.github.ghik.silencer.silent
+import validation.Rule
 
 /** The core language of uniform, journeys will typically be expressed
   * in terms of this interaction 
@@ -61,7 +64,7 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     id: String,
     tell: Tell,
     default: Option[Ask] = None,
-    validation: List[List[Rule[Ask]]] = Nil,
+    validation: List[Rule[Ask]] = Nil,
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit
@@ -93,7 +96,7 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
   def ask[A](
     id: String,
     default: Option[A] = None,
-    validation: List[List[Rule[A]]] = Nil,
+    validation: List[Rule[A]] = Nil,
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit selectorAsk : IndexOf[SupportedAsk, A],

@@ -20,8 +20,8 @@ case class HmrcPlayInterpreter(
   def messages(
     request: Request[AnyContent]
   ): UniformMessages[Html] =
-    this.convertMessages(messagesApi.preferred(request)) |+|
-      UniformMessages.bestGuess.map{HtmlFormat.escape}
+    { messagesApi.preferred(request).convertMessages() |+|
+      UniformMessages.bestGuess }.map{HtmlFormat.escape}
 
   def pageChrome(
     key: List[String],
@@ -57,9 +57,9 @@ case class HmrcPlayInterpreter(
   /** This tells uniform to wrap or transform anything that is loosely related with the supplied HTML 
     * note however this will be overwritten if you use a custom view
     */
-  implicit def genericFormGroupingForLooselyRelated[A: LooselyRelatedTC] = new FormGrouping[A, Html] {
-    def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html =
-      Html("""<div style="border:1px solid red;"> """) |+| in |+| Html("""</div>""")
-  }
+  // implicit def genericFormGroupingForLooselyRelated[A: LooselyRelatedTC] = new FormGrouping[A, Html] {
+  //   def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html =
+  //     Html("""<div style="border:1px solid red;"> """) |+| in |+| Html("""</div>""")
+  // }
 
 }

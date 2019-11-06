@@ -1,16 +1,19 @@
 package ltbs.uniform
 package interpreters.cli
 
+import scala.language.higherKinds
+
 import cats.implicits._
-import shapeless._
 import com.github.ghik.silencer.silent
+import shapeless._
+import validation.Rule
 
 trait TellCli[A] {
   def render(in: A): String
 }
 
 trait AskCli[A] {
-  def apply(in: String, validation: List[List[Rule[A]]]): A
+  def apply(in: String, validation: List[Rule[A]]): A
 }
 
 class CliInterpreter[
@@ -22,7 +25,7 @@ class CliInterpreter[
     id            : String,
     t             : Tell,
     default       : Option[Ask],
-    validation    : List[List[Rule[Ask]]],
+    validation    : List[Rule[Ask]],
     customContent : Map[String,(String,List[Any])]
   )( implicit
     selectorTell : IndexOf[SupportedTell, Tell],
@@ -51,7 +54,7 @@ object CliInterpreter {
 
   def askCliInstance[A](f: String => Either[String,A]) = new AskCli[A] {
     @annotation.tailrec
-    def apply(key: String, validation: List[List[Rule[A]]]): A = {
+    def apply(key: String, validation: List[Rule[A]]): A = {
       print(s"$key: ")
       val rawIn = io.StdIn.readLine()
 

@@ -1,5 +1,7 @@
 package ltbs.uniform
 
+import scala.language.higherKinds
+
 import com.github.ghik.silencer.silent
 import shapeless.LowPriority
 import shapeless.tag, tag.{@@}

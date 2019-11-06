@@ -1,6 +1,7 @@
 package ltbs.uniform
 package common.web
 
+import validation.Rule
 import cats.implicits._
 import cats.Monoid
 import shapeless.Lazy
@@ -98,7 +99,7 @@ trait InferListingPages[Html] {
       id: String,
       tell: Html,
       defaultIn: Option[List[A]],
-      validationIn: List[List[Rule[List[A]]]],
+      validationIn: List[Rule[List[A]]],
       messages: UniformMessages[Html]
     ): WM[List[A]] = {
 

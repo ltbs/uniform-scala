@@ -1,5 +1,7 @@
 package ltbs.uniform
 
+import scala.language.higherKinds
+
 import shapeless._
 
 /** A KList

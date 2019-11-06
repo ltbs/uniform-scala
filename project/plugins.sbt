@@ -11,7 +11,7 @@ addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.2")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
 
-addSbtPlugin("com.rallyhealth.sbt" % "sbt-git-versioning" % "1.2.1")
+addSbtPlugin("com.rallyhealth.sbt" % "sbt-git-versioning" % "1.2.2")
 
 addSbtPlugin("com.47deg"  % "sbt-microsites" % "0.9.7")
 
@@ -25,7 +25,7 @@ addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.4.2")
 
-addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.8")
+//addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.8")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.0")
 
