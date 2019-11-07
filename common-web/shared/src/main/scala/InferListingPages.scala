@@ -10,6 +10,7 @@ sealed trait ListAction
 sealed trait ListActionRow extends ListAction
 sealed trait ListActionGeneral extends ListAction
 
+/** The data type returned form the branching part of a listing page. */
 object ListAction {
   case class Delete(index: Int) extends ListActionRow
   case class Edit(index: Int) extends ListActionRow
@@ -24,11 +25,25 @@ trait ListingTell[Html, A] {
   def apply(rows: List[ListingTellRow[A]], messages: UniformMessages[Html]): Html
 }
 
-object Pos {
+protected[web] object Pos {
   def unapply(value: String): Option[Int] =
     Either.catchOnly[NumberFormatException](value.toInt).toOption
 }
 
+/** Produces pages for `List[A]` where a user can enter multiple items
+  * of a given datatype via a central page that enumerates the items
+  * already, allows them to add new items and edit or delete existing ones.
+  * 
+  * There are two ways you can produce a listing - the first works by
+  * infering the page for `A` automatically. To use this approach
+  * simply use an `ask[List[A]]` in your journey and it will pick up
+  * and use the add/edit part from inference, falling back to
+  * [[InferFormField]] if necessary. 
+  * 
+  * The second approach works by explicitly supplying a subjourney and
+  * interpreting this into a [[WebMonadConstructor]], by using the
+  * [[listingPageWM]] method. 
+  */
 trait InferListingPages[Html] {
   this: GenericWebInterpreter[Html] =>
 
@@ -56,6 +71,44 @@ trait InferListingPages[Html] {
     useSubjourneys = false
   )
 
+  /** Allows creation of a listing page that uses an interpreted
+    * subjourney in place of the implicit single-page form used for
+    * adding and editing. 
+    * 
+    * {{{
+    *   case class MyClass(a: Boolean, b: String)
+    * 
+    *   type SubjourneyTell = NilTypes
+    *   type SubjourneyAsk = Boolean :: String :: NilTypes
+    * 
+    *   def myclassSubjourney[F[_]: cats.Monad]( 
+    *     existing: List[MyClass], 
+    *     editIndex: Option[Int], 
+    *     messages: UniformMessages[Html]
+    *   )(
+    *     int: Language[F, SubjourneyTell, SubjourneyAsk]
+    *   ): F[MyClass] = ???
+    * 
+    *   implicit def myClassListing(
+    *     implicit request: Request[AnyContent]
+    *   ) = {
+    *     interpreter.listingPageWM[MyClass](
+    *       subjourney[interpreter.WM](_,_,_)(
+    *         create[SubjourneyTell, SubjourneyAsk](interpreter.messages(request))
+    *       )
+    *     )
+    *   }
+    * }}}
+    * 
+    * @param addEditJourney the interpreted journey used for adding
+    *        and editing. Accepts the existing list of entries, an
+    *        index for editing (None if adding), and messages. 
+    * @param deleteJourney an optional journey to be invoked when
+    *        deleting, must return a boolean
+    * @param customOrdering allows the entries to be ordered
+    *        differently in the listing. By default they will be in
+    *        the order added. 
+    */
   def listingPageWM[A](
     addEditJourney: (List[A], Option[Int], UniformMessages[Html]) => WM[A],
     deleteJourney: (List[A], Int) => WM[Boolean] = {(_: List[A], _: Int) => true.pure[WM]},
