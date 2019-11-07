@@ -3,7 +3,7 @@ layout: docs
 title: Asking
 ---
 
-```tut:invisible
+```scala mdoc:invisible
 import ltbs.uniform._
 import cats.implicits._
 import scala.language.higherKinds
@@ -11,7 +11,7 @@ import scala.language.higherKinds
 
 # asks
 
-```
+```scala
 def ask[A](stepId: String): F[A]
 ```
 

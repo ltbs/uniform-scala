@@ -1,5 +1,4 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
-import microsites.ExtraMdFileConfig
 
 val scala2_10 = "2.10.7"
 val scala2_11 = "2.11.12"
@@ -154,19 +153,9 @@ lazy val commonSettings = Seq(
   )
 )
 
-def tutSettings(name: String, crossProject: Boolean = true) = {
-  Seq(
-    tutSourceDirectory := {if (crossProject) baseDirectory.value.getParentFile else baseDirectory.value} / "docs",
-    tutTargetDirectory := {if (crossProject) baseDirectory.value.getParentFile else baseDirectory.value}.getParentFile / "docs" / "src" / "main" / "tut" / name,
-    scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused", "-Xfatal-warnings"),
-    fork in (Tut, run) := true
-  )
-}
-
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
-  .enablePlugins(TutPlugin).settings(tutSettings("core"))
   .settings(
     crossScalaVersions += scala2_13,
     libraryDependencies ++= Seq(
@@ -179,6 +168,15 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
+
+lazy val coreDocs = project
+  .in(file("core/docs-out"))
+  .dependsOn(coreJVM)
+  .settings(
+    skip.in(publish) := true,
+    mdocIn := file("core/docs")
+  )
+  .enablePlugins(MdocPlugin)
 
 lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
@@ -196,7 +194,6 @@ lazy val commonWebJS = `common-web`.js.dependsOn(coreJS)
 
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
-  .enablePlugins(TutPlugin).settings(tutSettings("other", false))
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJVM % "test")
   .settings(
@@ -212,7 +209,6 @@ lazy val `interpreter-gui` = project
 
 lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
-  .enablePlugins(TutPlugin).settings(tutSettings("other"))
   .settings(commonSettings)
   .settings(
     crossScalaVersions += scala2_13
@@ -246,24 +242,16 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
 
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
   .dependsOn(commonWebJVM)
-  .enablePlugins(TutPlugin)
-  .settings(tutSettings("play"))
-  .settings(
-    libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play" % "2.6.20" % Tut
-    )
-  )
   .dependsOn(exampleProgramsJVM % "test")
 
 lazy val `interpreter-js` = project
   .settings(commonSettings)
-  .enablePlugins(TutPlugin)
   .settings(
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(commonWebJS, `exampleProgramsJS` % Tut)
+  .dependsOn(commonWebJS)
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -306,42 +294,3 @@ lazy val `example-js` = project
   )
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(`interpreter-js`, exampleProgramsJS)
-
-lazy val docs = project
-  .enablePlugins(MicrositesPlugin)
-  .settings(commonSettings)
-  .settings(
-    fork in Test := true,
-    micrositeName           := "uniform-scala",
-    micrositeDescription    := "Purely functional user-interaction",
-    micrositeAuthor         := "Luke Tebbs",
-    micrositeGithubOwner    := "ltbs",
-    micrositeGithubRepo     := "uniform-scala",
-    micrositeBaseUrl        := "/uniform-scala",
-    micrositeGitterChannel  := false,
-    micrositeHighlightTheme := "color-brewer",
-    micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
-      "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
-    )),
-    micrositePalette := Map(
-      "brand-primary"   -> "#5236E0",
-      "brand-secondary" -> "#32423F",
-      "brand-tertiary"  -> "#232F2D",
-      "gray-dark"       -> "#3E4645",
-      "gray"            -> "#7F8483",
-      "gray-light"      -> "#E2E3E3",
-      "gray-lighter"    -> "#F3F4F4",
-      "white-color"     -> "#FFFFFF"),
-    scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
-    libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
-      "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
-    ),
-    fork in (Tut, run) := true,
-    tut := (tut
-      dependsOn tut.in(coreJVM)
-      dependsOn tut.in(interpreterLogictableJVM)
-      dependsOn tut.in(`interpreter-play26`)
-      dependsOn tut.in(`interpreter-cli`)
-    ).value,
-  )

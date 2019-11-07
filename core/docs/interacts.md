@@ -9,7 +9,7 @@ title: Interacting
 def interact[Tell, Ask](stepId: String, value: Tell): F[Ask]
 ```
 
-```tut:invisible
+```scala mdoc:invisible
 type F[A] = Option[A]
 def interact[Tell, Ask](stepId: String, value: Tell): F[Ask] = ???
 ```
@@ -24,7 +24,7 @@ could be modeled as `interact[Address, Boolean]("confirm-address", addr)`.
 
 To be precise both `ask` and `tell` are defined in terms of `interact` -
 
-```tut:silent
+```scala mdoc:silent
 def tell[A](stepId: String, value: A): F[Unit] = 
   interact[A, Unit](stepId, value)
 

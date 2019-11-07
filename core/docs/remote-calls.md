@@ -3,7 +3,7 @@ layout: docs
 title: Remote Calls
 ---
 
-```tut:invisible
+```scala mdoc:invisible
 import ltbs.uniform._
 import cats.implicits._
 import scala.language.higherKinds
@@ -22,7 +22,7 @@ accept an additional parameter alongside the interpreter.
 To illustrate this with an example let us take the journey to
 calculate the number of days a person has been alive from earlier - 
 
-```tut:silent
+```scala mdoc:silent
 
 import ltbs.uniform._
 import cats.implicits._
@@ -52,7 +52,7 @@ If we wanted to modify this such that the calculation for `daysAlive` is
 done via some remote process we can instead define a tagless final
 interface like so - 
 
-```tut:silent
+```scala mdoc:silent
 trait Server[F[_]] {
     def calculate(dob: LocalDate): F[Long]
 }
@@ -60,7 +60,7 @@ trait Server[F[_]] {
 
 This can now be used alongside `interpreter` - 
 
-```tut:silent
+```scala mdoc:silent
 def dateOfBirthRemote[F[_] : cats.Monad](
   interpreter: Language[F, TellTypes, AskTypes], 
   server: Server[F]
@@ -82,7 +82,7 @@ now provide a server instance when calling `dateOfBirthRemote`, and for
 testing we can simply generate one automatically for any
 `cats.Applicative` (which also includes `cats.Monad` instances)- 
 
-```tut:silent
+```scala mdoc:silent
 def testServer[F[_]: cats.Applicative] = new Server[F] { 
     def calculate(dateOfBirth: LocalDate): F[Long] = (
       LocalDate.now.toEpochDay - dateOfBirth.toEpochDay
@@ -92,7 +92,7 @@ def testServer[F[_]: cats.Applicative] = new Server[F] {
 
 We can now invoke a test server for whatever environment we want - 
 
-```tut
+```scala mdoc
 testServer[util.Try].calculate(
   LocalDate.now.minusDays(100)
 )

@@ -16,14 +16,14 @@ alive and finally it will return their date of birth as a string.
 You will need to import the core uniform library, and you will need
 cats. You do not need to import any interpreters when merely defining the journey.
 
-```tut:silent
+```scala mdoc:silent
 import ltbs.uniform._
 import cats.implicits._
 ```
 
 We will also be using higher-kinded types, here we have enabled this as an import - 
 
-```tut:silent
+```scala mdoc:silent
 import scala.language.higherKinds
 ```
 
@@ -31,7 +31,7 @@ We're going to use the old `java.time.LocalDate` in our program
 too along with some code for formatting. This is specific to our
 example here and not likely needed for your project.
 
-```tut:silent
+```scala mdoc:silent
 import java.time._, format._
 ```
 
@@ -39,7 +39,7 @@ import java.time._, format._
 
 Next we have the type declarations for the 'tells' -
 
-```tut:silent
+```scala mdoc:silent
 type TellTypes = Long :: NilTypes
 ```
 In this instance we want to be able to present the user with `Long`
@@ -58,7 +58,7 @@ case we would just use `NilTypes` on its own.
 
 Next we need a similar type declaration for the 'asks' -
 
-```tut:silent
+```scala mdoc:silent
 type AskTypes = LocalDate :: NilTypes
 ```
 
@@ -70,7 +70,7 @@ user for their date of birth.
 
 Now we can create our main journey body.
 
-```tut:silent
+```scala mdoc:silent
 def dateOfBirth[F[_] : cats.Monad](
   interpreter: Language[F, TellTypes, AskTypes]
 ): F[String] = {
