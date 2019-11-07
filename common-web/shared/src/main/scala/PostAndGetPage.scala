@@ -35,7 +35,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
     id: String,
     tell: Html,
     default: Option[A],
-    validationRules: List[Rule[A]],
+    validation: Rule[A],
     messages: UniformMessages[Html]
   ): WebMonad[A, Html] = new WebMonad[A, Html] {
     def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A, Html]] = {
@@ -43,8 +43,6 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
       val currentId = pageIn.pathPrefix :+ id
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}
-
-      val validation: Rule[A] = validationRules.combineAll
 
       lazy val dbObject: Option[Either[ErrorTree,A]] = {
         val fromState = dbInput map {_ >>= codec.decode >>= validation.either}

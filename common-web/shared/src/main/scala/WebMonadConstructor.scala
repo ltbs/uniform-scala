@@ -7,7 +7,7 @@ trait WebMonadConstructor[A, Html] {
     id: String,
     tell: Html,
     defaultIn: Option[A],
-    validationIn: List[Rule[A]],
+    validationIn: Rule[A],
     messages: UniformMessages[Html]
   ): WebMonad[A, Html]
 }

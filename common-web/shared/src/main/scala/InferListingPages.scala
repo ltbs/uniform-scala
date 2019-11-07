@@ -1,7 +1,7 @@
 package ltbs.uniform
 package common.web
 
-import validation.Rule
+import validation._
 import cats.implicits._
 import cats.Monoid
 import shapeless.Lazy
@@ -59,12 +59,12 @@ trait InferListingPages[Html] {
     wmcbranchffg: FormField[ListActionGeneral, Html],
     wmcbranchffa: FormField[ListAction, Html]
   ): WMC[List[A]] = listingPageWM(
-    addEditJourney = {(existing: List[A], edit: Option[Int], messages: UniformMessages[Html]) =>
+    addEditJourney = {(existing: List[A], edit: Option[Int], messages: UniformMessages[Html], validation) =>
       wmca.value.apply(
         id = if (edit.isDefined) "edit" else "add", 
         tell = Monoid[Html].empty,
         defaultIn = edit.map(existing.apply),
-        validationIn = List.empty,
+        validationIn = validation,
         messages = messages
       )
     },
@@ -110,7 +110,7 @@ trait InferListingPages[Html] {
     *        the order added. 
     */
   def listingPageWM[A](
-    addEditJourney: (List[A], Option[Int], UniformMessages[Html]) => WM[A],
+    addEditJourney: (List[A], Option[Int], UniformMessages[Html], Rule[A]) => WM[A],
     deleteJourney: (List[A], Int) => WM[Boolean] = {(_: List[A], _: Int) => true.pure[WM]},
     customOrdering: Option[cats.Order[A]] = None,
     useSubjourneys: Boolean = true
@@ -152,9 +152,18 @@ trait InferListingPages[Html] {
       id: String,
       tell: Html,
       defaultIn: Option[List[A]],
-      validationIn: List[Rule[List[A]]],
+      validationIn: Rule[List[A]],
       messages: UniformMessages[Html]
     ): WM[List[A]] = {
+
+      val subRules = validationIn.subRules
+      val (_, max) = subRules.collect {
+        case Rule.MaxLength(h, _) => (0, h)
+        case Rule.MinLength(l,_) => (l,Int.MaxValue)
+        case Rule.LengthBetween(l,h) => (l,h)          
+      }.foldLeft((0, Int.MaxValue)){
+        case ((al, ah),(bl, bh)) => (Math.max(al, bl), Math.min(ah, bh))
+      }
 
       def subJourney[S](id: Seq[String])(sub: => WM[S]): WM[S] =
         if (useSubjourneys)
@@ -184,13 +193,28 @@ trait InferListingPages[Html] {
             ListingTellRow(v, editLink, deleteLink)
           }
 
-        {wmcbranch(id, listingRowHtml(indexedRows, messages), None, Nil, messages): WM[ListAction]} flatMap {
+        val validation = {
+          import cats.data.Validated.Valid
+          Rule.cond[ListAction]({
+            case ListAction.Add if data.size >= max => false
+            case _ => true
+          }, "maxLength") followedBy {
+            case ListAction.Continue => validationIn(data).map{_ => ListAction.Continue}
+            case x => Valid(x)
+          }
+        }
+
+        val elementValidation: Rule[A] = subRules.collect {
+          case Rule.ForEachInList(r) => r
+        }.combineAll
+
+        {wmcbranch(id, listingRowHtml(indexedRows, messages), None, validation, messages): WM[ListAction]} flatMap {
           case ListAction.Continue =>
             data.pure[WM]
 
           case ListAction.Add =>
             subJourney(Seq(id, "add"))( for {
-              r <- addEditJourney(data, None, messages)
+              r <- addEditJourney(data, None, messages, elementValidation)
               _ <- db(List(s"${id}-zzdata")) = data :+ r
               _ <- db.deleteRecursive(List(id))
             } yield (List.empty[A]))
@@ -209,7 +233,7 @@ trait InferListingPages[Html] {
 
           case ListAction.Edit(index) =>
             subJourney(Seq(id, "edit", index.toString))( for {
-              r <- addEditJourney(data, Some(index), messages)
+              r <- addEditJourney(data, Some(index), messages, elementValidation)
               _ <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, r)
               _ <- db.deleteRecursive(List(id))
             } yield (List.empty[A]))

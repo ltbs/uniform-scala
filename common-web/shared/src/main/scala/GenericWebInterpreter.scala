@@ -24,7 +24,7 @@ trait GenericWebInterpreter[Html] {
       id: String,
       tell: Tell,
       defaultIn: Option[Ask],
-      validationIn: List[Rule[Ask]],
+      validationIn: Rule[Ask],
       customContent: Map[String,(String, List[Any])]
     )(implicit
       selectorTell: IndexOf[SupportedTell,Tell],

@@ -32,7 +32,8 @@ class WitchController @Inject()(
   def familiarProgram[F[_]: cats.Monad](
     existing: List[Familiar],
     editIndex: Option[Int],
-    messages: UniformMessages[Html]
+    messages: UniformMessages[Html],
+    rule: validation.Rule[Familiar]
   )(
     int: Language[F, NilTypes, Boolean :: String :: NilTypes]
   ): F[Familiar] = {
@@ -50,7 +51,7 @@ class WitchController @Inject()(
   implicit def familiarListing(
     implicit request: Request[AnyContent]
   ) = interpreter.listingPageWM[Familiar](
-    familiarProgram[interpreter.WM](_,_,_)(create[NilTypes, Boolean :: String :: NilTypes](interpreter.messages(request)))
+    familiarProgram[interpreter.WM](_,_,_,_)(create[NilTypes, Boolean :: String :: NilTypes](interpreter.messages(request)))
   )
 
   def reportWitch(targetId: String) = Action.async { implicit request: Request[AnyContent] =>

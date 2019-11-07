@@ -53,10 +53,8 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     * @param tell data to be presented to the user
     * @param default optional existing/default value. For example an
     *           'edit' journey. 
-    * @param validation rules to check the data is valid (after it has
-    *           been turned into an Ask). Rules in the inner lists are
-    *           error-accumulating, where as the outer groups are run
-    *           sequentially.
+    * @param validation rule to check the data is valid (after it has
+    *           been turned into an Ask). 
     * @param customContent overrides any messages used in the journey
     *           step 
     */  
@@ -64,7 +62,7 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     id: String,
     tell: Tell,
     default: Option[Ask] = None,
-    validation: List[Rule[Ask]] = Nil,
+    validation: Rule[Ask] = Rule.alwaysPass[Ask],
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit
@@ -86,9 +84,7 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     * @param default optional existing/default value. For example an
     *           'edit' journey. 
     * @param validation rules to check the data is valid (after it has
-    *           been turned into an Ask). Rules in the inner lists are
-    *           error-accumulating, where as the outer groups are run
-    *           sequentially.
+    *           been turned into an Ask). 
     * @param customContent overrides any messages used in the journey
     *           step 
     * 
@@ -96,7 +92,7 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
   def ask[A](
     id: String,
     default: Option[A] = None,
-    validation: List[Rule[A]] = Nil,
+    validation: Rule[A] = Rule.alwaysPass[A],
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit selectorAsk : IndexOf[SupportedAsk, A],

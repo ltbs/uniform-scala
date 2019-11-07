@@ -30,6 +30,37 @@ package object validation
 
   implicit class RichRule[A](rule: Rule[A]) {
     def either(in: A): Either[ErrorTree, A] = rule.apply(in).toEither
-    def followedBy(ruleB: Rule[A]): Rule[A] = rule(_) andThen ruleB
+
+    /** compose a new validation rule by chaining two together in
+      * sequence. The second Rule will not be executed unless the
+      * first passes.
+      */
+    def followedBy(ruleB: Rule[A]): Rule[A] = FollowedByRule(rule, ruleB)
+
+    /** compose a new validation rule by running two together in
+      * parallel. The second Rule will be executed regardless of 
+      * if the first passes and any errors aggregated.
+      */
+    def alongWith(ruleB: Rule[A]): Rule[A] = AlongWithRule(rule, ruleB)    
+
+    /** In the event that the validation is some form of aggregation
+      * (such as [[FollowedByRule]] or [[AlongWithRule]]) split it out into all of 
+      * its non-aggregate components. 
+      * 
+      * If the rule is a normal rule return a singleton list with that rule. 
+      */
+    def subRules: List[Rule[A]] = {
+      @annotation.tailrec
+      def inner(normal: List[Rule[A]], unsorted: List[Rule[A]]): List[Rule[A]] = {
+        unsorted match {
+          case (FollowedByRule(a,b)::xs) => inner(normal, a :: b :: xs)
+          case (AlongWithRule(a,b)::xs) => inner(normal, a :: b :: xs)
+          case x::xs => inner(x::normal, xs)
+          case Nil => normal
+        }
+      }
+
+      inner(Nil, List(rule))
+    }
   }
 }
