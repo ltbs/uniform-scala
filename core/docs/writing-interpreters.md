@@ -104,11 +104,11 @@ kinded type our interpreter works with. To keep things simple we're
 just going to use the `Id` monad here.
 
 ```scala mdoc:silent
-import ltbs.uniform._
+import ltbs.uniform._, validation.Rule
 
 import cats.implicits._
 import cats.{Id, Monad}
-import shapeless.{Id => _, _}
+import shapeless.{HList, HNil}
 import scala.language.higherKinds
 
 class ExampleValuesInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
@@ -119,7 +119,7 @@ class ExampleValuesInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
     id: String,
     tell: Tell,
     default: Option[Ask] = None,
-    validation: List[List[Rule[Ask]]] = Nil,
+    validation: List[Rule[Ask]] = Nil,
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit selectorTell : IndexOf[SupportedTell, Tell],
