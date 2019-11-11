@@ -20,7 +20,7 @@ spreadsheet to be shown to stakeholders or Business Analysts.
 For this example we will write a deliberately convoluted program in
 order to test the logic -
 
-```tut:silent
+```scala mdoc:silent
 import ltbs.uniform._
 import cats.implicits._
 import scala.language.higherKinds
@@ -82,7 +82,7 @@ libraryDependencies +=
 
 And we need to import the logictable library -
 
-```tut:silent
+```scala mdoc:silent
 import ltbs.uniform.interpreters.logictable._
 ```
 
@@ -90,7 +90,7 @@ import ltbs.uniform.interpreters.logictable._
 
 We now need to provide some sample data for the interpreter to consume.
 
-```tut:silent
+```scala mdoc:silent
 implicit val intSamples = new SampleData[Int] {
   def apply(key: String): List[Int] = key match {
     case "age" => List(10,50,100)
@@ -106,7 +106,7 @@ implicit val booleanSamples = new SampleData[Boolean] {
 
 We can now execute our program with the logic table interpreter -
 
-```tut
+```scala mdoc
 val output: List[(List[String], Either[ErrorTree,Int])] = greasySpoon(
   new LogicTableInterpreter[TellTypes, AskTypes]
 ).value.run
@@ -117,7 +117,7 @@ is the list of question the user would be asked with the answer they
 gave paired with the outcome (either an error or a completed journey
 result).
 
-```tut
+```scala mdoc
 output.take(5).foreach{ case (messages, outcome) =>
   println(messages.mkString("\n"))
   println(s"   => $outcome")

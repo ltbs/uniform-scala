@@ -3,6 +3,7 @@ package controllers
 import cats.implicits._
 import javax.inject._
 import ltbs.uniform._, interpreters.playframework._, examples.beardtax._
+import common.web.WebMonad
 import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
@@ -25,7 +26,7 @@ class BeardController2 @Inject()(
   implicit val persistence: PersistenceEngine[Request[AnyContent]] =
     DebugPersistence(UnsafePersistence())
 
-  def adaptedHod = new Hod[common.web.WebMonad[?, Html]] {
+  def adaptedHod = new Hod[WebMonad[?, Html]] {
     val inner = new HodConnector
     def costOfBeard(beardStyle: BeardStyle, length: BeardLength): WebMonad[Int, Html] =
       common.web.FutureAdapter[Html].alwaysRerun.apply(inner.costOfBeard(beardStyle, length))

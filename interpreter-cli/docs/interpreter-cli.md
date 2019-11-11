@@ -19,7 +19,7 @@ fundamentals of uniform in action.
 
 First of all you need a program. Lets start with a simple greeting application -
 
-```tut:silent
+```scala mdoc:silent
 import ltbs.uniform._
 import cats.implicits._
 import scala.language.higherKinds
@@ -64,7 +64,7 @@ libraryDependencies +=
 
 We need to import the interpreter -
 
-```tut
+```scala mdoc
 import ltbs.uniform.interpreters.cli._
 ```
 
@@ -73,6 +73,6 @@ The program can now be executed using the interpreter.
 If invoked `helloProgram` will now prompt the user for a forename,
 then a surname and then give the expected greeting.
 
-```tut
-helloProgram(new CliInterpreter[TellTypes, AskTypes])
+```scala mdoc
+def runner = helloProgram(new CliInterpreter[TellTypes, AskTypes])
 ```

@@ -192,6 +192,15 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
 lazy val commonWebJVM = `common-web`.jvm.dependsOn(coreJVM)
 lazy val commonWebJS = `common-web`.js.dependsOn(coreJS)
 
+lazy val commonWebDocs = project
+  .in(file("common-web/docs-out"))
+  .dependsOn(commonWebJVM)
+  .settings(
+    skip.in(publish) := true,
+    mdocIn := file("common-web/docs")
+  )
+  .enablePlugins(MdocPlugin)
+
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
   .dependsOn(coreJVM)
@@ -199,6 +208,16 @@ lazy val `interpreter-cli` = project
   .settings(
     crossScalaVersions += scala2_13
   )
+
+
+lazy val `interpreter-cli-docs` = project
+  .in(file("interpreter-cli/docs-out"))
+  .dependsOn(`interpreter-cli`)
+  .settings(
+    skip.in(publish) := true,
+    mdocIn := file("interpreter-cli/docs")
+  )
+  .enablePlugins(MdocPlugin)
 
 lazy val `interpreter-gui` = project
   .settings(commonSettings)
@@ -213,6 +232,15 @@ lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
   .settings(
     crossScalaVersions += scala2_13
   )
+
+lazy val `interpreter-logictable-docs` = project
+  .in(file("interpreter-logictable/docs-out"))
+  .dependsOn(`interpreter-logictable`.jvm)
+  .settings(
+    skip.in(publish) := true,
+    mdocIn := file("interpreter-logictable/docs")
+  )
+  .enablePlugins(MdocPlugin)
 
 lazy val interpreterLogictableJS = `interpreter-logictable`.js
   .dependsOn(coreJS)
@@ -240,6 +268,18 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
       crossScalaVersions := Seq(scala2_11, scala2_12, scala2_13)
     ).dependsOn(core.jvm, `common-web`.jvm))
 
+lazy val `interpreter-play-docs` = project
+  .in(file("interpreter-play/docs-out"))
+  .dependsOn(`interpreter-play`.projects(Play26))
+  .settings(
+    skip.in(publish) := true,
+    mdocIn := file("interpreter-play/docs"),
+    libraryDependencies += 
+      "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
+  )
+  .enablePlugins(MdocPlugin)
+
 lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
   .dependsOn(commonWebJVM)
   .dependsOn(exampleProgramsJVM % "test")
@@ -252,6 +292,15 @@ lazy val `interpreter-js` = project
   )
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(commonWebJS)
+
+lazy val `interpreter-js-docs` = project
+  .in(file("interpreter-js/docs-out"))
+  .dependsOn(`interpreter-js`)
+  .settings(
+    skip.in(publish) := true,
+    mdocIn := file("interpreter-js/docs")
+  )
+  .enablePlugins(MdocPlugin)
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -294,3 +343,35 @@ lazy val `example-js` = project
   )
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(`interpreter-js`, exampleProgramsJS)
+
+
+lazy val docs = project
+  .enablePlugins(MicrositesPlugin)
+  .settings(commonSettings)
+  .settings(
+    fork in Test := true,
+    micrositeName           := "uniform-scala",
+    micrositeDescription    := "Purely functional user-interaction",
+    micrositeAuthor         := "Luke Tebbs",
+    micrositeGithubOwner    := "ltbs",
+    micrositeGithubRepo     := "uniform-scala",
+    micrositeBaseUrl        := "/uniform-scala",
+    micrositeGitterChannel  := false,
+    micrositeHighlightTheme := "color-brewer",
+    micrositeConfigYaml     := microsites.ConfigYml(yamlCustomProperties = Map(
+      "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
+    )),
+    micrositePalette := Map(
+      "brand-primary"   -> "#5236E0",
+      "brand-secondary" -> "#32423F",
+      "brand-tertiary"  -> "#232F2D",
+      "gray-dark"       -> "#3E4645",
+      "gray"            -> "#7F8483",
+      "gray-light"      -> "#E2E3E3",
+      "gray-lighter"    -> "#F3F4F4",
+      "white-color"     -> "#FFFFFF"),
+    libraryDependencies ++= Seq(
+      "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
+      "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
+    )
+)
