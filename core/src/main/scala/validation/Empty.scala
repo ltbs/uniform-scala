@@ -3,31 +3,40 @@ package validation
 
 import language.implicitConversions
 
+/** A type that can be checked to see if it is 'empty' (in the sense
+  * of a Monoid being empty). Note that unlike with Monoid it does not
+  * require a definition for empty, only the ability to check if an
+  * element is empty */
 @simulacrum.typeclass trait Empty[A] {
   def isEmpty(in: A): Boolean
 }
 
 trait EmptyInstances {
 
-  def newEmpty[A](e: A) = new Empty[A] {
+  /** Convenience method to create an Empty instance from a supplied value 
+    * {{{ 
+    * implicit val emptyString: Empty[String] = instance("")
+    * }}}
+    */
+  def instance[A](e: A) = new Empty[A] {
     def empty = e
     def isEmpty(in: A): Boolean = in == empty
   }
 
-  implicit val emptyString = newEmpty("")
-  implicit val emptyInt = newEmpty(0)
+  implicit val emptyString = instance("")
+  implicit val emptyInt = instance(0)
   implicit def emptyOpt[A] = {
     import cats.syntax.option._
-    newEmpty(none[A])
+    instance(none[A])
   }
 
   implicit def emptyNumeric[A](
     implicit num: Numeric[A]
-  ) = newEmpty(num.zero)
+  ) = instance(num.zero)
 
   implicit def emptyMonoid[A](
     implicit mon: cats.Monoid[A]
-  ) = newEmpty(mon.empty)
+  ) = instance(mon.empty)
 
   implicit def emptyQuantifiable[A](
     implicit qty: Quantifiable[A]

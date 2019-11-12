@@ -4,6 +4,9 @@ import cats.implicits._
 import cats.Monoid
 import cats.data.Validated
 
+/** Validation and data transformation capabilities used in
+  * uniform. 
+  */
 package object validation
     extends validation.Compat
     with Quantifiable.ToQuantifiableOps
