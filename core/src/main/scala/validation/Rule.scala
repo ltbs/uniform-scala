@@ -88,7 +88,7 @@ object Rule extends Quantifiable.ToQuantifiableOps {
   def min[A: Order](minValue: A, errorMsg: String = "min"): Rule[A] =
     Min[A](minValue, errorMsg)
 
-  case class Max[A: Order] private (maxValue: A, errorMsg: String = "max") extends Rule[A]{
+  case class Max[A: Order] private (maxValue: A, errorMsg: String) extends Rule[A]{
     def apply(in: A): Validated[ErrorTree, A] =
       Validated.cond(in <= maxValue, in, error(errorMsg))
   }

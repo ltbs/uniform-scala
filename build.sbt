@@ -2,7 +2,7 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 val scala2_10 = "2.10.7"
 val scala2_11 = "2.11.12"
-val scala2_12 = "2.12.8"
+val scala2_12 = "2.12.10"
 val scala2_13 = "2.13.0"
 
 lazy val root = project.in(file("."))
@@ -153,7 +153,32 @@ lazy val commonSettings = Seq(
   )
 )
 
+def mdocSettings = {
+
+  Seq(
+    mdocIn := {
+
+      val isCrossBuild = baseDirectory.value.getAbsolutePath.split("/").last match {
+        case "js" | "jvm" => true
+        case x if x.startsWith("play") || x.startsWith(".") => true
+        case _ => false
+      }
+
+      if (isCrossBuild)
+        (baseDirectory.value / ".." / "docs").getCanonicalFile
+      else
+        baseDirectory.value / "docs"
+    },
+
+    mdocOut := (docs/baseDirectory).value / "src" / "main" / "tut" / name.value,
+
+    // mdoc sadly doesn't use a different scalacOptions from main compilation...
+    scalacOptions in Compile --= Seq("-Xfatal-warnings") 
+  )
+}
+
 lazy val core = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
@@ -163,22 +188,16 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "org.typelevel" %%% "simulacrum" % "1.0.0"
-    ) ++ macroDependencies(scalaVersion.value)
+    ) ++ macroDependencies(scalaVersion.value),
   )
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
-
-lazy val coreDocs = project
-  .in(file("core/docs-out"))
-  .dependsOn(coreJVM)
-  .settings(
-    skip.in(publish) := true,
-    mdocIn := file("core/docs")
-  )
   .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .settings(commonSettings)
   .settings(
@@ -189,17 +208,13 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
     ) ++ macroDependencies(scalaVersion.value)
   )
 
-lazy val commonWebJVM = `common-web`.jvm.dependsOn(coreJVM)
-lazy val commonWebJS = `common-web`.js.dependsOn(coreJS)
-
-lazy val commonWebDocs = project
-  .in(file("common-web/docs-out"))
-  .dependsOn(commonWebJVM)
-  .settings(
-    skip.in(publish) := true,
-    mdocIn := file("common-web/docs")
-  )
+lazy val commonWebJVM = `common-web`.jvm
+  .dependsOn(core.jvm)
   .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
+
+lazy val commonWebJS = `common-web`.js
+  .dependsOn(core.js)
 
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
@@ -208,16 +223,8 @@ lazy val `interpreter-cli` = project
   .settings(
     crossScalaVersions += scala2_13
   )
-
-
-lazy val `interpreter-cli-docs` = project
-  .in(file("interpreter-cli/docs-out"))
-  .dependsOn(`interpreter-cli`)
-  .settings(
-    skip.in(publish) := true,
-    mdocIn := file("interpreter-cli/docs")
-  )
   .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `interpreter-gui` = project
   .settings(commonSettings)
@@ -225,22 +232,16 @@ lazy val `interpreter-gui` = project
     crossScalaVersions += scala2_13
   )
   .dependsOn(coreJVM)
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
     crossScalaVersions += scala2_13
   )
-
-lazy val `interpreter-logictable-docs` = project
-  .in(file("interpreter-logictable/docs-out"))
-  .dependsOn(`interpreter-logictable`.jvm)
-  .settings(
-    skip.in(publish) := true,
-    mdocIn := file("interpreter-logictable/docs")
-  )
-  .enablePlugins(MdocPlugin)
 
 lazy val interpreterLogictableJS = `interpreter-logictable`.js
   .dependsOn(coreJS)
@@ -249,9 +250,12 @@ lazy val interpreterLogictableJS = `interpreter-logictable`.js
 lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJVM % "test")
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
   crossProject(Play25, Play26, Play27)
+    .withoutSuffixFor(Play27)
     .crossType(CrossType.Full)
     .settings(commonSettings)
     .configurePlatform(Play25)(_.settings(
@@ -268,21 +272,11 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
       crossScalaVersions := Seq(scala2_11, scala2_12, scala2_13)
     ).dependsOn(core.jvm, `common-web`.jvm))
 
-lazy val `interpreter-play-docs` = project
-  .in(file("interpreter-play/docs-out"))
-  .dependsOn(`interpreter-play`.projects(Play26))
-  .settings(
-    skip.in(publish) := true,
-    mdocIn := file("interpreter-play/docs"),
-    libraryDependencies += 
-      "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
-  )
-  .enablePlugins(MdocPlugin)
-
-lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
+lazy val `interpreter-play27` = `interpreter-play`.projects(Play27)
   .dependsOn(commonWebJVM)
   .dependsOn(exampleProgramsJVM % "test")
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `interpreter-js` = project
   .settings(commonSettings)
@@ -292,15 +286,8 @@ lazy val `interpreter-js` = project
   )
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(commonWebJS)
-
-lazy val `interpreter-js-docs` = project
-  .in(file("interpreter-js/docs-out"))
-  .dependsOn(`interpreter-js`)
-  .settings(
-    skip.in(publish) := true,
-    mdocIn := file("interpreter-js/docs")
-  )
   .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -344,7 +331,6 @@ lazy val `example-js` = project
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(`interpreter-js`, exampleProgramsJS)
 
-
 lazy val docs = project
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
@@ -373,5 +359,11 @@ lazy val docs = project
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
       "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
-    )
+    ),
+    // makeMicrosite := (makeMicrosite
+    //   dependsOn (coreDocs / mdoc)
+    //   dependsOn mdoc.in(`interpreter-logictable-docs`)
+    //   dependsOn mdoc.in(`interpreter-play-docs`)
+    //   dependsOn mdoc.in(`interpreter-cli-docs`)
+    // ).value
 )

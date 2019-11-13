@@ -20,7 +20,7 @@ package object cli {
     @annotation.tailrec
     def apply(key: String, validation: List[ltbs.uniform.validation.Rule[A]]): A = {
       print(s"$key: ")
-      val rawIn = io.StdIn.readLine()
+      val rawIn = scala.io.StdIn.readLine()
 
       f(rawIn) match {
         case Left(err) => println(err); apply(key, validation)

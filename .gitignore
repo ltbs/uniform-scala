@@ -15,3 +15,4 @@ logs
 docs/src/main/tut/core/
 docs/src/main/tut/play/
 docs/src/main/tut/other
+docs/src/main/tut/interpreter-*
