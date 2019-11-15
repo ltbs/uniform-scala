@@ -33,17 +33,20 @@ package object validation
     }
   }
 
-  implicit class RichRule[A](rule: Rule[A]) {
+  implicit class RichRule[A](rule: Rule[A]) extends RichTransformation[A,A](rule)
+
+  implicit class RichTransformation[A,B](transformation: Transformation[A,B]) {
 
     /** check the input and return a Left(ErrorTree) if there is an
       * error or a Right(a) if the data is valid
       */    
-    def either(in: A): Either[ErrorTree, A] = rule.apply(in).toEither
+    def either(in: A): Either[ErrorTree, B] = transformation.apply(in).toEither
 
-    /** compose a new validation rule by chaining two together in
-      * sequence. The second Rule will not be executed unless the
+    /** compose a new validation transformation by chaining two together in
+      * sequence. The second Transformation will not be executed unless the
       * first passes.
       */
-    def followedBy(ruleB: Rule[A]): Rule[A] = rule(_) andThen ruleB
+    def followedBy[C](transformationB: Transformation[B,C]): Transformation[A,C] =
+      transformation(_) andThen transformationB
   }
 }

@@ -7,7 +7,7 @@ import common.web.WebMonad
 import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
-import play.twirl.api.Html
+import scalatags.Text.all._
 
 class HodConnector(implicit ec: ExecutionContext) extends Hod[Future] {
   def costOfBeard(beardStyle: BeardStyle, length: BeardLength): Future[Int] =
@@ -26,10 +26,10 @@ class BeardController2 @Inject()(
   implicit val persistence: PersistenceEngine[Request[AnyContent]] =
     DebugPersistence(UnsafePersistence())
 
-  def adaptedHod = new Hod[WebMonad[?, Html]] {
+  def adaptedHod = new Hod[WebMonad[?, Tag]] {
     val inner = new HodConnector
-    def costOfBeard(beardStyle: BeardStyle, length: BeardLength): WebMonad[Int, Html] =
-      common.web.FutureAdapter[Html].alwaysRerun.apply(inner.costOfBeard(beardStyle, length))
+    def costOfBeard(beardStyle: BeardStyle, length: BeardLength): WebMonad[Int, Tag] =
+      common.web.FutureAdapter[Tag].alwaysRerun.apply(inner.costOfBeard(beardStyle, length))
   }
 
   lazy val interpreter = HmrcPlayInterpreter(this, messagesApi)

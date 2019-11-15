@@ -2,11 +2,10 @@ package ltbs.uniform
 package common.web
 
 import cats.implicits._
-import cats.Monoid
 import cats.~>
 import concurrent._
 
-case class FutureAdapter[Html: Monoid]() {
+case class FutureAdapter[Html]() {
 
   type WM[A] = WebMonad[A, Html]
 

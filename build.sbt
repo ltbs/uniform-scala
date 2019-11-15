@@ -50,7 +50,7 @@ lazy val commonSettings = Seq(
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   scalacOptions ++= Seq(
 //    "-P:silencer:checkUnused",           // silencer plugin to fail build if supressing a non-existant warning
-    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
+//    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.
@@ -300,9 +300,24 @@ lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
 lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
 
+lazy val `example-assets` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+  .settings(
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.7.0"
+  )
+
+lazy val exampleAssetsJS = `example-assets`.js.dependsOn(`common-web`.js)
+lazy val exampleAssetsJVM = `example-assets`.jvm.dependsOn(`common-web`.jvm)
+
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(`interpreter-play`.projects(Play26), core.jvm, `example-programs`.jvm)
+  .dependsOn(
+    `interpreter-play`.projects(Play26),
+    core.jvm,
+    `example-programs`.jvm,
+    `example-assets`.jvm
+  )
   .settings(
     TwirlKeys.templateImports ++= Seq(
       "ltbs.uniform._",
@@ -323,13 +338,19 @@ lazy val `example-js` = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
+    crossScalaVersions := Seq(scala2_12),
     libraryDependencies ++= Seq(
       "org.querki" %%% "jquery-facade" % "1.2",
-      "org.scala-js" %%% "scalajs-java-time" % "0.2.5"
+      "org.scala-js" %%% "scalajs-java-time" % "0.2.5",
+      "com.lihaoyi" %%% "scalatags" % "0.7.0"
     )
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(`interpreter-js`, exampleProgramsJS)
+  .dependsOn(
+    `interpreter-js`,
+    exampleProgramsJS,
+    `example-assets`.js    
+  )
 
 lazy val docs = project
   .enablePlugins(MicrositesPlugin)

@@ -3,13 +3,11 @@ package interpreters.playframework
 
 import play.api._,mvc._,http.Writeable
 import concurrent.{ExecutionContext, Future}
-import cats.Monoid
 import cats.implicits._
 import common.web._
 
 abstract class PlayInterpreter[Html: Writeable](controller: Results)(
-  implicit ec: ExecutionContext,
-  val mon: Monoid[Html]
+  implicit ec: ExecutionContext
 ) extends GenericWebInterpreter[Html] {
 
   def messages(
@@ -19,7 +17,6 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
   def pageChrome(
     key: List[String],
     errors: ErrorTree,
-    tell: Html,
     ask: Html,
     breadcrumbs: Path,
     request: Request[AnyContent],
@@ -58,7 +55,7 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
               case AskResult.GotoPath(targetPath) =>
                 (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]
               case AskResult.Payload(html, errors, messagesOut, stats) =>
-                (db, controller.Ok(pageChrome(id, errors, mon.empty, html, path, request, messagesOut, stats))).pure[Future]
+                (db, controller.Ok(pageChrome(id, errors, html, path, request, messagesOut, stats))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (if (purgeStateUponCompletion) DB.empty else dbOut, _) }
             }
