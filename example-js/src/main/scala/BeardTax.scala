@@ -33,18 +33,13 @@ object BeardTaxApp extends App {
       def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = span("")
     }
 
-    // Why is this needed?
-    implicit val f2: WMC[Int] = implicitly
-
     def renderFrame(
       frame: JQuery,
       htmlForm: Tag,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
     ): Future[Unit] = Future {
-      val jsVersion: org.scalajs.dom.Element = htmlForm.render
-      frame.empty()
-      frame.add(jsVersion)
+      frame.html(htmlForm.toString)
       ()
     }
   }
@@ -58,15 +53,18 @@ object BeardTaxApp extends App {
       12.pure[WebMonad[?, Tag]]
   }
 
-  val runner = new interpreter.JsRunner[Int](
+  val runner = {
+    new interpreter.JsRunner[Int](
     beardProgram[interpreter.WM](i, jsHod),
-    $("uniform")
-  )(_ => ().pure[Future])
+    $("#uniform"),
+      diagnostics = true
+    )(output => Future($("#uniform").html(output.toString)))
+  }
 
   @JSExportTopLevel("back")
   def backLink(): Future[Unit] = runner.goBack()
 
   @JSExportTopLevel("submit")
   def submit(): Future[Unit] = runner.submit()
-  
+
 }
