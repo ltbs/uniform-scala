@@ -10,7 +10,7 @@ package object beardtax {
 
   type BeardLength = (Int,Int)
   type TellTypes = NilTypes
-  type AskTypes = Int :: NilTypes
+  type AskTypes = Int :: MemberOfPublic :: BeardLength :: NilTypes
 
   def beardProgram[F[_] : Monad](
     interpreter: Language[F, TellTypes, AskTypes],
@@ -18,8 +18,11 @@ package object beardtax {
   ): F[Int] = {
     import interpreter._
     for {
-      test <- ask[Int]("test")
-    } yield test
+      a <- ask[Int]("a")
+      b <- ask[Int]("b")
+      c <- ask[Int]("c")
+      d <- ask[Int]("d")                  
+    } yield a + b + c + d
   }
 
 }
