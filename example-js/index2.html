@@ -14,7 +14,11 @@
 	"hmrcstyle/uniform-link-buttons.css">
   <link rel="stylesheet" href="hmrcstyle/jquery-ui-1.12.1/jquery-ui.min.css">
   <script type="text/javascript" src="hmrcstyle/jquery-3.4.1.min.js"></script>
-  <script type="text/javascript" src="hmrcstyle/jquery-ui-1.12.1/jquery-ui.min.js"></script>  
+  <script type="text/javascript" src="hmrcstyle/jquery-ui-1.12.1/jquery-ui.min.js"></script>
+
+<link rel="stylesheet" href="hmrcstyle/jstree/themes/default/style.min.css" />
+<script src="hmrcstyle/jstree/jstree.min.js"></script>
+
   <script type="text/javascript" src="hmrcstyle/govuk-frontend-2.js"></script>
   <script type="text/javascript" src=
   "hmrcstyle/show-hide-content.js"></script>
@@ -111,12 +115,48 @@
       </div>
     </div>
   </footer>
-  <div id="state" title="Uniform State">State</div>
-  <div id="crumbs" title="Uniform Breadcrumbs">Crumbs</div>
+  <footer id="uniform-diagnostics" style="display: none;">
+    <div id="tabs">
+  <ul>
+    <li><a href="#state">State</a></li>
+    <li><a href="#crumbs">Breadcrumbs</a></li>
+    <li><a href="#i18n">UniformMessages</a></li>
+  </ul>
+  <div id="state">
+  </div>
+  <div id="crumbs">
+  </div>
+  <div id="i18n">
+
+    <div id="html1">
+      <ul>
+	<li>Root node 1
+	  <ul>
+            <li>Child node 1</li>
+            <li><a href="#">Child node 2</a></li>
+	  </ul>
+	</li>
+	<li>Root node 2
+	  <ul>
+            <li>Child node 3</li>
+            <li><a href="#">Child node 4</a></li>
+	  </ul>
+	</li>
+      </ul>
+    </div>
+  </div>
+</div>
+  </footer>
   <script type="text/javascript" src="./target/scala-2.12/example-js-fastopt.js"></script>
   <script type="text/javascript" >
-    $( "#state" ).dialog();
-    $( "#crumbs" ).dialog();        
+    $( "#tabs" ).tabs();
+    $('#html1').jstree();
+  document.onkeyup = function(e) {
+      if (e.ctrlKey && e.which == 68 && e.shiftKey) {
+        $("#uniform-diagnostics").toggle();
+	$(".govuk-footer").toggle();	  
+    } 
+  };
     </script>
 </body>
 </html>

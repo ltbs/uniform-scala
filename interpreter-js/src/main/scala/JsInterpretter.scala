@@ -17,6 +17,40 @@ abstract class JsInterpreter[Html](
     messages: UniformMessages[Html]
   ): Future[Unit]
 
+  def renderState(stateOut: DB): String = {
+
+    def renderInput(key: String, i: Input): String = {
+
+      val topLi = i.valueAtRoot match {
+        case Some(rootValue) =>       s"""<li><strong>$key</strong> : ${rootValue.mkString(",")}"""
+        case None => s"""<li><strong>$key</strong>"""
+      }
+
+      val elements = i.keys.collect {
+        case single::Nil => renderInput(single, i / single)
+      }
+
+      topLi ++ {if (elements.nonEmpty) {
+        "<ul>" ++ elements.mkString ++ "</ul>"
+      } else {
+        ""
+      }} ++ "</li>"
+    }
+
+    "<ul>" ++ stateOut.map {
+      case (pagePath, valueEncoded) =>
+        val Right(value) = Input.fromUrlEncodedString(valueEncoded)
+        renderInput(pagePath.mkString(" / "), value)
+    }.mkString ++ "</ul>"
+  }
+  
+  def renderCrumbs(crumbsOut: Path): String =
+    "<ol>" ++
+      crumbsOut.reverse.map { pathElement =>
+        s"""<li><a onclick="">${pathElement.mkString(" / ")}</a></li>"""
+      }.mkString ++ "</ol>"
+
+
   case class JsRunner[A](
     wm: WebMonad[A, Html],
     selector: JQuery,
@@ -38,8 +72,6 @@ abstract class JsInterpreter[Html](
     def submit(): Future[Unit] = {
       val dataStringEncoded = selector.serialize()
       val dataInput = Input.fromUrlEncodedString(dataStringEncoded)
-      org.scalajs.dom.window.alert(s"dataSubmitted: $dataInput")
-      org.scalajs.dom.window.alert(s"target: ${crumbs.head}")      
       run(PageIn(crumbs.head, Nil, dataInput.toOption, db))
     }
 
@@ -52,8 +84,8 @@ abstract class JsInterpreter[Html](
         crumbs = path
 
         if (diagnostics) {
-          $("#state").html(db.toString)
-          $("#crumbs").html(crumbs.toString)          
+          $("#state").html(renderState(db))
+          $("#crumbs").html(renderCrumbs(crumbs))          
         }
 
         pageOut match {

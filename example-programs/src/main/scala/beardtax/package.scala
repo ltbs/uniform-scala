@@ -19,10 +19,10 @@ package object beardtax {
     import interpreter._
     for {
       a <- ask[Int]("a")
-      b <- ask[Int]("b")
+      b <- ask[BeardLength]("b")
       c <- ask[Int]("c")
       d <- ask[Int]("d")                  
-    } yield a + b + c + d
+    } yield a + b._1 + b._2 + c + d
   }
 
 }
