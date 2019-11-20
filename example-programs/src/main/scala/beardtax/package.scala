@@ -10,7 +10,7 @@ package object beardtax {
 
   type BeardLength = (Int,Int)
   type TellTypes = NilTypes
-  type AskTypes = Option[(Int, Int)] :: Boolean :: Either[Int, String] ::Int :: MemberOfPublic :: BeardLength :: NilTypes
+  type AskTypes = Option[MemberOfPublic] :: BeardStyle :: BeardLength :: NilTypes
 
   def beardProgram[F[_] : Monad](
     interpreter: Language[F, TellTypes, AskTypes],
@@ -18,13 +18,18 @@ package object beardtax {
   ): F[Int] = {
     import interpreter._
     for {
-      _ <- ask[Option[(Int,Int)]]("e2")            
-      _ <- ask[Either[Int,String]]("e")      
-      a <- ask[Int]("a")
-      b <- ask[BeardLength]("b")
-      c <- ask[Int]("c")
-      d <- ask[Int]("d")                  
-    } yield a + b._1 + b._2 + c + d
+      memberOfPublic <- ask[Option[MemberOfPublic]]("is-public")
+      beardStyle     <- ask[BeardStyle]("beard-style", customContent = Map(
+        "beard-style" -> {memberOfPublic match {
+          case None                              => ("beard-style-sycophantic", Nil)
+          case Some(MemberOfPublic(_, sname, _)) => ("beard-style-menacing", List(sname))
+        }}
+      ))
+      beardLength    <- ask[BeardLength]("beard-length-mm", validation = List(
+        Rule.condAtPath("_2")(x => x._1 <= x._2, "lower.less.than.higher")
+      )) emptyUnless memberOfPublic.isDefined
+      cost           <- hod.costOfBeard(beardStyle, beardLength)
+    } yield cost
   }
 
 }

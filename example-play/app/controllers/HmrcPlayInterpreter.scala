@@ -4,6 +4,7 @@ import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc.{Results, Request, AnyContent}
 import scala.concurrent.ExecutionContext.Implicits.global
 import ltbs.uniform.common.web.{InferFormFieldProduct, InferFormFieldCoProduct, FormFieldStats}
+import cats.syntax.semigroup._
 import scalatags.Text.all._
 import ScalatagsSupport._
 
@@ -19,7 +20,8 @@ case class HmrcPlayInterpreter(
   def messages(
     request: Request[AnyContent]
   ): UniformMessages[Tag] =
-    UniformMessages.echo.map{x => span(x)}
+    { messagesApi.preferred(request).convertMessages() |+|
+      UniformMessages.bestGuess }.map{span(_)}
 
   def headerBar(
     serviceName: Option[String],
