@@ -11,6 +11,7 @@ abstract class JsInterpreter[Html](
 ) extends GenericWebInterpreter[Html] {
 
   def renderFrame(
+    key: List[String], 
     frame: JQuery, 
     htmlForm: Html,
     errors: ErrorTree,
@@ -92,7 +93,7 @@ abstract class JsInterpreter[Html](
           case AskResult.GotoPath(targetPath) =>
             run(request.copy(targetId = targetPath, path = Nil, request = None, state = db))
           case AskResult.Payload(html, errors, messagesOut, _) =>
-            renderFrame(selector, html, errors, messagesOut)
+            renderFrame(request.targetId, selector, html, errors, messagesOut)
           case AskResult.Success(result) =>
             f(result) map { _ => 
               if (purgeStateUponCompletion) {db = DB.empty}

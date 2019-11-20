@@ -16,50 +16,27 @@ object BeardTaxApp extends App {
 
   val interpreter = new JsInterpreter[Tag] with InferFormFieldProduct[Tag] with InferFormFieldCoProduct[Tag] with examples.Widgets {
 
-    def renderProduct[A](
-      key: List[String],
-      path: Path,
-      values: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Tag],
-      pfl: ProductFieldList[A]
-    ): Tag = div(
-      pfl.inner map { case (subFieldId, f) =>
-        f(key:+ subFieldId, path, values / subFieldId, errors / subFieldId, messages)
-      }
-    )
-
-    def renderCoproduct[A](
-      key: List[String],
-      path: Path,
-      values: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Tag],
-      cfl: CoproductFieldList[A]
-    ): Tag = {
-      val value: Option[String] = values.valueAtRoot.flatMap{_.headOption}
-      radios(
-        key,
-        cfl.inner.map{_._1},
-        value,
-        errors,
-        messages,
-        cfl.inner.map{
-          case(subkey,f) => subkey -> f(key :+ subkey, path, {values / subkey}, errors / subkey, messages)
-        }.filter(_._2.toString.trim.nonEmpty).toMap
-      )
-    }
-
     implicit val tellTwirlUnit = new WebTell[Unit] {
       def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = span("")
     }
 
     def renderFrame(
+      key: List[String],
       frame: JQuery,
       htmlForm: Tag,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
     ): Future[Unit] = Future {
+
+      $(".govuk-heading-xl").html(messages(key.mkString(".")).toString)
+
+      if (errors.nonEmpty) {
+        $(".govuk-error-summary").replaceWith(errorSummary(key, errors, messages).toString)
+        $(".govuk-error-summary").show()
+      } else {
+        $(".govuk-error-summary").html("")        
+        $(".govuk-error-summary").hide()
+      }
       frame.html(htmlForm.toString)
       ()
     }

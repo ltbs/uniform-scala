@@ -3,27 +3,14 @@ package controllers
 import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc.{Results, Request, AnyContent}
 import scala.concurrent.ExecutionContext.Implicits.global
-import ltbs.uniform.common.web.{InferFormFieldProduct, FormFieldStats}
+import ltbs.uniform.common.web.{InferFormFieldProduct, InferFormFieldCoProduct, FormFieldStats}
 import scalatags.Text.all._
 import ScalatagsSupport._
 
 case class HmrcPlayInterpreter(
   results: Results,
   messagesApi: play.api.i18n.MessagesApi
-) extends PlayInterpreter[Tag](results) with InferFormFieldProduct[Tag] with examples.Widgets {
-
-  def renderProduct[A](
-    key: List[String],
-    path: Path,
-    values: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Tag],
-    pfl: ProductFieldList[A]
-  ): Tag = div(
-    pfl.inner map { case (subFieldId, f) =>
-      f(key:+ subFieldId, path, values / subFieldId, errors / subFieldId, messages)
-    }
-  )
+) extends PlayInterpreter[Tag](results) with InferFormFieldProduct[Tag] with InferFormFieldCoProduct[Tag] with examples.Widgets {
 
   implicit val tellTwirlUnit = new WebTell[Unit] {
     def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = span("")
@@ -33,39 +20,6 @@ case class HmrcPlayInterpreter(
     request: Request[AnyContent]
   ): UniformMessages[Tag] =
     UniformMessages.echo.map{x => span(x)}
-
-  def errorSummary(
-    key: List[String],
-    errors: ErrorTree,
-    messages: UniformMessages[Tag]
-  ): Tag = {
-
-    val errorTags: List[Tag] =
-      ErrorTree.simplified(errors).map { case (path, errormsg) =>
-        li()(
-          a(href:=s"#${(key :: path).mkString(".")}")(
-            errormsg.prefixWith(key ++ path).render(messages)
-          )
-        )
-      }.toList
-
-    div(
-      cls:="govuk-error-summary",
-      attr("aria-labelledby"):="error-summary-title",
-      attr("role"):="alert",
-      tabindex:="-1",
-      attr("data-module"):="error-summary"
-    )(
-      h2(cls:="govuk-error-summary__title", id:="error-summary-title")(
-        messages({key :+ "there.is.a.problem"}.mkString("."))
-      ),
-      div(cls:="govuk-error-summary__body")(
-        ul(cls:="govuk-list govuk-error-summary__list")(
-          errorTags
-        )
-      )
-    )
-  }
 
   def headerBar(
     serviceName: Option[String],
@@ -177,6 +131,7 @@ case class HmrcPlayInterpreter(
         meta(name:="viewport", content:="width=device-width, initial-scale=1"),
         link(rel:="stylesheet", tpe:="text/css", href:="/assets/govuk-frontend-2.4.0.min.css"), 
         link(rel:="stylesheet", tpe:="text/css", href:="/assets/uniform-link-buttons.css"),
+        link(rel:="stylesheet", tpe:="text/css", href:="/assets/uniform.css"),        
         script(tpe:="text/javascript", src:="/assets/jquery-3.3.1.min.js"),
         script(tpe:="text/javascript", src:="/assets/govuk-frontend-2.4.0.min.js"),
         script(tpe:="text/javascript", src:="/assets/show-hide-content.js"),
@@ -194,7 +149,7 @@ case class HmrcPlayInterpreter(
           tag("main")(cls:= "govuk-main-wrapper ", id:="main-content", role:="main")(
             div(id:="mainBody") (
               breadcrumbs.drop(1).headOption.map{ back =>
-                a (href:="@back", cls:="govuk-back-link")(messages({back :+ "back"}.mkString(".")))
+                a (href:=back.mkString("/"), cls:="govuk-back-link")(messages({back :+ "back"}.mkString(".")))
               },
               if(errors.nonEmpty) errorSummary(key, errors, messages),
               div(cls:="govuk-width-container")(

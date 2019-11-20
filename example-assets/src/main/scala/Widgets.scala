@@ -15,6 +15,40 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
   
   import bundle.all._
 
+  def renderProduct[A](
+    key: List[String],
+    path: Path,
+    values: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    pfl: ProductFieldList[A, Tag]
+  ): Tag = div(
+    pfl.inner map { case (subFieldId, f) =>
+      f(key:+ subFieldId, path, values / subFieldId, errors / subFieldId, messages)
+    }
+  )
+
+  def renderCoproduct[A](
+    key: List[String],
+    path: Path,
+    values: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    cfl: CoproductFieldList[A, Tag]
+  ): Tag = {
+    val value: Option[String] = values.valueAtRoot.flatMap{_.headOption}
+    radios(
+      key,
+      cfl.inner.map{_._1},
+      value,
+      errors,
+      messages,
+      cfl.inner.map{
+        case(subkey,f) => subkey -> f(key :+ subkey, path, {values / subkey}, errors / subkey, messages)
+      }.filter(_._2.toString.trim.nonEmpty).toMap
+    )
+  }
+
   implicit val unitField = new FormField[Unit,Tag] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
@@ -200,6 +234,39 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
         
       )
     }
+  }
+
+  def errorSummary(
+    key: List[String],
+    errors: ErrorTree,
+    messages: UniformMessages[Tag]
+  ): Tag = {
+
+    val errorTags: List[Tag] =
+      ErrorTree.simplified(errors).map { case (path, errormsg) =>
+        li()(
+          a(href:=s"#${(key :: path).mkString(".")}")(
+            errormsg.prefixWith(key ++ path).render(messages)
+          )
+        )
+      }.toList
+
+    div(
+      cls:="govuk-error-summary",
+      attr("aria-labelledby"):="error-summary-title",
+      attr("role"):="alert",
+      tabindex:="-1",
+      attr("data-module"):="error-summary"
+    )(
+      h2(cls:="govuk-error-summary__title", id:="error-summary-title")(
+        messages({key :+ "there.is.a.problem"}.mkString("."))
+      ),
+      div(cls:="govuk-error-summary__body")(
+        ul(cls:="govuk-list govuk-error-summary__list")(
+          errorTags
+        )
+      )
+    )
   }
 
 }
