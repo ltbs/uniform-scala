@@ -15,7 +15,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
   
   import bundle.all._
 
-  implicit val twirlUnitField = new FormField[Unit,Tag] {
+  implicit val unitField = new FormField[Unit,Tag] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
@@ -24,7 +24,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
-    ): Tag = span("")
+    ): Tag = span(cls:="unit")("")
 
   }
 
@@ -101,22 +101,6 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     }
   }
 
-  def selectionOfFields(
-    inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Tag]) => Tag)]
-  )(key: List[String], path: Path, values: Input, errors: ErrorTree, messages: UniformMessages[Tag]): Tag = {
-    val value: Option[String] = values.valueAtRoot.flatMap{_.headOption}
-    radios(
-      key,
-      inner.map{_._1},
-      value,
-      errors,
-      messages,
-      inner.map{
-        case(subkey,f) => subkey -> f(key :+ subkey, path, {values / subkey}, errors / subkey, messages)
-      }.filter(_._2.toString.trim.nonEmpty).toMap
-    )
-  }
-
   def radios(
     key: List[String],
     options: Seq[String],
@@ -127,33 +111,34 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
   ): Tag = {
     val keyNoDots=key.mkString("-")
 
-    fieldSurround(key, errors, messages) ( div (cls:= "govuk-radios") {
-      for((opt,num) <- options.zipWithIndex) (
-        div(cls:="govuk-radios__item", attr("data-target"):=keyNoDots)(
-          input(
-            cls:="govuk-radios__input",
-            id:=s"$keyNoDots-$num",
-            name:= key.mkString("."),
-            attr("type"):="radio",
-            value:=opt,
-            attr("aria-describedby"):=s"$keyNoDots-num-item-hint",
-            if(existing.exists(_ == opt)){ "checked" },
-            if(conditional.isDefinedAt(opt)) {attr("aria-expanded"):="true"}
-          ),
-          label(cls:="govuk-label govuk-radios__label govuk-label--s", attr("for"):=s"$keyNoDots-$num")(
-            messages.decompose({key :+ opt}.mkString("."))
-          ),
-          messages.get({key :+ opt :+ "hint"}.mkString(".")).map { hint =>
-            span( id:=s"$keyNoDots-opt-item-hint", cls:="govuk-hint govuk-checkboxes__hint")(
-              hint
+    fieldSurround(key, errors, messages) (
+      div (cls:= "govuk-radios") {
+        options.zipWithIndex.map{ case (opt,num) =>
+            div(cls:="govuk-radios__item", attr("data-target"):=keyNoDots)(
+              input(
+                cls:="govuk-radios__input",
+                id:=s"$keyNoDots-$num",
+                name:= key.mkString("."),
+                attr("type"):="radio",
+                value:=opt,
+                attr("aria-describedby"):=s"$keyNoDots-num-item-hint",
+                if(existing.exists(_ == opt)){ checked },
+                if(conditional.isDefinedAt(opt)) {attr("aria-expanded"):="true"}
+              ),
+              label(cls:="govuk-label govuk-radios__label govuk-label--s", attr("for"):=s"$keyNoDots-$num")(
+                messages.decompose({key :+ opt}.mkString("."))
+              ),
+              messages.get({key :+ opt :+ "hint"}.mkString(".")).map { hint =>
+                span( id:=s"$keyNoDots-opt-item-hint", cls:="govuk-hint govuk-checkboxes__hint")(
+                  hint
+                )
+              },
+              if (conditional.isDefinedAt(opt)) {
+                div (id:=s"conditional-$keyNoDots-$opt", cls:=s"conditional conditional-$keyNoDots")(conditional(opt))
+              }
             )
-          }
-        ),
-        conditional.lift(opt) map { optIn =>
-          div (id:=s"conditional-$keyNoDots-$opt", cls:=s"conditional-$keyNoDots")(optIn)
         }
-      )
-    }
+      }
     )
   }
 

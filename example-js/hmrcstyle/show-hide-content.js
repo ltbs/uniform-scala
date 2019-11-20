@@ -1,5 +1,5 @@
 
-$(document).ready(function() {
+function updateRadios() {
     $('[data-target] > input[type="radio"]').change(function () {
 	radioValue=this.value;
 	dataTarget=$(this).parent("[data-target]").attr("data-target");
@@ -8,5 +8,8 @@ $(document).ready(function() {
 	$("#conditional-" + dataTarget + "-" + radioValue).removeClass("govuk-radios__conditional--hidden")
 	$("#conditional-" + dataTarget + "-" + radioValue).addClass("govuk-radios__conditional")	
     });
-    
+}
+
+$(document).ready(function() {
+    updateRadios();
 });

@@ -14,7 +14,7 @@ import scalatags.JsDom.all._
 
 object BeardTaxApp extends App {
 
-  val interpreter = new JsInterpreter[Tag] with InferFormFieldProduct[Tag] with examples.Widgets {
+  val interpreter = new JsInterpreter[Tag] with InferFormFieldProduct[Tag] with InferFormFieldCoProduct[Tag] with examples.Widgets {
 
     def renderProduct[A](
       key: List[String],
@@ -28,6 +28,27 @@ object BeardTaxApp extends App {
         f(key:+ subFieldId, path, values / subFieldId, errors / subFieldId, messages)
       }
     )
+
+    def renderCoproduct[A](
+      key: List[String],
+      path: Path,
+      values: Input,
+      errors: ErrorTree,
+      messages: UniformMessages[Tag],
+      cfl: CoproductFieldList[A]
+    ): Tag = {
+      val value: Option[String] = values.valueAtRoot.flatMap{_.headOption}
+      radios(
+        key,
+        cfl.inner.map{_._1},
+        value,
+        errors,
+        messages,
+        cfl.inner.map{
+          case(subkey,f) => subkey -> f(key :+ subkey, path, {values / subkey}, errors / subkey, messages)
+        }.filter(_._2.toString.trim.nonEmpty).toMap
+      )
+    }
 
     implicit val tellTwirlUnit = new WebTell[Unit] {
       def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = span("")

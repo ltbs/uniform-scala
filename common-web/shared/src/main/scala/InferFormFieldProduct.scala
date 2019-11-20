@@ -7,8 +7,6 @@ import cats.implicits.{catsSyntaxEither => _,_}
 
 trait InferFormFieldProduct[Html] {
 
-  type FF[A] = FormField[A, Html]
-
   def renderProduct[A](
     key: List[String],
     path: Path,
@@ -35,7 +33,7 @@ trait InferFormFieldProduct[Html] {
   implicit def consFieldList[K <: Symbol, H, T <: HList](
     implicit
       witness: Witness.Aux[K],
-    hField: Lazy[FF[H]],
+    hField: Lazy[FormField[H, Html]],
     tFields: ProductFieldList[T]
   ): ProductFieldList[FieldType[K, H] :: T] = new ProductFieldList[FieldType[K, H] :: T] {
     val fieldName = witness.value.name
@@ -87,8 +85,8 @@ trait InferFormFieldProduct[Html] {
 
   implicit def genericField[A, H, T](implicit
     @silent("never used") generic: LabelledGeneric.Aux[A,T],
-    hlistInstance: Lazy[FF[T]]
-  ): FF[A] = new FF[A] {
+    hlistInstance: Lazy[FormField[T, Html]]
+  ): FormField[A, Html] = new FormField[A, Html] {
 
     val hlist = hlistInstance.value
     def decode(in: Input): Either[ErrorTree,A] =

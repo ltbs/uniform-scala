@@ -10,7 +10,7 @@ package object beardtax {
 
   type BeardLength = (Int,Int)
   type TellTypes = NilTypes
-  type AskTypes = Int :: MemberOfPublic :: BeardLength :: NilTypes
+  type AskTypes = Option[(Int, Int)] :: Boolean :: Either[Int, String] ::Int :: MemberOfPublic :: BeardLength :: NilTypes
 
   def beardProgram[F[_] : Monad](
     interpreter: Language[F, TellTypes, AskTypes],
@@ -18,6 +18,8 @@ package object beardtax {
   ): F[Int] = {
     import interpreter._
     for {
+      _ <- ask[Option[(Int,Int)]]("e2")            
+      _ <- ask[Either[Int,String]]("e")      
       a <- ask[Int]("a")
       b <- ask[BeardLength]("b")
       c <- ask[Int]("c")
