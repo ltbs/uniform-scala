@@ -2,7 +2,6 @@ package ltbs.uniform
 package interpreters.js
 
 import common.web._
-
 import concurrent._
 import org.querki.jquery._
 
@@ -14,6 +13,7 @@ abstract class JsInterpreter[Html](
     key: List[String], 
     frame: JQuery, 
     htmlForm: Html,
+    breadcrumbs: Path, 
     errors: ErrorTree,
     messages: UniformMessages[Html]
   ): Future[Unit]
@@ -63,9 +63,9 @@ abstract class JsInterpreter[Html](
     f: A => Future[Result]
   ) {
 
-    def goBack(): Future[Unit] = crumbs match {
-      case (_::last::_) => 
-        run(PageIn(last, Nil, None, db))
+    def goBack(): Future[Unit] = crumbs.drop(1).headOption match {
+      case Some(link) =>
+        run(PageIn(link, Nil, None, db))
       case _ =>
         Future.successful(())
     }
@@ -93,7 +93,7 @@ abstract class JsInterpreter[Html](
           case AskResult.GotoPath(targetPath) =>
             run(request.copy(targetId = targetPath, path = Nil, request = None, state = db))
           case AskResult.Payload(html, errors, messagesOut, _) =>
-            renderFrame(request.targetId, selector, html, errors, messagesOut)
+            renderFrame(request.targetId, selector, html, crumbs, errors, messagesOut)
           case AskResult.Success(result) =>
             f(result) map { _ => 
               if (purgeStateUponCompletion) {db = DB.empty}

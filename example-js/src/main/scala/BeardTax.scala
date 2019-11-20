@@ -24,11 +24,30 @@ object BeardTaxApp extends App {
       key: List[String],
       frame: JQuery,
       htmlForm: Tag,
+      breadcrumbs: Path, 
       errors: ErrorTree,
       messages: UniformMessages[Tag]
     ): Future[Unit] = Future {
 
       $(".govuk-heading-xl").html(messages(key.mkString(".")).toString)
+
+      if (errors.nonEmpty) {
+        $(".govuk-error-summary").replaceWith(errorSummary(key, errors, messages).toString)
+        $(".govuk-error-summary").show()
+      } else {
+        $(".govuk-error-summary").html("")        
+        $(".govuk-error-summary").hide()
+      }
+
+      breadcrumbs.drop(1).headOption match {
+        case Some(link) => 
+          $(".govuk-back-link").html(messages({link :+ "back"}.mkString(".")).toString)
+          $(".govuk-back-link").show()
+        case _ =>
+          $(".govuk-back-link").html("")
+          $(".govuk-back-link").hide()
+          
+      }
 
       if (errors.nonEmpty) {
         $(".govuk-error-summary").replaceWith(errorSummary(key, errors, messages).toString)
