@@ -27,7 +27,7 @@ abstract class JsInterpreter[Html](
       }
 
       val elements = i.keys.collect {
-        case single::Nil => renderInput(single, i / single)
+        case single::_ => renderInput(single, i / single)
       }
 
       topLi ++ {if (elements.nonEmpty) {
