@@ -32,6 +32,7 @@ class BeardController2 @Inject()(
       common.web.FutureAdapter[Tag].alwaysRerun.apply(inner.costOfBeard(beardStyle, length))
   }
 
+
   lazy val interpreter = HmrcPlayInterpreter(this, messagesApi)
 
   def beardAction(targetId: String) = Action.async { implicit request: Request[AnyContent] =>

@@ -1,9 +1,9 @@
 package ltbs.uniform
 
-import shapeless.HList
 import scala.language.higherKinds
-import com.github.ghik.silencer.silent
 
+import shapeless.HList
+import com.github.ghik.silencer.silent
 import validation.Rule
 
 /** The core language of uniform, journeys will typically be expressed
@@ -35,7 +35,7 @@ import validation.Rule
 trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
 
   /** Nest a journey within a single stage of a bigger journey. */
-  def subJourney[A](@silent("never used") id: String)(sub: => UF[A]): UF[A] = sub
+  def subJourney[A](@silent("never used") id: String*)(sub: => UF[A]): UF[A] = sub
 
   /** Present an instance of Tell to the user, and ask for an
     * instance of Ask. Defines a 'step' in the user journey. 
@@ -53,10 +53,8 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     * @param tell data to be presented to the user
     * @param default optional existing/default value. For example an
     *           'edit' journey. 
-    * @param validation rules to check the data is valid (after it has
-    *           been turned into an Ask). Rules in the inner lists are
-    *           error-accumulating, where as the outer groups are run
-    *           sequentially.
+    * @param validation rule to check the data is valid (after it has
+    *           been turned into an Ask). 
     * @param customContent overrides any messages used in the journey
     *           step 
     */  
@@ -64,7 +62,7 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     id: String,
     tell: Tell,
     default: Option[Ask] = None,
-    validation: List[Rule[Ask]] = Nil,
+    validation: Rule[Ask] = Rule.alwaysPass[Ask],
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit
@@ -86,9 +84,7 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     * @param default optional existing/default value. For example an
     *           'edit' journey. 
     * @param validation rules to check the data is valid (after it has
-    *           been turned into an Ask). Rules in the inner lists are
-    *           error-accumulating, where as the outer groups are run
-    *           sequentially.
+    *           been turned into an Ask). 
     * @param customContent overrides any messages used in the journey
     *           step 
     * 
@@ -96,7 +92,7 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
   def ask[A](
     id: String,
     default: Option[A] = None,
-    validation: List[Rule[A]] = Nil,
+    validation: Rule[A] = Rule.alwaysPass[A],
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit selectorAsk : IndexOf[SupportedAsk, A],

@@ -12,10 +12,7 @@ case class FutureAdapter[Html]() {
   def alwaysRerun = new ~>[Future, WM] {
     def apply[A](fa: Future[A]): WM[A] = new WM[A] {
       def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] =
-        fa.map{ x =>
-          import pageIn._
-          PageOut(path, state, AskResult.Success(x))
-        }
+        fa.map{ x => pageIn.toPageOut(AskResult.Success[A,Html](x)) }
     }
   }
 
@@ -33,7 +30,7 @@ case class FutureAdapter[Html]() {
 
       def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] = {
         import pageIn._
-        val triggerValues: List[String] = path.sorted.flatMap{ state.get }
+        val triggerValues: List[String] = breadcrumbs.sorted.flatMap{ state.get }
         val trigger: String = sha256Hash(triggerValues.mkString)
         val oldTrigger: Option[String] = state.get(List(cacheId, "trigger"))
 
@@ -42,16 +39,16 @@ case class FutureAdapter[Html]() {
             Input.fromUrlEncodedString(state(List(cacheId, "value"))) >>= codec.decode
 
           val Right(oldie) = oldValue
-          PageOut(path, state, AskResult.Success[A, Html](oldie)).pure[Future]
+          pageIn.toPageOut(AskResult.Success[A, Html](oldie)).pure[Future]
         } else {
           fa.map{ result =>
-
             val newData = Map(
               List(cacheId, "value") -> codec.encode(result).toUrlEncodedString,
               List(cacheId, "trigger") -> trigger
             )
-            PageOut(path, state ++ newData, AskResult.Success[A, Html](result))
-
+            pageIn.toPageOut(AskResult.Success[A, Html](result)).copy (
+              db = pageIn.state ++ newData
+            )
           }
         }
       }

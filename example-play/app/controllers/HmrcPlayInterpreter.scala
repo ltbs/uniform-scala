@@ -116,8 +116,9 @@ case class HmrcPlayInterpreter(
   def pageChrome(
     key: List[String],
     errors: ErrorTree,
-    htmlInner: Tag,
-    breadcrumbs: Path,
+    tell: Tag,
+    ask: Tag,
+    breadcrumbs: List[String],
     request: Request[AnyContent],
     messages: UniformMessages[Tag],
     stats: FormFieldStats
@@ -161,7 +162,8 @@ case class HmrcPlayInterpreter(
               ),
               form(method:="post")(
                 input(tpe:="hidden", name:="csrfToken", value:=csrf),
-                htmlInner,
+                tell,
+                ask,
                 button(tpe:="submit", cls:="govuk-button")(messages({key :+ "save.and.continue"}.mkString(".")))
               )
             )

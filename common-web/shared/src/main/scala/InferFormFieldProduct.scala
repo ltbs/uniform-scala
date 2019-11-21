@@ -9,14 +9,14 @@ trait ProductFieldList[A, Html]{
   def decode(out: Input): Either[ErrorTree,A]
   def encode(in: A): Input
   def stats: FormFieldStats
-  val inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
+  val inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
 }
 
 trait InferFormFieldProduct[Html] {
 
   def renderProduct[A](
     key: List[String],
-    path: Path,
+    path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html],
@@ -71,7 +71,7 @@ trait InferFormFieldProduct[Html] {
     new FormField[A, Html] {
       def render(
         key: List[String],
-        path: Path,
+        path: Breadcrumbs,
         values: Input,
         errors: ErrorTree,
         messages: UniformMessages[Html]
@@ -98,7 +98,7 @@ trait InferFormFieldProduct[Html] {
 
     def render(
       key: List[String],
-      path: Path,
+      path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]

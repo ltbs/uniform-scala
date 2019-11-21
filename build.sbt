@@ -319,6 +319,7 @@ lazy val `example-play` = project.settings(commonSettings)
     `example-assets`.jvm
   )
   .settings(
+//    scalacOptions += "-Xprint:typer",
     TwirlKeys.templateImports ++= Seq(
       "ltbs.uniform._",
       "ltbs.uniform.interpreters.playframework._"

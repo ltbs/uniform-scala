@@ -3,7 +3,9 @@ package common.web
 
 /** The combined output of web execution */
 final case class PageOut[A,Html](
-  path: Path,
+  breadcrumbs: Breadcrumbs,
   db: DB,
-  output: AskResult[A,Html]
+  output: AskResult[A,Html],
+  pathPrefix: List[String],
+  config: JourneyConfig
 )

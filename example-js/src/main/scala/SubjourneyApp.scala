@@ -2,7 +2,7 @@ package ltbs.uniform
 package examples
 package js
 
-import beardtax._
+import witchcraft.subjourneys._
 import interpreters.js._
 import common.web._
 
@@ -12,7 +12,7 @@ import scala.scalajs._, js.annotation.JSExportTopLevel
 import scala.concurrent._, ExecutionContext.Implicits.global
 import scalatags.JsDom.all._
 
-object BeardTaxApp {
+object SubjourneyApp extends App {
 
   val interpreter = new JsInterpreter[Tag] with InferFormFieldProduct[Tag] with InferFormFieldCoProduct[Tag] with examples.Widgets {
 
@@ -66,23 +66,23 @@ object BeardTaxApp {
 
   val i = interpreter.create[TellTypes, AskTypes](UniformMessages.echo.map{span(_)})
 
-  def jsHod = new Hod[WebMonad[?, Tag]] {
-    def costOfBeard(beardStyle: BeardStyle, length: BeardLength): WebMonad[Int, Tag] =
-      12.pure[WebMonad[?, Tag]]
-  }
+  // def jsHod = new Hod[WebMonad[?, Tag]] {
+  //   def costOfBeard(beardStyle: BeardStyle, length: BeardLength): WebMonad[Int, Tag] =
+  //     12.pure[WebMonad[?, Tag]]
+  // }
 
   val runner = {
-    new interpreter.JsRunner[Int](
-    beardProgram[interpreter.WM](i, jsHod),
+    new interpreter.JsRunner[Unit](
+    subjourneyProg[interpreter.WM](i),
     $("#uniform"),
       diagnostics = true
     )(output => Future($("#uniform").html(output.toString)))
   }
 
-//  @JSExportTopLevel("back")
+  @JSExportTopLevel("back")
   def backLink(): Future[Unit] = runner.goBack()
 
-//  @JSExportTopLevel("submit")
+  @JSExportTopLevel("submit")
   def submit(): Future[Unit] = runner.submit()
 
 }

@@ -12,8 +12,9 @@ abstract class JsInterpreter[Html](
   def renderFrame(
     key: List[String], 
     frame: JQuery, 
-    htmlForm: Html,
-    breadcrumbs: Path, 
+    tell: Html,
+    ask: Html,
+    breadcrumbs: Breadcrumbs, 
     errors: ErrorTree,
     messages: UniformMessages[Html]
   ): Future[Unit]
@@ -45,18 +46,19 @@ abstract class JsInterpreter[Html](
     }.mkString ++ "</ul>"
   }
   
-  def renderCrumbs(crumbsOut: Path): String =
+  def renderCrumbs(crumbsOut: Breadcrumbs): String =
     "<ol>" ++
       crumbsOut.reverse.map { pathElement =>
         s"""<li><a onclick="">${pathElement.mkString(" / ")}</a></li>"""
       }.mkString ++ "</ol>"
 
-
   case class JsRunner[A](
     wm: WebMonad[A, Html],
     selector: JQuery,
     var db: DB = DB.empty,
-    var crumbs: Path = Nil,
+    var crumbs: Breadcrumbs = Nil,
+    var pathPrefix: List[String] = Nil,
+    config: JourneyConfig = JourneyConfig(),
     purgeStateUponCompletion: Boolean = false,
     diagnostics: Boolean = false
   )(
@@ -65,7 +67,7 @@ abstract class JsInterpreter[Html](
 
     def goBack(): Future[Unit] = crumbs.drop(1).headOption match {
       case Some(link) =>
-        run(PageIn(link, Nil, None, db))
+        run(PageIn(link, Nil, None, db, pathPrefix, config))
       case _ =>
         Future.successful(())
     }
@@ -73,16 +75,16 @@ abstract class JsInterpreter[Html](
     def submit(): Future[Unit] = {
       val dataStringEncoded = selector.serialize()
       val dataInput = Input.fromUrlEncodedString(dataStringEncoded)
-      run(PageIn(crumbs.head, Nil, dataInput.toOption, db))
+      run(PageIn(crumbs.head, Nil, dataInput.toOption, db, pathPrefix, config))
     }
 
     def run(
       request: PageIn
     ): Future[Result] = wm(request) flatMap {
-      case common.web.PageOut(path, dbOut, pageOut) =>
+      case common.web.PageOut(pathOut, dbOut, pageOut, _, _) =>
 
         db = dbOut
-        crumbs = path
+        crumbs = pathOut
 
         if (diagnostics) {
           $("#state").html(renderState(db))
@@ -91,9 +93,9 @@ abstract class JsInterpreter[Html](
 
         pageOut match {
           case AskResult.GotoPath(targetPath) =>
-            run(request.copy(targetId = targetPath, path = Nil, request = None, state = db))
-          case AskResult.Payload(html, errors, messagesOut, _) =>
-            renderFrame(request.targetId, selector, html, crumbs, errors, messagesOut)
+            run(request.copy(targetId = targetPath, breadcrumbs = Nil, request = None, state = db, pathPrefix = Nil))
+          case AskResult.Payload(tell, ask, errors, messagesOut, _) =>
+            renderFrame(request.targetId, selector, tell, ask, crumbs, errors, messagesOut)
           case AskResult.Success(result) =>
             f(result) map { _ => 
               if (purgeStateUponCompletion) {db = DB.empty}
@@ -101,7 +103,7 @@ abstract class JsInterpreter[Html](
             }
         }        
     }
-    run(PageIn(Nil, Nil, None, db))
+    run(PageIn(Nil, Nil, None, db, pathPrefix, config))
   }
 
 }

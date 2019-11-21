@@ -17,7 +17,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
 
   def renderProduct[A](
     key: List[String],
-    path: Path,
+    path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
     messages: UniformMessages[Tag],
@@ -30,7 +30,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
 
   def renderCoproduct[A](
     key: List[String],
-    path: Path,
+    path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
     messages: UniformMessages[Tag],
@@ -54,7 +54,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     def encode(in: Unit): Input = Input.empty
     def render(
       key: List[String],
-      path: Path,
+      path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
@@ -89,7 +89,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
 
     def render(
       key: List[String],
-      path: Path,
+      path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
@@ -125,7 +125,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
 
     def render(
       key: List[String],
-      path: Path,
+      path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
@@ -206,7 +206,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
 
     def render(
       key: List[String],
-      path: Path,
+      path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
@@ -219,7 +219,6 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
               label (cls:="govuk-label govuk-date-input__label", attr("for"):="@key-@field")(
                 messages((key :+ field).mkString(".") ,field)
               ),
-
             )
           ),
           input(
@@ -228,7 +227,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
             name:=(key :+ field).mkString("."),
             attr("type"):="number",
             pattern:="[0-9]*",
-            value:=data.valueAt(field).headOption.fold("")(_.toString)
+            value:={data / field}.valueAtRoot.flatMap{_.headOption}.getOrElse("")
           ))
         }:_*
         
@@ -245,7 +244,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     val errorTags: List[Tag] =
       ErrorTree.simplified(errors).map { case (path, errormsg) =>
         li()(
-          a(href:=s"#${(key :: path).mkString(".")}")(
+          a(href:=s"#${(key ++ path).mkString("_")}")(
             errormsg.prefixWith(key ++ path).render(messages)
           )
         )

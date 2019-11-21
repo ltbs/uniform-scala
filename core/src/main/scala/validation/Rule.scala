@@ -109,4 +109,12 @@ object Rule extends Quantifiable.ToQuantifiableOps {
     */
   def between[A: Order](minValue: A, maxValue: A): Rule[A] =
     Between[A](minValue, maxValue)
+
+  case class ForEachInList[A](inner: Rule[A]) extends Rule[List[A]] {
+    def apply(in: List[A]): Validated[ErrorTree, List[A]] =
+      in.map { inner }.sequence
+  }
+
+  def forEachInList[A](inner: Rule[A]): Rule[List[A]] =
+    ForEachInList[A](inner)
 }

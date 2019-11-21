@@ -1,7 +1,7 @@
 package ltbs.uniform
 package validation
 
-import language.implicitConversions
+import scala.language.implicitConversions
 
 /** A type that can be checked to see if it is 'empty' (in the sense
   * of a Monoid being empty). Note that unlike with Monoid it does not

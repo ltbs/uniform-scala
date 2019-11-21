@@ -5,7 +5,7 @@ package common.web
 trait FormFieldPresentation[A, Html]{
   def render(
     key: List[String],
-    path: Path,
+    path: Breadcrumbs,
     data: Option[Input],
     errors: ErrorTree,
     messages: UniformMessages[Html]
@@ -16,7 +16,7 @@ trait FormFieldPresentation[A, Html]{
     new FormFieldPresentation[B, Html] {
       def render(
         key: List[String],
-        path: Path,
+        path: Breadcrumbs,
         data: Option[Input],
         errors: ErrorTree,
         messages: UniformMessages[Html]

@@ -10,6 +10,16 @@ GET         /beardtax/*id        controllers.BeardController2.beardAction(id: St
 POST        /beardtax/           controllers.BeardController2.beardAction(id = "")
 POST        /beardtax/*id        controllers.BeardController2.beardAction(id: String)
 
+# GET         /reportwitch/        controllers.WitchController.reportWitch(id = "")
+# GET         /reportwitch/*id     controllers.WitchController.reportWitch(id: String)
+# POST        /reportwitch/        controllers.WitchController.reportWitch(id = "")
+# POST        /reportwitch/*id     controllers.WitchController.reportWitch(id: String)
+
+GET         /subjourney/        controllers.SubjourneyController.main(id = "")
+GET         /subjourney/*id     controllers.SubjourneyController.main(id: String)
+POST        /subjourney/        controllers.SubjourneyController.main(id = "")
+POST        /subjourney/*id     controllers.SubjourneyController.main(id: String)
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file        controllers.Assets.versioned(path="/public/assets", file: Asset)

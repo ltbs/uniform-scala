@@ -1,18 +1,12 @@
 package ltbs.uniform
 
-import cats.implicits._
-import cats.Monad
+import com.github.ghik.silencer.silent
 import util._
 
-trait ScalaVersionCompatibility {
-  implicit def catsSyntaxEither = cats.implicits.catsSyntaxEither _
+@silent("Unused import") trait ScalaVersionCompatibility {
 
-  implicit class RichEither[A,B](in: Either[A,B]) {
-    def toOption: Option[B] = in match {
-      case Right(b) => Some(b)
-      case _        => None
-    }
-  }
+  import cats.implicits._
+  import cats.Monad
 
   implicit class RichTry[A](in: Try[A]) {
     def toEither: Either[Throwable, A] = in match {

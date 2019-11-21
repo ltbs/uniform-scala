@@ -1,7 +1,8 @@
 package ltbs.uniform
 
-import simulacrum._
 import scala.language.implicitConversions
+
+import simulacrum._
 import cats.data.{NonEmptyList => NEL}
 import collection.immutable.ListMap
 
@@ -12,6 +13,8 @@ import collection.immutable.ListMap
 
   type Key
   type Value
+
+  def listSubtrees(a: T): List[Key]
 
   def appendWith(a: T, key: Key): T
 
@@ -87,6 +90,10 @@ trait TreeLikeInstances {
     type Value = V
     type T = Map[List[K],V]
 
+    def listSubtrees(a: T): List[Key] = a.keys.collect{
+      case (h::_) => h
+    }.toList.distinct
+
     def subTree(a: T, key: Key): T =
       a.collect { case (`key`::rem, v) =>
         (rem, v)
@@ -110,6 +117,9 @@ trait TreeLikeInstances {
 
     type Key = String
     type Value = NEL[ErrorMsg]
+
+    def listSubtrees(a: ErrorTree): List[Key] =
+      a.keys.toList.flatMap{_.head}.distinct
 
     def subTree(a: ErrorTree, keyPath: String): ErrorTree = {
       a.flatMap { case (allPaths, errs) =>
