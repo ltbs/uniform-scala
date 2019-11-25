@@ -13,7 +13,7 @@ trait SampleFormFields {
     def encode(in: Unit): Input = Input.empty
     def render(
       key: List[String],
-      path: Path,
+      path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[String]

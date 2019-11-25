@@ -9,11 +9,11 @@ object Presenter extends InferFormFieldProduct[String] with SampleFormFields {
 
   def renderProduct[A](
     key: List[String],
-    path: Path,
+    path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
     messages: UniformMessages[String],
-    pfl: ProductFieldList[A]
+    pfl: ProductFieldList[A, String]
   ): String =
     pfl.inner.map { case (subFieldId, f) =>
       f(key:+ subFieldId, path, values, errors, messages)

@@ -50,7 +50,7 @@ lazy val commonSettings = Seq(
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   scalacOptions ++= Seq(
 //    "-P:silencer:checkUnused",           // silencer plugin to fail build if supressing a non-existant warning
-//    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
+    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.

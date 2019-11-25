@@ -14,6 +14,11 @@ import util._
       case Success(a) => Right(a)
     }
   }
+
+  implicit class RichEither[A,B](in: Either[A,B]) {
+    def map[C](f: B => C): Either[A, C] =
+      implicitly[Monad[Either[A, ?]]].map(in)(f)    
+  }
 }
 
 package validation {
