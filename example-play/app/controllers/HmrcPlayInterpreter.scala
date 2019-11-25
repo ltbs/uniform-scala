@@ -3,18 +3,43 @@ package controllers
 import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc.{Results, Request, AnyContent}
 import scala.concurrent.ExecutionContext.Implicits.global
-import ltbs.uniform.common.web.{InferFormFieldProduct, InferFormFieldCoProduct, FormFieldStats}
+import ltbs.uniform.common.web.{InferFormFieldProduct, InferFormFieldCoProduct, InferListingPages, FormFieldStats, ListingTell, ListingTellRow, GenericWebTell}
 import cats.syntax.semigroup._
 import scalatags.Text.all._
 import ScalatagsSupport._
+import ltbs.uniform.common.web.ListingTellRow
 
 case class HmrcPlayInterpreter(
   results: Results,
   messagesApi: play.api.i18n.MessagesApi
-) extends PlayInterpreter[Tag](results) with InferFormFieldProduct[Tag] with InferFormFieldCoProduct[Tag] with examples.Widgets {
+) extends PlayInterpreter[Tag](results)
+    with InferFormFieldProduct[Tag]
+    with InferFormFieldCoProduct[Tag]
+    with InferListingPages[Tag]
+    with examples.Widgets {
 
   implicit val tellTwirlUnit = new WebTell[Unit] {
-    def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = span("")
+    def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = blankTell
+  }
+
+  def blankTell: Tag = span("")
+
+  implicit def autoTell[A] = new GenericWebTell[A, Tag] {
+    def render(in: A, key: String, messages: UniformMessages[Tag]): Tag = span(in.toString)
+  }
+
+  implicit def autoListingTell[A](implicit tell: GenericWebTell[A, Tag]) = new ListingTell[Tag, A] {
+    def apply(rows: List[ListingTellRow[A]], messages: UniformMessages[Tag]): Tag =
+      table (
+        tr( th("item"),th("edit"),th("delete")),
+        rows.map{ row => 
+          tr(
+            td(tell.render(row.value, "", messages)),
+            td(a(href:=row.editLink)(messages("edit"))),
+            td(a(href:=row.deleteLink)(messages("delete")))
+          )
+        }
+      )
   }
 
   def messages(

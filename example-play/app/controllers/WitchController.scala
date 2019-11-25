@@ -9,18 +9,13 @@ import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
 import play.twirl.api.Html
+import scalatags.Text.all._
 
-trait CrapAutoTell {
-  implicit def autoTell[A] = new GenericWebTell[A, Html] {
-    def render(in: A, key: String, messages: UniformMessages[Html]): Html = Html(in.toString)
-  }
-}
-/*
 @Singleton
 class WitchController @Inject()(
   implicit val messagesApi: MessagesApi,
   ec:ExecutionContext
-) extends ControllerHelpers with I18nSupport with CrapAutoTell {
+) extends ControllerHelpers with I18nSupport {
 
   implicit val persistence: PersistenceEngine[Request[AnyContent]] =
     UnsafePersistence()
@@ -32,7 +27,7 @@ class WitchController @Inject()(
   def familiarProgram[F[_]: cats.Monad](
     existing: List[Familiar],
     editIndex: Option[Int],
-    messages: UniformMessages[Html],
+    messages: UniformMessages[Tag],
     rule: validation.Rule[Familiar]
   )(
     int: Language[F, NilTypes, Boolean :: String :: NilTypes]
@@ -67,4 +62,4 @@ class WitchController @Inject()(
     }
   }
 }
- */
+

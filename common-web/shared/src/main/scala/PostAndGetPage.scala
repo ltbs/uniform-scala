@@ -110,7 +110,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
       } else {
         Future.successful{
           dbObject match {
-            case Some(Right(data)) if targetId =!= Nil && !breadcrumbs.contains(targetId) =>
+            case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && !breadcrumbs.contains(targetId) =>
               // they're replaying the journey
               pageIn.toPageOut(AskResult.Success[A,Html](data)).copy(
                 breadcrumbs = currentId :: pageIn.breadcrumbs
