@@ -6,11 +6,10 @@ title: Validation
 # Validation
 
 For any given `interact[Tell, Ask]` the validation data structure is
-`List[List[Rule[Ask]]]`.
+`Rule[Ask]`.
 
-Each inner groups of Rules is carried out 'concurrently' (error
-accumulating) before sequentially passing validation on to the next
-stage (fail-fast).
+Rules can be composed as 'fail-fast' (sequential) or 'error-accumulating' (parallel). 
+
 
 This means that error checking can be applied in-order, all together
 or some mix of the two. For example, you might want to check that a
@@ -90,7 +89,7 @@ simply supply it as a parameter.
 def askAddress2[F[_]](
   interpreter: Language[F, TellTypes, AskTypes]
 ): F[Address] =
-  interpreter.ask[Address]("post-to", validation = List(postcodeCheck))
+  interpreter.ask[Address]("post-to", validation = postcodeCheck)
 ```
 
 In this case we only have a single `Rule` applied to the `validation`
@@ -103,5 +102,5 @@ line starts with a number we can either do this sequentially using
 ```scala mdoc:silent
 val sequentialChecks: Rule[Address] = 
   postcodeCheck followedBy 
-    Rule.cond[Address](_.line1.head.isDigit, "line-must-start-with-number")   
+    Rule.cond[Address](_.line1.head.isDigit, "line-must-start-with-number")
 ```

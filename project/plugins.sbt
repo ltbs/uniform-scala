@@ -3,7 +3,7 @@ resolvers ++= Seq(
   Resolver.jcenterRepo
 )
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.29")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.31") // held back for mdoc
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.8")
 
@@ -15,7 +15,7 @@ addSbtPlugin("com.rallyhealth.sbt" % "sbt-git-versioning" % "1.2.2")
 
 addSbtPlugin("com.47deg" % "sbt-microsites" % "0.9.7")
 
-addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.0.0")
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.0.2a")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
 

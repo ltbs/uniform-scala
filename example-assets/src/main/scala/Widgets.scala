@@ -8,6 +8,7 @@ import cats.implicits._
 import java.time.LocalDate
 import scalatags._, generic.Bundle
 import validation.{Rule, Transformation}
+import enumeratum._
 
 private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
 
@@ -115,6 +116,31 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       }.toEither
     )(_.toString)
 
+
+  implicit def enumSetField[A <: EnumEntry](implicit enum: Enum[A]) = new FormField[Set[A],Tag] {
+    def decode(out: Input): Either[ErrorTree,Set[A]] = {
+      val rootValues = out.valueAtRoot.getOrElse(List.empty[String])
+      val listValidated: List[Validated[ErrorTree,A]] = rootValues.map { 
+        Transformation.catchOnly[NoSuchElementException]("bad-entry")(enum.withName).apply(_)
+      }
+      val validatedList: Validated[ErrorTree, List[A]] = listValidated.sequence
+      validatedList.map{_.toSet}.toEither
+    }
+
+    def encode(in: Set[A]): Input = Input.one(in.map{_.entryName}.toList)
+
+    def render(
+      key: List[String],
+      path: Breadcrumbs,
+      data: Input,
+      errors: ErrorTree,
+      messages: UniformMessages[Tag]
+    ): Tag = {
+      val existingValues: List[String] = data.valueAtRoot.getOrElse(Nil)
+      checkboxes(key, enum.values.map{_.entryName}, existingValues, errors, messages)      
+    }
+  }
+
   implicit val booleanField = new FormField[Boolean,Tag] {
     def decode(out: Input): Either[ErrorTree,Boolean] =
       out.toField[Boolean]{x: String =>
@@ -175,6 +201,48 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       }
     )
   }
+
+  def checkboxes(
+    key: List[String],
+    options: Seq[String],
+    existing: List[String],
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    conditional: PartialFunction[String,Tag] = PartialFunction.empty
+  ): Tag = {
+    val keyNoDots=key.mkString("-")
+
+    fieldSurround(key, errors, messages) (
+      div (cls:= "govuk-radios") {
+        options.zipWithIndex.map{ case (opt,num) =>
+            div(cls:="govuk-radios__item", attr("data-target"):=keyNoDots)(
+              input(
+                cls:="govuk-radios__input",
+                id:=s"$keyNoDots-$num",
+                name:= key.mkString("."),
+                attr("type"):="checkbox",
+                value:=opt,
+                attr("aria-describedby"):=s"$keyNoDots-num-item-hint",
+                if(existing.exists(_ == opt)){ checked },
+                if(conditional.isDefinedAt(opt)) {attr("aria-expanded"):="true"}
+              ),
+              label(cls:="govuk-label govuk-radios__label govuk-label--s", attr("for"):=s"$keyNoDots-$num")(
+                messages.decompose({key :+ opt}.mkString("."))
+              ),
+              messages.get({key :+ opt :+ "hint"}.mkString(".")).map { hint =>
+                span( id:=s"$keyNoDots-opt-item-hint", cls:="govuk-hint govuk-checkboxes__hint")(
+                  hint
+                )
+              },
+              if (conditional.isDefinedAt(opt)) {
+                div (id:=s"conditional-$keyNoDots-$opt", cls:=s"conditional conditional-$keyNoDots")(conditional(opt))
+              }
+            )
+        }
+      }
+    )
+  }
+
 
   implicit val dateField = new FormField[LocalDate,Tag] {
 

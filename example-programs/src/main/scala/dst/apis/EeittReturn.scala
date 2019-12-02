@@ -1,0 +1,53 @@
+package ltbs.uniform.examples.dst.apis
+package eeittreturn
+
+import scala.language.higherKinds
+import java.time.{LocalDate => Day, LocalDateTime}
+import enumeratum._
+import cats.data.NonEmptySet
+
+sealed trait ErrorResponseCode extends EnumEntry
+
+trait Identification
+
+object ErrorResponseCode extends Enum[ErrorResponseCode] {
+  def values = findValues
+
+  case object InvalidRegime extends ErrorResponseCode
+  case object InvalidIdtype extends ErrorResponseCode
+  case object InvalidIdnumber extends ErrorResponseCode
+  case object InvalidPayload extends ErrorResponseCode
+
+  /** The back end has indicated that business partner key information cannot be found for the id number. */
+  case object NotFoundBpkey extends ErrorResponseCode
+
+  /** The back end has indicated that the taxpayer profile cannot be found for the ID. */
+  case object NotFoundId extends ErrorResponseCode
+  case object DuplicateSubmission extends ErrorResponseCode
+  case object ServerError extends ErrorResponseCode
+  case object ServiceUnavailable extends ErrorResponseCode
+}
+
+case class ErrorResponse(
+  code: ErrorResponseCode,
+  reason: String
+)
+
+case class EeittReturnResponse(
+  processingDate: LocalDateTime,
+  formBundleNumber: String // "^[0-9]{12}$"
+)
+
+trait EeittReturn[F[_]] {
+  def apply(
+    regime: String, // (AGL|LFT|APD|IPT|BD|GD|ZBFP|ZGRF|ZVTR|ZAIR|DST)$
+    identification: Identification,
+    periodKey: String,
+    period: (Day, Day), // redundant
+    isrScenario: Option[String],
+    regimeSpecificDetails: Map[String, String],
+    tableForm: String, // "^[0-9a-zA-Z{\u00C0-\u02FF\u2019}\\- &`'^._|]{1,30}$"
+    regimeSpecificFormDetails: Map[String, String],
+    receivedAt: LocalDateTime
+  ): F[Either[NonEmptySet[ErrorResponse], EeittReturnResponse]]
+}

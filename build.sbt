@@ -208,13 +208,26 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
     ) ++ macroDependencies(scalaVersion.value)
   )
 
-lazy val commonWebJVM = `common-web`.jvm
-  .dependsOn(core.jvm)
-  .enablePlugins(MdocPlugin)
-  .settings(mdocSettings)
-
 lazy val commonWebJS = `common-web`.js
   .dependsOn(core.js)
+  .settings(
+//    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.6"
+  )
+
+lazy val commonWebJSDocs = project
+  .settings(
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.6"
+  )
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(core.js, commonWebJS, `interpreter-js`, exampleAssetsJS)
+
+lazy val commonWebJVM = `common-web`.jvm
+  .dependsOn(core.jvm)
+  .settings(
+    mdocJS := Some(commonWebJSDocs)
+  )
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
@@ -294,7 +307,8 @@ lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .dependsOn(core)
   .settings(
-    crossScalaVersions += scala2_13
+    crossScalaVersions += scala2_13, 
+    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"
   )
 
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
@@ -304,7 +318,8 @@ lazy val `example-assets` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.7.0"
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.7.0",
+    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"
   )
 
 lazy val exampleAssetsJS = `example-assets`.js.dependsOn(`common-web`.js)

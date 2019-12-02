@@ -15,6 +15,16 @@ GET         /reportwitch/*id     controllers.WitchController.reportWitch(id: Str
 POST        /reportwitch/        controllers.WitchController.reportWitch(id = "")
 POST        /reportwitch/*id     controllers.WitchController.reportWitch(id: String)
 
+GET         /dst/register/        controllers.DstController.register(id = "")
+GET         /dst/register/*id     controllers.DstController.register(id: String)
+POST        /dst/register/        controllers.DstController.register(id = "")
+POST        /dst/register/*id     controllers.DstController.register(id: String)
+
+GET         /dst/return/        controllers.DstController.returnForm(id = "")
+GET         /dst/return/*id     controllers.DstController.returnForm(id: String)
+POST        /dst/return/        controllers.DstController.returnForm(id = "")
+POST        /dst/return/*id     controllers.DstController.returnForm(id: String)
+
 GET         /subjourney/        controllers.SubjourneyController.main(id = "")
 GET         /subjourney/*id     controllers.SubjourneyController.main(id: String)
 POST        /subjourney/        controllers.SubjourneyController.main(id = "")

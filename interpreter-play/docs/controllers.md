@@ -54,7 +54,7 @@ simple example we'll just leave it undefined for now.
     errors: ErrorTree,
     tell: Html,
     ask: Html,
-    breadcrumbs: Path,
+    breadcrumbs: Breadcrumbs,
     request: Request[AnyContent],
     messages: UniformMessages[Html]
   ): Html = ???
@@ -76,11 +76,11 @@ active.
   def selectionOfFields(
     inner: List[(
       String,
-      (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html
+      (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html
     )]
   )(
     key: List[String],
-    path: Path,
+    path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html]
@@ -145,7 +145,7 @@ class ExampleController (
     errors: ErrorTree,
     tell: Html,
     ask: Html,
-    breadcrumbs: Path,
+    breadcrumbs: Breadcrumbs,
     request: Request[AnyContent],
     messages: UniformMessages[Html]
   ): Html = ???
@@ -153,11 +153,11 @@ class ExampleController (
   def selectionOfFields(
     inner: List[(
       String,
-      (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html
+      (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html
     )]
   )(
     key: List[String],
-    path: Path,
+    path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html]
