@@ -11,7 +11,7 @@ sealed trait Status extends EnumEntry
 object Status extends Enum[Status] {
   def values = findValues
   case object Open      extends Status
-  case object Fulfulled extends Status  
+  case object Fulfilled extends Status  
 }
 
 sealed trait IncomeSourceType extends EnumEntry
@@ -22,8 +22,6 @@ object IncomeSourceType extends Enum[IncomeSourceType] {
   case object ITSB extends IncomeSourceType
   case object ITSP extends IncomeSourceType
 }
-
-sealed trait Identification
 
 case class ObligationId(
   incomeSourceType: Option[IncomeSourceType],
@@ -70,7 +68,7 @@ case class ErrorResponse(
 trait GetObligation[F[_]] {
   def apply(
     identification: Identification,
-    regimeType: Any,
+    regimeType: String = "DST",
     status: Set[Status] = Status.values.toSet, 
     range:(Day, Day)
   ): F[Either[NonEmptySet[ErrorResponse], List[Obligation]]]

@@ -8,8 +8,6 @@ import cats.data.NonEmptySet
 
 sealed trait ErrorResponseCode extends EnumEntry
 
-trait Identification
-
 object ErrorResponseCode extends Enum[ErrorResponseCode] {
   def values = findValues
 
@@ -39,15 +37,15 @@ case class EeittReturnResponse(
 )
 
 trait EeittReturn[F[_]] {
+
+  val isrScenario = "ZDS1"
+
   def apply(
     regime: String, // (AGL|LFT|APD|IPT|BD|GD|ZBFP|ZGRF|ZVTR|ZAIR|DST)$
     identification: Identification,
     periodKey: String,
     period: (Day, Day), // redundant
-    isrScenario: Option[String],
     regimeSpecificDetails: Map[String, String],
-    tableForm: String, // "^[0-9a-zA-Z{\u00C0-\u02FF\u2019}\\- &`'^._|]{1,30}$"
-    regimeSpecificFormDetails: Map[String, String],
-    receivedAt: LocalDateTime
+    receivedAt: LocalDateTime = java.time.LocalDateTime.now
   ): F[Either[NonEmptySet[ErrorResponse], EeittReturnResponse]]
 }

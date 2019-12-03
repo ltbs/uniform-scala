@@ -1,9 +1,9 @@
 package controllers
 
 import cats.implicits._
+import cats.{~>, Id}
 import javax.inject._
 import ltbs.uniform._, interpreters.playframework._, examples.dst._
-import common.web.WebMonad
 import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
@@ -14,19 +14,22 @@ import scalatags.Text.all._
   ec: ExecutionContext
 ) extends ControllerHelpers with I18nSupport {
 
-
   implicit val persistence: PersistenceEngine[Request[AnyContent]] =
     DebugPersistence(UnsafePersistence())
 
   lazy val interpreter = HmrcPlayInterpreter(this, messagesApi)
 
+  val ToWM = λ[Id ~> interpreter.WM](_.pure[interpreter.WM])
+
   def register(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
     import interpreter._
     val playProgram = registrationJourney[interpreter.WM](
-      create[TellTypes, AskTypes](interpreter.messages(request))
+      create[TellTypes, AskTypes](interpreter.messages(request)),
+      DummyAuth.convert(ToWM),
+      DummySubscriber.convert(ToWM)
     )
     playProgram.run(targetId, purgeStateUponCompletion = true) {
-      i: Registration => Ok(s"$i").pure[Future]
+      i: Unit => Ok(s"$i").pure[Future]
     }
   }
 
@@ -34,10 +37,13 @@ import scalatags.Text.all._
 
     import interpreter._
     val playProgram = returnJourney[interpreter.WM](
-      create[TellTypes, AskTypesReturn](interpreter.messages(request))
+      create[TellTypes, AskTypesReturn](interpreter.messages(request)),
+      DummyAuth.authRecord.id,
+      DummyEeittReturn.convert(ToWM),
+      DummyGetObligation.convert(ToWM)
     )
     playProgram.run(targetId, purgeStateUponCompletion = true) {
-      i: ReturnForm => Ok(s"$i").pure[Future]
+      i: Unit => Ok(s"$i").pure[Future]
     }
   }
 

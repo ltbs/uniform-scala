@@ -308,7 +308,8 @@ lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .dependsOn(core)
   .settings(
     crossScalaVersions += scala2_13, 
-    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13"
+    libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.13",
+    scalacOptions -= "-Xfatal-warnings"
   )
 
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
