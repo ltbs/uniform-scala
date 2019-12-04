@@ -39,7 +39,7 @@ import scalatags.Text.all._
     val playProgram = returnJourney[interpreter.WM](
       create[TellTypes, AskTypesReturn](interpreter.messages(request)),
       DummyAuth.authRecord.id,
-      DummyEeittReturn.convert(ToWM),
+      DstReturnSchema.convert(ToWM),
       DummyGetObligation.convert(ToWM)
     )
     playProgram.run(targetId, purgeStateUponCompletion = true) {

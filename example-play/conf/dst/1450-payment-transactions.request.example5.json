@@ -1,0 +1,35 @@
+{
+    "header": {
+        "messageSequence": 123456,
+        "numberOfRecords": 2,
+        "totalNetInPence": 400000,
+        "totalCommissionInPence": 1500,
+        "totalGrossInPence": 401500,
+        "messageGenerationDateTime": "2017-01-24T11:14:08Z"
+    },
+    "transactions": [
+        {
+            "paymentDate": "2016-12-28",
+            "taxType": "CDSX",
+            "taxRef": "CDSI700000399011",
+            "paymentRef": "43f015d9-f150-4fcb-9923-97c68b96cc5e",
+            "netAmountInPence": 300000,
+            "commissionAmountInPence": 1500,
+            "grossAmountInPence": 301500,
+            "creditOrDebitCard": "C",
+            "chargeReference" : "XR007000003990"
+        },
+        {
+            "paymentDate": "2016-12-28",
+            "taxType": "CDSX",
+            "taxRef": "CDSI700000214711",
+            "paymentRef": "4035f720-f308-4a8c-bdc2-6db4c5b2006a",
+            "netAmountInPence": 100000,
+            "commissionAmountInPence": 0,
+            "grossAmountInPence": 100000,
+            "creditOrDebitCard": "D",
+            "chargeReference" : "XF007000002147"
+        }
+    ]
+  
+}

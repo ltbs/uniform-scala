@@ -1,0 +1,29 @@
+{
+	"obligations": [
+		{
+			"identification": {
+				"incomeSourceType": "ITSA",
+				"referenceNumber": "AB123456A",
+				"referenceType": "NINO"
+			},
+			"obligationDetails": [
+				{
+					"status": "O",
+					"inboundCorrespondenceFromDate": "1920-02-29",
+					"inboundCorrespondenceToDate": "1920-02-29",
+					"inboundCorrespondenceDateReceived": "1920-02-29",
+					"inboundCorrespondenceDueDate": "1920-02-29",
+					"periodKey": "#001"
+				},
+				{
+					"status": "O",
+					"inboundCorrespondenceFromDate": "1920-02-29",
+					"inboundCorrespondenceToDate": "1920-02-29",
+					"inboundCorrespondenceDateReceived": "1920-02-29",
+					"inboundCorrespondenceDueDate": "1920-02-29",
+					"periodKey": "#001"
+				}
+			]
+		}
+	]
+}

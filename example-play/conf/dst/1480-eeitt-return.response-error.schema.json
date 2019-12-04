@@ -1,0 +1,62 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "MTDFB - API 1480 Return Submission (EEITT) - Error Response Schema",
+	"description": "Return Submission (EEITT) - Error Response Schema",
+	"type": "object",
+	"oneOf": [{
+		"$ref": "#/definitions/failureResponseElement"
+	},
+	{
+		"$ref": "#/definitions/failureResponseArray"
+	}],
+	"definitions": {
+		"failureResponseArray": {
+			"type": "object",
+			"properties": {
+				"failures": {
+					"type": "array",
+					"minItems": 2,
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/failureResponseElement"
+					}
+				}
+			},
+			"required": [
+				"failures"
+			],
+			"additionalProperties": false
+		},
+		"failureResponseElement": {
+			"type": "object",
+			"properties": {
+				"code": {
+					"type": "string",
+					"enum": [
+						"INVALID_REGIME",
+						"INVALID_IDTYPE",
+						"INVALID_IDNUMBER",
+						"INVALID_PAYLOAD",
+						"NOT_FOUND_BPKEY",
+                        "NOT_FOUND_ID",
+						"DUPLICATE_SUBMISSION",
+						"SERVER_ERROR",
+						"SERVICE_UNAVAILABLE"
+					],
+					"description": "Keys for all the errors returned. Custom per API"
+				},
+				"reason": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 160,
+					"description": "A simple description for the failure"
+				}
+			},
+			"required": [
+				"code",
+				"reason"
+			],
+			"additionalProperties": false
+		}
+	}
+}

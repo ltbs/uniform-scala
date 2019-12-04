@@ -1,0 +1,54 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Response",
+    "description": "Response",
+    "oneOf": [
+        {
+            "$ref": "#/definitions/successResponse"
+        },
+        {
+            "$ref": "#/definitions/failureResponse"
+        }
+    ],
+    "definitions": {
+        "successResponse": {
+            "type": "object",
+            "properties": {
+                "processingDate": {
+                    "type": "string"
+                },
+                "sapNumber": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 10
+                },
+                "safeId": {
+                     "type": "string",
+                     "pattern": "^X[A-Z]000[0-9]{10}$"
+                },
+                "agentReferenceNumber": {
+                     "type": "string",
+                     "pattern": "^[A-Z]ARN[0-9]{7}$"
+                }
+            },
+            "required": [
+                "processingDate",
+                "sapNumber",
+                "safeId"
+            ]
+        },
+        "failureResponse": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string",
+                    "description": "a simple description for the failure"
+                }
+            },
+            "required": [
+                "reason"
+            ],
+            "additionalProperties": false
+        }
+    }
+}

@@ -1,0 +1,110 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Get Obligation Data Response Schema",
+    "description": "Get Obligation Data Response Schema",
+    "type": "object",
+    "properties": {
+        "obligations": {
+            "$ref": "#/definitions/obligations"
+        }
+    },
+    "required": [
+        "obligations"
+    ],
+    "additionalProperties": false,
+    "definitions": {
+        "obligations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "identification": {
+                        "type": "object",
+                        "properties": {
+                            "incomeSourceType": {
+                                "type": "string",
+                                "enum": [
+									"ITSA",
+									"ITSB",
+									"ITSP"
+								],
+								"description": "Mandatory if ReferenceType  is an IncomeSourceID"
+                            },
+                            "referenceNumber": {
+                                "description": "Reference Number",
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9]{1,15}$"
+                            },
+                            "referenceType": {
+                                "description": "Income source Identifier, Example values: MTDBIS NINO",
+                                "type": "string",
+                                "pattern": "^[A-Za-z]{1,6}$"
+                            }
+                        },
+                        "required": [
+                            "referenceNumber",
+                            "referenceType"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "obligationDetails": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "status": {
+                                    "description": "Open or Fullfilled status. Values: O = Open; F = Fulfilled",
+                                    "type": "string",
+                                    "enum": [
+                                        "O",
+                                        "F"
+                                    ]
+                                },
+                                "inboundCorrespondenceFromDate": {
+                                    "description": "Inbound Correspondence From Date",
+                                    "$ref": "#/definitions/dateString"
+                                },
+                                "inboundCorrespondenceToDate": {
+                                    "description": "Inbound Correspondence To Date",
+                                    "$ref": "#/definitions/dateString"
+                                },
+                                "inboundCorrespondenceDateReceived": {
+                                    "description": "Inbound Correspondence Date Received",
+                                    "$ref": "#/definitions/dateString"
+                                },
+                                "inboundCorrespondenceDueDate": {
+                                    "description": "Inbound Correspondence Due Date",
+                                    "$ref": "#/definitions/dateString"
+                                },
+                                "periodKey": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 4
+                                }
+                            },
+                            "required": [
+                                "status",
+                                "inboundCorrespondenceFromDate",
+                                "inboundCorrespondenceToDate",
+                                "inboundCorrespondenceDueDate",
+                                "periodKey"
+                            ],
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "required": [
+                    "obligationDetails"
+                ],
+                "additionalProperties": false
+            }
+        },
+        "dateString": {
+            "description": "YYYY-MM-DD",
+            "type": "string",
+            "pattern": "^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-](0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$"
+        }
+    }
+}

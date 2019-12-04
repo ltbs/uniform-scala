@@ -1,0 +1,276 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Get Financial Data Response Success Schema",
+    "description": "Get Financial Data Response Success Schema",
+    "definitions": {
+        "financialsType": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "chargeType": {
+                        "description": "Description of charge type",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 30
+                    },
+                    "mainType": {
+                        "description": "Description of main type",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 30
+                    },
+                    "periodKey": {
+                        "description": "Period Key",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "periodKeyDescription": {
+                        "description": "Description of Period Key Description",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 50
+                    },
+                    "taxPeriodFrom": {
+                        "description": "Tax Period From. Format YYYY-MM-DD",
+                        "$ref": "#/definitions/dateString"
+                    },
+                    "taxPeriodTo": {
+                        "description": "Tax Period To. Format YYYY-MM-DD",
+                        "$ref": "#/definitions/dateString"
+                    },
+                    "businessPartner": {
+                        "description": "Business Partner",
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "contractAccountCategory": {
+                        "description": "Contract Account Category",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "contractAccount": {
+                        "description": "Contract Account",
+                        "type": "string",
+                        "maxLength": 12
+                    },
+                    "contractObjectType": {
+                        "description": "Contract Object Type",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "contractObject": {
+                        "description": "Contract Object",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 20
+                    },
+                    "sapDocumentNumber": {
+                        "description": "SAP Document Number",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 12
+                    },
+                    "sapDocumentNumberItem": {
+                        "description": "SAP Document Number Item",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "chargeReference": {
+                        "description": "Charge Reference",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 16
+                    },
+                    "mainTransaction": {
+                        "description": "Main Transaction",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "subTransaction": {
+                        "description": "Sub Transaction",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "originalAmount": {
+                        "description": "Original Amount",
+                        "$ref": "#/definitions/monetary"
+                    },
+                    "outstandingAmount": {
+                        "description": "Outstanding Amount",
+                        "$ref": "#/definitions/monetary"
+                    },
+                    "clearedAmount": {
+                        "description": "Cleared Amount",
+                        "$ref": "#/definitions/monetary"
+                    },
+                    "accruedInterest": {
+                        "description": "Accrued interest",
+                        "$ref": "#/definitions/monetary"
+                    },
+                    "items": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "subItem": {
+                                    "description": "Sub Item",
+                                    "type": "string",
+                                    "maxLength": 3
+                                },
+                                "dueDate": {
+                                    "description": "Due Date. Format YYYY-MM-DD",
+                                    "$ref": "#/definitions/dateString"
+                                },
+                                "amount": {
+                                    "description": "Amount",
+                                    "$ref": "#/definitions/monetary"
+                                },
+                                "clearingDate": {
+                                    "description": "Clearing Date. Format YYYY-MM-DD",
+                                    "$ref": "#/definitions/dateString"
+                                },
+                                "clearingReason": {
+                                    "description": "Clearing Reason",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 50
+                                },
+                                "outgoingPaymentMethod": {
+                                    "description": "Outgoing Payment Method",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 30
+                                },
+                                "paymentLock": {
+                                    "description": "Payment Lock",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 30
+                                },
+                                "clearingLock": {
+                                    "description": "Clearing Lock",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 30
+                                },
+                                "interestLock": {
+                                    "description": "Interest Lock",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 30
+                                },
+                                "dunningLock": {
+                                    "description": "Dunning Lock",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 30
+                                },
+                                "returnFlag": {
+                                    "description": "If true, means that the charge has been generated by a 'return'",
+                                    "type": "boolean"
+                                },
+                                "paymentReference": {
+                                    "description": "Payment Reference",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 35
+                                },
+                                "paymentAmount": {
+                                    "description": "Payment Amount",
+                                    "$ref": "#/definitions/monetary"
+                                },
+                                "paymentMethod": {
+                                    "description": "Payment Method",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 30
+                                },
+                                "paymentLot": {
+                                    "description": "Payment Lot",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 12
+                                },
+                                "paymentLotItem": {
+                                    "description": "Payment Lot Item",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 6
+                                },
+                                "clearingSAPDocument": {
+                                    "description": "Clearing SAP Document",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 12
+                                },
+                                "statisticalDocument": {
+                                    "description": "Statistical Document",
+                                    "type": "string",
+                                    "maxLength": 1
+                                },
+                                "returnReason": {
+                                    "description": "Return Reason",
+                                    "type": "string",
+                                    "maxLength": 50
+                                },
+                                "promiseToPay": {
+                                    "description": "Promise to pay",
+                                    "type": "string",
+                                    "maxLength": 12
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "dateString": {
+            "type": "string",
+            "description": "Format YYYY-MM-DD",
+            "pattern": "^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-](0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$"
+        },
+        "monetary": {
+            "type": "number",
+            "minimum": -9999999999999.99,
+            "maximum": 9999999999999.99,
+            "multipleOf": 0.01,
+            "description": "Defines a monetary value (to 2 decimal places), between -9999999999999.99 and 9999999999999.99"
+        }
+    },
+    "type": "object",
+    "properties": {
+        "idType": {
+            "description": "Possible values: EMPREF , MTDBSA , NINO , ZISA, VRN, ZSDL, NI, PUID, ZDST",
+            "type": "string",
+            "pattern": "^(EMPREF|MTDBSA|NINO|VRN|ZISA|ZSDL|NI|PUID|ZDST)$"
+        },
+        "idNumber": {
+            "description": "EMPREF number, Example 064XZ36815. MDTBSA number, Example XQIT00000000001. NINO number, Example IN408059B. Manager Reference Number (ZISA) , Example 145863. VAT Registration Number, Example 012345678. SDIL Registration, Example XVSDIL000100108, BSP( NI ) Registration Number,Exampple XQNI00000100046",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+        },
+        "regimeType": {
+            "description": "RegimeType",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+        },
+        "processingDate": {
+            "description": "The date and time the message was processed",
+            "type": "string",
+            "format": "date-time"
+        },
+        "financialTransactions": {
+            "$ref": "#/definitions/financialsType"
+        }
+    },
+    "required": [
+        "processingDate"
+    ],
+    "additionalProperties": false
+}

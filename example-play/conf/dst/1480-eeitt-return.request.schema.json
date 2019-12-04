@@ -1,0 +1,109 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "MTDFB - API 1480 Return Submission (EEITT) - Request Schema",
+    "description": "Return Submission (EEITT) Request",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "periodKey": {
+            "title": "The key to identify the return period",
+            "description": "A 4 character string identifier, format nnAA or nnAn or #nnn or nnnn e.g. 17GH, 17B2, #001, 0918",
+            "type": "string",
+            "pattern": "^([0-9]{2}[A-Z][A-Z0-9])|(#[0-9]{3})|([0-9]{4})$"
+        },
+        "periodFrom": {
+            "description": "Return period 'from' date",
+            "$ref": "#/definitions/dateString"
+        },
+        "periodTo": {
+            "description": "Return period 'to' date",
+            "$ref": "#/definitions/dateString"
+        },
+        "returnsDetails": {
+            "description": "Returns details",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "isrScenario": {
+                    "description": "ISR scenario",
+                    "type": "string",
+                    "pattern": "^[0-9a-zA-Z{\u00C0-\u02FF\u2019}\\- &`'^._|]{1,4}$"
+                },
+                "regimeSpecificDetails": {
+                    "description": "Regime specific details",
+                    "$ref": "#/definitions/regimeSpecificDetails"
+                }
+            },
+			"required": [
+                "regimeSpecificDetails"
+			]
+        },
+        "tableForms": {
+        	"description": "Table Forms",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "tableForm": {
+                    "description": "Table Form",
+                    "type": "string",
+                    "pattern": "^[0-9a-zA-Z{\u00C0-\u02FF\u2019}\\- &`'^._|]{1,30}$"
+                },
+                "regimeSpecificDetails": {
+                    "description": "Regime specific details",
+                    "$ref": "#/definitions/regimeSpecificDetails"
+                }
+            },
+			"required": [
+				"tableForm"
+			]
+        },
+        "receivedAt": {
+            "description": "The date & time the return was received by MDTP API. UTC timezone",
+            "type": "string",
+            "format": "date-time"
+        }
+    },
+    "required": [
+        "returnsDetails",
+		"receivedAt"
+    ],
+    "definitions": {
+        "dateString": {
+            "description": "Date value in the format YYYY-MM-DD",
+            "type": "string",
+            "pattern": "^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-](0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$"
+        },
+        "regimeSpecificDetails": {
+            "description": "Regime specific details",
+            "type": "array",
+            "minItems": 0,
+            "items": {
+                "type": "object",
+                "maxProperties": 3,
+                "additionalProperties": false,
+                "properties": {
+                    "paramSequence": {
+                        "description": "Sequence number",
+                        "type": "string",
+                        "pattern": "^[0-9a-zA-Z{\u00C0-\u02FF\u2019}\\- &`'^._|]{1,3}$"
+                    },
+                    "paramName": {
+						"description": "Regime specific field",
+                        "type": "string",
+                        "pattern": "^[0-9a-zA-Z{\u00C0-\u02FF\u2019}\\- &`'^._|]{1,30}$"
+                    },
+                    "paramValue": {
+                        "description": "Parameter value",
+                        "type": "string",
+                        "pattern": "^[0-9a-zA-Z{\u00C0-\u02FF\u2019}\\- &`'^._|]{1,255}$"
+                    }
+                },
+                "required": [
+                    "paramSequence",
+                    "paramName",
+                    "paramValue"
+                ]
+            }
+        }
+    }
+}

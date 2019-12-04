@@ -1,0 +1,65 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "#1330 - Get Obligation Data response schema",
+    "type": "object",
+    "oneOf": [
+        {
+            "$ref": "#/definitions/failureResponseElement"
+        },
+        {
+            "$ref": "#/definitions/failureResponseArray"
+        }
+    ],
+    "definitions": {
+        "failureResponseArray": {
+            "type": "object",
+            "properties": {
+                "failures": {
+                    "type": "array",
+                    "minItems": 2,
+                    "uniqueItems": true,
+                    "items": {
+                        "$ref": "#/definitions/failureResponseElement"
+                    }
+                }
+            },
+            "required": [
+                "failures"
+            ],
+            "additionalProperties": false
+        },
+        "failureResponseElement": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "enum": [
+                        "INVALID_IDTYPE",
+                        "INVALID_IDNUMBER",
+                        "INVALID_STATUS",
+                        "INVALID_REGIME",
+                        "INVALID_DATE_TO",
+                        "INVALID_DATE_FROM",
+                        "INVALID_DATE_RANGE",
+                        "NOT_FOUND_BPKEY",
+                        "NOT_FOUND",
+                        "SERVER_ERROR",
+                        "SERVICE_UNAVAILABLE"
+                    ],
+                    "description": "Keys for all the errors returned"
+                },
+                "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160,
+                    "description": "A simple description for the failure"
+                }
+            },
+            "required": [
+                "code",
+                "reason"
+            ],
+            "additionalProperties": false
+        }
+    }
+}

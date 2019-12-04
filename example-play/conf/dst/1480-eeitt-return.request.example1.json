@@ -1,0 +1,61 @@
+{
+   "periodKey": "19B4",
+   "periodFrom": "2019-12-03",
+   "periodTo": "2020-02-28",
+   "returnsDetails": {
+      "isrScenario": "ZAG1",
+      "regimeSpecificDetails": [
+         {
+            "paramSequence": "01",
+            "paramName": "A_REGISTRATION_NUMBER",
+            "paramValue": "XZAL00000100142"
+         },
+         {
+            "paramSequence": "01",
+            "paramName": "A_RET_TYPE",
+            "paramValue": "1"
+         },
+         {
+            "paramSequence": "01",
+            "paramName": "A_AGL_LEVY_DUE",
+            "paramValue": "10000.00"
+         },
+         {
+            "paramSequence": "01",
+            "paramName": "A_AGL_TAXABLE_TON",
+            "paramValue": "20"
+         },
+         {
+            "paramSequence": "01",
+            "paramName": "A_AGL_RELIEVED_TON",
+            "paramValue": "20"
+         },
+         {
+            "paramSequence": "01",
+            "paramName": "A_AGL_EXEMPT_TON",
+            "paramValue": "Org name-1"
+         },
+         {
+            "paramSequence": "01",
+            "paramName": "A_DATA_ORIGIN",
+            "paramValue": "1"
+         }
+      ]
+   },
+   "tableForms": {
+      "tableForm": "Form Number 1",
+      "regimeSpecificDetails": [
+         {
+            "paramSequence": "02",
+            "paramName": "A_REGISTRATION_NUMBER",
+            "paramValue": "String 12"
+         },
+         {
+            "paramSequence": "02",
+            "paramName": "A_AGL_RELIEVED_TON",
+            "paramValue": "10"
+         }
+      ]
+   },
+   "receivedAt": "2017-01-01T00:01:00Z"
+}

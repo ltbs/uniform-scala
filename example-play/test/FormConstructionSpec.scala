@@ -1,3 +1,5 @@
+/*
+
 package playexample
 
 import org.scalatest._
@@ -25,3 +27,5 @@ class FormConstructionSpec extends FlatSpec with Matchers {
     playHtml.toString should include ("Luke")
   }
 }
+
+ */

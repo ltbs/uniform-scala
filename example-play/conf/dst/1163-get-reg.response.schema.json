@@ -1,0 +1,582 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Registration Response Schema",
+  "description": "Registration Response Schema",
+  "oneOf": [
+    {
+      "$ref": "#/definitions/successResponse"
+    },
+    {
+      "$ref": "#/definitions/failureResponse"
+    }
+  ],
+  "definitions": {
+    "successResponse": {
+      "type": "object",
+      "properties": {
+        "safeId": {
+          "description": "SAFE reference identifier",
+          "type": "string",
+          "pattern": "^X[A-Z]000[0-9]{10}$"
+        },
+        "sapNumber": {
+           "type": "string",
+           "minLength": 10,
+           "maxLength": 10
+        },
+        "agentReferenceNumber": {
+          "description": "Agent Reference Number",
+          "type": "string",
+          "pattern": "^[A-Z](ARN)[0-9]{7}$"
+        },
+        "isEditable": {
+          "description": "Boolean value to indicate whether the data record is editable or not",
+          "type": "boolean"
+        },
+        "isAnAgent": {
+          "description": "Boolean value to indicate whether the Business Partner is an Agent or not",
+          "type": "boolean"
+        },
+        "isAnASAgent": {
+          "description": "Boolean value, It’s an Agent Service’s processes. It will be true (value = 1) only if the BP has an ARN and a specific BP Role for AS Agents",
+          "type": "boolean"
+        },
+        "isAnIndividual": {
+          "description": "Boolean value to indicate whether the Business Partner is an Individual or not",
+          "type": "boolean"
+        },
+        "individual": {
+          "description": "Container element for Individual-specific fields",
+          "$ref": "#/definitions/individual"
+        },
+        "organisation": {
+          "description": "Container element for Organisation-specific fields",
+          "$ref": "#/definitions/organisation"
+        },
+        "address": {
+          "description": "Container element for Adress-specific fields",
+          "$ref": "#/definitions/addressType"
+        },
+        "contactDetails": {
+          "description": "Container element for Contact-specific fields",
+          "$ref": "#/definitions/contactCommDetailsType"
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "safeId",
+            "isEditable",
+            "isAnAgent",
+            "isAnIndividual",
+            "organisation",
+            "address",
+            "contactDetails"
+          ]
+        },
+        {
+          "required": [
+            "safeId",
+            "isEditable",
+            "isAnAgent",
+            "isAnIndividual",
+            "individual",
+            "address",
+            "contactDetails"
+          ]
+        }
+      ],
+      "additionalProperties": false
+    },
+    "failureResponse": {
+      "type": "object",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/failureResponseElement"
+        },
+        {
+          "$ref": "#/definitions/failureResponseArray"
+        }
+      ]
+    },
+    "failureResponseArray": {
+      "type": "object",
+      "properties": {
+        "failures": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/failureResponseElement"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "failureResponseElement": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "INVALID_UTR",
+            "INVALID_NINO",
+            "INVALID_EORI",
+            "INVALID_TRN",
+            "INVALID_IDTYPE",
+            "INVALID_PAYLOAD",
+            "MALFORMED_PAYLOAD",
+            "CONFLICT",
+            "NOT_FOUND",
+            "SERVER_ERROR",
+            "SERVICE_UNAVAILABLE"
+          ],
+          "description": "Keys for all the errors returned. Custom per API"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "A simple description for the failure"
+        }
+      },
+      "required": ["code","reason"],
+      "additionalProperties": false
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$",
+      "description": "Defines a date in the format dd-mm-yyyy"
+    },
+    "individual": {
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 35
+        },
+        "middleName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 35
+        },
+        "lastName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 35
+        },
+        "dateOfBirth": {
+          "$ref": "#/definitions/date"
+        }
+      },
+      "required": [
+        "firstName",
+        "lastName"
+      ],
+      "additionalProperties": false
+    },
+    "organisation": {
+      "type": "object",
+      "properties": {
+        "organisationName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 105
+        },
+        "isAGroup": {
+          "description": "Boolean value to indicate whether the Organisation is a Group or not",
+          "type": "boolean"
+        },
+        "organisationType": {
+          "description": "Type of the organisation",
+          "type": "string",
+          "enum": [
+            "Not Specified",
+            "Partnership",
+            "LLP",
+            "Corporate body",
+            "Unincorporated body"
+          ]
+        }
+      },
+      "required": [
+        "organisationName"
+      ],
+      "additionalProperties": false
+    },
+    "addressType": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "addressLine1": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 35
+            },
+            "addressLine2": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 35
+            },
+            "addressLine3": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 35
+            },
+            "addressLine4": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 35
+            },
+            "countryCode": {
+              "type": "string",
+              "enum": [
+                "GB"
+              ]
+            },
+            "postalCode": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10
+            }
+          },
+          "required": [
+            "addressLine1",
+            "countryCode",
+            "postalCode"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "addressLine1": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 35
+            },
+            "addressLine2": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 35
+            },
+            "addressLine3": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 35
+            },
+            "addressLine4": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 35
+            },
+            "countryCode": {
+              "$ref": "#/definitions/countryCodes"
+            },
+            "postalCode": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10
+            }
+          },
+          "required": [
+            "addressLine1",
+            "countryCode"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "countryCodes": {
+      "description": "Country code iso 3166-1 alpha-2",
+      "type": "string",
+      "enum": [
+        "AD",
+        "AE",
+        "AF",
+        "AG",
+        "AI",
+        "AL",
+        "AM",
+        "AN",
+        "AO",
+        "AQ",
+        "AR",
+        "AS",
+        "AT",
+        "AU",
+        "AW",
+        "AX",
+        "AZ",
+        "BA",
+        "BB",
+        "BD",
+        "BE",
+        "BF",
+        "BG",
+        "BH",
+        "BI",
+        "BJ",
+        "BM",
+        "BN",
+        "BO",
+        "BQ",
+        "BR",
+        "BS",
+        "BT",
+        "BV",
+        "BW",
+        "BY",
+        "BZ",
+        "CA",
+        "CC",
+        "CD",
+        "CF",
+        "CG",
+        "CH",
+        "CI",
+        "CK",
+        "CL",
+        "CM",
+        "CN",
+        "CO",
+        "CR",
+        "CS",
+        "CU",
+        "CV",
+        "CW",
+        "CX",
+        "CY",
+        "CZ",
+        "DE",
+        "DJ",
+        "DK",
+        "DM",
+        "DO",
+        "DZ",
+        "EC",
+        "EE",
+        "EG",
+        "EH",
+        "ER",
+        "ES",
+        "ET",
+        "EU",
+        "FI",
+        "FJ",
+        "FK",
+        "FM",
+        "FO",
+        "FR",
+        "GA",
+        "GD",
+        "GE",
+        "GF",
+        "GG",
+        "GH",
+        "GI",
+        "GL",
+        "GM",
+        "GN",
+        "GP",
+        "GQ",
+        "GY",
+        "HK",
+        "HM",
+        "HN",
+        "HR",
+        "GR",
+        "GS",
+        "GT",
+        "GU",
+        "GW",
+        "HT",
+        "HU",
+        "ID",
+        "IE",
+        "IL",
+        "IM",
+        "IN",
+        "IO",
+        "IQ",
+        "IR",
+        "IS",
+        "IT",
+        "JE",
+        "JM",
+        "JO",
+        "JP",
+        "KE",
+        "KG",
+        "KH",
+        "KI",
+        "KM",
+        "KN",
+        "KP",
+        "KR",
+        "KW",
+        "KY",
+        "KZ",
+        "LA",
+        "LB",
+        "LC",
+        "LI",
+        "LK",
+        "LR",
+        "LS",
+        "LT",
+        "LU",
+        "LV",
+        "LY",
+        "MA",
+        "MC",
+        "MD",
+        "ME",
+        "MF",
+        "MG",
+        "MH",
+        "MK",
+        "ML",
+        "MM",
+        "MN",
+        "MO",
+        "MP",
+        "MQ",
+        "MR",
+        "MS",
+        "MT",
+        "MU",
+        "MV",
+        "MW",
+        "MX",
+        "MY",
+        "MZ",
+        "NA",
+        "NC",
+        "NE",
+        "NF",
+        "NG",
+        "NI",
+        "NL",
+        "NO",
+        "NP",
+        "NR",
+        "NT",
+        "NU",
+        "NZ",
+        "OM",
+        "PA",
+        "PE",
+        "PF",
+        "PG",
+        "PH",
+        "PK",
+        "PL",
+        "PM",
+        "PN",
+        "PR",
+        "PS",
+        "PT",
+        "PW",
+        "PY",
+        "QA",
+        "RE",
+        "RO",
+        "RS",
+        "RU",
+        "RW",
+        "SA",
+        "SB",
+        "SC",
+        "SD",
+        "SE",
+        "SG",
+        "SH",
+        "SI",
+        "SJ",
+        "SK",
+        "SL",
+        "SM",
+        "SN",
+        "SO",
+        "SR",
+        "SS",
+        "ST",
+        "SV",
+        "SX",
+        "SY",
+        "SZ",
+        "TC",
+        "TD",
+        "TF",
+        "TG",
+        "TH",
+        "TJ",
+        "TK",
+        "TL",
+        "TM",
+        "TN",
+        "TO",
+        "TP",
+        "TR",
+        "TT",
+        "TV",
+        "TW",
+        "TZ",
+        "UA",
+        "UG",
+        "UM",
+        "UN",
+        "US",
+        "UY",
+        "UZ",
+        "VA",
+        "VC",
+        "VE",
+        "VG",
+        "VI",
+        "VN",
+        "VU",
+        "WF",
+        "WS",
+        "YE",
+        "YT",
+        "ZA",
+        "ZM",
+        "ZW"
+      ]
+    },
+    "contactCommDetailsType": {
+      "type": "object",
+      "properties": {
+        "primaryPhoneNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24,
+          "pattern": "^[A-Z0-9 )/(\\-*#+]+$"
+        },
+        "secondaryPhoneNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24,
+          "pattern": "^[A-Z0-9 )/(\\-*#+]+$"
+        },
+        "faxNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24,
+          "pattern": "^[A-Z0-9 )/(\\-*#+]+$"
+        },
+        "emailAddress": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 132
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

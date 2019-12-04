@@ -1,4 +1,5 @@
-package ltbs.uniform.examples.dst.apis
+package ltbs.uniform.examples.dst
+package apis
 package eeittreturn
 
 import scala.language.higherKinds
@@ -41,11 +42,8 @@ trait EeittReturn[F[_]] {
   val isrScenario = "ZDS1"
 
   def apply(
-    regime: String, // (AGL|LFT|APD|IPT|BD|GD|ZBFP|ZGRF|ZVTR|ZAIR|DST)$
     identification: Identification,
-    periodKey: String,
-    period: (Day, Day), // redundant
-    regimeSpecificDetails: Map[String, String],
-    receivedAt: LocalDateTime = java.time.LocalDateTime.now
+    period: Period,
+    activity: Map[Activity, ActivityReturn]
   ): F[Either[NonEmptySet[ErrorResponse], EeittReturnResponse]]
 }

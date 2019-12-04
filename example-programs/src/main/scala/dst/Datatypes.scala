@@ -107,6 +107,11 @@ object LegalEntity extends Enum[LegalEntity] {
 
 // ------- RETURNS
 
+case class Period(
+  start: Day,
+  end: Day
+)
+
 case class Basic (
   businessPartner : String,
   contractAccount : String,
@@ -118,8 +123,6 @@ case class Basic (
   period : (Day, Day),
   chargeRef : String
 )
-
-
 
 sealed trait Activity extends EnumEntry
 
@@ -141,6 +144,12 @@ case class ActivityReturn (
   loss : Boolean,
   margin : Percent
 )
+
+object ActivityReturn {
+  def empty = ActivityReturn(
+    false, false, 0
+  )
+}
 
 case class RepaymentDetails (
   isUkAccount : Boolean,

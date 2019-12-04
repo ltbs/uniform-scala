@@ -99,12 +99,15 @@ package object dst {
       activity <- {ask[Set[Activity]]("activity") >>= { _.map{ a => ask[ActivityReturn](s"activity-$a").map(x => a -> x)}.toList.sequence}}.map{_.toMap}
       financial <- ask[FinancialInformation]("financial-information")
       breakdown <- ask[List[LiabilityBreakdownEntry]]("breakdown")
-    } yield (eeittReturns.apply(
+    } yield ()
+
+
+  /*(eeittReturns.apply(
       "DST",
       id,
       "period",
       basic.period,
-      Map() //     regimeSpecificDetails: Map[String, String],
-    ))
+      Nil
+    )) */
   }  
 }

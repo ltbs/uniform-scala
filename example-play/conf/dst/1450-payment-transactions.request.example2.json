@@ -1,0 +1,34 @@
+{
+    "header": {
+        "messageSequence": 123456,
+        "numberOfRecords": 2,
+        "totalNetInPence": 200000,
+        "totalCommissionInPence": 0,
+        "totalGrossInPence": 200000,
+        "messageGenerationDateTime": "2017-01-24T11:14:08Z"
+    },
+    "transactions": [     
+        {
+            "paymentDate": "2016-12-28",
+            "taxType": "PNGR",
+            "taxRef": "YNAB1234567890",
+            "paymentRef": "4035e520-f308-4a8c-bdc2-6db4c5b2006a",
+            "netAmountInPence": 100000,
+            "commissionAmountInPence": 0,
+            "grossAmountInPence": 100000,
+            "creditOrDebitCard": "D",
+            "chargeReference" : "YNAB1234567890"
+        },
+        {
+            "paymentDate": "2016-12-30",
+            "taxType": "PNGR",
+            "taxRef": "YNBB1234567890",
+            "paymentRef": "4035e520-f318-4a8c-bdc2-6db4c5b2006a",
+            "netAmountInPence": 100000,
+            "commissionAmountInPence": 0,
+            "grossAmountInPence": 100000,
+            "creditOrDebitCard": "C",
+            "chargeReference" : "YNAB1234567890"
+        }
+    ]
+}

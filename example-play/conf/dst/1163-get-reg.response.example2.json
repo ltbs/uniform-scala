@@ -1,0 +1,28 @@
+{
+  "safeId": "XE0001234567890",
+  "sapNumber": "1234567890",
+  "agentReferenceNumber": "AARN1234567",
+  "isEditable": true,
+  "isAnAgent": false,
+  "isAnASAgent":false,
+  "isAnIndividual": true,
+  "organisation": {
+    "organisationName": "Trotters Trading (Stepney) Ltd.",
+    "isAGroup": true,
+    "organisationType": "Not Specified"
+  },
+  "address": {
+    "addressLine1": "100 SuttonStreet",
+    "addressLine2": "Wokingham",
+    "addressLine3": "Surrey",
+    "addressLine4": "London",
+    "postalCode": "DH14EJ",
+    "countryCode": "GB"
+  },
+  "contactDetails": {
+    "primaryPhoneNumber": "01332752856",
+    "secondaryPhoneNumber": "07782565326",
+    "faxNumber": "01332754256",
+    "emailAddress": "stephen@manncorpone.co.uk"
+  }
+}

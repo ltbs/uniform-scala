@@ -1,0 +1,68 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "#1166 - Get Financial Data",
+    "description": "Get Financial Data error response schema",
+    "type": "object",
+    "oneOf": [
+        {
+            "$ref": "#/definitions/failureResponseArray"
+        },
+        {
+            "$ref": "#/definitions/failureResponseElement"
+        }
+    ],
+    "definitions": {
+        "failureResponseArray": {
+            "type": "object",
+            "properties": {
+                "failures": {
+                    "type": "array",
+                    "minItems": 2,
+                    "uniqueItems": true,
+                    "items": {
+                        "$ref": "#/definitions/failureResponseElement"
+                    }
+                }
+            },
+            "required": [
+                "failures"
+            ],
+            "additionalProperties": false
+        },
+        "failureResponseElement": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "enum": [
+                        "INVALID_IDTYPE",
+                        "INVALID_IDNUMBER",
+                        "INVALID_REGIMETYPE",
+                        "INVALID_ONLYOPENITEMS",
+                        "INVALID_INCLUDELOCKS",
+                        "INVALID_CALCULATEACCRUEDINTEREST",
+                        "INVALID_CUSTOMERPAYMENTINFORMATION",
+                        "INVALID_DATEFROM",
+                        "INVALID_DATETO",
+                        "INVALID_DATA",
+                        "NOT_FOUND",
+                        "SERVER_ERROR",
+                        "SERVICE_UNAVAILABLE"
+                    ],
+                    "description": "Keys for all the errors returned"
+                },
+                "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160,
+                    "description": "A simple description for the failure"
+                }
+            },
+            "required": [
+                "code",
+                "reason"
+            ],
+            "additionalProperties": false
+        }
+    }
+}

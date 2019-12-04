@@ -1,0 +1,110 @@
+{
+	"registrationDetails": {
+		"isrScenario": "ZAG2",
+		"commonDetails": {
+			"legalEntity": {
+				"organisationType": "7",
+				"dateOfApplication": "2018-11-08",
+				"taxStartDate": "2018-11-08"
+			},
+			"customerIdentificationNumber": {
+				"custIDNumber": "2951985072",
+				"noIdentifier": "0",
+				"organisationName": "OrgnisationName",
+				"title": "0001",
+				"custFirstName": "CustFirstName",
+				"custLastName": "CustLastName",
+				"custDOB": "0000-01-01",
+				"dataMismatchIndicator": "0"
+			},
+			"aboutBusiness": {
+				"organisationName": "AbtBizOrgName",
+				"title": "0",
+				"firstName": "AbtBizFirstName",
+				"lastName": "AbtBizLastName",
+				"dateOfBirth": "1980-11-01",
+				"tradingName": "AbtBizTradingName"
+			},
+			"businessContactDetails": {
+				"addressNotInUK": "0",
+				"addressInputModeIndicator": "2",
+				"houseNumberName": "BizContact HouseName",
+				"addressLine1": "BizContact Address Lone",
+				"addressLine2": "BizContact Address Ltwo",
+				"addressLine3": "BizContact Address Lthree",
+				"addressLine4": "BizContact Address Lfour",
+				"postCode": "TF1 2TU",
+				"telephoneNumber": "01952501050",
+				"mobileNumber": "07701045888",
+				"email": "someemailone@mydomain.com",
+				"fax": "01952111111"
+			},
+			"correspondenceAddressDifferent": "1",
+			"correspondenceContactDetails": {
+				"addressNotInUK": "0",
+				"addressInputModeIndicator": "2",
+				"houseNumberName": "CorrspContact HouseName",
+				"addressLine1": "CorrspContact Address Lone",
+				"addressLine2": "CorrspContact Address Ltwo",
+				"addressLine3": "CorrspContact Address Lthree",
+				"addressLine4": "CorrspContact Address Lfour",
+				"postCode": "TF3 4TU",
+				"telephoneNumber": "01952105051",
+				"mobileNumber": "07701045999",
+				"email": "someemailtwo@mydomain.com",
+				"fax": "01952222222"
+			},
+			"legacyCustomerReference": {
+				"customerMigratedFromLegacySystem": "0",
+				"customerReferenceNumber": "123456789"
+			},
+			"declarationStatus": "01",
+			"declarationAcceptedIndicator": "1"
+		},
+		"regimeSpecificDetails": [
+			{
+				"paramSequence": "001",
+				"paramName": "A_DATA_ORIGIN",
+				"paramValue": "1"
+			}
+		]
+	},
+	"siteDetails": {
+		"isrScenario": "ZAG5",
+		"formData": [
+			{
+				"commonDetails": {
+					"action": "1",
+					"retrieveSiteReferenceNumber": "aaaaaaaaaaaaaaaaaaaa",
+					"siteAddress": {
+						"tradingName": "Trading Name",
+						"siteReferenceNumber": "123456789012345",
+						"addressInputModeIndicator": "2",
+						"houseNumberName": "siteAddress HouseName",
+						"addressLine1": "siteAddress Address Lone",
+						"addressLine2": "siteAddress Address Ltwo",
+						"addressLine3": "siteAddress Address Lthree",
+						"addressLine4": "siteAddress Address Lfour",
+						"postCode": "TF5 6TU",
+						"telephoneNumber": "01952115151",
+						"mobileNumber": "07701045000",
+						"email": "someemailthree@mydomain.com",
+						"fax": "01952333333"
+					}
+				},
+				"regimeSpecificDetails": [
+					{
+						"paramSequence": "001",
+						"paramName": "A_WB_USED_TO_WEIGHT",
+						"paramValue": "1"
+					},
+					{
+						"paramSequence": "002",
+						"paramName": "A_DATA_ORIGIN",
+						"paramValue": "1"
+					}
+				]
+			}
+		]
+	}
+}

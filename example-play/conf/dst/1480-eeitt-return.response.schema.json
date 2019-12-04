@@ -1,0 +1,22 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "MTDFB - API 1480 Return Submission (EEITT) - Success response",
+	"description": "Return Submission (EEITT) - Success response",
+	"type": "object",
+	"properties": {
+		"processingDate": {
+			"description": "The date the message was processed",
+			"type": "string",
+			"format": "date-time"
+		},
+		"formBundleNumber": {
+			"type": "string",
+			"pattern": "^[0-9]{12}$"
+		}
+	},
+	"required": [
+		"processingDate",
+		"formBundleNumber"
+	],
+	"additionalProperties": false
+}

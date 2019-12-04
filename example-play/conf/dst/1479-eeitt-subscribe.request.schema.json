@@ -1,0 +1,1165 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "MTDFB - API 1479 - Customer Subscription.",
+	"description": "Create a registration request for new tax payers for EEITTS related regime",
+	"type": "object",
+	"properties": {
+		"registrationDetails": {
+			"description": "ETMP registration details object",
+			"$ref": "#/definitions/registrationDetailsType"
+		},
+		"entityDetails": {
+			"description": "ETMP entity details object",
+			"$ref": "#/definitions/entityDetailsType"
+		},
+		"premiseDetails": {
+			"description": "ETMP premise details object",
+			"$ref": "#/definitions/premiseDetailsType"
+		},
+		"agentDetails": {
+			"description": "ETMP agent details object",
+			"$ref": "#/definitions/agentDetailsType"
+		},
+		"siteDetails": {
+			"description": "ETMP site details object",
+			"$ref": "#/definitions/siteDetailsType"
+		}
+	},
+	"required": [
+		"registrationDetails"
+	],
+	"additionalProperties": false,
+	"definitions": {
+		"isrScenarioString": {
+			"description": "ISR_SCENARIO",
+			"type": "string",
+			"pattern": "^[0-9a-zA-Z{À-˿’}\\- &`'^._]{1,4}$"
+		},
+		"dateString": {
+			"description": "Format YYYY-MM-DD",
+			"type": "string",
+			"pattern": "^\\d{4}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$"
+		},
+		"phoneNumberType": {
+			"description": "Telephone Number",
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 30,
+			"pattern": "^[A-Z0-9 )/(*#-]+$"
+		},
+		"mobileNumberType": {
+			"description": "Mobile Number",
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 30,
+			"pattern": "^[A-Z0-9 )/(*#-]+$"
+		},
+		"faxNumberType": {
+			"description": "Fax Number",
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 30,
+			"pattern": "^[A-Z0-9 )/(*#-]+$"
+		},
+		"emailAddressType": {
+			"description": "Email Address",
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 132,
+			"format": "email"
+		},
+		"titleType": {
+			"description": "Customer title type, 4-digits code representing the customer title. 0001 - Mr, 0002 - Mrs, 0003 - Miss, 0004 - Ms, 0005 - Dr, 0006 - Sir, 0007 - Rev, 0008 - Personal Representative of, 0009 - Professor, 0010 - Lord, 0011 - Lady, 0012 - Dame",
+			"type": "string",
+			"enum": [
+				"0001",
+				"0002",
+				"0003",
+				"0004",
+				"0005",
+				"0006",
+				"0007",
+				"0008",
+				"0009",
+				"0010",
+				"0011",
+				"0012"
+			]
+		},
+		"trueFalseIndicatorType": {
+			"description": "Idicator type used to repesent numeric value for boolean. 1: True, 0: False",
+			"type": "string",
+			"enum": [
+				"0",
+				"1"
+			]
+		},
+		"dataOriginType": {
+			"description": "Data Origin 1-digit code representing the source of submission data. 1 - Portal",
+			"type": "string",
+			"enum": [
+				"1"
+			]
+		},
+		"contactDetailsType": {
+			"type": "object",
+			"properties": {
+				"addressNotInUK": {
+					"description": "Address is NOT in the UK indicator. 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				},
+				"addressInputModeIndicator": {
+					"description": "Address input mode idicator. 1: Lookup, 2: Manual MDTP to provide value - 2",
+					"type": "string",
+					"enum": [
+						"1",
+						"2"
+					]
+				},
+				"houseNumberName": {
+					"description": "House Number / Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine1": {
+					"description": "Address Line-1",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine2": {
+					"description": "Address Line-2",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine3": {
+					"description": "Address Line-3",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine4": {
+					"description": "Address Line-4",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"postCode": {
+					"description": "Post Code",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 10
+				},
+				"nonUKCountry": {
+					"description": "Non Uk country name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"telephoneNumber": {
+					"description": "Telephone Number",
+					"$ref": "#/definitions/phoneNumberType"
+				},
+				"mobileNumber": {
+					"description": "Mobile Number",
+					"$ref": "#/definitions/mobileNumberType"
+				},
+				"email": {
+					"description": "Email Address",
+					"$ref": "#/definitions/emailAddressType"
+				},
+				"fax": {
+					"description": "Fax Number",
+					"$ref": "#/definitions/faxNumberType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"customerIDNumberType": {
+			"type": "object",
+			"properties": {
+				"custIDNumber": {
+					"description": "Customer Identification Number",
+					"type": "string",
+					"minLength": 0,
+					"maxLength": 15
+				},
+				"noIdentifier": {
+					"description": "Customer Identifier Indicator where 1: True, 0: False. Expected to always be False for MDTP submissions.",
+					"$ref": "#/definitions/trueFalseIndicatorType",
+					"default": "0"
+				},
+				"organisationName": {
+					"description": "Organisation Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 160
+				},
+				"title": {
+					"description": "Customer title",
+					"$ref": "#/definitions/titleType"
+				},
+				"custFirstName": {
+					"description": "Customer First Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"custLastName": {
+					"description": "Customer Last Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"custDOB": {
+					"description": "Customer date of birth",
+					"$ref": "#/definitions/dateString"
+				},
+				"dataMismatchIndicator": {
+					"description": "Custoemr identification data mismatch indicator. 1: True, 0: False",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"aboutBusinessType": {
+			"type": "object",
+			"properties": {
+				"organisationName": {
+					"description": "Organisation Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 160
+				},
+				"title": {
+					"description": "No Custoemr Identifier Indicator. 1: True, 0: False. Expected to always be False for MDTP submissions.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				},
+				"firstName": {
+					"description": "Customer First Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"lastName": {
+					"description": "Customer Last Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"dateOfBirth": {
+					"description": "Customer date of birth",
+					"$ref": "#/definitions/dateString"
+				},
+				"tradingName": {
+					"description": "Organisation Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 160
+				}
+			},
+			"additionalProperties": false
+		},
+		"customerIdentificationType": {
+			"type": "object",
+			"properties": {
+				"custIDNumber": {
+					"description": "Customer Identification Number",
+					"type": "string",
+					"minLength": 0,
+					"maxLength": 10
+				},
+				"noIdentifier": {
+					"description": "Customer Identifier Indicator where 1: True, 0: False. Expected to always be False for MDTP submissions.",
+					"$ref": "#/definitions/trueFalseIndicatorType",
+					"default": "0"
+				},
+				"organisationName": {
+					"description": "Organisation Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 160
+				},
+				"title": {
+					"description": "Customer title",
+					"$ref": "#/definitions/titleType"
+				},
+				"custFirstName": {
+					"description": "Customer First Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"custLastName": {
+					"description": "Customer Last Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"custDOB": {
+					"description": "Customer date of birth",
+					"$ref": "#/definitions/dateString"
+				},
+				"dataMismatchIndicator": {
+					"description": "Custoemr identification data mismatch indicator. 1: True, 0: False",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"regimeSpecificDetailsType": {
+			"type": "object",
+			"maxProperties": 3,
+			"properties": {
+				"paramSequence": {
+					"description": "Regime specific parameter sequence number",
+					"type": "string",
+					"pattern": "^[0-9a-zA-Z{À-˿’}\\- &`'^._]{1,3}$"
+				},
+				"paramName": {
+					"description": "Regime specific parameter name",
+					"type": "string",
+					"pattern": "^[0-9a-zA-Z{À-˿’}\\- &`'^._]{1,30}$"
+				},
+				"paramValue": {
+					"description": "Regime specific parameter value",
+					"type": "string",
+					"pattern": "^[0-9a-zA-Z{À-˿’}\\- &`'^._@]{1,255}$"
+				}
+			},
+			"required": [
+				"paramSequence",
+				"paramName",
+				"paramValue"
+			],
+			"additionalProperties": false
+		},
+		"registrationDetailsType": {
+			"type": "object",
+			"properties": {
+				"isrScenario": {
+					"description": "ISR_SCENARIO",
+					"$ref": "#/definitions/isrScenarioString"
+				},
+				"commonDetails": {
+					"description": "Common Details object",
+					"$ref": "#/definitions/registrationCommonDetailsType"
+				},
+				"regimeSpecificDetails": {
+					"description": "Regime Specific Details Array",
+					"type": "array",
+					"minItems": 0,
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/regimeSpecificDetailsType"
+					}
+				}
+			},
+			"additionalProperties": false
+		},
+		"entityDetailsType": {
+			"type": "object",
+			"properties": {
+				"isrScenario": {
+					"description": "ISR_SCENARIO",
+					"$ref": "#/definitions/isrScenarioString"
+				},
+				"formData": {
+					"description": "Regime Specific Details Array",
+					"type": "array",
+					"minItems": 1,
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/entityFormDataType"
+					}
+				}
+			},
+			"required": [
+				"formData"
+			],
+			"additionalProperties": false
+		},
+		"premiseDetailsType": {
+			"type": "object",
+			"properties": {
+				"isrScenario": {
+					"description": "ISR_SCENARIO",
+					"$ref": "#/definitions/isrScenarioString"
+				},
+				"formData": {
+					"description": "Regime Specific Details Array",
+					"type": "array",
+					"minItems": 1,
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/premiseFormDataType"
+					}
+				}
+			},
+			"required": [
+				"formData"
+			],
+			"additionalProperties": false
+		},
+		"agentDetailsType": {
+			"type": "object",
+			"properties": {
+				"isrScenario": {
+					"description": "ISR_SCENARIO",
+					"$ref": "#/definitions/isrScenarioString"
+				},
+				"formData": {
+					"description": "Regime Specific Details Array",
+					"type": "array",
+					"minItems": 1,
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/agentFormDataType"
+					}
+				}
+			},
+			"required": [
+				"formData"
+			],
+			"additionalProperties": false
+		},
+		"siteDetailsType": {
+			"type": "object",
+			"properties": {
+				"isrScenario": {
+					"description": "ISR_SCENARIO",
+					"$ref": "#/definitions/isrScenarioString"
+				},
+				"formData": {
+					"description": "Regime Specific Details Array",
+					"type": "array",
+					"minItems": 1,
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/siteFormDataType"
+					}
+				}
+			},
+			"required": [
+				"formData"
+			],
+			"additionalProperties": false
+		},
+		"registrationCommonDetailsType": {
+			"type": "object",
+			"properties": {
+				"legalEntity": {
+					"description": "Organisation details indicator",
+					"$ref": "#/definitions/registrationCommonDetailsLegalEntityType"
+				},
+				"customerIdentificationNumber": {
+					"description": "Organisation details indicator",
+					"$ref": "#/definitions/customerIDNumberType"
+				},
+				"aboutBusiness": {
+					"description": "Organisation details indicator",
+					"$ref": "#/definitions/aboutBusinessType"
+				},
+				"businessContactDetails": {
+					"description": "Organisation details indicator",
+					"$ref": "#/definitions/contactDetailsType"
+				},
+				"correspondenceAddressDifferent": {
+					"description": "Indicator for - Is the correspondence address different to the business contact address provided above? 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				},
+				"correspondenceContactDetails": {
+					"description": "Organisation details indicator",
+					"$ref": "#/definitions/contactDetailsType"
+				},
+				"legacyCustomerReference": {
+					"description": "Organisation details indicator",
+					"$ref": "#/definitions/registrationCommonDetailsLegacyCustRefType"
+				},
+				"declarationStatus": {
+					"description": "2-digits code representing the declaration status. 01 - Authorised Official, 02 - Company Secretary, 03 - Director, 04 - Partner, 05 - Sole Proprietor, 06 - Trustee, 07 - Other",
+					"type": "string",
+					"enum": [
+						"01",
+						"02",
+						"03",
+						"04",
+						"05",
+						"06",
+						"07"
+					]
+				},
+				"declarationAcceptedIndicator": {
+					"description": "Indicator for - Is the declaration information acceptable? 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"registrationCommonDetailsLegalEntityType": {
+			"type": "object",
+			"properties": {
+				"organisationType": {
+					"description": "Organisation Type - 1: Sole Proprietor, 2: LLP, 3: Partnership, 5: Unincorporated Body, 6:Trust, 7: Limited Company, 12: Lloyds Syndicate",
+					"type": "string",
+					"enum": [
+						"1",
+						"2",
+						"3",
+						"5",
+						"6",
+						"7",
+						"12"
+					]
+				},
+				"dateOfApplication": {
+					"description": "Date of Application",
+					"$ref": "#/definitions/dateString"
+				},
+				"taxStartDate": {
+					"description": "Tax Start Date",
+					"$ref": "#/definitions/dateString"
+				}
+			},
+			"additionalProperties": false
+		},
+		"registrationCommonDetailsLegacyCustRefType": {
+			"type": "object",
+			"properties": {
+				"customerMigratedFromLegacySystem": {
+					"description": "Has the customer been migrated from legacy system indicator",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				},
+				"customerReferenceNumber": {
+					"description": "Legacy Customer Reference Number",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 30
+				}
+			},
+			"additionalProperties": false
+		},
+		"entityFormDataType": {
+			"type": "object",
+			"properties": {
+				"commonDetails": {
+					"description": "Common Details object",
+					"$ref": "#/definitions/entityCommonDetailsType"
+				},
+				"regimeSpecificDetails": {
+					"description": "Regime Specific Details Array",
+					"type": "array",
+					"minItems": 0,
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/regimeSpecificDetailsType"
+					}
+				}
+			},
+			"additionalProperties": false
+		},
+		"entityCommonDetailsType": {
+			"type": "object",
+			"properties": {
+				"action": {
+					"description": "1-digit code representing the user action. 1 - Add, 2 - Amend, 3 - Remove",
+					"type": "string",
+					"enum": [
+						"1",
+						"2",
+						"3"
+					]
+				},
+				"typeOfEntity": {
+					"description": "Type of Entity object",
+					"$ref": "#/definitions/entityCommonDetailsEntityType"
+				},
+				"organisationType": {
+					"description": "Organisation Type - 1: Sole Proprietor, 2: LLP, 3: Partnership, 5. Unincorporated Body, 7: Limited Company",
+					"type": "string",
+					"enum": [
+						"1",
+						"2",
+						"3",
+						"5",
+						"7"
+					]
+				},
+				"joiningDate": {
+					"description": "Joining Date",
+					"$ref": "#/definitions/dateString"
+				},
+				"leavingDate": {
+					"description": "Leaving Date",
+					"$ref": "#/definitions/dateString"
+				},
+				"customerIdentification": {
+					"description": "Customer Identification details",
+					"$ref": "#/definitions/customerIdentificationType"
+				},
+				"aboutBusiness": {
+					"description": "Organisation details indicator",
+					"$ref": "#/definitions/aboutBusinessType"
+				},
+				"businessContactDetails": {
+					"description": "Organisation details indicator",
+					"$ref": "#/definitions/entityCommonDetailsContactType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"entityCommonDetailsEntityType": {
+			"type": "object",
+			"properties": {
+				"entityType": {
+					"description": "Type of entity: 1-digit code representing type of entity. 1 - Group Member, 2 - Group Representative Member, 3 -  Controlling Body, 4 - Partner",
+					"type": "string",
+					"enum": [
+						"1",
+						"2",
+						"3",
+						"4"
+					]
+				},
+				"groupRepresentativeMemberIndicator": {
+					"description": "Indicator for - Is now the Group Representative Member? 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				},
+				"controllingBodyIndicator": {
+					"description": "Indicator for - Is now the Controlling Body? 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				},
+				"alsoControllingBodyIndicator": {
+					"description": "Indicator for - Is also the Controlling Body? 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"entityCommonDetailsContactType": {
+			"type": "object",
+			"properties": {
+				"addressNotInUK": {
+					"description": "Address is NOT in the UK indicator. 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				},
+				"addressInputModeIndicator": {
+					"description": "Address input mode idicator. 1: Lookup, 2: Manual MDTP to provide value - 2",
+					"type": "string",
+					"enum": [
+						"1",
+						"2"
+					]
+				},
+				"houseNumberName": {
+					"description": "House Number / Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine1": {
+					"description": "Address Line-1",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine2": {
+					"description": "Address Line-2",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine3": {
+					"description": "Address Line-3",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine4": {
+					"description": "Address Line-4",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"postCode": {
+					"description": "Post Code",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 10
+				},
+				"nonUKCountry": {
+					"description": "Non Uk country name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"telephoneNumber": {
+					"description": "Telephone Number",
+					"$ref": "#/definitions/phoneNumberType"
+				},				
+				"email": {
+					"description": "Email Address",
+					"$ref": "#/definitions/emailAddressType"
+				},
+				"fax": {
+					"description": "Fax Number",
+					"$ref": "#/definitions/faxNumberType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"premiseFormDataType": {
+			"type": "object",
+			"properties": {
+				"commonDetails": {
+					"description": "Common Details object",
+					"$ref": "#/definitions/premiseCommonDetailsType"
+				},
+				"regimeSpecificDetails": {
+					"description": "Regime Specific Details Array",
+					"type": "array",
+					"minItems": 0,
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/regimeSpecificDetailsType"
+					}
+				}
+			},
+			"additionalProperties": false
+		},
+		"premiseCommonDetailsType": {
+			"type": "object",
+			"properties": {
+				"action": {
+					"description": "1-digit code representing the user action. 1 - New premise",
+					"type": "string",
+					"enum": [
+						"1"
+					]
+				}
+			},
+			"additionalProperties": false
+		},
+		"agentFormDataType": {
+			"type": "object",
+			"properties": {
+				"commonDetails": {
+					"description": "Common Details object",
+					"$ref": "#/definitions/agentCommonDetailsType"
+				},
+				"regimeSpecificDetails": {
+					"description": "Regime Specific Details Array",
+					"type": "array",
+					"minItems": 0,
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/regimeSpecificDetailsType"
+					}
+				}
+			},
+			"additionalProperties": false
+		},
+		"agentCommonDetailsType": {
+			"type": "object",
+			"properties": {
+				"action": {
+					"description": "1-digit code representing the user action. 1 - Create an Agent, 2 - Amend an Agent, 3 - Appoint an Agent, 4 - Disband an Agent,",
+					"type": "string",
+					"enum": [
+						"1",
+						"2",
+						"3",
+						"4"
+					]
+				},
+				"disbandAgentRelationship": {
+					"description": "Disband Agent Relationship",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"agentIdentification": {
+					"description": "Agent Identification information",
+					"$ref": "#/definitions/agentIdentificationType"
+				},
+				"legalStatus": {
+					"description": "Organisation Type - 1: Sole Proprietor, 2: LLP, 3: Partnership, 5. Unincorporated Body, 7: Limited Company",
+					"type": "string",
+					"enum": [
+						"1",
+						"2",
+						"3",
+						"5",						
+						"7"
+					]
+				},
+				"aboutAgent": {
+					"description": "About the agent",
+					"$ref": "#/definitions/aboutAgentType"
+				},
+				"correspondenceAddressDetails": {
+					"description": "Organisation details indicator",
+					"$ref": "#/definitions/agentContactDetailsType"
+				},
+				"agentRepresentativeDetails": {
+					"description": "Agent Representative Details",
+					"$ref": "#/definitions/agentRepresentativeDetailsType"
+				},
+				"declarationStatus": {
+					"description": "2-digits code representing the declaration status. 01 - Authorised Official, 02 - Company Secretary, 03 - Director, 04 - Partner, 05 - Sole Proprietor, 06 - Trustee",
+					"type": "string",
+					"enum": [
+						"01",
+						"02",
+						"03",
+						"04",
+						"05",
+						"06"
+					]
+				},
+				"declarationAcceptedIndicator": {
+					"description": "Indicator for - Is the declaration information acceptable? 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"agentIdentificationType": {
+			"type": "object",
+			"properties": {
+				"agentIDNumber": {
+					"description": "Agent Identification Number",
+					"type": "string",
+					"minLength": 0,
+					"maxLength": 11
+				},
+				"noIdentifier": {
+					"description": "Agent Identifier Indicator where 1: True, 0: False. Expected to always be False for MDTP submissions.",
+					"$ref": "#/definitions/trueFalseIndicatorType",
+					"default": "0"
+				},
+				"organisationName": {
+					"description": "Organisation Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 160
+				},
+				"title": {
+					"description": "Agent title",
+					"$ref": "#/definitions/titleType"
+				},
+				"firstName": {
+					"description": "Agent First Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"lastName": {
+					"description": "Agent Last Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"agentDOB": {
+					"description": "Agent date of birth",
+					"$ref": "#/definitions/dateString"
+				},
+				"arn": {
+					"description": "Agent Registration Number (ARN)",
+					"type": "string",
+					"pattern": "^[A-Z](ARN)[0-9]{7}$"
+				},
+				"correspondenceExistIndicator": {
+					"description": "Indicator for - Agent correspondence exist ? where 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType",
+					"default": "0"
+				},
+				"dataMismatchIndicator": {
+					"description": "Agent identification data mismatch indicator. 1: True, 0: False",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"aboutAgentType": {
+			"type": "object",
+			"properties": {
+				"organisationName": {
+					"description": "Organisation Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 160
+				},
+				"title": {
+					"description": "Agent title",
+					"$ref": "#/definitions/titleType"
+				},
+				"firstName": {
+					"description": "Customer First Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"lastName": {
+					"description": "Customer Last Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"dateOfBirth": {
+					"description": "Customer date of birth",
+					"$ref": "#/definitions/dateString"
+				}
+			},
+			"additionalProperties": false
+		},
+		"agentContactDetailsType": {
+			"type": "object",
+			"properties": {
+				"addressInputModeIndicator": {
+					"description": "Address input mode idicator. 1: Lookup, 2: Manual MDTP to provide value - 2",
+					"type": "string",
+					"enum": [
+						"1",
+						"2"
+					]
+				},
+				"houseNumberName": {
+					"description": "House Number / Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine1": {
+					"description": "Address Line-1",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine2": {
+					"description": "Address Line-2",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine3": {
+					"description": "Address Line-3",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine4": {
+					"description": "Address Line-4",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"postCode": {
+					"description": "Post Code",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 10
+				},
+				"telephoneNumber": {
+					"description": "Telephone Number",
+					"$ref": "#/definitions/phoneNumberType"
+				},
+				"mobileNumber": {
+					"description": "Mobile Number",
+					"$ref": "#/definitions/mobileNumberType"
+				},
+				"email": {
+					"description": "Email Address",
+					"$ref": "#/definitions/emailAddressType"
+				},
+				"fax": {
+					"description": "Fax Number",
+					"$ref": "#/definitions/faxNumberType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"agentRepresentativeDetailsType": {
+			"type": "object",
+			"properties": {
+				"adminRepresentativeIndicator": {
+					"description": "Administrative Representative Indicator. 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				},
+				"agentIndicator": {
+					"description": "Agent Indicator. 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				},
+				"agentCategory": {
+					"description": "1-digit code representing the agent relationship category. 1 -  Receives notice to file and all other correspondences, 2 - Receives notice to file correspondence, 3 -  Receives no correspondence",
+					"type": "string",
+					"enum": [
+						"1",
+						"2",
+						"3"
+					]
+				},
+				"fiscalRepresentativeIndicator": {
+					"description": "Fiscal Representative Indicator. 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				},
+				"taxRepresentativeIndicator": {
+					"description": "Tax Representative Indicator. 1: True, 0: False.",
+					"$ref": "#/definitions/trueFalseIndicatorType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"siteFormDataType": {
+			"type": "object",
+			"properties": {
+				"commonDetails": {
+					"description": "Common Details object",
+					"$ref": "#/definitions/siteCommonDetailsType"
+				},
+				"regimeSpecificDetails": {
+					"description": "Regime Specific Details Array",
+					"type": "array",
+					"minItems": 0,
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/regimeSpecificDetailsType"
+					}
+				}
+			},
+			"additionalProperties": false
+		},
+		"siteCommonDetailsType": {
+			"type": "object",
+			"properties": {
+				"action": {
+					"description": "1-digit code representing the user action. 1 - New site, 2 - Amend site, 3 - Close site, 4 - Transfer site",
+					"type": "string",
+					"enum": [
+						"1",
+						"2",
+						"3",
+						"4"
+					]
+				},
+				"retrieveSiteReferenceNumber": {
+					"description": "Site reference/License or permit number",
+					"type": "string",
+					"maxLength": 20
+				},
+				"siteClosureDetails": {
+					"description": "Site Closure Details",
+					"$ref": "#/definitions/siteClosureDetailsType"
+				},
+				"siteAddress": {
+					"description": "Site Address",
+					"$ref": "#/definitions/siteAddressType"
+				}
+			},
+			"additionalProperties": false
+		},
+		"siteClosureDetailsType": {
+			"type": "object",
+			"properties": {
+				"siteReferenceNumber": {
+					"description": "Site reference /License or permit number",
+					"type": "string",
+					"maxLength": 20
+				},
+				"dateOfClosure": {
+					"description": "Date of site closure",
+					"$ref": "#/definitions/dateString"
+				},
+				"closureReason": {
+					"description": "Reason for site closure",
+					"type": "string",
+					"maxLength": 255
+				},
+				"tradingName": {
+					"description": "Customer Last Name",
+					"type": "string",
+					"maxLength": 160
+				}
+			},
+			"additionalProperties": false
+		},
+		"siteAddressType": {
+			"type": "object",
+			"properties": {
+				"tradingName": {
+					"description": "Trading Name",
+					"type": "string",
+					"maxLength": 160
+				},
+				"siteReferenceNumber": {
+					"description": "New site reference /License or permit number",
+					"type": "string",
+					"maxLength": 20
+				},
+				"addressInputModeIndicator": {
+					"description": "Address input mode idicator. 1: Lookup, 2: Manual MDTP to provide value - 2",
+					"type": "string",
+					"enum": [
+						"1",
+						"2"
+					]
+				},
+				"houseNumberName": {
+					"description": "House Number / Name",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine1": {
+					"description": "Address Line-1",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine2": {
+					"description": "Address Line-2",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine3": {
+					"description": "Address Line-3",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"addressLine4": {
+					"description": "Address Line-4",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 40
+				},
+				"postCode": {
+					"description": "Post Code",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 10
+				},
+				"telephoneNumber": {
+					"description": "Telephone Number",
+					"$ref": "#/definitions/phoneNumberType"
+				},
+				"mobileNumber": {
+					"description": "Mobile Number",
+					"$ref": "#/definitions/mobileNumberType"
+				},
+				"email": {
+					"description": "Email Address",
+					"$ref": "#/definitions/emailAddressType"
+				},
+				"fax": {
+					"description": "Fax Number",
+					"$ref": "#/definitions/faxNumberType"
+				}
+			},
+			"additionalProperties": false
+		}
+	}
+}

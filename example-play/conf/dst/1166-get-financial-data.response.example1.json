@@ -1,0 +1,52 @@
+{
+    "idType": "MTDBSA",
+    "idNumber": "XQIT00000000001",
+    "regimeType": "ITSA",
+    "processingDate": "2017-03-07T09:30:00.000Z",
+    "financialTransactions": [
+      {
+         "chargeType": "PAYE",
+         "mainType": "2100",
+         "periodKey": "13RL",
+         "periodKeyDescription": "abcde",
+         "taxPeriodFrom": "1967-08-13",
+         "taxPeriodTo": "1967-08-14",
+         "businessPartner": "6622334455",
+         "contractAccountCategory": "02",
+         "contractAccount": "X",
+         "contractObjectType": "ABCD",
+         "contractObject": "00000003000000002757",
+         "sapDocumentNumber": "1040000872",
+         "sapDocumentNumberItem": "XM00",
+         "chargeReference": "XM002610011594",
+         "mainTransaction": "1234",
+         "subTransaction": "5678",
+         "originalAmount": 10000,
+         "outstandingAmount": 10000,
+         "clearedAmount": 10000,
+         "accruedInterest": 10000,
+         "items": [
+            {
+               "subItem": "001",
+               "dueDate": "1967-08-13",
+               "amount": 10000,
+               "clearingDate": "1967-08-13",
+               "clearingReason": "01",
+               "outgoingPaymentMethod": "A",
+               "paymentLock": "a",
+               "clearingLock": "A",
+               "interestLock": "C",
+               "dunningLock": "1",
+               "returnFlag": true,
+               "paymentReference": "a",
+               "paymentAmount": 10000,
+               "paymentMethod": "A",
+               "paymentLot": "081203010024",
+               "paymentLotItem": "000001",
+               "clearingSAPDocument": "3350000253",
+               "statisticalDocument": "A"
+            }
+         ]
+      }
+   ]
+}

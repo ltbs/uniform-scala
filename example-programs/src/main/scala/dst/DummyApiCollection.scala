@@ -55,34 +55,6 @@ object DummySubscriber extends customer.EeittCustomerSubscription[Id] {
       ) = nat(orig.apply(regime, identification, registration, entity, premise, agent))
     }
   }
-
-}
-
-object DummyEeittReturn extends eeittreturn.EeittReturn[Id] {
-  import eeittreturn._
-  def apply(
-    regime: String,
-    identification: apis.Identification,
-    periodKey: String,
-    period: (LocalDate, LocalDate),
-    regimeSpecificDetails: Map[String,String],
-    receivedAt: LocalDateTime
-  ): Either[NonEmptySet[ErrorResponse],EeittReturnResponse] =
-    EeittReturnResponse(LocalDateTime.now, "1234").asRight[NonEmptySet[ErrorResponse]]
-
-  def convert[G[_]](nat: Id ~> G) = {
-    val orig = this
-    new eeittreturn.EeittReturn[G] {
-      def apply(
-        regime: String,
-        identification: apis.Identification,
-        periodKey: String,
-        period: (LocalDate, LocalDate),
-        regimeSpecificDetails: Map[String,String],
-        receivedAt: LocalDateTime
-      ) = nat(orig.apply(regime, identification, periodKey, period, regimeSpecificDetails, receivedAt))
-    }
-  }
 }
 
 object DummyGetObligation extends getobligation.GetObligation[Id] {

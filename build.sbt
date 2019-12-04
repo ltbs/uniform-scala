@@ -342,6 +342,7 @@ lazy val `example-play` = project.settings(commonSettings)
     ),
     PlayKeys.playDefaultPort := 9001,
     libraryDependencies ++= Seq(
+      "com.github.fge" % "json-schema-validator" % "2.2.6",
       filters,
       guice
     ),

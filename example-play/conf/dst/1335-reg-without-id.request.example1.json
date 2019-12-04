@@ -1,0 +1,29 @@
+{
+    "regime": "FHDDS",
+    "acknowledgementReference": "12345678901234567890123456789012",
+    "isAnAgent": false,
+    "isAGroup": false,
+    "identification": {
+        "idNumber": "123456",
+        "issuingInstitution": "France Institution",
+        "issuingCountryCode": "FR"
+    },
+    "individual": {
+        "firstName": "John",
+        "lastName": "Smith",
+        "dateOfBirth": "1990-04-03"
+    },
+    "address": {
+        "addressLine1": "100, Sutton Street",
+        "addressLine2": "Wokingham",
+        "addressLine3": "Surrey",
+        "addressLine4": "London",
+        "postalCode": "DH1 4EJ",
+        "countryCode": "GB"
+    },
+    "contactDetails": {
+        "phoneNumber": "01332752856",
+        "mobileNumber": "07782565326",
+        "faxNumber": "01332754256"
+    }
+} 

@@ -1,0 +1,12 @@
+{
+   "failures": [
+        {
+            "code": "INVALID_REGIME",
+            "reason": "Request has not passed validation.  Invalid regime."
+        },
+        {
+            "code": "INVALID_PAYLOAD",
+            "reason": "Request has not passed validation. Invalid payload."
+        }
+    ]
+}

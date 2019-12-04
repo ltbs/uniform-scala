@@ -1,0 +1,58 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "API1450  error response schema",
+    "type": "object",
+    "oneOf": [
+        {
+            "$ref": "#/definitions/failureResponseElement"
+        },
+        {
+            "$ref": "#/definitions/failureResponseArray"
+        }
+    ],
+    "definitions": {
+        "failureResponseArray": {
+            "type": "object",
+            "properties": {
+                "failures": {
+                    "type": "array",
+                    "minItems": 2,
+                    "uniqueItems": true,
+                    "items": {
+                        "$ref": "#/definitions/failureResponseElement"
+                    }
+                }
+            },
+            "required": [
+                "failures"
+            ],
+            "additionalProperties": false
+        },
+        "failureResponseElement": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "enum": [
+                        "BAD_REQUEST",
+                        "INVALID_PAYLOAD",
+                        "SERVER_ERROR",
+                        "SERVICE_UNAVAILABLE"
+                    ],
+                    "description": "Keys for all the errors returned"
+                },
+                "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160,
+                    "description": "A simple description for the failure"
+                }
+            },
+            "required": [
+                "code",
+                "reason"
+            ],
+            "additionalProperties": false
+        }
+    }
+}

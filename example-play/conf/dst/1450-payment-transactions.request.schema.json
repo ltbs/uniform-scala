@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "OPG to ETMP Payment transactions",
+  "description": "OPG to ETMP Payment transactions",
+  "type": "object",
+  "properties": {
+    "header": {
+      "$ref": "#/definitions/header"
+    },
+    "transactions": {
+      "$ref": "#/definitions/transactions"
+    }
+  },
+  "required": [
+    "header",
+    "transactions"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "header": {
+      "type": "object",
+      "properties": {
+        "messageSequence": {
+          "description": "A number assigned to each file. Range 1 to 999999 and increase by 1 for each message",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 999999
+        },
+        "numberOfRecords": {
+          "description": "Total number of transactions",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "totalNetInPence": {
+          "description": "Sum of net items in pence",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999999999999999999
+         },
+        "totalCommissionInPence": {
+          "description": "Sum of commission items in pence",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999999999999999999
+        },
+        "totalGrossInPence": {
+          "description": "Sum of gross items in pence",
+          "type": "integer",
+          "minimum": 0,
+           "maximum": 999999999999999999
+        },
+        "messageGenerationDateTime": {
+          "description": "Date and Time when OPG created the message",
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "messageSequence",
+        "numberOfRecords",
+        "totalNetInPence",
+        "totalCommissionInPence",
+        "totalGrossInPence",
+        "messageGenerationDateTime"
+      ],
+      "additionalProperties": false
+    },
+    "transactions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2000,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "properties": {
+          "paymentDate": {
+            "description": "YYYY-MM-DD",
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$"
+          },
+          "taxType": {
+            "description": "Values can be P800, P302, PARC, PNGR, CDSX, NIIV or ZDST.",
+            "type": "string",
+            "pattern": "^[A-Z0-9]{4}$"
+          },
+          "taxRef": {
+            "description": "Value and Example:NINO ( including check character) P800 and start of tax year eg. YN464834DP8002016 (17 Character long). NINO ( including check character) P302 and start of tax year eg. YN464834DP3022016 (17 Character long). For PNGR the format will be 14 character charge reference number eg. XaPRnnnnnnnnnn (14 Character long). For PARC the format will be the standard ETMP 14 character charge reference format eg. Xmnnnnnnnnnnnn (where m is a modulus check)For BSP NI this will always be the ‘NI’ identifier eg.XQNI00000100046 (15 Character long).Value and Example:NINO ( including check character) P800 and start of tax year eg. YN464834DP8002016 (17 Character long). NINO ( including check character) P302 and start of tax year eg. YN464834DP3022016 (17 Character long). For 04AW CDS this will be CDSI + 12 char charge reference  - total 16 char long. For 84GN DST - this will always be the DST identifier that has been assigned as part of the subscription journey. No concatenations will be required eg XADST0000010000",
+            "type": "string",
+            "pattern": "^(((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]?P800\\d{4})$|^(((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]?P302\\d{4})$|^(\\d{2}[A-Z][0-9]{5}P302[0-9]{4})$|^([A-Z]{4}[0-9]{10})$|^([A-Z]{4}[0-9]{11})$|^CDSI[a-zA-Z0-9]{12}$|^(X[A-Z]{1}[0-9]{12})$|^([A-Z]{2}DST[0-9]{10})$"
+          },
+          "paymentRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "netAmountInPence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999999
+          },
+          "commissionAmountInPence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999999
+          },
+          "grossAmountInPence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999999
+          },
+          "creditOrDebitCard": {
+            "type": "string",
+            "enum": [
+              "C",
+              "D"
+            ]
+          },
+          "chargeReference": {
+            "description": "ETMP Charge Reference: Example: XR007000003990. Mandatory when Tax Type = ‘NIIV’. Eg.XA000010177911.",
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9]{14}$"        
+          }
+        },
+        "required": [
+          "paymentDate",
+          "taxType",
+          "taxRef",
+          "paymentRef",
+          "netAmountInPence",
+          "commissionAmountInPence",
+          "grossAmountInPence",
+          "creditOrDebitCard"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
