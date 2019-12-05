@@ -43,7 +43,7 @@ object DstReturnSchema extends eeittreturn.EeittReturn[Id] {
   lazy val schema = SchemaChecker(getClass.getResourceAsStream("/dst/returns.schema.json"))
 
   def apply(
-    identification: apis.Identification,
+    dstRegNo: String, 
     period: Period,
     activity: Map[Activity, ActivityReturn],
     repaymentDetails: Option[RepaymentDetails],
@@ -102,7 +102,7 @@ object DstReturnSchema extends eeittreturn.EeittReturn[Id] {
     }
 
     val regimeSpecificDetails: Seq[(String, String)] = Seq(
-//      "REGISTRATION_NUMBER" -> ???, // MANDATORY ID Reference number ZGEN_FBP_REFERENCE
+      "REGISTRATION_NUMBER" -> dstRegNo, // MANDATORY ID Reference number ZGEN_FBP_REFERENCE
       "PERIOD_FROM" -> period.start.toString, // MANDATORY Period From  DATS
       "PERIOD_TO" -> period.start.toString, // MANDATORY Period To  DATS
 //      "DST_FIRST_RETURN" -> ???, // Is this the first return you have submitted for this company and this accounting period? CHAR1
