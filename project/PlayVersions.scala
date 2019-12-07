@@ -24,7 +24,7 @@ object Play26 extends Platform {
   def sbtSuffix: String = "26"
   def enable(project: Project): Project = project
     .settings(
-      libraryDependencies += "com.typesafe.play" %% "play" % "2.6.24" % "provided"
+      libraryDependencies += "com.typesafe.play" %% "play" % "2.6.25" % "provided"
     )
 }
 
