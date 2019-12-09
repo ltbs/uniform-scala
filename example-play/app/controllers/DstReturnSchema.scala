@@ -48,10 +48,11 @@ object DstReturnSchema extends eeittreturn.EeittReturn[Id] {
     activity: Map[Activity, ActivityReturn],
     repaymentDetails: Option[RepaymentDetails],
     finInfo: FinancialInformation,
-    breakdown: List[LiabilityBreakdownEntry]
+    breakdown: List[LiabilityBreakdownEntry],
+    isAmend: Boolean = false
   ): Either[NonEmptySet[ErrorResponse],EeittReturnResponse] = {
 
-    def bool(in: Boolean): String = if(in) "T" else "F"
+    def bool(in: Boolean): String = if(in) "X" else " "
 
     import Activity._
     val activityEntries: Seq[(String, String)] =
@@ -97,7 +98,7 @@ object DstReturnSchema extends eeittreturn.EeittReturn[Id] {
       Seq(
         "DST_GROUP_MEMBER" -> e.memberName, // Group Member Company Name CHAR40
         "DST_GROUP_MEM_ID" -> e.utr, // Company registration reference number (UTR) CHAR40
-        "DST_GROUP_MEM_LIABILITY" -> e.memberLiability.toString, // DST liability amount per group member BETRW_KK
+        "DST_GROUP_MEM_LIABILITY" -> e.memberLiability.toString // DST liability amount per group member BETRW_KK
       )
     }
 
@@ -105,15 +106,13 @@ object DstReturnSchema extends eeittreturn.EeittReturn[Id] {
       "REGISTRATION_NUMBER" -> dstRegNo, // MANDATORY ID Reference number ZGEN_FBP_REFERENCE
       "PERIOD_FROM" -> period.start.toString, // MANDATORY Period From  DATS
       "PERIOD_TO" -> period.start.toString, // MANDATORY Period To  DATS
-//      "DST_FIRST_RETURN" -> ???, // Is this the first return you have submitted for this company and this accounting period? CHAR1
-    ) ++ subjectEntries ++ activityEntries ++ Seq(
+      "DST_FIRST_RETURN" -> bool(isAmend), // Is this the first return you have submitted for this company and this accounting period? CHAR1
       "DST_RELIEF" -> finInfo.crossBorderRelief.toString, // Are you claiming relief for relevant cross-border transactions? CHAR1
       "DST_TAX_ALLOWANCE" -> finInfo.taxFreeAllowance.toString, // What tax-free allowance is being claimed against taxable revenues? BETRW_KK
       "DST_GROUP_LIABILITY" -> finInfo.totalLiability.toString, // MANDATORY Digital Services Group Total Liability BETRW_KK
       "DST_REPAYMENT_REQ" -> bool(repaymentDetails.isDefined), // Repayment for overpayment required? CHAR1
-    ) ++ repaymentInfo ++ Seq (
-      // "DATA_ORIGIN" -> ???, // MANDATORY Data origin CHAR2
-    ) ++ breakdownEntries
+      "DATA_ORIGIN" -> "1" // MANDATORY Data origin CHAR2      
+    ) ++ subjectEntries ++ activityEntries ++ repaymentInfo ++ breakdownEntries
 
 
 
@@ -151,10 +150,14 @@ object DstReturnSchema extends eeittreturn.EeittReturn[Id] {
     val orig = this
     new eeittreturn.EeittReturn[G] {
       def apply(
-        identification: apis.Identification,
+        dstRegNo: String,
         period: Period,
-        activity: Map[Activity, ActivityReturn]
-      ) = nat(orig.apply(identification, period, activity))
+        activity: Map[Activity, ActivityReturn],
+        repaymentDetails: Option[RepaymentDetails],
+        finInfo: FinancialInformation,
+        breakdown: List[LiabilityBreakdownEntry],
+        isAmend: Boolean = false
+      ) = nat(orig.apply(dstRegNo, period, activity, repaymentDetails, finInfo, breakdown, isAmend))
     }
   }
 }

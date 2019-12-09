@@ -8,9 +8,25 @@ class DstReturnSchemaSpec extends AnyFlatSpec with Matchers {
 
   "A return API call" should "conform to the schema" in {
     DstReturnSchema(
-      Nino(""), //identification
+      "BCD", //identification
       Period(LocalDate.of(2018,1,1), LocalDate.of(2019,12,31)), //period: (LocalDate, LocalDate),
-      Map.empty
+      Map.empty,
+      None,
+      FinancialInformation(false, 1, 1),
+      Nil,
+      false
+    )
+  }
+ 
+
+}
+
+
+
+class DstRegSchemaSpec extends AnyFlatSpec with Matchers {
+
+  "A return API call" should "conform to the schema" in {
+    DstRegSchema(
     )
   }
  

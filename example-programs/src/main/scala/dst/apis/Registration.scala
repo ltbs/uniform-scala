@@ -122,7 +122,7 @@ trait Registration[F[_]] {
   /** I have literally no idea what this is for */
   def noIndividualOrOrganisation(
     regime: String,
-    isAnAgent: Boolean,
+    isAnAgent: Boolean
   ): F[Any]
 }
 

@@ -8,6 +8,7 @@ import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
 import scalatags.Text.all._
+import java.time.LocalDate
 
 @Singleton class DstController @Inject()(
   implicit val messagesApi: MessagesApi,
@@ -38,9 +39,10 @@ import scalatags.Text.all._
     import interpreter._
     val playProgram = returnJourney[interpreter.WM](
       create[TellTypes, AskTypesReturn](interpreter.messages(request)),
-      DummyAuth.authRecord.id,
       DstReturnSchema.convert(ToWM),
-      DummyGetObligation.convert(ToWM)
+      "ABCD",
+      Period(LocalDate.of(2018,1,1), LocalDate.of(2019,1,1)),
+      false
     )
     playProgram.run(targetId, purgeStateUponCompletion = true) {
       i: Unit => Ok(s"$i").pure[Future]

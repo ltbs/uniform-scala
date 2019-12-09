@@ -42,8 +42,12 @@ trait EeittReturn[F[_]] {
   val isrScenario = "ZDS1"
 
   def apply(
-    identification: Identification,
+    dstRegNo: String, 
     period: Period,
-    activity: Map[Activity, ActivityReturn]
+    activity: Map[Activity, ActivityReturn],
+    repaymentDetails: Option[RepaymentDetails],
+    finInfo: FinancialInformation,
+    breakdown: List[LiabilityBreakdownEntry],
+    isAmend: Boolean = false
   ): F[Either[NonEmptySet[ErrorResponse], EeittReturnResponse]]
 }

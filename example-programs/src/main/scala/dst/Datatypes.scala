@@ -112,18 +112,6 @@ case class Period(
   end: Day
 )
 
-case class Basic (
-  businessPartner : String,
-  contractAccount : String,
-  threeThreeRt : String,
-  formBundle : String,
-  contractObject : String,
-  registrationNumber : String,
-  acknowledgement : String,
-  period : (Day, Day),
-  chargeRef : String
-)
-
 sealed trait Activity extends EnumEntry
 
 object Activity extends Enum[Activity] { 
@@ -134,10 +122,6 @@ object Activity extends Enum[Activity] {
   case object SearchEngine extends Activity
   case object Marketplace extends Activity
 }
-
-case class CompanyInformation (
-  isAmendment : Boolean
-)
 
 case class ActivityReturn (
   alternateChargeProvision : Boolean,
@@ -164,20 +148,11 @@ case class RepaymentDetails (
 case class FinancialInformation (
   crossBorderRelief : Boolean,
   taxFreeAllowance : Money,
-  totalLiability : Money,
-  repaymentDetails : Option[RepaymentDetails]
+  totalLiability : Money
 )
 
 case class LiabilityBreakdownEntry (
   memberName : String,
   utr : String,
   memberLiability : Money
-)
-
-case class ReturnForm (
-  basic: Basic,
-  companyInformation: CompanyInformation,
-  activity: Map[Activity, ActivityReturn],
-  financialInformation: FinancialInformation,
-  breakdown: List[LiabilityBreakdownEntry]
 )

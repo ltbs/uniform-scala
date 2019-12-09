@@ -82,32 +82,31 @@ package object dst {
 
   }
 
-  type AskTypesReturn = Basic :: CompanyInformation :: Set[Activity] :: ActivityReturn :: FinancialInformation :: List[LiabilityBreakdownEntry] :: NilTypes
+  type AskTypesReturn = Set[Activity] :: ActivityReturn :: FinancialInformation :: List[LiabilityBreakdownEntry] :: Option[RepaymentDetails] :: NilTypes
 
   def returnJourney[F[_] : Monad](
     i: Language[F, TellTypes, AskTypesReturn],
-    id: Identification, 
     eeittReturns: eeittreturn.EeittReturn[F],
-    obligations: getobligation.GetObligation[F]
+    dstRegNo: String = "ABCD",
+    period: Period,
+    isAmend: Boolean
   ): F[Unit] = {
     import i._
 
     for {
-      completedPeriods <- obligations.apply(id, "DST", Set(Status.Fulfilled), (Day.now.minusYears(2), Day.now))
-      basic <- ask[Basic]("basic")
-      company <- ask[CompanyInformation]("company-information")
+//      completedPeriods <- obligations.apply(id, "DST", Set(Status.Fulfilled), (Day.now.minusYears(2), Day.now))
       activity <- {ask[Set[Activity]]("activity") >>= { _.map{ a => ask[ActivityReturn](s"activity-$a").map(x => a -> x)}.toList.sequence}}.map{_.toMap}
       financial <- ask[FinancialInformation]("financial-information")
       breakdown <- ask[List[LiabilityBreakdownEntry]]("breakdown")
-    } yield ()
-
-
-  /*(eeittReturns.apply(
-      "DST",
-      id,
-      "period",
-      basic.period,
-      Nil
-    )) */
+      repaymentDetails <- ask[Option[RepaymentDetails]]("repayment")      
+    } yield (eeittReturns.apply(
+      dstRegNo = dstRegNo,
+      period = period,
+      activity = activity,
+      repaymentDetails = repaymentDetails,
+      finInfo = financial,
+      breakdown = breakdown,
+      isAmend = isAmend
+    ))
   }  
 }
