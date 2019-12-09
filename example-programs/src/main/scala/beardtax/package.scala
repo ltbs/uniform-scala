@@ -1,9 +1,10 @@
 package ltbs.uniform
 package examples
 
+import scala.language.higherKinds
+
 import cats.Monad
 import cats.implicits._
-import scala.language.higherKinds
 import validation._
 
 package object beardtax {
@@ -25,9 +26,9 @@ package object beardtax {
           case Some(MemberOfPublic(_, sname, _)) => ("beard-style-menacing", List(sname))
         }}
       ))
-      beardLength    <- ask[BeardLength]("beard-length-mm", validation = List(
+      beardLength    <- ask[BeardLength]("beard-length-mm", validation = 
         Rule.condAtPath("_2")(x => x._1 <= x._2, "lower.less.than.higher")
-      )) emptyUnless memberOfPublic.isDefined
+      ) emptyUnless memberOfPublic.isDefined
       cost           <- hod.costOfBeard(beardStyle, beardLength)
     } yield cost
   }

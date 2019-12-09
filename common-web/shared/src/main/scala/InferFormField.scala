@@ -1,10 +1,10 @@
 package ltbs.uniform
 package common.web
 
-import shapeless._, labelled._
+import cats.implicits._
+import shapeless._, shapeless.labelled._
 import cats.Monoid
 import com.github.ghik.silencer.silent
-import cats.implicits.{catsSyntaxEither => _,_}
 
 trait FormGrouping[A, Html] {
   def wrap(in: Html, key: List[String], messages: UniformMessages[Html]): Html
@@ -23,7 +23,7 @@ trait InferFormField[Html] {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
@@ -63,12 +63,12 @@ trait InferFormField[Html] {
 
     def render(
       key: List[String],
-      path: Path,
+      path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
     ): Html = {
-      val options: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)] =
+      val options: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)] =
         List(
           "Some" -> {case (subKey, subPath, subOpt, subErr, subMsg) =>
             encInner.value.render(
@@ -124,13 +124,13 @@ trait InferFormField[Html] {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
     ): Html = mon.combine(
-      hField.value.render(key :+ fieldName, path, data / fieldName, errors / fieldName, messages),
-      tField.render(key, path, data, errors, messages)
+      hField.value.render(key :+ fieldName, breadcrumbs, data / fieldName, errors / fieldName, messages),
+      tField.render(key, breadcrumbs, data, errors, messages)
     )
   }
 
@@ -145,9 +145,25 @@ trait InferFormField[Html] {
         defaultFormGrouping.wrap(in, key, messages)
     }
 
+  implicit def listCodec[A](implicit @silent subcodec: Codec[A]) = new Codec[List[A]]{
+    import cats.data.Validated
+    def decode(out: Input): Either[ErrorTree,List[A]] = {
+      val s: List[Validated[ErrorTree,A]] =
+        out.listSubtrees.sorted map { key: String =>
+          subcodec.decode(out / key).leftMap{_.prefixWith(key)}.toValidated
+        }
+      s.sequence.toEither
+    }
+
+    def encode(in: List[A]): Input = in.zipWithIndex.foldLeft(Input.empty) {
+      case (acc,(value, index)) => acc ++ subcodec.encode(value).prefixWith(index.toString)
+    }
+  }
+
   implicit def genericField[A, H, T](implicit
-    @silent("never used") generic: LabelledGeneric.Aux[A,T],
+    @silent generic: LabelledGeneric.Aux[A,T],
     hlistInstance: Lazy[FF[T]],
+    @silent("never used") notAnIterable: A <:!< Iterable[_],
     wrapper: FormGrouping[A, Html]
   ): FF[A] = new FF[A] {
 
@@ -160,12 +176,12 @@ trait InferFormField[Html] {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
     ): Html = {
-      val core = hlist.render(key, path, data, errors, messages)
+      val core = hlist.render(key, breadcrumbs, data, errors, messages)
       if (stats.isCompound)
         wrapper.wrap(core, key, messages)
       else
@@ -177,10 +193,10 @@ trait InferFormField[Html] {
 
   // COPRODUCTS
   def selectionOfFields(
-    inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
+    inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
   )(
     key: List[String],
-    path: Path,
+    breadcrumbs: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html]
@@ -190,7 +206,7 @@ trait InferFormField[Html] {
     def decode(out: Input): Either[ErrorTree,A]
     def encode(in: A): Input
     def stats: FormFieldStats
-    val inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
+    val inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
   }
 
   implicit val cnilField: CoproductFieldList[CNil] = new CoproductFieldList[CNil]{
@@ -240,8 +256,8 @@ trait InferFormField[Html] {
 
   implicit def coproductField[A](implicit coproductFields: CoproductFieldList[A]) =
     new FormField[A, Html] {
-      def render(key: List[String], path: Path, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html =
-        selectionOfFields(coproductFields.inner)(key,path, values,errors,messages)
+      def render(key: List[String], breadcrumbs: Breadcrumbs, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html =
+        selectionOfFields(coproductFields.inner)(key,breadcrumbs, values,errors,messages)
 
       def decode(out: Input): Either[ErrorTree,A] = coproductFields.decode(out)
       def encode(in: A): Input = coproductFields.encode(in)

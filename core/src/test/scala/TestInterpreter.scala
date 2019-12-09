@@ -15,7 +15,7 @@ class MonoidInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
     id: String,
     tell: Tell,
     default: Option[Ask] = None,
-    validation: List[Rule[Ask]] = Nil,
+    validation: Rule[Ask] = Rule.alwaysPass[Ask],
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit

@@ -4,14 +4,18 @@ import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc.{Results, Request, AnyContent}
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.twirl.api.{Html, HtmlFormat}
-import ltbs.uniform.common.web.{InferFormField, FormGrouping, FormFieldStats}
+import ltbs.uniform.common.web._
 import cats.syntax.semigroup._
-import ltbs.uniform.examples.{beardtax, LooselyRelatedTC}, beardtax._
+import ltbs.uniform.examples.{beardtax, LooselyRelatedTC}
 
 case class HmrcPlayInterpreter(
   results: Results,
   messagesApi: play.api.i18n.MessagesApi
-) extends PlayInterpreter[Html](results) with InferFormField[Html] with Widgets {
+) extends PlayTwirlInterpreter(results) with InferFormField[Html] with Widgets with InferListingPages[Html] {
+  
+  def genericListingPage(
+    rows: List[(Html, Int)]
+  ): Html = cats.Monoid[Html].combineAll(rows.map{_._1})
 
   def messages(
     request: Request[AnyContent]
@@ -24,7 +28,7 @@ case class HmrcPlayInterpreter(
     errors: ErrorTree,
     tell: Html,
     ask: Html,
-    breadcrumbs: Path,
+    breadcrumbs: List[String],
     request: Request[AnyContent],
     messages: UniformMessages[Html],
     stats: FormFieldStats
@@ -35,8 +39,8 @@ case class HmrcPlayInterpreter(
   }
 
   def selectionOfFields(
-    inner: List[(String, (List[String], Path, Input, ErrorTree, UniformMessages[Html]) => Html)]
-  )(key: List[String], path: Path, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html = {
+    inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
+  )(key: List[String], breadcrumbs: Breadcrumbs, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html = {
     val value: Option[String] = values.valueAtRoot.flatMap{_.headOption}
     views.html.uniform.radios(
       key,
@@ -45,7 +49,7 @@ case class HmrcPlayInterpreter(
       errors,
       messages,
       inner.map{
-        case(subkey,f) => subkey -> f(key :+ subkey, path, {values / subkey}, errors / subkey, messages)
+        case(subkey,f) => subkey -> f(key :+ subkey, breadcrumbs, {values / subkey}, errors / subkey, messages)
       }.filter(_._2.toString.trim.nonEmpty).toMap
     )
   }

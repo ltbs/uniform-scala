@@ -1,7 +1,7 @@
 package ltbs.uniform
 package validation
 
-import language.implicitConversions
+import scala.language.implicitConversions
 
 @simulacrum.typeclass trait Empty[A] {
   def isEmpty(in: A): Boolean

@@ -2,7 +2,9 @@ package ltbs.uniform
 package common.web
 
 final case class PageOut[A,Html](
-  path: Path,
+  breadcrumbs: Breadcrumbs,
   db: DB,
-  output: AskResult[A,Html]
+  output: AskResult[A,Html],
+  pathPrefix: List[String],
+  config: JourneyConfig
 )

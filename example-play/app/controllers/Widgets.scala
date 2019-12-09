@@ -3,7 +3,7 @@ package controllers
 import cats.implicits._
 
 import ltbs.uniform._, interpreters.playframework._
-import ltbs.uniform.common.web.{FormField, FormFieldStats}
+import ltbs.uniform.common.web.{FormField, GenericWebTell, ListingTell, ListingTellRow, FormFieldStats}
 import play.twirl.api.Html
 import java.time.LocalDate
 import cats.data.Validated
@@ -11,7 +11,24 @@ import validation.Rule
 
 object Widgets extends Widgets
 
-trait Widgets {
+trait Widgets extends InferTellTwirlDL {
+
+  implicit def tellToListingTell[A: GenericWebTell[?, Html]] = new ListingTell[Html, A] {
+
+    def apply(rows: List[ListingTellRow[A]], messages: UniformMessages[Html]): Html = {
+      def tellRow: ListingTellRow[A] => String = {
+        case ListingTellRow(value, editLink, deleteLink) =>        
+        s"""<tr><td>${implicitly[common.web.GenericWebTell[A, Html]].render(value, "list", messages)}</td><td><a href="${editLink}">Edit</a></td><td><a href="${deleteLink}">Delete</a></td></tr>"""
+      }
+
+      Html(
+        s"""|<table>
+            |  <tr><th>Item</th><th>Edit</th><th>Delete</th></tr>
+            |  ${rows.map(tellRow).mkString}
+            |</table>""".stripMargin
+      )
+    }
+  }
 
   implicit val twirlBigStringField = new FormField[BigString,Html] {
     import shapeless.tag
@@ -23,7 +40,7 @@ trait Widgets {
     def encode(in: BigString): Input = Input.one(List(in))
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
@@ -43,7 +60,7 @@ trait Widgets {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
@@ -59,7 +76,7 @@ trait Widgets {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
@@ -113,7 +130,7 @@ trait Widgets {
 
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]

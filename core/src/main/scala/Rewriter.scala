@@ -1,6 +1,7 @@
 package ltbs.uniform
 
-import language.higherKinds
+import scala.language.higherKinds
+
 import shapeless._
 import validation.Rule
 
@@ -20,7 +21,7 @@ class Rewriter[TC[_], SupportedTell <: HList, SupportedAsk <: HList](
       id: String,
       tell: Tell,
       default: Option[Ask] = None,
-      validation: List[Rule[Ask]] = Nil,
+      validation: Rule[Ask] = Rule.alwaysPass[Ask],
       customContent: Map[String,(String,List[Any])] = Map.empty
     ): TC[Ask]
 
@@ -35,7 +36,7 @@ class Rewriter[TC[_], SupportedTell <: HList, SupportedAsk <: HList](
       id: String,
       tell: Tell,
       default: Option[Ask] = None,
-      validation: List[Rule[Ask]] = Nil,
+      validation: Rule[Ask] = Rule.alwaysPass[Ask],
       customContent: Map[String,(String,List[Any])] = Map.empty
     )(
       implicit

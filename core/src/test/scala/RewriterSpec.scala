@@ -33,7 +33,7 @@ class RewriterSpec extends AnyFlatSpec with Matchers with OptTCOps {
           id: String,
           tell: Tell,
           default: Option[String] = None,
-          validation: List[Rule[String]] = Nil,
+          validation: Rule[String] = Rule.alwaysPass[String],
           customContent: Map[String,(String,List[Any])] = Map.empty
         ): String = naive.ask[Int]("test").map{_.toString}
       }

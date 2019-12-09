@@ -4,7 +4,6 @@ package interpreters.logictable
 import shapeless._
 import cats.data._
 import validation._
-import cats.implicits._
 
 case class LogicTableInterpreter[
   SupportedTell <: HList,
@@ -18,7 +17,7 @@ case class LogicTableInterpreter[
     id            : String,
     t             : Tell,
     default       : Option[Ask],
-    validation    : List[Rule[Ask]],
+    validation    : Rule[Ask],
     customContent : Map[String,(String,List[Any])]
   )( implicit
     selectorTell : IndexOf[SupportedTell, Tell],
@@ -34,7 +33,7 @@ case class LogicTableInterpreter[
         askSamples.map { sample =>
           (
             tellStrings :+ s"$id ask: ${sample.toString}",
-            validation.combineAll.either(sample)
+            validation.either(sample)
           )
         }
       }
