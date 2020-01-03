@@ -2,7 +2,6 @@ package ltbs.uniform
 
 import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 import cats._, implicits._
-import scala.language.higherKinds
 import com.github.ghik.silencer.silent
 
 case class SillyEmpty[OUT]()(implicit m: Monoid[OUT]) {

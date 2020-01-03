@@ -2,6 +2,7 @@ package ltbs.uniform
 package common.web
 
 /** Controls the rendering of a field in a web form */
+/*
 trait FormFieldPresentation[A, Html]{
   def render(
     key: List[String],
@@ -24,3 +25,4 @@ trait FormFieldPresentation[A, Html]{
     }
   }
 }
+ */

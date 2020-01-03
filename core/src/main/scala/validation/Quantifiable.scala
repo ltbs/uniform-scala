@@ -1,7 +1,7 @@
 package ltbs.uniform
 package validation
 
-import language.implicitConversions
+import scala.language.implicitConversions
 
 /** A type that has elements that can be counted 
   * 

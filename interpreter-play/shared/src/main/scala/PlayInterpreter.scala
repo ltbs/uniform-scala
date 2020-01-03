@@ -21,7 +21,7 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
     errors: ErrorTree,
     tell: Html,
     ask: Html,
-    breadcrumbs: Path,
+    breadcrumbs: List[String],
     request: Request[AnyContent],
     messages: UniformMessages[Html],
     fieldStats: FormFieldStats
@@ -38,27 +38,40 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
       persistence: PersistenceEngine[Req]
     ): Future[Result] = run(path){f.map{_.pure[Future]}}
 
-    def run(path: String, purgeStateUponCompletion: Boolean = false)(
+    def run(path: String, purgeStateUponCompletion: Boolean = false, config: JourneyConfig = JourneyConfig())(
       f: A => Future[Result]
     )(implicit
       request: Req,
       persistence: PersistenceEngine[Req]
     ): Future[Result] = {
-
-      val id = path.split("/").filter(_.nonEmpty).toList
+      val baseUrl = request.path.dropRight(path.size)
+      val id = path.split("/", -1).toList
+      
+      // //this is a nasty bodge to prevent hitting URL's with a trailing slash
+      // //which seem to be caused by the UA handling '..' in the redirection target. 
+      // if (id.lastOption == Some("")) {
+      //   return (controller.Redirect(
+      //     request.path.dropRight(1)
+      //   )).pure[Future]
+      // }
 
       val data: Option[Input] = request.body.asFormUrlEncoded.map {
         _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
       }
 
-      persistence.apply(request) { db =>
-        wm(PageIn(id, Nil, data, db)) flatMap {
-          case common.web.PageOut(path, dbOut, pageOut) =>
+      persistence(request) { db =>
+        wm(PageIn(id, Nil, data, db, Nil, config)) flatMap {
+          case common.web.PageOut(breadcrumbs, dbOut, pageOut, _, _) =>
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
-                (dbOut, controller.Redirect(relativePath(id, targetPath))).pure[Future]
+                val path = baseUrl + targetPath.mkString("/")
+                (dbOut, controller.Redirect(path)).pure[Future]
               case AskResult.Payload(html, errors, messagesOut, stats) =>
-                (db, controller.Ok(pageChrome(id, errors, mon.empty, html, path, request, messagesOut, stats))).pure[Future]
+                val convertedBreadcrumbs = breadcrumbs.map { c => 
+                  baseUrl + c.mkString("/")
+                }
+
+                (db, controller.Ok(pageChrome(breadcrumbs.head, errors, mon.empty, html, convertedBreadcrumbs, request, messagesOut,stats))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (if (purgeStateUponCompletion) DB.empty else dbOut, _) }
             }

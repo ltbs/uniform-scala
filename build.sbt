@@ -254,7 +254,7 @@ lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
   .settings(mdocSettings)
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
-  crossProject(Play25, Play26, Play27)
+  crossProject(Play25, Play26, Play27, Play28)
     .withoutSuffixFor(Play27)
     .crossType(CrossType.Full)
     .settings(commonSettings)
@@ -270,6 +270,10 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
     .configurePlatform(Play27)(_.settings(
       name := "interpreter-play27",
       crossScalaVersions := Seq(scala2_11, scala2_12, scala2_13)
+    ).dependsOn(core.jvm, `common-web`.jvm))
+    .configurePlatform(Play28)(_.settings(
+      name := "interpreter-play28",
+      crossScalaVersions := Seq(scala2_12, scala2_13)
     ).dependsOn(core.jvm, `common-web`.jvm))
 
 lazy val `interpreter-play27` = `interpreter-play`.projects(Play27)
@@ -304,6 +308,7 @@ lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
   .dependsOn(`interpreter-play`.projects(Play26), core.jvm, `example-programs`.jvm)
   .settings(
+//    scalacOptions += "-Xprint:typer",
     TwirlKeys.templateImports ++= Seq(
       "ltbs.uniform._",
       "ltbs.uniform.interpreters.playframework._"

@@ -18,7 +18,7 @@ package object playframework extends common.web.webcommon {
     def encode(in: Unit): Input = Input.empty
     def render(
       key: List[String],
-      path: Path,
+      breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[TwirlHtml]

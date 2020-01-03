@@ -11,7 +11,7 @@ trait SampleFormFields {
   implicit val stringFieldR = new FormField[String, String] {
     def render(
       key: List[String],
-      @silent("never used") path: Path,
+      @silent("never used") path: Breadcrumbs,
       @silent("never used") data: Input,
       @silent("never used") errors: ErrorTree,
       @silent("never used") messages: UniformMessages[String]
@@ -43,7 +43,7 @@ trait SampleFormFields {
 
     def render(
       key: List[String],
-      @silent("never used") path: Path,
+      @silent("never used") path: Breadcrumbs,
       @silent("never used") data: Input,
       @silent("never used") errors: ErrorTree,
       @silent("never used") messages: UniformMessages[String]

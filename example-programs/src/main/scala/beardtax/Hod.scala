@@ -1,6 +1,7 @@
 package ltbs.uniform.examples.beardtax
 
 import scala.language.higherKinds
+
 import cats.Id
 
 trait Hod[F[_]] {
