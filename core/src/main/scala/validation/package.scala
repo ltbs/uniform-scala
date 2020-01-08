@@ -4,6 +4,9 @@ import cats.implicits._
 import cats.Monoid
 import cats.data.Validated
 
+/** Validation and data transformation capabilities used in
+  * uniform. 
+  */
 package object validation
     extends validation.Compat
     with Quantifiable.ToQuantifiableOps
@@ -12,6 +15,8 @@ package object validation
     with EmptyInstances
 {
   type Transformation[A, B] = A => Validated[ErrorTree, B]
+
+  /** A validation rule used to check input data. */
   type Rule[A] = Transformation[A,A]
 
   implicit def ruleMonoidInstance[A] = new Monoid[Rule[A]] {
@@ -26,6 +31,21 @@ package object validation
         case (Invalid(e1), Invalid(e2)) => Invalid(e1 |+| e2)
       }
     }
+  }
+
+  implicit class RichTransformation[A,B](transformation: Transformation[A,B]) {
+
+    /** check the input and return a Left(ErrorTree) if there is an
+      * error or a Right(a) if the data is valid
+      */    
+    def either(in: A): Either[ErrorTree, B] = transformation.apply(in).toEither
+
+    /** compose a new validation transformation by chaining two together in
+      * sequence. The second Transformation will not be executed unless the
+      * first passes.
+      */
+    def followedBy[C](transformationB: Transformation[B,C]): Transformation[A,C] =
+      transformation(_) andThen transformationB
   }
 
   implicit class RichRule[A](rule: Rule[A]) {

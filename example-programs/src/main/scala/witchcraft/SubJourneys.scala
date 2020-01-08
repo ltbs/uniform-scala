@@ -27,9 +27,10 @@ package object subjourneys {
       _ <- i.ask[String]("a", default = Some("x"))
       _ <- i.ask[String]("b", default = Some("x"))
     } yield (()) }
-    _ <- i.subJourney("threea","threeb", "threec") { i.ask[String]("a") }
+    _ <- i.subJourney("threea","threeb", "threec") { i.ask[String]("v") }
+    _ <- i.subJourney("threez","threeb", "threec") { i.ask[String]("a") }    
     _ <- i.subJourney("solo") { i.ask[String]("a") }
-    _ <- i.ask[String]("end")    
+    _ <- i.ask[String]("end")
   } yield ()
 
 }

@@ -1,10 +1,9 @@
 package ltbs.uniform
 package examples
 
-import scala.language.higherKinds
-
 import cats.Monad
 import cats.implicits._
+import scala.language.higherKinds
 import validation._
 
 package object beardtax {

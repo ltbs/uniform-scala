@@ -3,13 +3,11 @@ package interpreters.playframework
 
 import play.api._,mvc._,http.Writeable
 import concurrent.{ExecutionContext, Future}
-import cats.Monoid
 import cats.implicits._
 import common.web._
 
 abstract class PlayInterpreter[Html: Writeable](controller: Results)(
-  implicit ec: ExecutionContext,
-  val mon: Monoid[Html]
+  implicit ec: ExecutionContext
 ) extends GenericWebInterpreter[Html] {
 
   def messages(
@@ -66,12 +64,11 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
               case AskResult.GotoPath(targetPath) =>
                 val path = baseUrl + targetPath.mkString("/")
                 (dbOut, controller.Redirect(path)).pure[Future]
-              case AskResult.Payload(html, errors, messagesOut, stats) =>
+              case AskResult.Payload(tell, ask, errors, messagesOut, stats) =>
                 val convertedBreadcrumbs = breadcrumbs.map { c => 
                   baseUrl + c.mkString("/")
                 }
-
-                (db, controller.Ok(pageChrome(breadcrumbs.head, errors, mon.empty, html, convertedBreadcrumbs, request, messagesOut,stats))).pure[Future]
+                (db, controller.Ok(pageChrome(breadcrumbs.head, errors, tell, ask, convertedBreadcrumbs, request, messagesOut,stats))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (if (purgeStateUponCompletion) DB.empty else dbOut, _) }
             }

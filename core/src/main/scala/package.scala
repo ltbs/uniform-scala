@@ -7,6 +7,7 @@ import cats.{Monoid, Applicative, Monad, Eq, Semigroup}
 import cats.data.{NonEmptyList, Validated}
 import shapeless.tag, tag.{@@}
 import collection.immutable.ListMap
+import uniform.validation.{Rule, Transformation}
 
 package object uniform
     extends TreeLike.ToTreeLikeOps
@@ -33,6 +34,8 @@ package object uniform
   type NilTypes = Unit :: shapeless.HNil
 
   implicit object Input extends MapTree[String, List[String]] {
+
+    /** Extract an [[Input]] from a UTF-8 URL encoded String. */
     def fromUrlEncodedString(in: String): Either[ErrorTree,Input] = {
       val ungrouped: List[(String, String)] =
         in.split("&").toList
@@ -48,6 +51,8 @@ package object uniform
   }
 
   implicit class RichInput(input: Input) {
+
+    /** Generate a UTF-8 URL encoded String. */    
     def toUrlEncodedString: String = {
       input
         .flatMap { case (k, vs) =>
@@ -58,28 +63,47 @@ package object uniform
         .mkString("&")
     }
 
+    /** Take the string at the root of the input tree and pass it
+      * through the transformation pipeline provided. This is usually
+      * done when constructing a codec for a datatype. 
+      * 
+      * For example - 
+      * {{{
+      * val someBool: Validated[ErrorTree, Boolean] = 
+      *   someInput.toField[Boolean]{x: String =>
+      *     Validated.catchOnly[IllegalArgumentException](
+      *       x.toBoolean
+      *     ).leftMap(_ => ErrorMsg("invalid").toTree)
+      *   }
+      * }}}
+      * */
     def toField[A](
-      pipeline: String => Validated[ErrorTree, A]
+      pipeline: Transformation[String, A]
     ): Validated[ErrorTree, A] =
       pipeline(
         input.valueAtRoot.flatMap(_.headOption.map(_.trim)).getOrElse("")
       )
 
+    /** Extract a string from the root of the Input tree. A more
+      * specialised version of [[toField]] that only handles
+      * strings. */
     def toStringField(
-      pipeline: String => Validated[ErrorTree, String] = {Validated.Valid(_)}
+      pipeline: Rule[String] = {Validated.Valid(_)}
     ): Validated[ErrorTree, String] = toField[String](pipeline)
 
+    /** Extract a string from a child element, then transform it into the desired datatype */
     def subField[A](
       key: String,
-      pipeline: String => Validated[ErrorTree, A]
+      pipeline: Transformation[String, A]
     ): Validated[ErrorTree, A] =
       pipeline(
         input.valueAt(key).flatMap(_.headOption.map(_.trim)).getOrElse("")
       ).leftMap(_.prefixWith(key))
 
+    /** Extract a string from a child element */    
     def stringSubField(
       key: String,
-      pipeline: String => Validated[ErrorTree, String] = {Validated.Valid(_)}
+      pipeline: Rule[String] = {Validated.Valid(_)}
     ): Validated[ErrorTree, String] = subField(key, pipeline)
 
 
@@ -101,9 +125,28 @@ package object uniform
   }
 
   implicit class RichAppOps[F[_]: Applicative, A](e: F[A]) {
+
+    /** Returns empty unless the predicate given is true, will short
+      * circuit if possible.
+      * 
+      * {{{
+      * ask[Salary]("salary") emptyUnless user.isEmployed
+      * 
+      * Future[Int]{"illegal".toInt} emptyUnless (false)
+      * }}}
+      */
     def emptyUnless(b: => Boolean)(implicit mon: Monoid[A]): F[A] =
       if(b) e else Monoid[A].empty.pure[F]
 
+    /** Returns empty unless the predicate given is true, will short
+      * circuit if possible.
+      * 
+      * {{{
+      * ask[Salary]("salary") emptyUnless ask[Boolean]("employed")
+      * 
+      * Future[Int]{"illegal".toInt} emptyUnless Future{false}
+      * }}}
+      */    
     def emptyUnless(eb: F[Boolean])(
       implicit mon: Monoid[A],
       monad: Monad[F]
@@ -112,9 +155,27 @@ package object uniform
       ret <- if (opt) e else mon.empty.pure[F]
     } yield ret
 
+    /** Returns None unless the predicate given is true, will short
+      * circuit if possible.
+      * 
+      * {{{
+      * ask[Salary]("salary") when user.isEmployed
+      * 
+      * Future[Int]{"illegal".toInt} when (false)
+      * }}}
+      */    
     def when(b: => Boolean): F[Option[A]] =
       if(b) e.map{_.some} else none[A].pure[F]
 
+    /** Returns None unless the predicate given is true, will short
+      * circuit if possible.
+      * 
+      * {{{
+      * ask[Salary]("salary") when ask[Boolean]("employed")
+      * 
+      * Future[Int]{"illegal".toInt} when Future{false}
+      * }}}
+      */        
     def when(wmb: F[Boolean])(implicit monad: Monad[F]): F[Option[A]] = for {
       opt <- wmb
       ret <- if (opt) e map {_.some} else none[A].pure[F]

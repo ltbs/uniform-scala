@@ -6,7 +6,7 @@ import concurrent.Future
 import scala.concurrent.ExecutionContext
 import validation._
 
-abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[A, Html] {
+abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
 
   def stats: FormFieldStats
 
@@ -71,7 +71,8 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
                 ).pure[Future]
               case Left(error) =>
                 val html = AskResult.Payload[A, Html](
-                  tell |+| postPage(currentId, state, localData, error, breadcrumbs, messages),
+                  tell,
+                  postPage(currentId, state, localData, error, breadcrumbs, messages),
                   error,
                   messages,
                   stats
@@ -83,16 +84,16 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
 
           case None =>
             val html = AskResult.Payload[A, Html](
-              tell |+|
-                getPage(
-                  currentId,
-                  state,
-                  dbInput.flatMap{_.toOption} orElse            // db
-                    default.map{x => codec.encode(x)} getOrElse // default
-                    Input.empty,                                // neither
-                  breadcrumbs,
-                  messages
-                ),
+              tell,
+              getPage(
+                currentId,
+                state,
+                dbInput.flatMap{_.toOption} orElse            // db
+                  default.map{x => codec.encode(x)} getOrElse // default
+                  Input.empty,                                // neither
+                breadcrumbs,
+                messages
+              ),
               ErrorTree.empty,
               messages,
               stats
@@ -109,7 +110,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
       } else {
         Future.successful{
           dbObject match {
-            case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && currentId.drop(targetId.size).isEmpty && !breadcrumbs.contains(targetId) =>
+            case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && !breadcrumbs.contains(targetId) =>
               // they're replaying the journey
               pageIn.toPageOut(AskResult.Success[A,Html](data)).copy(
                 breadcrumbs = currentId :: pageIn.breadcrumbs
@@ -123,7 +124,7 @@ abstract class PostAndGetPage[A, Html: cats.Monoid] extends WebMonadConstructor[
   }
 }
 
-class SimplePostAndGetPage[A,Html: cats.Monoid](
+class SimplePostAndGetPage[A,Html](
   fieldIn: FormField[A, Html]
 ) extends PostAndGetPage[A, Html] {
 
@@ -153,7 +154,7 @@ class SimplePostAndGetPage[A,Html: cats.Monoid](
 
 object PostAndGetPage {
 
-  def apply[A,Html: cats.Monoid](
+  def apply[A,Html](
     fieldIn: FormField[A, Html]
   ): WebMonadConstructor[A, Html] = new SimplePostAndGetPage[A, Html](fieldIn)
 

@@ -1,5 +1,4 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
-import microsites.ExtraMdFileConfig
 
 val scala2_10 = "2.10.7"
 val scala2_11 = "2.11.12"
@@ -154,18 +153,34 @@ lazy val commonSettings = Seq(
   )
 )
 
-def tutSettings(name: String) = Seq(
-  tutSourceDirectory := baseDirectory.value.getParentFile / "docs",
-  tutTargetDirectory := baseDirectory.value.getParentFile.getParentFile / "docs" / "src" / "main" / "tut" / name,
-  scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
-  fork in (Tut, run) := true,
-  scalacOptions in Tut -= "-Xfatal-warnings"
-)
+def mdocSettings = {
+
+  Seq(
+    mdocIn := {
+
+      val isCrossBuild = baseDirectory.value.getAbsolutePath.split("/").last match {
+        case "js" | "jvm" => true
+        case x if x.startsWith("play") || x.startsWith(".") => true
+        case _ => false
+      }
+
+      if (isCrossBuild)
+        (baseDirectory.value / ".." / "docs").getCanonicalFile
+      else
+        baseDirectory.value / "docs"
+    },
+
+    mdocOut := (docs/baseDirectory).value / "src" / "main" / "tut" / name.value,
+
+    // mdoc sadly doesn't use a different scalacOptions from main compilation...
+    scalacOptions in Compile --= Seq("-Xfatal-warnings") 
+  )
+}
 
 lazy val core = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
-  .enablePlugins(TutPlugin).settings(tutSettings("core"))
   .settings(
     crossScalaVersions += scala2_13,
     libraryDependencies ++= Seq(
@@ -173,13 +188,16 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "org.typelevel" %%% "simulacrum" % "1.0.0"
-    ) ++ macroDependencies(scalaVersion.value)
+    ) ++ macroDependencies(scalaVersion.value),
   )
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .settings(commonSettings)
   .settings(
@@ -190,17 +208,23 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
     ) ++ macroDependencies(scalaVersion.value)
   )
 
-lazy val commonWebJVM = `common-web`.jvm.dependsOn(coreJVM)
-lazy val commonWebJS = `common-web`.js.dependsOn(coreJS)
+lazy val commonWebJVM = `common-web`.jvm
+  .dependsOn(core.jvm)
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
+
+lazy val commonWebJS = `common-web`.js
+  .dependsOn(core.js)
 
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
-  .enablePlugins(TutPlugin).settings(tutSettings("other"))
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJVM % "test")
   .settings(
     crossScalaVersions += scala2_13
   )
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `interpreter-gui` = project
   .settings(commonSettings)
@@ -208,10 +232,12 @@ lazy val `interpreter-gui` = project
     crossScalaVersions += scala2_13
   )
   .dependsOn(coreJVM)
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
-  .enablePlugins(TutPlugin).settings(tutSettings("other"))
   .settings(commonSettings)
   .settings(
     crossScalaVersions += scala2_13
@@ -224,9 +250,12 @@ lazy val interpreterLogictableJS = `interpreter-logictable`.js
 lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJVM % "test")
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
   crossProject(Play25, Play26, Play27, Play28)
+    .withoutSuffixFor(Play27)
     .crossType(CrossType.Full)
     .settings(commonSettings)
     .configurePlatform(Play25)(_.settings(
@@ -247,26 +276,22 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
       crossScalaVersions := Seq(scala2_12, scala2_13)
     ).dependsOn(core.jvm, `common-web`.jvm))
 
-lazy val `interpreter-play26` = `interpreter-play`.projects(Play26)
+lazy val `interpreter-play27` = `interpreter-play`.projects(Play27)
   .dependsOn(commonWebJVM)
-  .enablePlugins(TutPlugin)
-  .settings(tutSettings("play"))
-  .settings(
-    libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play" % "2.6.20" % Tut
-    )
-  )
   .dependsOn(exampleProgramsJVM % "test")
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `interpreter-js` = project
   .settings(commonSettings)
-  .enablePlugins(TutPlugin)
   .settings(
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies += "org.querki" %%% "jquery-facade" % "1.2"
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(commonWebJS, `exampleProgramsJS` % Tut)
+  .dependsOn(commonWebJS)
+  .enablePlugins(MdocPlugin)
+  .settings(mdocSettings)
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -279,9 +304,24 @@ lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
 lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
 
+lazy val `example-assets` = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+  .settings(
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.7.0"
+  )
+
+lazy val exampleAssetsJS = `example-assets`.js.dependsOn(`common-web`.js)
+lazy val exampleAssetsJVM = `example-assets`.jvm.dependsOn(`common-web`.jvm)
+
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
-  .dependsOn(`interpreter-play`.projects(Play26), core.jvm, `example-programs`.jvm)
+  .dependsOn(
+    `interpreter-play`.projects(Play26),
+    core.jvm,
+    `example-programs`.jvm,
+    `example-assets`.jvm
+  )
   .settings(
 //    scalacOptions += "-Xprint:typer",
     TwirlKeys.templateImports ++= Seq(
@@ -303,13 +343,19 @@ lazy val `example-js` = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
+    crossScalaVersions := Seq(scala2_12),
     libraryDependencies ++= Seq(
       "org.querki" %%% "jquery-facade" % "1.2",
-      "org.scala-js" %%% "scalajs-java-time" % "0.2.5"
+      "org.scala-js" %%% "scalajs-java-time" % "0.2.5",
+      "com.lihaoyi" %%% "scalatags" % "0.7.0"
     )
   )
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(`interpreter-js`, exampleProgramsJS)
+  .dependsOn(
+    `interpreter-js`,
+    exampleProgramsJS,
+    `example-assets`.js    
+  )
 
 lazy val docs = project
   .enablePlugins(MicrositesPlugin)
@@ -336,15 +382,14 @@ lazy val docs = project
       "gray-light"      -> "#E2E3E3",
       "gray-lighter"    -> "#F3F4F4",
       "white-color"     -> "#FFFFFF"),
-    scalacOptions in Tut --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports", "-Ywarn-unused"),
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
       "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
     ),
-    fork in (Tut, run) := true,
-    tut := (tut
-      dependsOn tut.in(coreJVM)
-      dependsOn tut.in(interpreterLogictableJVM)
-      dependsOn tut.in(`interpreter-play26`)
-    ).value,
-  )
+    // makeMicrosite := (makeMicrosite
+    //   dependsOn (coreDocs / mdoc)
+    //   dependsOn mdoc.in(`interpreter-logictable-docs`)
+    //   dependsOn mdoc.in(`interpreter-play-docs`)
+    //   dependsOn mdoc.in(`interpreter-cli-docs`)
+    // ).value
+)

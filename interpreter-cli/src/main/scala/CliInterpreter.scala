@@ -56,7 +56,7 @@ object CliInterpreter {
     @annotation.tailrec
     def apply(key: String, validation: Rule[A]): A = {
       print(s"$key: ")
-      val rawIn = io.StdIn.readLine()
+      val rawIn = scala.io.StdIn.readLine()
 
       f(rawIn).flatMap(validation(_).toEither) match {
         case Left(err) => println(err); apply(key, validation)

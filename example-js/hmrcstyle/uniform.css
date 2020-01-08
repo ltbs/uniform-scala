@@ -1,0 +1,12 @@
+span.unit {
+    display: none;
+}
+
+div.conditional {
+  display: none;
+}
+
+input:checked + label + span + div.conditional,
+input:checked + label + div.conditional{
+    display: block !important;
+}

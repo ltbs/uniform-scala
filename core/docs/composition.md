@@ -11,7 +11,7 @@ journey provided you are using the same interpreter.
 Lets start with an example that collects two `Person` records from a
 user -
 
-```tut:silent
+```scala mdoc:silent
 import ltbs.uniform._
 import cats.implicits._
 import scala.language.higherKinds
@@ -39,7 +39,7 @@ def senderAndReceiver1[F[_] : cats.Monad](
 This is fine, but if we wanted to ask the user for the name and age
 separately we would have some duplication in our code -
 
-```tut:silent
+```scala mdoc:silent
 type AskTypes2 = String :: Int :: NilTypes
 
 def senderAndReceiver2[F[_] : cats.Monad](
@@ -66,7 +66,7 @@ def senderAndReceiver2[F[_] : cats.Monad](
 We can separate out the collection of the person record into a local
 function -
 
-```tut:silent
+```scala mdoc:silent
 def senderAndReceiver3[F[_] : cats.Monad](
   interpreter: Language[
     F,

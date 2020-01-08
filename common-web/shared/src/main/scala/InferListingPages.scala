@@ -3,7 +3,6 @@ package common.web
 
 import validation._
 import cats.implicits._
-import cats.Monoid
 import shapeless.Lazy
 
 sealed trait ListAction
@@ -47,13 +46,10 @@ protected[web] object Pos {
 trait InferListingPages[Html] {
   this: GenericWebInterpreter[Html] =>
 
-  def genericListingPage(
-    rows: List[(Html, Int)]
-  ): Html
+  def blankTell: Html
 
   implicit def listingPage[A](implicit
     wmca: Lazy[WMC[A]],
-    mon: Monoid[Html],
     codec: Codec[List[A]],
     listingTell: ListingTell[Html, A],
     wmcbranchffg: FormField[ListActionGeneral, Html],
@@ -62,7 +58,7 @@ trait InferListingPages[Html] {
     addEditJourney = {(existing: List[A], edit: Option[Int], messages: UniformMessages[Html], validation) =>
       wmca.value.apply(
         id = if (edit.isDefined) "edit" else "add", 
-        tell = Monoid[Html].empty,
+        tell = blankTell,
         defaultIn = edit.map(existing.apply),
         validationIn = validation,
         messages = messages
@@ -118,7 +114,6 @@ trait InferListingPages[Html] {
     wmcbranchffg: FormField[ListActionGeneral, Html],
     wmcbranchffa: FormField[ListAction, Html],    
     codec: Codec[List[A]],
-    mon: Monoid[Html],
     listingRowHtml: ListingTell[Html, A]
   ) = new WMC[List[A]] {
 

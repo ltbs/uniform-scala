@@ -14,7 +14,7 @@ There are a few things we will need to configure before we can use our
 controller.
 ## Imports
 
-```tut:silent
+```scala mdoc:silent
 import ltbs.uniform._, interpreters.playframework._
 
 import play.api.i18n.{Messages => _, _}
@@ -32,7 +32,7 @@ different interpreters.
 For now we'll just use the 'best guess' messages. We'll create a
 function to populate our messages like so -
 
-```tut:silent
+```scala mdoc:silent
   def messages(
     request: Request[AnyContent]
   ): UniformMessages[Html] =
@@ -48,7 +48,7 @@ We need to tell the interpreter what chrome to use. For our Twirl
 based example we'd probably want to defer to a view, but for our
 simple example we'll just leave it undefined for now.
 
-```tut:silent
+```scala mdoc:silent
   def pageChrome(
     key: List[String],
     errors: ErrorTree,
@@ -72,7 +72,7 @@ The `selectionOfFields` method takes a list of options and a function
 to control the Html that should be presented when that option is
 active.
 
-```tut:silent
+```scala mdoc:silent
   def selectionOfFields(
     inner: List[(
       String,

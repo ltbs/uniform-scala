@@ -8,6 +8,19 @@ object SampleFormFields extends SampleFormFields
 
 trait SampleFormFields {
 
+  implicit val twirlUnitField = new FormField[Unit,String] {
+    def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
+    def encode(in: Unit): Input = Input.empty
+    def render(
+      key: List[String],
+      path: Breadcrumbs,
+      data: Input,
+      errors: ErrorTree,
+      messages: UniformMessages[String]
+    ): String = ""
+  }
+
+
   implicit val stringFieldR = new FormField[String, String] {
     def render(
       key: List[String],

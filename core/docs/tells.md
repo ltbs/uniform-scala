@@ -3,7 +3,7 @@ layout: docs
 title: Telling
 ---
 
-```tut:invisible
+```scala mdoc:invisible
 import ltbs.uniform._
 import cats.implicits._
 import scala.language.higherKinds
@@ -42,14 +42,14 @@ which defines the types we are allowed to tell our user.
 
 Given this `TellTypes` definition - 
 
-```tut:silent
+```scala mdoc:silent
 type TellTypes = Long :: NilTypes
 type AskTypes = NilTypes
 ```
 
 This code will fail to compile - 
 
-```tut:fail
+```scala mdoc:fail
 def badType[F[_] : cats.Monad](
   interpreter: Language[F, TellTypes, AskTypes]
 ): F[Unit] = {
@@ -64,7 +64,7 @@ The reason here is that we are attempting to present a value of type
 In order to get this to work we could modify our program to send the
 user a Long instead - 
 
-```tut:silent
+```scala mdoc:silent
 def goodType[F[_] : cats.Monad](
   interpreter: Language[F, TellTypes, AskTypes]
 ): F[Unit] = {
@@ -75,14 +75,14 @@ def goodType[F[_] : cats.Monad](
 Or we could add a requirement that the interpreter must know how to
 present a `java.time.LocalDate` back to the user -
 
-```tut:silent
-type TellTypes = java.time.LocalDate :: Long :: NilTypes
+```scala mdoc:silent
+type TellTypes2 = java.time.LocalDate :: Long :: NilTypes
 ```
 
 Because we do not ask the user for a `Long` in the above program we
 can remove it from `TellTypes` (though it being there will not prevent
 the program from compiling) - 
 
-```tut:silent
-type TellTypes = java.time.LocalDate :: NilTypes
+```scala mdoc:silent
+type TellTypes3 = java.time.LocalDate :: NilTypes
 ```

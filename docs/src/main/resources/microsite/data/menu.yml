@@ -22,18 +22,18 @@ options:
      - title: Remote Calls
        url: core/remote-calls.html
   - title: Play Framework Interpreter
-    url: play/index.html
+    url: interpreter-play27/index.html
     nested_options:
      - title: Controllers
-       url: play/controllers.html
+       url: interpreter-play27/controllers.html
      - title: WebMonad
-       url: play/web-monad.html
+       url: interpreter-play27/web-monad.html
      - title: Internationalisation
-       url: play/internationalisation.html
+       url: interpreter-play27/internationalisation.html
      - title: Listing Pages
-       url: play/listing-pages.html
+       url: interpreter-play27/listing-pages.html
      - title: Memoisation
-       url: play/remote-calls.html
+       url: interpreter-play27/remote-calls.html
   - title: Other Interpreters
     url: interpreters.html
     nested_options:

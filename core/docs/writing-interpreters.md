@@ -88,13 +88,13 @@ Suppose we want an interpreter that returns dummy values - for any
 
 We would create a typeclass like the following -
 
-```tut:silent
+```scala mdoc:silent
 trait Example[A] { def value: A }
 ```
 
 And we would now give some instances -
 
-```tut:silent
+```scala mdoc:silent
 implicit val intExample = new Example[Int] { def value: Int = 12 }
 implicit val stringExample = new Example[String] { def value: String = "test" }
 ```
@@ -103,12 +103,12 @@ We can now create an interpreter. First we must decide what higher
 kinded type our interpreter works with. To keep things simple we're
 just going to use the `Id` monad here.
 
-```tut:silent
-import ltbs.uniform._
+```scala mdoc:silent
+import ltbs.uniform._, validation.Rule
 
 import cats.implicits._
 import cats.{Id, Monad}
-import shapeless.{Id => _, _}
+import shapeless.{HList, HNil}
 import scala.language.higherKinds
 
 class ExampleValuesInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
@@ -119,7 +119,7 @@ class ExampleValuesInterpreter[SupportedTell <: HList, SupportedAsk <: HList](
     id: String,
     tell: Tell,
     default: Option[Ask] = None,
-    validation: List[List[Rule[Ask]]] = Nil,
+    validation: List[Rule[Ask]] = Nil,
     customContent: Map[String,(String,List[Any])] = Map.empty
   )(
     implicit selectorTell : IndexOf[SupportedTell, Tell],
@@ -135,7 +135,7 @@ need to define that method.
 it will give you a mapped HList of its implicit typeclass
 instances. For example if we use `Int` and `String` -
 
-```tut
+```scala mdoc
 val summoner = TypeclassList[Int :: String :: HNil, Example]
 summoner.forType[Int].value
 summoner.forType[String].value
@@ -143,7 +143,7 @@ summoner.forType[String].value
 
 We can now create a simple program and test our new interpreter -
 
-```tut:silent
+```scala mdoc:silent
 type TellTypes = NilTypes
 type AskTypes = Int :: String :: HNil
 
@@ -158,7 +158,7 @@ def program[F[_]: Monad](
 }
 ```
 
-```tut
+```scala mdoc
 program(
   new ExampleValuesInterpreter[TellTypes, AskTypes]
 )

@@ -9,6 +9,7 @@ import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
 
+
 @Singleton
 class SubjourneyController @Inject()(
   implicit val messagesApi: MessagesApi,
@@ -33,3 +34,4 @@ class SubjourneyController @Inject()(
     }
   }
 }
+

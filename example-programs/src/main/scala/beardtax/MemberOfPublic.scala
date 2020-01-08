@@ -3,7 +3,7 @@ package examples
 package beardtax
 
 case class MemberOfPublic(
-  forename: NonEmptyString,
-  surname: NonEmptyString,
+  forename: String,
+  surname: String,
   age: java.time.LocalDate
 ) extends LooselyRelated

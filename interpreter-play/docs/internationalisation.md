@@ -12,7 +12,7 @@ Messages are provided as a `UniformMessages[Html]` object, where
 It is possible to convert the play messages into `UniformMessages`
 like so - 
 
-```tut:invisible
+```scala mdoc:invisible
 import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc._
 import play.twirl.api._
@@ -21,7 +21,7 @@ import cats.implicits._
 def messagesApi: play.api.i18n.MessagesApi = ???
 ```
 
-```tut:silent
+```scala mdoc:silent
 def messages(request: Request[AnyContent]): UniformMessages[Html] =
   messagesApi.preferred(request).convertMessages.map{HtmlFormat.escape}
 ```
@@ -34,8 +34,8 @@ asked. If we want a behaviour similar to play where the key itself is
 returned if there is no message defined we can use the
 `UniformMessages.echo` provider as a fallback - 
 
-```tut:silent
-  def messages(request: Request[AnyContent]): UniformMessages[Html] = {
+```scala mdoc:silent
+  def messages2(request: Request[AnyContent]): UniformMessages[Html] = {
     messagesApi.preferred(request).convertMessages() |+|
     UniformMessages.echo 
   } map ( HtmlFormat.escape )

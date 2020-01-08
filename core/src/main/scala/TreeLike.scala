@@ -17,6 +17,10 @@ import collection.immutable.ListMap
   def listSubtrees(a: T): List[Key]
 
   def appendWith(a: T, key: Key): T
+
+  /** Add an key to the start of each existing key, effectively
+    * creating a new tree with the existing tree as a single
+    * subtree */
   def prefixWith(a: T, key: Key): T
 
   def prefixWithMany(value: T, key: List[Key]): T = {
@@ -28,7 +32,10 @@ import collection.immutable.ListMap
     inner(value, key.reverse)
   }
 
+  /** gives the subtree at a given key */
   def subTree(a: T, key: Key): T
+
+  /** gives the subtree at a given key */  
   def /(a: T, key: Key): T = subTree(a,key)
 
   def valueAt(a: T, key: Key): Option[Value] =
@@ -40,24 +47,28 @@ import collection.immutable.ListMap
 
   def valueAtRoot(a: T): Option[Value]
 
+  /** returns 'true' if there is a subtree at the given key */
   def definedAt(a: T, key: Key): Boolean =
     valueAt(a, key).isDefined
 
+  /** returns 'true' if there is a subtree at the given path */  
   def definedAtPath(a: T, key: List[Key]): Boolean =
     valueAtPath(a, key).isDefined
 
+  /** returns 'true' if there is a subtree at the given path */    
   def definedAtRoot(a: T): Boolean =
     valueAtRoot(a).isDefined
 
   def isEmpty(a: T): Boolean = a == empty
   def isNonEmpty(a: T): Boolean = !isEmpty(a)
 
-  /** create an empty tree (no verticies) */
+  /** a null-graph (no verticies/K0) */
   def empty: T
 
-  /** create a tree with a single vertex */  
+  /** create a tree with a single vertex (a singleton graph) */  
   def one(in: Value): T
 
+  /** gives the subtree at a given path */    
   def atPath(a: T, path: List[Key]): T = {
 
     @annotation.tailrec

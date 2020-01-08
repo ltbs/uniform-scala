@@ -1,0 +1,17 @@
+.link-button, .link-button:hover, .link-button:focus, .link-button:active {
+  display: inline;
+  background: none;
+  border: none;
+  color: #005ea5;
+  text-decoration: underline;
+  cursor: pointer;
+  -webkit-box-shadow: none;
+  outline: 0;
+  position: relative;
+  padding:0;
+  margin-right: 0;
+}
+
+.link-button:hover {
+    color: #4c2c92;
+}

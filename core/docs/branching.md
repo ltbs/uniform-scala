@@ -9,7 +9,7 @@ If no steps in a journey are dependent upon the result of a previous
 one then `cats.Monad` may be overkill and you should consider using
 `cats.Applicative` instead -
 
-```tut:silent
+```scala mdoc:silent
 import ltbs.uniform._
 import cats.implicits._
 import scala.language.higherKinds
@@ -40,7 +40,7 @@ But lets suppose we want an optional third `Person` in our tuple. We
 could literally add an extra type (`Option[Person]`) into our
 `AskTypes`, but lets use branching instead -
 
-```tut:silent
+```scala mdoc:silent
 // we now need Booleans too
 type AskTypes2 = Boolean :: AskTypes1
 
@@ -80,7 +80,7 @@ asked again for a name and age and this time `_3` would be defined
 This could be used for all sorts of branching - you are not confined
 to booleans, or to using pattern matching.
 
-```tut:silent
+```scala mdoc:silent
 type BigSpenderAskTypes = Boolean :: String :: Int :: NilTypes
 
 def bigSpender[F[_] : cats.Monad](
@@ -125,7 +125,7 @@ it returns a `Some[A]` where when the predicate is `true`, and a
 journey and not execute the `ask[A]` in the event that the predicate
 returns `false`. 
 
-```tut
+```scala mdoc
 import scala.concurrent._, duration._
 implicit val ec = ExecutionContext.global
 
@@ -167,7 +167,7 @@ same as the underlying `ask`.
 
 For example -
 
-```tut:silent
+```scala mdoc:silent
 Await.result(
   Future{Thread.sleep(2000); 12} emptyUnless false,
   1.second)
@@ -176,7 +176,7 @@ Await.result(
 We can apply this in the context of our earlier program in order to
 simplify the code -
 
-```tut:silent
+```scala mdoc:silent
 def bigSpender2[F[_] : cats.Monad](
   interpreter: Language[
     F,
