@@ -3,7 +3,7 @@ package controllers
 import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc.{Results, Request, AnyContent}
 import scala.concurrent.ExecutionContext.Implicits.global
-import ltbs.uniform.common.web.{InferFormFieldProduct, InferFormFieldCoProduct, InferListingPages, FormFieldStats, ListingTell, ListingTellRow, GenericWebTell}
+import ltbs.uniform.common.web.{InferFormFieldProduct, InferFormFieldCoProduct, InferListingPages, FormFieldStats, ListingTell, ListingTellRow, GenericWebTell, FormField}
 import cats.syntax.semigroup._
 import scalatags.Text.all._
 import ScalatagsSupport._
@@ -17,6 +17,37 @@ case class HmrcPlayInterpreter(
     with InferFormFieldCoProduct[Tag]
     with InferListingPages[Tag]
     with examples.Widgets {
+
+//   implicit def oddballField = new FormField[Set[examples.dst.Activity],Tag] {
+// def decode(out: ltbs.uniform.Input): Either[ltbs.uniform.ErrorTree,Set[ltbs.uniform.examples.dst.Activity]] = ???
+// def encode(in: Set[ltbs.uniform.examples.dst.Activity]): ltbs.uniform.Input = ???
+
+// // Members declared in ltbs.uniform.common.web.FormField
+// def render(key: List[String],breadcrumbs: ltbs.uniform.common.web.Breadcrumbs,data: ltbs.uniform.Input,errors: ltbs.uniform.ErrorTree,messages: ltbs.uniform.UniformMessages[scalatags.Text.all.Tag]): scalatags.Text.all.Tag = ???
+
+//   }
+
+  implicit lazy val oddballField2: FormField[Set[examples.dst.Activity],Tag] = {
+    import examples.dst.Activity, Activity.{SocialMedia, SearchEngine, OnlineMarketplace}
+    implicitly[FormField[(
+      Boolean,
+      Boolean,
+      Boolean
+    ), Tag]].imap{case (a,b,c) =>
+        Set.apply[Option[Activity]](
+          Some(SocialMedia).filter(_ => a),
+          Some(SearchEngine).filter(_ => b),
+          Some(OnlineMarketplace).filter(_ => c)          
+        ).flatten
+    }{ theset => 
+      (
+        theset.contains(SocialMedia),
+        theset.contains(SearchEngine),
+        theset.contains(OnlineMarketplace)        
+      )
+    }
+
+  }
 
   implicit val tellTwirlUnit = new WebTell[Unit] {
     def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = blankTell

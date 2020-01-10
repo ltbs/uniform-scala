@@ -115,6 +115,14 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       }.toEither
     )(_.toString)
 
+  implicit val longField: FormField[Long,Tag] =
+    stringField.simap(x => 
+      {
+        Rule.nonEmpty[String].apply(x) andThen
+        Transformation.catchOnly[NumberFormatException]("not-a-number")(_.toLong)
+      }.toEither
+    )(_.toString)
+
   implicit val booleanField = new FormField[Boolean,Tag] {
     def decode(out: Input): Either[ErrorTree,Boolean] =
       out.toField[Boolean]{x: String =>

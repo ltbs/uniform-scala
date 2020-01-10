@@ -23,3 +23,13 @@ POST        /subjourney/*id     controllers.SubjourneyController.main(id: String
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file        controllers.Assets.versioned(path="/public/assets", file: Asset)
+
+GET         /dst/register/        controllers.DstController.register(id = "")
+GET         /dst/register/*id     controllers.DstController.register(id: String)
+POST        /dst/register/        controllers.DstController.register(id = "")
+POST        /dst/register/*id     controllers.DstController.register(id: String)
+
+GET         /dst/return/        controllers.DstController.submitReturn(id = "")
+GET         /dst/return/*id     controllers.DstController.submitReturn(id: String)
+POST        /dst/return/        controllers.DstController.submitReturn(id = "")
+POST        /dst/return/*id     controllers.DstController.submitReturn(id: String)
