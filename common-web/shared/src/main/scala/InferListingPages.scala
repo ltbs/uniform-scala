@@ -212,6 +212,7 @@ trait InferListingPages[Html] {
               r <- addEditJourney(data, None, messages, elementValidation)
               _ <- db(List(s"${id}-zzdata")) = data :+ r
               _ <- db.deleteRecursive(List(id))
+              _ <- goto[Unit](id)
             } yield (List.empty[A]))
 
           case ListAction.Delete(index) =>
@@ -224,6 +225,7 @@ trait InferListingPages[Html] {
                   ().pure[WM]
               }
               _ <- db.deleteRecursive(List(id))
+              _ <- goto[Unit](id)              
             } yield (List.empty[A]))
 
           case ListAction.Edit(index) =>
@@ -231,6 +233,7 @@ trait InferListingPages[Html] {
               r <- addEditJourney(data, Some(index), messages, elementValidation)
               _ <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, r)
               _ <- db.deleteRecursive(List(id))
+              _ <- goto[Unit](id)              
             } yield (List.empty[A]))
         }
       }
