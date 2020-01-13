@@ -19,7 +19,7 @@ addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.0.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
 
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.4")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.0")
 
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.1")
 
