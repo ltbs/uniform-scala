@@ -25,7 +25,8 @@ lazy val root = project.in(file("."))
     publish := {},
     test := {},
     publishArtifact := false,
-    publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo")))
+    publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo"))),
+    organization := "com.luketebbs.uniform"
   )
 
 scalaVersion := scala2_11
@@ -130,11 +131,7 @@ lazy val commonSettings = Seq(
     )
   ),
   publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    sonatypePublishToBundle.value
   },
   publishConfiguration := publishConfiguration.value.withOverwrite(isSnapshot.value),
   com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration := com.typesafe.sbt.pgp.PgpKeys.publishSignedConfiguration.value.withOverwrite(isSnapshot.value),
@@ -145,7 +142,7 @@ lazy val commonSettings = Seq(
     else None
   },
   useGpg := true,
-  licenses += ("GPL-3", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
+  licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
     "org.scalatestplus" %%% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % "test",
     compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.2"),
