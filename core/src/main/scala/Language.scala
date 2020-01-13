@@ -5,6 +5,7 @@ import scala.language.higherKinds
 import shapeless.HList
 import com.github.ghik.silencer.silent
 import validation.Rule
+import cats.Functor
 
 /** The core language of uniform, journeys will typically be expressed
   * in terms of this interaction 
@@ -125,5 +126,21 @@ trait Language[UF[_], SupportedTell <: HList, SupportedAsk <: HList]{
     implicit selectorAsk : IndexOf[SupportedAsk, Unit],
     selectorTell : IndexOf[SupportedTell, A]
   ) = interact[A,Unit](id, tell, customContent=customContent)
+
+  def end[A](
+    id: String,
+    tellValue: A,
+    customContent: Map[String,(String,List[Any])] = Map.empty
+  )(
+    implicit selectorAsk : IndexOf[SupportedAsk, Unit],
+    selectorTell : IndexOf[SupportedTell, A],
+    ufFunctor: Functor[UF]
+  ): UF[Nothing] = {
+    import cats.syntax.functor._
+    
+    tell[A](id, tellValue, customContent=customContent) map {
+      _ => throw new IllegalStateException(s"Journey end at $id")
+    }
+  }
 
 }
