@@ -13,9 +13,8 @@ import scalatags.Text.all._
 
 @Singleton
 class WitchController @Inject()(
-  implicit override val messagesApi: MessagesApi,
-  val controllerComponents: ControllerComponents,
-  ec:ExecutionContext
+  implicit ec:ExecutionContext,
+  val controllerComponents: ControllerComponents
 ) extends BaseController with ControllerHelpers with I18nSupport {
 
   implicit val persistence: PersistenceEngine[Request[AnyContent]] =
