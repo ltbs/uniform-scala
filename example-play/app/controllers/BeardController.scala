@@ -19,9 +19,9 @@ class HodConnector(implicit ec: ExecutionContext) extends Hod[Future] {
 
 @Singleton
 class BeardController2 @Inject()(
-  implicit val messagesApi: MessagesApi,
-  ec:ExecutionContext
-) extends ControllerHelpers with I18nSupport {
+  implicit ec:ExecutionContext,
+  val controllerComponents: ControllerComponents
+) extends BaseController with ControllerHelpers with I18nSupport {
 
   implicit val persistence: PersistenceEngine[Request[AnyContent]] =
     DebugPersistence(UnsafePersistence())
