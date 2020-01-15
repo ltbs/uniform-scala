@@ -12,9 +12,10 @@ import scala.concurrent._
 
 @Singleton
 class SubjourneyController @Inject()(
-  implicit val messagesApi: MessagesApi,
+  implicit override val messagesApi: MessagesApi,
+  val controllerComponents: ControllerComponents,
   ec:ExecutionContext
-) extends ControllerHelpers with I18nSupport {
+) extends BaseController with ControllerHelpers with I18nSupport {
 
   implicit val persistence: PersistenceEngine[Request[AnyContent]] =
     UnsafePersistence()
