@@ -329,10 +329,9 @@ lazy val `example-play` = project.settings(commonSettings)
     PlayKeys.playDefaultPort := 9001,
     libraryDependencies ++= Seq(
       filters,
-      guice,
-      "org.slf4j" % "slf4j-api" % "1.7.26"
+      guice
     ),
-    dependencyOverrides += "org.slf4j" % "slf4j-api" % "1.7.26",
+    excludeDependencies += "org.scalameta" %% "mdoc",
     initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.interpreters.playframework._",
     initialCommands in consoleQuick := """import cats.implicits._;""",
     scalacOptions -= "-Xfatal-warnings", // twirl....
