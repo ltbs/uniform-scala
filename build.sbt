@@ -1,4 +1,5 @@
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import sbt.Keys.dependencyOverrides
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 val scala2_10 = "2.10.7"
 val scala2_11 = "2.11.12"
@@ -328,8 +329,10 @@ lazy val `example-play` = project.settings(commonSettings)
     PlayKeys.playDefaultPort := 9001,
     libraryDependencies ++= Seq(
       filters,
-      guice
+      guice,
+      "org.slf4j" % "slf4j-api" % "1.7.26"
     ),
+    dependencyOverrides += "org.slf4j" % "slf4j-api" % "1.7.26",
     initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.interpreters.playframework._",
     initialCommands in consoleQuick := """import cats.implicits._;""",
     scalacOptions -= "-Xfatal-warnings", // twirl....
