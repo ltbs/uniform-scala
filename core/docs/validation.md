@@ -90,7 +90,7 @@ simply supply it as a parameter.
 def askAddress2[F[_]](
   interpreter: Language[F, TellTypes, AskTypes]
 ): F[Address] =
-  interpreter.ask[Address]("post-to", validation = List(postcodeCheck))
+  interpreter.ask[Address]("post-to", validation = postcodeCheck)
 ```
 
 In this case we only have a single `Rule` applied to the `validation`
