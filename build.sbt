@@ -1,4 +1,5 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import AutoDocs._
 
 val scala2_10 = "2.10.7"
 val scala2_11 = "2.11.12"
@@ -150,30 +151,6 @@ lazy val commonSettings = Seq(
   )
 )
 
-def mdocSettings = {
-
-  Seq(
-    mdocIn := {
-
-      val isCrossBuild = baseDirectory.value.getAbsolutePath.split("/").last match {
-        case "js" | "jvm" => true
-        case x if x.startsWith("play") || x.startsWith(".") => true
-        case _ => false
-      }
-
-      if (isCrossBuild)
-        (baseDirectory.value / ".." / "docs").getCanonicalFile
-      else
-        baseDirectory.value / "docs"
-    },
-
-    mdocOut := (docs/baseDirectory).value / "src" / "main" / "tut" / name.value,
-
-    // mdoc sadly doesn't use a different scalacOptions from main compilation...
-    scalacOptions in Compile --= Seq("-Xfatal-warnings") 
-  )
-}
-
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -190,8 +167,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
-  .enablePlugins(MdocPlugin)
-  .settings(mdocSettings)
+
+lazy val coreDocs = docProject(coreJVM, docs)
 
 lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -207,11 +184,11 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
 
 lazy val commonWebJVM = `common-web`.jvm
   .dependsOn(core.jvm)
-  .enablePlugins(MdocPlugin)
-  .settings(mdocSettings)
 
 lazy val commonWebJS = `common-web`.js
   .dependsOn(core.js)
+
+lazy val commonWebDocumentation = docProject(commonWebJVM, docs)
 
 lazy val `interpreter-cli` = project
   .settings(commonSettings)
@@ -220,8 +197,6 @@ lazy val `interpreter-cli` = project
   .settings(
     crossScalaVersions += scala2_13
   )
-  .enablePlugins(MdocPlugin)
-  .settings(mdocSettings)
 
 lazy val `interpreter-gui` = project
   .settings(commonSettings)
@@ -229,8 +204,6 @@ lazy val `interpreter-gui` = project
     crossScalaVersions += scala2_13
   )
   .dependsOn(coreJVM)
-  .enablePlugins(MdocPlugin)
-  .settings(mdocSettings)
 
 lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -247,8 +220,8 @@ lazy val interpreterLogictableJS = `interpreter-logictable`.js
 lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJVM % "test")
-  .enablePlugins(MdocPlugin)
-  .settings(mdocSettings)
+
+lazy val interpreterLogictableDocs = docProject(interpreterLogictableJVM, docs)
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
   crossProject(Play25, Play26, Play27, Play28)
@@ -276,8 +249,8 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
 lazy val `interpreter-play27` = `interpreter-play`.projects(Play27)
   .dependsOn(commonWebJVM)
   .dependsOn(exampleProgramsJVM % "test")
-  .enablePlugins(MdocPlugin)
-  .settings(mdocSettings)
+
+lazy val `interpreter-play-docs` = docProject(`interpreter-play27`, docs)
 
 lazy val `interpreter-js` = project
   .settings(commonSettings)
@@ -287,8 +260,8 @@ lazy val `interpreter-js` = project
   )
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(commonWebJS)
-  .enablePlugins(MdocPlugin)
-  .settings(mdocSettings)
+
+lazy val `interpreter-js-docs` = docProject(`interpreter-js`, docs)
 
 lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
