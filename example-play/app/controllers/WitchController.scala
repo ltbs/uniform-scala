@@ -18,7 +18,7 @@ class WitchController @Inject()(
 ) extends BaseController with ControllerHelpers with I18nSupport {
 
   implicit val persistence: PersistenceEngine[Request[AnyContent]] =
-    UnsafePersistence()
+    DebugPersistence(UnsafePersistence())
 
   lazy val interpreter = HmrcPlayInterpreter(this, messagesApi)
 

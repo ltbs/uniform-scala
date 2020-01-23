@@ -29,20 +29,6 @@ protected[web] object Pos {
     Either.catchOnly[NumberFormatException](value.toInt).toOption
 }
 
-/** Produces pages for `List[A]` where a user can enter multiple items
-  * of a given datatype via a central page that enumerates the items
-  * already, allows them to add new items and edit or delete existing ones.
-  * 
-  * There are two ways you can produce a listing - the first works by
-  * infering the page for `A` automatically. To use this approach
-  * simply use an `ask[List[A]]` in your journey and it will pick up
-  * and use the add/edit part from inference, falling back to
-  * [[InferFormField]] if necessary. 
-  * 
-  * The second approach works by explicitly supplying a subjourney and
-  * interpreting this into a [[WebMonadConstructor]], by using the
-  * [[listingPageWM]] method. 
-  */
 trait InferListingPages[Html] {
   this: GenericWebInterpreter[Html] =>
 
@@ -167,7 +153,7 @@ trait InferListingPages[Html] {
           genericSubJourney[S](id, c => c.copy(leapAhead = false))(sub)
 
       db.get[List[A]](List(s"${id}-zzdata")).flatMap{ dataRead =>
-
+        println(s"###### dataRead: $dataRead")
         val data: List[A] = dataRead match {
           case Some(Right(d)) => d
           case _ => defaultIn.getOrElse(Nil)
@@ -228,13 +214,18 @@ trait InferListingPages[Html] {
               _ <- goto[Unit](id)              
             } yield (List.empty[A]))
 
-          case ListAction.Edit(index) =>
+          case ListAction.Edit(index) => {
+            println(s"##### in InferListingPages ListAction.Edit")
+            println(s"##### index: $index")
+            println(s"##### id: $id")
+            println(s"##### data: $data")
             subJourney(Seq(id, "edit", index.toString))( for {
               r <- addEditJourney(data, Some(index), messages, elementValidation)
               _ <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, r)
               _ <- db.deleteRecursive(List(id))
               _ <- goto[Unit](id)              
             } yield (List.empty[A]))
+          }
         }
       }
     }
