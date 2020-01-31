@@ -29,6 +29,20 @@ protected[web] object Pos {
     Either.catchOnly[NumberFormatException](value.toInt).toOption
 }
 
+/** Produces pages for `List[A]` where a user can enter multiple items
+  * of a given datatype via a central page that enumerates the items
+  * already, allows them to add new items and edit or delete existing ones.
+  *
+  * There are two ways you can produce a listing - the first works by
+  * infering the page for `A` automatically. To use this approach
+  * simply use an `ask[List[A]]` in your journey and it will pick up
+  * and use the add/edit part from inference, falling back to
+  * [[InferFormField]] if necessary.
+  *
+  * The second approach works by explicitly supplying a subjourney and
+  * interpreting this into a [[WebMonadConstructor]], by using the
+  * [[listingPageWM]] method.
+  */
 trait InferListingPages[Html] {
   this: GenericWebInterpreter[Html] =>
 

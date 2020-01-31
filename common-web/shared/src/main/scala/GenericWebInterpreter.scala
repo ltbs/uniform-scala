@@ -50,7 +50,6 @@ trait GenericWebInterpreter[Html] {
     config: JourneyConfig => JourneyConfig = identity
   )(sub: => WM[A]): WM[A] = {
     import cats.implicits._
-    println(s"####### JourneyConfig is $config")
     getConfig() >>= {origConf => mutateConfig(config) >> pushPathPrefix(id) >> sub <* popPathPrefix(id.size) <* mutateConfig{_ => origConf}}
   }
 
