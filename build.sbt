@@ -17,6 +17,7 @@ lazy val root = project.in(file("."))
     `interpreter-play`.projects(Play25),
     `interpreter-play`.projects(Play26),
     `interpreter-play`.projects(Play27),
+    `interpreter-play`.projects(Play28),    
     exampleProgramsJS,
     exampleProgramsJVM,
     commonWebJVM,

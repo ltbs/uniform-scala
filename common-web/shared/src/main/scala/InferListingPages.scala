@@ -37,11 +37,11 @@ protected[web] object Pos {
   * infering the page for `A` automatically. To use this approach
   * simply use an `ask[List[A]]` in your journey and it will pick up
   * and use the add/edit part from inference, falling back to
-  * [[InferFormField]] if necessary.
-  *
+  * `InferFormField` if necessary. 
+  * 
   * The second approach works by explicitly supplying a subjourney and
   * interpreting this into a [[WebMonadConstructor]], by using the
-  * [[listingPageWM]] method.
+  * `listingPageWM` method. 
   */
 trait InferListingPages[Html] {
   this: GenericWebInterpreter[Html] =>
