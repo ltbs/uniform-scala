@@ -1,8 +1,8 @@
 package ltbs.uniform
 package common.web
 
-import validation._
 import cats.implicits._
+import ltbs.uniform.validation._
 import shapeless.Lazy
 
 sealed trait ListAction
@@ -138,7 +138,7 @@ trait InferListingPages[Html] {
     ): WM[List[A]] = {
 
       val subRules = validationIn.subRules
-      val (_, max) = subRules.collect {
+      val (min, max) = subRules.collect {
         case Rule.MaxLength(h, _) => (0, h)
         case Rule.MinLength(l,_) => (l,Int.MaxValue)
         case Rule.LengthBetween(l,h) => (l,h)          
@@ -152,79 +152,84 @@ trait InferListingPages[Html] {
         else
           genericSubJourney[S](id, c => c.copy(leapAhead = false))(sub)
 
-      db.get[List[A]](List(s"${id}-zzdata")).flatMap{ dataRead =>
-        println(s"###### dataRead: $dataRead")
-        val data: List[A] = dataRead match {
-          case Some(Right(d)) => d
-          case _ => defaultIn.getOrElse(Nil)
-        }
+      getConfig().flatMap { config: JourneyConfig =>
 
-        val orderWithIndex: Ordering[(A, Int)] = {new cats.Order[(A, Int)] {
-          def compare(a: (A, Int), b: (A, Int)): Int = customOrdering match {
-            case Some(o) => o.compare(a._1, b._1)
-            case None    => a._2 compareTo b._2
-          }
-        }}.toOrdering
+        db.get[List[A]](List(s"${id}-zzdata")).flatMap { dataRead =>
 
-        val indexedRows = data.zipWithIndex.
-          sorted(orderWithIndex).
-          map{case (v, index) =>
-            val editLink = s"$id/edit/$index" + (if (useSubjourneys) "/" else "")
-            val deleteLink = s"$id/delete/$index/"
-            ListingTellRow(v, editLink, deleteLink)
+          val data: List[A] = dataRead match {
+            case Some(Right(d)) => d
+            case _ => defaultIn.getOrElse(Nil)
           }
 
-        val validation = {
-          import cats.data.Validated.Valid
-          Rule.cond[ListAction]({
-            case ListAction.Add if data.size >= max => false
-            case _ => true
-          }, "maxLength") followedBy {
-            case ListAction.Continue => validationIn(data).map{_ => ListAction.Continue}
-            case x => Valid(x)
-          }
-        }
-
-        val elementValidation: Rule[A] = subRules.collect {
-          case Rule.ForEachInList(r) => r
-        }.combineAll
-
-        {wmcbranch(id, listingRowHtml(indexedRows, messages), None, validation, messages): WM[ListAction]} flatMap {
-          case ListAction.Continue =>
-            data.pure[WM]
-
-          case ListAction.Add =>
-            subJourney(Seq(id, "add"))( for {
-              r <- addEditJourney(data, None, messages, elementValidation)
-              _ <- db(List(s"${id}-zzdata")) = data :+ r
-              _ <- db.deleteRecursive(List(id))
-              _ <- goto[Unit](id)
-            } yield (List.empty[A]))
-
-          case ListAction.Delete(index) =>
-            subJourney(Seq(id, "delete"))( for {
-              confirm <- deleteJourney(data,index)
-              _       <- confirm match {
-                case true =>
-                  db(List(s"${id}-zzdata")) = data.deleteAtIndex(index)
-                case false =>
-                  ().pure[WM]
+          val orderWithIndex: Ordering[(A, Int)] = {
+            new cats.Order[(A, Int)] {
+              def compare(a: (A, Int), b: (A, Int)): Int = customOrdering match {
+                case Some(o) => o.compare(a._1, b._1)
+                case None => a._2 compareTo b._2
               }
-              _ <- db.deleteRecursive(List(id))
-              _ <- goto[Unit](id)              
-            } yield (List.empty[A]))
+            }
+          }.toOrdering
 
-          case ListAction.Edit(index) => {
-            println(s"##### in InferListingPages ListAction.Edit")
-            println(s"##### index: $index")
-            println(s"##### id: $id")
-            println(s"##### data: $data")
-            subJourney(Seq(id, "edit", index.toString))( for {
-              r <- addEditJourney(data, Some(index), messages, elementValidation)
-              _ <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, r)
-              _ <- db.deleteRecursive(List(id))
-              _ <- goto[Unit](id)              
-            } yield (List.empty[A]))
+          val indexedRows = data.zipWithIndex.
+            sorted(orderWithIndex).
+            map { case (v, index) =>
+              val editLink = s"$id/edit/$index" + (if (useSubjourneys) "/" else "")
+              val deleteLink = s"$id/delete/$index/"
+              ListingTellRow(v, editLink, deleteLink)
+            }
+
+          val validation = {
+            import cats.data.Validated.Valid
+            Rule.cond[ListAction]({
+              case ListAction.Add if data.size >= max => false
+              case _ => true
+            }, "maxLength") followedBy {
+              case ListAction.Continue => validationIn(data).map { _ => ListAction.Continue }
+              case x => Valid(x)
+            }
+          }
+
+          val elementValidation: Rule[A] = subRules.collect {
+            case Rule.ForEachInList(r) => r
+          }.combineAll
+
+          (if (config.askFirstListItem && data.isEmpty && min > 0) {
+            (ListAction.Add: ListAction).pure[WM]
+          } else {
+            wmcbranch(id, listingRowHtml(indexedRows, messages), None, validation, messages): WM[ListAction]
+          }) flatMap {
+            case ListAction.Continue =>
+              data.pure[WM]
+
+            case ListAction.Add =>
+              subJourney(Seq(id, "add"))(for {
+                r <- addEditJourney(data, None, messages, elementValidation)
+                _ <- db(List(s"${id}-zzdata")) = data :+ r
+                _ <- db.deleteRecursive(List(id))
+                _ <- goto[Unit](id)
+              } yield (List.empty[A]))
+
+            case ListAction.Delete(index) =>
+              subJourney(Seq(id, "delete"))(for {
+                confirm <- deleteJourney(data, index)
+                _ <- confirm match {
+                  case true =>
+                    db(List(s"${id}-zzdata")) = data.deleteAtIndex(index)
+                  case false =>
+                    ().pure[WM]
+                }
+                _ <- db.deleteRecursive(List(id))
+                _ <- goto[Unit](id)
+              } yield (List.empty[A]))
+
+            case ListAction.Edit(index) => {
+              subJourney(Seq(id, "edit", index.toString))(for {
+                r <- addEditJourney(data, Some(index), messages, elementValidation)
+                _ <- db(List(s"${id}-zzdata")) = data.replaceAtIndex(index, r)
+                _ <- db.deleteRecursive(List(id))
+                _ <- goto[Unit](id)
+              } yield (List.empty[A]))
+            }
           }
         }
       }
