@@ -13,3 +13,15 @@ and have interpreters build for you -
 6. Selenium Tests
 
 See the [documentation](https://ltbs.github.io/uniform-scala/) to get started.
+
+## Building 
+
+It is necessary to build the play28 interpreter separately, for example if running 
+`publishSigned` - 
+
+```
+sbt +publishSigned +interpreter-play28/publishSigned
+```
+
+Without doing this you will likely find SBT will attempt to change `crossScalaVersions` to 
+include incompatible combinations of Play and Scala.
