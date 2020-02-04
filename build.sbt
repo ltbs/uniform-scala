@@ -1,6 +1,12 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import AutoDocs._
 
+val allCrossScala = Seq(
+  "2.11.12",
+  "2.12.10",
+  "2.13.0"
+)
+
 lazy val root = project.in(file("."))
   .aggregate(
     coreJS,
@@ -9,10 +15,10 @@ lazy val root = project.in(file("."))
     `interpreter-gui`,
     interpreterLogictableJS,
     interpreterLogictableJVM,
-    `interpreter-play`.projects(Play25),
+//    `interpreter-play`.projects(Play25), // please see README.md
     `interpreter-play`.projects(Play26),
     `interpreter-play`.projects(Play27),
-//    `interpreter-play`.projects(Play28),    // please see README.md
+    `interpreter-play`.projects(Play28),    
     exampleProgramsJS,
     exampleProgramsJVM,
     commonWebJVM,
@@ -24,15 +30,9 @@ lazy val root = project.in(file("."))
     test := {},
     publishArtifact := false,
     publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo"))),
-    organization := "com.luketebbs.uniform"
+    organization := "com.luketebbs.uniform",
+    scalaVersion := allCrossScala.find(_.startsWith("2.12")).get
   )
-
-scalaVersion in ThisBuild := "2.12.10"
-crossScalaVersions in ThisBuild := Seq(
-  "2.11.12", 
-  "2.12.10",
-  "2.13.0"
-)
 
 enablePlugins(SemVerPlugin, SiteScaladocPlugin)
 
@@ -49,6 +49,8 @@ lazy val commonSettings = Seq(
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
+  scalaVersion := allCrossScala.find(_.startsWith("2.12")).get, 
+  crossScalaVersions := allCrossScala,
   scalacOptions ++= Seq(
 //    "-P:silencer:checkUnused",           // silencer plugin to fail build if supressing a non-existant warning
     "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
@@ -216,6 +218,16 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
     .crossType(CrossType.Full)
     .settings(commonSettings)
     .configure(_.dependsOn(core.jvm, `common-web`.jvm))
+    .configurePlatform(Play25) {_.settings(
+      scalaVersion := allCrossScala.find(_.startsWith("2.11")).get,
+      crossScalaVersions := allCrossScala.filter{_.startsWith("2.11")}
+    )}
+    .configurePlatform(Play26) {_.settings(
+      crossScalaVersions := allCrossScala.filter{x => x.startsWith("2.11") || x.startsWith("2.12")}
+    )}
+    .configurePlatform(Play28) {_.settings(
+      crossScalaVersions := allCrossScala.filterNot{x => x.startsWith("2.11")}
+    )}
 
 lazy val `interpreter-play27` = `interpreter-play`.projects(Play27)
   .dependsOn(commonWebJVM)

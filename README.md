@@ -16,11 +16,11 @@ See the [documentation](https://ltbs.github.io/uniform-scala/) to get started.
 
 ## Building 
 
-It is necessary to build the play28 interpreter separately, for example if running 
+It is necessary to build the play25 interpreter separately, for example if running 
 `publishSigned` - 
 
 ```
-sbt +publishSigned +interpreter-play28/publishSigned
+sbt +publishSigned +interpreter-play25/publishSigned
 ```
 
 Without doing this you will likely find SBT will attempt to change `crossScalaVersions` to 
