@@ -25,3 +25,6 @@ sbt +publishSigned +interpreter-play25/publishSigned
 
 Without doing this you will likely find SBT will attempt to change `crossScalaVersions` to 
 include incompatible combinations of Play and Scala.
+
+Additionally `+compile` will generally fail. For some reason the root compilation task appears
+to depend upon an earlier version of itself. `+test`, etc should work, however. 
