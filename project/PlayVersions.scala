@@ -8,7 +8,7 @@ object Play25 extends Platform {
   def enable(project: Project): Project = project
     .settings(
       scalaVersion := "2.11.12",
-      crossScalaVersions := Seq("2.11.12"),
+      crossScalaVersions ~= {_.filter{_.startsWith("2.11")}},
       libraryDependencies ++= Seq(
         "com.typesafe.play" %% "play-server"       % "2.5.19" % "provided",
         "com.typesafe.play" %% "play-omnidoc"      % "2.5.19" % "provided",
@@ -24,6 +24,7 @@ object Play26 extends Platform {
   def sbtSuffix: String = "26"
   def enable(project: Project): Project = project
     .settings(
+      crossScalaVersions ~= {_.filter{x => x.startsWith("2.11") || x.startsWith("2.12")}},      
       libraryDependencies += "com.typesafe.play" %% "play" % "2.6.25" % "provided"
     )
 }
@@ -42,6 +43,7 @@ object Play28 extends Platform {
   def sbtSuffix: String = "28"
   def enable(project: Project): Project = project
     .settings(
+      crossScalaVersions ~= {_.filterNot{_.startsWith("2.11")}},            
       libraryDependencies += "com.typesafe.play" %% "play" % "2.8.0-RC1" % "provided"
     )
 }

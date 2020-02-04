@@ -17,6 +17,9 @@ lazy val root = project.in(file("."))
     `interpreter-play`.projects(Play25),
     `interpreter-play`.projects(Play26),
     `interpreter-play`.projects(Play27),
+    `persistence-mongo`.projects(Play25),
+    `persistence-mongo`.projects(Play26),
+    `persistence-mongo`.projects(Play27),    
     exampleProgramsJS,
     exampleProgramsJVM,
     commonWebJVM,
@@ -31,8 +34,8 @@ lazy val root = project.in(file("."))
   )
 
 scalaVersion := scala2_11
-crossScalaVersions := Seq(scala2_11)
 
+crossScalaVersions in ThisBuild := Seq(scala2_11, scala2_12, scala2_13)
 enablePlugins(SemVerPlugin, SiteScaladocPlugin)
 
 def macroDependencies(scalaVersion: String) =
@@ -45,8 +48,6 @@ def macroDependencies(scalaVersion: String) =
   }
 
 lazy val commonSettings = Seq(
-  scalaVersion := scala2_12,
-  crossScalaVersions := Seq(scala2_11, scala2_12),
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
@@ -225,32 +226,24 @@ lazy val interpreterLogictableDocs = docProject(interpreterLogictableJVM, docs)
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
   crossProject(Play25, Play26, Play27, Play28)
-    .withoutSuffixFor(Play27)
     .crossType(CrossType.Full)
     .settings(commonSettings)
-    .configurePlatform(Play25)(_.settings(
-      name := "interpreter-play25",
-      scalaVersion := scala2_11,
-      crossScalaVersions := Seq(scala2_11)
-    ).dependsOn(core.jvm, `common-web`.jvm))
-    .configurePlatform(Play26)(_.settings(
-      name := "interpreter-play26",
-      crossScalaVersions := Seq(scala2_11, scala2_12)
-    ).dependsOn(core.jvm, `common-web`.jvm))
-    .configurePlatform(Play27)(_.settings(
-      name := "interpreter-play27",
-      crossScalaVersions := Seq(scala2_11, scala2_12, scala2_13)
-    ).dependsOn(core.jvm, `common-web`.jvm))
-    .configurePlatform(Play28)(_.settings(
-      name := "interpreter-play28",
-      crossScalaVersions := Seq(scala2_12, scala2_13)
-    ).dependsOn(core.jvm, `common-web`.jvm))
+    .configurePlatform(Play25)(_.dependsOn(core.jvm, `common-web`.jvm))
+    .configurePlatform(Play26)(_.dependsOn(core.jvm, `common-web`.jvm))
+    .configurePlatform(Play27)(_.dependsOn(core.jvm, `common-web`.jvm))
+    .configurePlatform(Play28)(_.dependsOn(core.jvm, `common-web`.jvm))
 
-lazy val `interpreter-play27` = `interpreter-play`.projects(Play27)
-  .dependsOn(commonWebJVM)
-  .dependsOn(exampleProgramsJVM % "test")
+//lazy val `interpreter-play-docs` = docProject(`interpreter-play27`, docs)
 
-lazy val `interpreter-play-docs` = docProject(`interpreter-play27`, docs)
+lazy val `persistence-mongo` : sbtcrossproject.CrossProject =
+  crossProject(Play25, Play26, Play27, Play28)
+  .crossType(CrossType.Pure)
+  .settings(commonSettings)
+  .settings(
+    libraryDependencies += "org.reactivemongo" %% "reactivemongo" % "0.20.2",
+    scalacOptions -= "-Xfatal-warnings" // twirl....
+  )
+  .dependsOn(`interpreter-play`)
 
 lazy val `interpreter-js` = project
   .settings(commonSettings)
