@@ -7,8 +7,6 @@ object Play25 extends Platform {
   def sbtSuffix: String = "25"
   def enable(project: Project): Project = project
     .settings(
-      scalaVersion := "2.11.12",
-      crossScalaVersions := Seq("2.11.12"),
       libraryDependencies ++= Seq(
         "com.typesafe.play" %% "play-server"       % "2.5.19" % "provided",
         "com.typesafe.play" %% "play-omnidoc"      % "2.5.19" % "provided",
