@@ -219,13 +219,19 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
     .settings(commonSettings)
     .configure(_.dependsOn(core.jvm, `common-web`.jvm))
     .configurePlatform(Play25) {_.settings(
+      name := "interpreter-play25",
       scalaVersion := allCrossScala.find(_.startsWith("2.11")).get,
       crossScalaVersions := allCrossScala.filter{_.startsWith("2.11")}
     )}
     .configurePlatform(Play26) {_.settings(
+      name := "interpreter-play26",      
       crossScalaVersions := allCrossScala.filter{x => x.startsWith("2.11") || x.startsWith("2.12")}
     )}
+    .configurePlatform(Play27) {_.settings(
+      name := "interpreter-play27",            
+    )}
     .configurePlatform(Play28) {_.settings(
+      name := "interpreter-play28",            
       crossScalaVersions := allCrossScala.filterNot{x => x.startsWith("2.11")}
     )}
 
