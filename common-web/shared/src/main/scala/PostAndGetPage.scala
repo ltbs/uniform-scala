@@ -60,7 +60,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
       if (targetIdP === currentId) {
         request match {
           case Some(post) =>
-            val localData = post.atPath(currentId)
+            val localData = post.atPath(id :: Nil)
             val parsed = (codec.decode(localData) >>= validation.either)
 
             parsed match {
@@ -72,7 +72,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
               case Left(error) =>
                 val html = AskResult.Payload[A, Html](
                   tell,
-                  postPage(currentId, state, localData, error, breadcrumbs, messages),
+                  postPage(id :: Nil, state, localData, error, breadcrumbs, messages),
                   error,
                   messages,
                   stats
@@ -86,7 +86,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
             val html = AskResult.Payload[A, Html](
               tell,
               getPage(
-                currentId,
+                id :: Nil,
                 state,
                 dbInput.flatMap{_.toOption} orElse            // db
                   default.map{x => codec.encode(x)} getOrElse // default
@@ -139,7 +139,7 @@ class SimplePostAndGetPage[A,Html](
       breadcrumbs: Breadcrumbs,
       messages: UniformMessages[Html]
     )(implicit ec: ExecutionContext): Html =
-      fieldIn.render(key, breadcrumbs, existing, ErrorTree.empty, messages)
+      fieldIn.render(key, key.last :: Nil, breadcrumbs, existing, ErrorTree.empty, messages)
 
     def postPage(
       key: List[String],
@@ -149,7 +149,7 @@ class SimplePostAndGetPage[A,Html](
       breadcrumbs: Breadcrumbs,
       messages: UniformMessages[Html]
     )(implicit ec: ExecutionContext): Html =
-      fieldIn.render(key, breadcrumbs, request, errors, messages)
+      fieldIn.render(key, key.last :: Nil, breadcrumbs, request, errors, messages)
 }
 
 object PostAndGetPage {

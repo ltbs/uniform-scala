@@ -52,7 +52,7 @@ abstract class PlayInterpreter[Html: Writeable](controller: Results)(
       //     request.path.dropRight(1)
       //   )).pure[Future]
       // }
-
+      println(request.body.asFormUrlEncoded)
       val data: Option[Input] = request.body.asFormUrlEncoded.map {
         _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
       }

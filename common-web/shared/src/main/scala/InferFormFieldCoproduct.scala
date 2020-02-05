@@ -7,13 +7,14 @@ trait CoproductFieldList[A, Html]{
   def decode(out: Input): Either[ErrorTree,A]
   def encode(in: A): Input
   def stats: FormFieldStats
-  val inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
+  val inner: List[(String, (List[String], List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
 }
 
 trait InferFormFieldCoProduct[Html] {
 
   def renderCoproduct[A](
-    key: List[String],
+    pageKey: List[String],    
+    fieldKey: List[String],
     path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
@@ -68,8 +69,8 @@ trait InferFormFieldCoProduct[Html] {
 
   implicit def coproductField[A](implicit coproductFields: CoproductFieldList[A, Html]) =
     new FormField[A, Html] {
-      def render(key: List[String], path: Breadcrumbs, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html =
-        renderCoproduct(key,path, values,errors,messages, coproductFields)
+      def render(pageKey: List[String], fieldKey: List[String], path: Breadcrumbs, values: Input, errors: ErrorTree, messages: UniformMessages[Html]): Html =
+        renderCoproduct(pageKey, fieldKey, path, values, errors, messages, coproductFields)
 
       def decode(out: Input): Either[ErrorTree,A] = coproductFields.decode(out)
       def encode(in: A): Input = coproductFields.encode(in)
