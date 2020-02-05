@@ -9,13 +9,14 @@ trait ProductFieldList[A, Html]{
   def decode(out: Input): Either[ErrorTree,A]
   def encode(in: A): Input
   def stats: FormFieldStats
-  val inner: List[(String, (List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
+  val inner: List[(String, (List[String], List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
 }
 
 trait InferFormFieldProduct[Html] {
 
   def renderProduct[A](
-    key: List[String],
+    pageKey: List[String],
+    fieldKey: List[String],    
     path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
@@ -70,13 +71,14 @@ trait InferFormFieldProduct[Html] {
   implicit def productField[A](implicit productFields: ProductFieldList[A,Html]) =
     new FormField[A, Html] {
       def render(
-        key: List[String],
+        pageKey: List[String],
+        fieldKey: List[String],        
         path: Breadcrumbs,
         values: Input,
         errors: ErrorTree,
         messages: UniformMessages[Html]
       ): Html =
-        renderProduct(key, path, values, errors, messages, productFields)
+        renderProduct(pageKey, fieldKey, path, values, errors, messages, productFields)
 
       def decode(out: Input): Either[ErrorTree,A] = productFields.decode(out)
       def encode(in: A): Input = productFields.encode(in)
@@ -97,13 +99,14 @@ trait InferFormFieldProduct[Html] {
       hlist.encode(generic.to(a))
 
     def render(
-      key: List[String],
+      pageKey: List[String],
+      fieldKey: List[String],      
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
     ): Html = {
-      hlist.render(key, path, data, errors, messages)
+      hlist.render(pageKey, fieldKey, path, data, errors, messages)
     }
 
     override def stats = hlist.stats

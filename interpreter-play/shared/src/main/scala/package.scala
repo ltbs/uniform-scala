@@ -17,7 +17,8 @@ package object playframework extends common.web.webcommon {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
-      key: List[String],
+      pageKey: List[String],
+      fieldKey: List[String],      
       breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,

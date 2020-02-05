@@ -16,7 +16,8 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
   import bundle.all._
 
   def renderProduct[A](
-    key: List[String],
+    pageKey: List[String],
+    fieldKey: List[String],    
     path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
@@ -24,12 +25,13 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     pfl: ProductFieldList[A, Tag]
   ): Tag = div(
     pfl.inner map { case (subFieldId, f) =>
-      f(key:+ subFieldId, path, values / subFieldId, errors / subFieldId, messages)
+      f(pageKey, fieldKey :+ subFieldId, path, values / subFieldId, errors / subFieldId, messages)
     }
   )
 
   def renderCoproduct[A](
-    key: List[String],
+    pageKey: List[String],
+    fieldKey: List[String],    
     path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
@@ -38,13 +40,13 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
   ): Tag = {
     val value: Option[String] = values.valueAtRoot.flatMap{_.headOption}
     radios(
-      key,
+      fieldKey,
       cfl.inner.map{_._1},
       value,
       errors,
       messages,
       cfl.inner.map{
-        case(subkey,f) => subkey -> f(key :+ subkey, path, {values / subkey}, errors / subkey, messages)
+        case(subkey,f) => subkey -> f(pageKey, fieldKey :+ subkey, path, {values / subkey}, errors / subkey, messages)
       }.filter(_._2.toString.trim.nonEmpty).toMap
     )
   }
@@ -53,7 +55,8 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
-      key: List[String],
+      pageKey: List[String],
+      fieldKey: List[String],      
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
@@ -88,7 +91,8 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     def encode(in: String): Input = Input.one(List(in))
 
     def render(
-      key: List[String],
+      pageKey: List[String],
+      fieldKey: List[String],      
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
@@ -96,11 +100,11 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     ): Tag = {
 
       val existingValue: String = data.valueAtRoot.flatMap{_.headOption}.getOrElse("")
-      fieldSurround(key, errors, messages) {
+      fieldSurround(fieldKey, errors, messages) {
         input(
           cls   := s"govuk-input ${errors.cls("govuk-input--error")}",
-          id    := key.mkString("_"),
-          name  := key.mkString("."),
+          id    := fieldKey.mkString("_"),
+          name  := fieldKey.mkString("."),
           value := existingValue
         )
       }
@@ -124,35 +128,36 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     def encode(in: Boolean): Input = Input.one(List(in.toString))
 
     def render(
-      key: List[String],
+      pageKey: List[String],      
+      fieldKey: List[String],
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
     ): Tag = {
       val existingValue: Option[String] = data.valueAtRoot.flatMap{_.headOption}
-      radios(key, List(true.toString,false.toString), existingValue, errors, messages)
+      radios(fieldKey, List(true.toString,false.toString), existingValue, errors, messages)
     }
   }
 
   def radios(
-    key: List[String],
+    fieldKey: List[String],
     options: Seq[String],
     existing: Option[String],
     errors: ErrorTree,
     messages: UniformMessages[Tag],
     conditional: PartialFunction[String,Tag] = PartialFunction.empty
   ): Tag = {
-    val keyNoDots=key.mkString("-")
+    val keyNoDots=fieldKey.mkString("-")
 
-    fieldSurround(key, errors, messages) (
+    fieldSurround(fieldKey, errors, messages) (
       div (cls:= "govuk-radios") {
         options.zipWithIndex.map{ case (opt,num) =>
             div(cls:="govuk-radios__item", attr("data-target"):=keyNoDots)(
               input(
                 cls:="govuk-radios__input",
                 id:=s"$keyNoDots-$num",
-                name:= key.mkString("."),
+                name:= fieldKey.mkString("."),
                 attr("type"):="radio",
                 value:=opt,
                 attr("aria-describedby"):=s"$keyNoDots-num-item-hint",
@@ -160,9 +165,9 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
                 if(conditional.isDefinedAt(opt)) {attr("aria-expanded"):="true"}
               ),
               label(cls:="govuk-label govuk-radios__label govuk-label--s", attr("for"):=s"$keyNoDots-$num")(
-                messages.decompose({key :+ opt}.mkString("."))
+                messages.decompose({fieldKey :+ opt}.mkString("."))
               ),
-              messages.get({key :+ opt :+ "hint"}.mkString(".")).map { hint =>
+              messages.get({fieldKey :+ opt :+ "hint"}.mkString(".")).map { hint =>
                 span( id:=s"$keyNoDots-opt-item-hint", cls:="govuk-hint govuk-checkboxes__hint")(
                   hint
                 )
@@ -205,26 +210,27 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       ).mapValues(_.toString.pure[List])
 
     def render(
-      key: List[String],
+      pageKey: List[String],      
+      fieldKey: List[String],
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
     ): Tag = {
-      fieldSurround(key, errors, messages)(
+      fieldSurround(fieldKey, errors, messages)(
         Seq("day","month","year") flatMap { field => 
           Seq(
             div(cls:="govuk-date-input__item") (
             div (cls:="govuk-form-group")(
-              label (cls:="govuk-label govuk-date-input__label", attr("for"):="@key-@field")(
-                messages((key :+ field).mkString(".") ,field)
+              label (cls:="govuk-label govuk-date-input__label", attr("for"):="@fieldKey-@field")(
+                messages((fieldKey :+ field).mkString(".") ,field)
               ),
             )
           ),
           input(
             cls:=s"govuk-input govuk-date-input__input govuk-input--width-${if(field=="year") 4 else 2} ${if (errors.definedAt(field)) {"govuk-input--error"}}",
-            id:=(key :+ field).mkString("_"),
-            name:=(key :+ field).mkString("."),
+            id:=(fieldKey :+ field).mkString("_"),
+            name:=(fieldKey :+ field).mkString("."),
             attr("type"):="number",
             pattern:="[0-9]*",
             value:={data / field}.valueAtRoot.flatMap{_.headOption}.getOrElse("")

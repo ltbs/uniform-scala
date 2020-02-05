@@ -125,13 +125,14 @@ trait InferListingPages[Html] {
         wmcbranchffa.encode(in)
 
       def render(
-        key: List[String],
+        pageKey: List[String],
+        fieldKey: List[String],        
         breadcrumbs: common.web.Breadcrumbs,
         data: Input,
         errors: ErrorTree,
         messages: UniformMessages[Html]
       ): Html =
-        wmcbranchffg.render(key, breadcrumbs, data, errors, messages)
+        wmcbranchffg.render(pageKey, fieldKey, breadcrumbs, data, errors, messages)
     }
 
     val wmcbranch = new SimplePostAndGetPage[ListAction, Html](

@@ -12,7 +12,8 @@ trait SampleFormFields {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
-      key: List[String],
+      @silent("never used") pageKey: List[String],
+      fieldKey: List[String],      
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
@@ -23,13 +24,14 @@ trait SampleFormFields {
 
   implicit val stringFieldR = new FormField[String, String] {
     def render(
-      key: List[String],
+      @silent("never used") pageKey: List[String],
+      fieldKey: List[String],      
       @silent("never used") path: Breadcrumbs,
       @silent("never used") data: Input,
       @silent("never used") errors: ErrorTree,
       @silent("never used") messages: UniformMessages[String]
     ): String = {
-      val k = key.mkString(".")
+      val k = fieldKey.mkString(".")
       s"STRING[$k]"
     }
 
@@ -55,13 +57,14 @@ trait SampleFormFields {
       )(_.toString)
 
     def render(
-      key: List[String],
+      @silent("never used") pageKey: List[String],     
+      fieldKey: List[String],
       @silent("never used") path: Breadcrumbs,
       @silent("never used") data: Input,
       @silent("never used") errors: ErrorTree,
       @silent("never used") messages: UniformMessages[String]
     ): String = {
-      val k = key.mkString(".")
+      val k = fieldKey.mkString(".")
       s"INT[$k]"
     }
 
