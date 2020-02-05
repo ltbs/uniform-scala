@@ -1,8 +1,8 @@
 package ltbs.uniform
 package common.web
 
+import validation._
 import cats.implicits._
-import ltbs.uniform.validation._
 import shapeless.Lazy
 
 sealed trait ListAction

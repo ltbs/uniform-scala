@@ -278,7 +278,7 @@ lazy val `example-assets` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.8"
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.7.0"
   )
 
 lazy val exampleAssetsJS = `example-assets`.js.dependsOn(`common-web`.js)
@@ -317,7 +317,7 @@ lazy val `example-js` = project
     libraryDependencies ++= Seq(
       "org.querki" %%% "jquery-facade" % "1.2",
       "org.scala-js" %%% "scalajs-java-time" % "0.2.5",
-      "com.lihaoyi" %%% "scalatags" % "0.6.8"
+      "com.lihaoyi" %%% "scalatags" % "0.7.0"
     )
   )
   .enablePlugins(ScalaJSPlugin)
