@@ -1,10 +1,11 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import AutoDocs._
 
-val scala2_10 = "2.10.7"
-val scala2_11 = "2.11.12"
-val scala2_12 = "2.12.10"
-val scala2_13 = "2.13.0"
+val allCrossScala = Seq(
+  "2.11.12",
+  "2.12.10",
+  "2.13.0"
+)
 
 lazy val root = project.in(file("."))
   .aggregate(
@@ -14,7 +15,7 @@ lazy val root = project.in(file("."))
     `interpreter-gui`,
     interpreterLogictableJS,
     interpreterLogictableJVM,
-    `interpreter-play`.projects(Play25),
+//    `interpreter-play`.projects(Play25), // please see README.md
     `interpreter-play`.projects(Play26),
     `interpreter-play`.projects(Play27),
     `interpreter-play`.projects(Play28),    
@@ -23,16 +24,15 @@ lazy val root = project.in(file("."))
     commonWebJVM,
   )
   .settings(
+    skip in compile := true, 
     publishLocal := {},
     publish := {},
     test := {},
     publishArtifact := false,
     publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo"))),
-    organization := "com.luketebbs.uniform"
+    organization := "com.luketebbs.uniform",
+    scalaVersion := allCrossScala.find(_.startsWith("2.12")).get
   )
-
-scalaVersion := scala2_11
-crossScalaVersions := Seq(scala2_11)
 
 enablePlugins(SemVerPlugin, SiteScaladocPlugin)
 
@@ -46,11 +46,11 @@ def macroDependencies(scalaVersion: String) =
   }
 
 lazy val commonSettings = Seq(
-  scalaVersion := scala2_12,
-  crossScalaVersions := Seq(scala2_11, scala2_12),
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
+  scalaVersion := allCrossScala.find(_.startsWith("2.12")).get, 
+  crossScalaVersions := allCrossScala,
   scalacOptions ++= Seq(
 //    "-P:silencer:checkUnused",           // silencer plugin to fail build if supressing a non-existant warning
     "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
@@ -157,7 +157,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
-    crossScalaVersions += scala2_13,
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core" % "2.0.0",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
@@ -176,7 +175,6 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
   .settings(commonSettings)
   .settings(
-    crossScalaVersions += scala2_13,
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "org.typelevel" %%% "simulacrum" % "1.0.0"
@@ -195,24 +193,15 @@ lazy val `interpreter-cli` = project
   .settings(commonSettings)
   .dependsOn(coreJVM)
   .dependsOn(exampleProgramsJVM % "test")
-  .settings(
-    crossScalaVersions += scala2_13
-  )
 
 lazy val `interpreter-gui` = project
   .settings(commonSettings)
-  .settings(
-    crossScalaVersions += scala2_13
-  )
   .dependsOn(coreJVM)
 
 lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
-  .settings(
-    crossScalaVersions += scala2_13
-  )
 
 lazy val interpreterLogictableJS = `interpreter-logictable`.js
   .dependsOn(coreJS)
@@ -226,26 +215,25 @@ lazy val interpreterLogictableDocs = docProject(interpreterLogictableJVM, docs)
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
   crossProject(Play25, Play26, Play27, Play28)
-    .withoutSuffixFor(Play27)
     .crossType(CrossType.Full)
     .settings(commonSettings)
-    .configurePlatform(Play25)(_.settings(
+    .configure(_.dependsOn(core.jvm, `common-web`.jvm))
+    .configurePlatform(Play25) {_.settings(
       name := "interpreter-play25",
-      scalaVersion := scala2_11,
-      crossScalaVersions := Seq(scala2_11)
-    ).dependsOn(core.jvm, `common-web`.jvm))
-    .configurePlatform(Play26)(_.settings(
-      name := "interpreter-play26",
-      crossScalaVersions := Seq(scala2_11, scala2_12)
-    ).dependsOn(core.jvm, `common-web`.jvm))
-    .configurePlatform(Play27)(_.settings(
-      name := "interpreter-play27",
-      crossScalaVersions := Seq(scala2_11, scala2_12, scala2_13)
-    ).dependsOn(core.jvm, `common-web`.jvm))
-    .configurePlatform(Play28)(_.settings(
-      name := "interpreter-play28",
-      crossScalaVersions := Seq(scala2_12, scala2_13)
-    ).dependsOn(core.jvm, `common-web`.jvm))
+      scalaVersion := allCrossScala.find(_.startsWith("2.11")).get,
+      crossScalaVersions := allCrossScala.filter{_.startsWith("2.11")}
+    )}
+    .configurePlatform(Play26) {_.settings(
+      name := "interpreter-play26",      
+      crossScalaVersions := allCrossScala.filter{x => x.startsWith("2.11") || x.startsWith("2.12")}
+    )}
+    .configurePlatform(Play27) {_.settings(
+      name := "interpreter-play27",            
+    )}
+    .configurePlatform(Play28) {_.settings(
+      name := "interpreter-play28",            
+      crossScalaVersions := allCrossScala.filterNot{x => x.startsWith("2.11")}
+    )}
 
 lazy val `interpreter-play27` = `interpreter-play`.projects(Play27)
   .dependsOn(commonWebJVM)
@@ -268,9 +256,6 @@ lazy val `example-programs` = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .dependsOn(core)
-  .settings(
-    crossScalaVersions += scala2_13
-  )
 
 lazy val exampleProgramsJS = `example-programs`.js.dependsOn(coreJS)
 lazy val exampleProgramsJVM = `example-programs`.jvm.dependsOn(coreJVM)
@@ -307,14 +292,14 @@ lazy val `example-play` = project.settings(commonSettings)
     initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.interpreters.playframework._",
     initialCommands in consoleQuick := """import cats.implicits._;""",
     scalacOptions -= "-Xfatal-warnings", // twirl....
-    crossScalaVersions := Seq(scala2_12)
+    crossScalaVersions ~= {_.filter{_.startsWith("2.12")}}
   )
 
 lazy val `example-js` = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
-    crossScalaVersions := Seq(scala2_12),
+    crossScalaVersions ~= {_.filter{_.startsWith("2.12")}},    
     libraryDependencies ++= Seq(
       "org.querki" %%% "jquery-facade" % "1.2",
       "org.scala-js" %%% "scalajs-java-time" % "0.2.5",

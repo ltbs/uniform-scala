@@ -15,7 +15,8 @@ trait FormField[A, Html] extends Codec[A] {
   def stats: FormFieldStats = FormFieldStats()
 
   def render(
-    key: List[String],
+    pageKey: List[String],
+    fieldKey: List[String],    
     breadcrumbs: Breadcrumbs,
     data: Input,
     errors: ErrorTree,
@@ -36,12 +37,13 @@ trait FormField[A, Html] extends Codec[A] {
       def encode(in: B): Input = orig.encode(g(in))
       def decode(out: Input): Either[ErrorTree,B] = orig.decode(out) >>= f
       def render(
-        key: List[String],
+        pageKey: List[String],
+        fieldKey: List[String],        
         breadcrumbs: Breadcrumbs,
         data: Input,
         errors: ErrorTree,
         messages: UniformMessages[Html]
-      ): Html = orig.render(key, breadcrumbs, data, errors, messages)
+      ): Html = orig.render(pageKey, fieldKey, breadcrumbs, data, errors, messages)
 
       override def stats = orig.stats
     }

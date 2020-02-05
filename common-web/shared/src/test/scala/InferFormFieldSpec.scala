@@ -8,7 +8,8 @@ import cats.implicits._
 object Presenter extends InferFormFieldProduct[String] with SampleFormFields {
 
   def renderProduct[A](
-    key: List[String],
+    pageKey: List[String],
+    fieldKey: List[String],    
     path: Breadcrumbs,
     values: Input,
     errors: ErrorTree,
@@ -16,7 +17,7 @@ object Presenter extends InferFormFieldProduct[String] with SampleFormFields {
     pfl: ProductFieldList[A, String]
   ): String =
     pfl.inner.map { case (subFieldId, f) =>
-      f(key:+ subFieldId, path, values, errors, messages)
+      f(pageKey, fieldKey :+ subFieldId, path, values, errors, messages)
     }.mkString
 
 }
@@ -40,7 +41,7 @@ class InferFormFieldSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "render correctly" in {
-    renderer.render(List("testRecord"), Nil, Input.empty, ErrorTree.empty, UniformMessages.noop) should be (
+    renderer.render(List("testPage"), List("testRecord"), Nil, Input.empty, ErrorTree.empty, UniformMessages.noop) should be (
       "INT[testRecord.a]STRING[testRecord.b]INT[testRecord.c._1]INT[testRecord.c._2]"
     )
   }
