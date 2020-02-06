@@ -1,9 +1,40 @@
 // build.sc
-import mill._, scalalib._
+import mill._, scalalib._, mill.scalalib.publish._, mill.scalajslib._
 
-object Options {
 
-  def scalacOptions(scalaVersion: String) = {
+trait UniformModule extends Module with PublishModule with CrossScalaModule {
+
+  def publishVersion = "0.0.0"
+
+   def pomSettings = PomSettings(
+     description = artifactName(),
+     organization = "com.luketebbs.uniform",
+     url = "https://ltbs.github.io/uniform-scala/",
+     licenses = Seq(License.`GPL-3.0+`),
+     versionControl = VersionControl.github("ltbs", "uniform-scala"),
+     developers = Seq(
+       Developer("ltbs", "Luke Tebbs", "http://www.luketebbs.com/"),
+       Developer(
+         id            = "mattrobertsky",
+         name          = "Matt Roberts",
+//         email         = "matt.roberts2@digital.hmrc.gov.uk",
+         url           = "https://github.com/mattrobertsky"
+       )
+     )
+   )
+
+  def scalacPluginIvyDeps = (if (crossScalaVersion.startsWith("2.13")) {
+    super.scalacPluginIvyDeps()    
+  } else {
+    super.scalacPluginIvyDeps() ++ Agg(
+      ivy"com.github.ghik::silencer-plugin:1.4.2",      
+      ivy"org.scalamacros:paradise_${crossScalaVersion}:2.1.1"
+    )
+  }) ++ Agg(
+      ivy"org.typelevel:kind-projector_${crossScalaVersion}:0.11.0"
+  )
+
+  def scalacOptions = {
     Seq(
       "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
       "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
@@ -29,7 +60,7 @@ object Options {
       "-Ywarn-dead-code",                  // Warn when dead code is identified.
       "-Ywarn-numeric-widen",              // Warn when numerics are widened.
       "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
-    ) ++ {scalaVersion match {
+    ) ++ {crossScalaVersion match {
       case x if x.startsWith("2.11") => Seq(
         "-Xfuture",                          // Turn on future language features.
         "-Ywarn-unused",
@@ -39,7 +70,7 @@ object Options {
         "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
         "-Ywarn-inaccessible"               // Warn about inaccessible types in method signatures.
       )
-      case x if x.startsWith("2.12") => Seq(        
+      case x if x.startsWith("2.12") => Seq(
         "-Xfuture",                          // Turn on future language features.
         "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
         "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
@@ -58,25 +89,18 @@ object Options {
         "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
         "-Ywarn-inaccessible"               // Warn about inaccessible types in method signatures.
       )
-      case x if x.startsWith("2.13") => Seq(                
+      case x if x.startsWith("2.13") => Seq(
         "-Ymacro-annotations"
       )
       case _ => Nil
     }}
   }
+
 }
 
-object core extends Cross[CoreModule]("2.11.12", "2.12.10", "2.13.1")
+class Core(val crossScalaVersion: String) extends UniformModule {
 
-// object core extends Cross[CoreModule]({for {
-//   crossVersion <- Seq("2.11.12", "2.12.10", "2.13.1")
-//   platform <- Seq("jvm", "js", "native")
-//   if (platform != "native" || crossVersion.startsWith("2.11"))  
-// } yield (platform, crossVersion)} :_*)
-
-class CoreModule(val crossScalaVersion: String) extends CrossScalaModule {
-
-  def ivyDeps = Agg(
+  def ivyDeps = super.ivyDeps() ++ Agg(
     ivy"org.typelevel::cats-core:2.0.0",
     ivy"org.scala-lang.modules::scala-parser-combinators:1.1.2",
     ivy"com.chuusai::shapeless:2.3.3",
@@ -84,15 +108,18 @@ class CoreModule(val crossScalaVersion: String) extends CrossScalaModule {
     ivy"com.github.ghik::silencer-lib:1.4.2" // TODO: Provided
   )
 
-  def scalacPluginIvyDeps = if (crossScalaVersion.startsWith("2.13")) {
-    super.scalacPluginIvyDeps()    
-  } else {
-    super.scalacPluginIvyDeps() ++ Agg(
-      ivy"org.scalamacros:paradise_${crossScalaVersion}:2.1.1",
-      ivy"com.github.ghik::silencer-plugin:1.4.2",
-      ivy"org.typelevel::kind-projector:0.10.3"
-    )
-  }
-
-  def scalacOptions = Options.scalacOptions(crossScalaVersion)
 }
+
+object core extends Cross[Core]("2.11.12", "2.12.10", "2.13.1")
+
+
+class CommonWeb(val crossScalaVersion: String) extends UniformModule {
+  def moduleDeps = Seq(core(crossScalaVersion))
+
+  def ivyDeps = super.ivyDeps() ++ Agg(
+    ivy"com.github.ghik::silencer-lib:1.4.2" // TODO: Provided
+  )
+
+}
+
+object `common-web` extends Cross[CommonWeb]("2.11.12", "2.12.10", "2.13.1")
