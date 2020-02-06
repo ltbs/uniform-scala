@@ -6,22 +6,25 @@ trait UniformModule extends Module with PublishModule with CrossScalaModule {
 
   def publishVersion = "0.0.0"
 
-   def pomSettings = PomSettings(
-     description = artifactName(),
-     organization = "com.luketebbs.uniform",
-     url = "https://ltbs.github.io/uniform-scala/",
-     licenses = Seq(License.`GPL-3.0+`),
-     versionControl = VersionControl.github("ltbs", "uniform-scala"),
-     developers = Seq(
-       Developer("ltbs", "Luke Tebbs", "http://www.luketebbs.com/"),
-       Developer(
-         id            = "mattrobertsky",
-         name          = "Matt Roberts",
-//         email         = "matt.roberts2@digital.hmrc.gov.uk",
-         url           = "https://github.com/mattrobertsky"
-       )
-     )
-   )
+  def pomSettings = PomSettings(
+    description = artifactName(),
+    organization = "com.luketebbs.uniform",
+    url = "https://ltbs.github.io/uniform-scala/",
+    licenses = Seq(License.`GPL-3.0+`),
+    versionControl = VersionControl.github("ltbs", "uniform-scala"),
+    developers = Seq(
+      Developer(
+        id            = "ltbs",
+        name          = "Luke Tebbs",
+        url           = "http://www.luketebbs.com/"
+      ),
+      Developer(
+        id            = "mattrobertsky",
+        name          = "Matt Roberts",
+        url           = "https://github.com/mattrobertsky"
+      )
+    )
+  )
 
   def scalacPluginIvyDeps = (if (crossScalaVersion.startsWith("2.13")) {
     super.scalacPluginIvyDeps()    
@@ -96,6 +99,10 @@ trait UniformModule extends Module with PublishModule with CrossScalaModule {
     }}
   }
 
+  def ivyDeps = super.ivyDeps() ++ Agg(
+    ivy"com.github.ghik::silencer-lib:1.4.2" // TODO: Provided
+  )
+  
 }
 
 class Core(val crossScalaVersion: String) extends UniformModule {
@@ -105,21 +112,58 @@ class Core(val crossScalaVersion: String) extends UniformModule {
     ivy"org.scala-lang.modules::scala-parser-combinators:1.1.2",
     ivy"com.chuusai::shapeless:2.3.3",
     ivy"org.typelevel::simulacrum:1.0.0", // TODO: Provided
-    ivy"com.github.ghik::silencer-lib:1.4.2" // TODO: Provided
   )
 
 }
 
 object core extends Cross[Core]("2.11.12", "2.12.10", "2.13.1")
 
-
 class CommonWeb(val crossScalaVersion: String) extends UniformModule {
   def moduleDeps = Seq(core(crossScalaVersion))
-
-  def ivyDeps = super.ivyDeps() ++ Agg(
-    ivy"com.github.ghik::silencer-lib:1.4.2" // TODO: Provided
-  )
-
 }
 
 object `common-web` extends Cross[CommonWeb]("2.11.12", "2.12.10", "2.13.1")
+
+class InterpreterLogicTable(val crossScalaVersion: String) extends UniformModule {
+  def moduleDeps = Seq(core(crossScalaVersion))
+}
+object `interpreter-logictable` extends Cross[InterpreterLogicTable]("2.11.12", "2.12.10", "2.13.1")
+
+class InterpreterCli(val crossScalaVersion: String) extends UniformModule {
+  def moduleDeps = Seq(core(crossScalaVersion))
+}
+object `interpreter-cli` extends Cross[InterpreterCli]("2.11.12", "2.12.10", "2.13.1")
+
+class InterpreterPlay(val playVersion: String, val crossScalaVersion: String) extends UniformModule {
+  def moduleDeps = Seq(`common-web`(crossScalaVersion))
+
+  def sources = T.sources(
+    millSourcePath / os.up / s"play${playVersion.split("[.]").take(2).mkString}", 
+    millSourcePath / os.up / "src"
+  )
+
+  def ivyDeps = super.ivyDeps() ++ {
+    if (playVersion.startsWith("2.5")) Agg(
+      ivy"com.typesafe.play::play-server:${playVersion}",
+      ivy"com.typesafe.play::play-omnidoc:${playVersion}",
+      ivy"com.typesafe.play::play-netty-server:${playVersion}",
+      ivy"com.typesafe.play::play-logback:${playVersion}",
+      ivy"com.typesafe.play::play-ws:${playVersion}"
+    ) else Agg(
+      ivy"com.typesafe.play::play:2.7.4"
+    )
+  }
+
+}
+
+object `interpreter-play` extends Cross[InterpreterPlay](
+  ("2.5.19", "2.11.12"),
+  ("2.6.25", "2.11.12"),
+  ("2.6.25", "2.12.10"),
+  ("2.7.4",  "2.11.12"),
+  ("2.7.4",  "2.12.10"),
+  ("2.7.4",  "2.13.1"),
+  ("2.8.0",  "2.12.10"),
+  ("2.8.0",  "2.13.1")
+)
+
