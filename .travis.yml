@@ -1,13 +1,55 @@
 language: scala
-
-jobs:
+sudo: required
+dist: trusty
+scala:
+- 2.11.12
+- 2.13.1
+cache:
+  directories:
+  - "$HOME/.m2"
+  - "$HOME/.ivy2"
+  - "$HOME/.sbt/boot/scala-$TRAVIS_SCALA_VERSION"
+before_cache:
+- find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+- find $HOME/.sbt -name "*.lock" -delete
+env:
+  global:
+  - PUBLISH_ARTIFACT: false
+  - env: PLAY_VERSION=2.7
+  - TARGET_SCALA_VERSION: 2.12.10
+  - GH_REF: github.com/ltbs/uniform-scala.git
+branches:
+  only:
+  - master
+  - develop
+jdk:
+- oraclejdk8
+matrix:
   include:
-    - script: sbt ++$TRAVIS_SCALA_VERSION test
-      scala:
-        - 2.11.11
-        - 2.12.8
-    - stage: docs
-      script: sbt ++$TRAVIS_SCALA_VERSION tut
-      scala:
-        - 2.11.11
-        - 2.12.8
+  - scala: 2.12.10
+    jdk: oraclejdk8
+    env: PLAY_VERSION=2.5
+  - scala: 2.12.10
+    jdk: oraclejdk8
+    env: PLAY_VERSION=2.6
+  - scala: 2.12.10
+    jdk: oraclejdk8
+    env: PLAY_VERSION=2.7
+  - scala: 2.13.1
+    jdk: oraclejdk8
+    env: PLAY_VERSION=2.6
+  - scala: 2.13.1
+    jdk: oraclejdk8
+    env: PLAY_VERSION=2.7 PUBLISH_ARTIFACT=true
+  - scala: 2.11.12
+    jdk: oraclejdk8
+    env: PLAY_VERSION=2.6
+before_install: unset SBT_OPTS JVM_OPTS
+install:
+- "./build/install_cassandra.sh"
+before_script:
+- mkdir -p $HOME/.sbt/launchers/1.3.8/
+- curl -L -o $HOME/.sbt/launchers/1.3.8/sbt-launch.jar https://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/1.3.8/sbt-launch.jar
+- travis_retry sbt "++$TRAVIS_SCALA_VERSION update"
+script:
+  - sbt test
