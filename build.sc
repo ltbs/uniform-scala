@@ -1,7 +1,6 @@
 // build.sc
 import mill._, scalalib._, mill.scalalib.publish._, mill.scalajslib._
 
-
 trait UniformModule extends Module with PublishModule with CrossScalaModule {
 
   def publishVersion = "0.0.0"
@@ -102,18 +101,37 @@ trait UniformModule extends Module with PublishModule with CrossScalaModule {
   def ivyDeps = super.ivyDeps() ++ Agg(
     ivy"com.github.ghik::silencer-lib:1.4.2" // TODO: Provided
   )
-  
+
+  lazy val parent = this
+
+  object test extends Tests{
+
+    def ivyDeps = Agg(
+      ivy"org.scalatestplus::scalatestplus-scalacheck:3.1.0.0-RC2"
+    )
+    def testFrameworks = Seq("org.scalatest.tools.Framework")
+
+    def moduleDeps = super.moduleDeps ++ Seq(parent, `example-programs`(crossScalaVersion))
+
+    def sources = T.sources(
+      parent.millSourcePath / "test"
+    )
+    
+  }
 }
 
-class Core(val crossScalaVersion: String) extends UniformModule {
+class ExamplePrograms(val crossScalaVersion: String) extends Module with CrossSbtModule {
+   def moduleDeps = super.moduleDeps ++ Seq(core(crossScalaVersion))
+}
+object `example-programs` extends Cross[ExamplePrograms]("2.11.12", "2.12.10", "2.13.1")
 
+class Core(val crossScalaVersion: String) extends UniformModule {
   def ivyDeps = super.ivyDeps() ++ Agg(
     ivy"org.typelevel::cats-core:2.0.0",
     ivy"org.scala-lang.modules::scala-parser-combinators:1.1.2",
     ivy"com.chuusai::shapeless:2.3.3",
-    ivy"org.typelevel::simulacrum:1.0.0", // TODO: Provided
+    ivy"org.typelevel::simulacrum:1.0.0" // TODO: Provided
   )
-
 }
 
 object core extends Cross[Core]("2.11.12", "2.12.10", "2.13.1")
