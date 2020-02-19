@@ -177,7 +177,7 @@ case class HmrcPlayInterpreter(
           tag("main")(cls:= "govuk-main-wrapper ", id:="main-content", role:="main")(
             div(id:="mainBody") (
               breadcrumbs.drop(1).headOption.map{ back =>
-                a (href:=back.mkString("/"), cls:="govuk-back-link")(messages({back :+ "back"}.mkString(".")))
+                a (href:=back, cls:="govuk-back-link")(messages({back :+ "back"}.mkString(".")))
               },
               if(errors.nonEmpty) errorSummary(key, errors, messages),
               div(cls:="govuk-width-container")(
