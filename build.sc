@@ -121,44 +121,65 @@ trait UniformModule extends Module with PublishModule with CrossScalaModule {
 }
 
 class ExamplePrograms(val crossScalaVersion: String) extends Module with CrossSbtModule {
-   def moduleDeps = super.moduleDeps ++ Seq(core(crossScalaVersion))
+   def moduleDeps = super.moduleDeps ++ Seq(core("jvm", crossScalaVersion))
 }
 object `example-programs` extends Cross[ExamplePrograms]("2.11.12", "2.12.10", "2.13.1")
 
-class Core(val crossScalaVersion: String) extends UniformModule {
+class Core(val platformSegment: String, val crossScalaVersion: String) extends UniformModule {
   def ivyDeps = super.ivyDeps() ++ Agg(
     ivy"org.typelevel::cats-core:2.0.0",
     ivy"org.scala-lang.modules::scala-parser-combinators:1.1.2",
     ivy"com.chuusai::shapeless:2.3.3",
     ivy"org.typelevel::simulacrum:1.0.0" // TODO: Provided
   )
+
+  override def sources = {
+    def shortCrossVersion = crossScalaVersion.replaceAll("\\.[0-9]+$", "")
+    T.sources(
+      millSourcePath / os.up / s"src",      
+      millSourcePath / os.up / s"src-$shortCrossVersion",
+      millSourcePath / os.up / s"src-$platformSegment",
+      millSourcePath / os.up / s"src-${platformSegment}-${shortCrossVersion}"
+    )
+  }
+
 }
 
-object core extends Cross[Core]("2.11.12", "2.12.10", "2.13.1")
+implicit def v = define.Cross.Factory[Core]{
+  case (("jvm", crossScalaVersion: String), ctx) => new Core("jvm", crossScalaVersion) {
+    override def millOuterCtx = ctx
+  }
+  case (("js", crossScalaVersion: String), ctx) => new Core("js", crossScalaVersion) with ScalaJSModule {
+    override def millOuterCtx = ctx
+    def scalaJSVersion = "1.0.0"
+  }
+}
+
+object core extends Cross[Core](
+  ("jvm", "2.11.12"),
+  ("jvm", "2.12.10"),
+  ("jvm", "2.13.1"),
+  ("js", "2.13.1")
+)
 
 class CommonWeb(val crossScalaVersion: String) extends UniformModule {
-  def moduleDeps = Seq(core(crossScalaVersion))
+  def moduleDeps = Seq(core("jvm", crossScalaVersion))
 }
 
 object `common-web` extends Cross[CommonWeb]("2.11.12", "2.12.10", "2.13.1")
 
 class InterpreterLogicTable(val crossScalaVersion: String) extends UniformModule {
-  def moduleDeps = Seq(core(crossScalaVersion))
+  def moduleDeps = Seq(core("jvm", crossScalaVersion))
 }
 object `interpreter-logictable` extends Cross[InterpreterLogicTable]("2.11.12", "2.12.10", "2.13.1")
 
 class InterpreterCli(val crossScalaVersion: String) extends UniformModule {
-  def moduleDeps = Seq(core(crossScalaVersion))
+  def moduleDeps = Seq(core("jvm", crossScalaVersion))
 }
 object `interpreter-cli` extends Cross[InterpreterCli]("2.11.12", "2.12.10", "2.13.1")
 
 class InterpreterPlay(val playVersion: String, val crossScalaVersion: String) extends UniformModule {
   def moduleDeps = Seq(`common-web`(crossScalaVersion))
-
-  def sources = T.sources(
-    millSourcePath / os.up / s"play${playVersion.split("[.]").take(2).mkString}", 
-    millSourcePath / os.up / "src"
-  )
 
   def ivyDeps = super.ivyDeps() ++ {
     if (playVersion.startsWith("2.5")) Agg(
