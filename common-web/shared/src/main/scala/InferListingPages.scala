@@ -139,7 +139,7 @@ trait InferListingPages[Html] {
       wmcbranchff
     ) {
       override val customRouting: PartialFunction[List[String],ListAction] = {
-        case "edit" :: Pos(x) :: Nil   => ListAction.Edit(x)
+        case "edit" :: Pos(x) :: _   => ListAction.Edit(x)
         case "delete" :: Pos(x) :: Nil => ListAction.Delete(x)
       }
     }
