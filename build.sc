@@ -3,7 +3,12 @@ import mill._, scalalib._, mill.scalalib.publish._, mill.scalajslib._
 
 trait UniformModule extends Module with PublishModule with CrossScalaModule {
 
-  def publishVersion = "0.0.0"
+  def publishVersion = {
+    import sys.process._
+    def gitVersion = {"git describe".!!}.init
+    def isDirty = {"git diff HEAD".!!}.trim.nonEmpty
+    gitVersion + {if (isDirty) "-dirty" else ""}
+  }
 
   def pomSettings = PomSettings(
     description = artifactName(),
@@ -134,12 +139,11 @@ class Core(val platformSegment: String, val crossScalaVersion: String) extends U
   )
 
   override def sources = {
-    def shortCrossVersion = crossScalaVersion.replaceAll("\\.[0-9]+$", "")
     T.sources(
       millSourcePath / os.up / s"src",      
-      millSourcePath / os.up / s"src-$shortCrossVersion",
+      millSourcePath / os.up / s"src-${artifactScalaVersion()}",
       millSourcePath / os.up / s"src-$platformSegment",
-      millSourcePath / os.up / s"src-${platformSegment}-${shortCrossVersion}"
+      millSourcePath / os.up / s"src-${platformSegment}-${artifactScalaVersion()}"
     )
   }
 
@@ -148,10 +152,13 @@ class Core(val platformSegment: String, val crossScalaVersion: String) extends U
 implicit def v = define.Cross.Factory[Core]{
   case (("jvm", crossScalaVersion: String), ctx) => new Core("jvm", crossScalaVersion) {
     override def millOuterCtx = ctx
+    override def artifactId = s"core_${artifactScalaVersion()}"
   }
+    
   case (("js", crossScalaVersion: String), ctx) => new Core("js", crossScalaVersion) with ScalaJSModule {
     override def millOuterCtx = ctx
     def scalaJSVersion = "1.0.0"
+    override def artifactId = s"core_sjs${artifactScalaJSVersion()}_${artifactScalaVersion()}"    
   }
 }
 
