@@ -13,7 +13,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
 
 addSbtPlugin("com.rallyhealth.sbt" % "sbt-git-versioning" % "1.2.2")
 
-addSbtPlugin("com.47deg"  % "sbt-microsites" % "1.1.0")
+addSbtPlugin("com.47deg"  % "sbt-microsites" % "1.1.3")
 
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.1.1")
 
