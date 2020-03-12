@@ -69,10 +69,23 @@ package web {
 }
 
 package object web extends webcommon {
+
+  import concurrent._, duration._
+  import java.time.LocalDateTime
+
   implicit class RichList[A](value: List[A]) {
     def deleteAtIndex(i: Int): List[A] =
       value.take(i) ++ value.drop(i + 1)
     def replaceAtIndex(i: Int, a: A): List[A] =
       value.take(i) ++ {a :: value.drop(i + 1)}
+  }
+
+  implicit class RichDateTime(val inner: LocalDateTime) extends AnyVal {
+    def +(duration: Duration):LocalDateTime = inner.plusNanos(duration.toNanos)
+  }
+
+  implicit val orderLocalDateTime = new cats.Order[LocalDateTime] {
+    def compare(x: LocalDateTime, y: LocalDateTime): Int =
+      x compareTo y
   }
 }

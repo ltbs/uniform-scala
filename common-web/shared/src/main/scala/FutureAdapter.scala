@@ -3,7 +3,8 @@ package common.web
 
 import cats.implicits._
 import cats.~>
-import concurrent._
+import concurrent._, duration._
+import java.time.LocalDateTime
 
 case class FutureAdapter[Html]() {
 
@@ -16,7 +17,7 @@ case class FutureAdapter[Html]() {
     }
   }
 
-  def rerunOnPriorStateChange(cacheId: String) = new {
+  def rerunOnPriorStateChange(cacheId: String, lifetime: Duration = 1.minute) = new {
 
     def sha256Hash(in: String): String = {
       import java.security.MessageDigest
@@ -26,25 +27,29 @@ case class FutureAdapter[Html]() {
       String.format("%032x", new BigInteger(1, digest))
     }
 
-    def apply[A](fa: Future[A])(implicit codec: Codec[A]): WM[A] = new WM[A] {
+    def apply[A](fa: => Future[A])(implicit codec: Codec[A]): WM[A] = new WM[A] {
 
       def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] = {
         import pageIn._
         val triggerValues: List[String] = breadcrumbs.sorted.flatMap{ state.get }
         val trigger: String = sha256Hash(triggerValues.mkString)
         val oldTrigger: Option[String] = state.get(List(cacheId, "trigger"))
-
-        if (oldTrigger == Some(trigger)) {
+        val timestamp: Option[LocalDateTime] = state
+          .get(List(cacheId, "timestamp"))
+          .map{LocalDateTime.parse}
+        if (oldTrigger == Some(trigger) && timestamp.fold(false)(_ + lifetime > LocalDateTime.now)) {
           val oldValue: Either[ErrorTree,A] =
             Input.fromUrlEncodedString(state(List(cacheId, "value"))) >>= codec.decode
 
           val Right(oldie) = oldValue
           pageIn.toPageOut(AskResult.Success[A, Html](oldie)).pure[Future]
         } else {
+
           fa.map{ result =>
             val newData = Map(
               List(cacheId, "value") -> codec.encode(result).toUrlEncodedString,
-              List(cacheId, "trigger") -> trigger
+              List(cacheId, "trigger") -> trigger,
+              List(cacheId, "timestamp") -> LocalDateTime.now.toString
             )
             pageIn.toPageOut(AskResult.Success[A, Html](result)).copy (
               db = pageIn.state ++ newData
