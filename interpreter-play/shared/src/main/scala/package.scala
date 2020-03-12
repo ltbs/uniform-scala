@@ -29,7 +29,7 @@ package object playframework extends common.web.webcommon {
 
   implicit class RichPlayMessages(input: i18n.Messages) {
 
-    def convertMessagesTwirlHtml(escapeHtml: Boolean = false): UniformMessages[TwirlHtml] = {
+    def convertMessagesTwirlHtml(escapeHtml: Boolean = true): UniformMessages[TwirlHtml] = {
       val stringMessages = convertMessages()
 
       if (escapeHtml) stringMessages.map(
