@@ -15,7 +15,7 @@ addSbtPlugin("com.rallyhealth.sbt" % "sbt-git-versioning" % "1.4.0")
 
 addSbtPlugin("com.47deg"  % "sbt-microsites" % "1.1.3")
 
-addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.1.1")
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.1.3")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
 
