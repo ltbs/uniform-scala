@@ -3,8 +3,8 @@ import AutoDocs._
 
 val allCrossScala = Seq(
   "2.11.12",
-  "2.12.10",
-  "2.13.0"
+  "2.12.11",
+  "2.13.2"
 )
 
 lazy val root = project.in(file("."))
@@ -40,9 +40,12 @@ def macroDependencies(scalaVersion: String) =
   CrossVersion.partialVersion(scalaVersion) match {
     case Some((2, minor)) if minor < 13 =>
       Seq(
-        compilerPlugin(("org.scalamacros" %% "paradise" % "2.1.1").cross(CrossVersion.patch))
+        compilerPlugin(("org.scalamacros" %% "paradise" % "2.1.1").cross(CrossVersion.patch)),
+        "org.scala-lang" % "scala-reflect" % scalaVersion
       )
-    case _ => Seq()
+    case _ => Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion
+    )
   }
 
 lazy val commonSettings = Seq(
@@ -53,7 +56,7 @@ lazy val commonSettings = Seq(
   crossScalaVersions := allCrossScala,
   scalacOptions ++= Seq(
 //    "-P:silencer:checkUnused",           // silencer plugin to fail build if supressing a non-existant warning
-    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
+//    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.
@@ -63,7 +66,7 @@ lazy val commonSettings = Seq(
     "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
     "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
     "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
-    "-Xlint:inaccessible",               // Warn about inaccessible types in method signatures.
+    "-Xlint:inaccessible",               // Warn about inacces(sible types in method signatures.
     "-Xlint:infer-any",                  // Warn when a type argument is inferred to be `Any`.
     "-Xlint:missing-interpolator",       // A string literal appears to be missing an interpolator id.
     "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
@@ -147,8 +150,8 @@ lazy val commonSettings = Seq(
   licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
     "org.scalatestplus" %%% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % "test",
-    compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.2"),
-    "com.github.ghik" %% "silencer-lib" % "1.4.2" % Provided
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.0" cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % "1.7.0" % Provided cross CrossVersion.full
   )
 )
 
@@ -161,8 +164,14 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.typelevel" %%% "cats-core" % "2.0.0",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "org.typelevel" %%% "simulacrum" % "1.0.0"
+      "org.typelevel" %%% "simulacrum" % "1.0.0",
+      "dev.zio" %% "izumi-reflect" % "1.0.0-M2"
     ) ++ macroDependencies(scalaVersion.value),
+    initialCommands in console := List(
+      "import cats.implicits._",
+      "val universe: scala.reflect.runtime.universe.type = scala.reflect.runtime.universe",
+      "import universe._"
+    ).mkString("; ")
   )
 
 lazy val coreJS = core.js

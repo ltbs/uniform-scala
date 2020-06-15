@@ -8,6 +8,7 @@ import cats.data.{NonEmptyList, Validated}
 import shapeless.tag, tag.{@@}
 import collection.immutable.ListMap
 import uniform.validation.{Rule, Transformation}
+import izumi.reflect.Tag
 
 package object uniform
     extends TreeLike.ToTreeLikeOps
@@ -197,4 +198,18 @@ package object uniform
     def eqv(x: A @@ Tag, y: A @@ Tag): Boolean = eqBase.eqv(x,y)
   }
 
+  def interact[A: Tag, T: Tag](key: String, value: T): Uniform[Needs.Ask[A] with Needs.Tell[T], A] =
+    Uniform.Interact(key, value, implicitly[Tag[A]], implicitly[Tag[T]])
+  def ask[A: Tag](key: String): Uniform[Needs.Ask[A], A] = Uniform.Ask(key, implicitly[Tag[A]])
+  def tell[A: Tag](key: String, value: A): Uniform[Needs.Tell[A], Unit] =
+    Uniform.Tell(key, value, implicitly[Tag[A]])
+  def end[A: Tag](key: String, value: A): Uniform[Needs.Tell[A], Nothing] =
+    Uniform.EndTell(key, value, implicitly[Tag[A]])
+  def end(key: String): Uniform[Needs[Any], Nothing] =
+    Uniform.End(key)
+  def endIf[T: Tag](pred: Boolean, key: String, value: T): Uniform[Needs.Tell[T], Unit] =
+    if(pred) end(key, value) else Uniform.Pure(())
+  def endIf(pred: Boolean, key: String): Uniform[Needs[Any], Unit] =
+    if(pred) end(key) else Uniform.Pure(())
+  def pure[A](value: A) = Uniform.Pure(value)
 }

@@ -44,7 +44,7 @@ class TestInterpreter extends AnyFlatSpec with Matchers {
     }
 
     val result: (Int, Option[String]) = program(
-      new MonoidInterpreter
+      new MonoidInterpreter()
     )
 
     result shouldBe ((0, None))
