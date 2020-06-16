@@ -4,7 +4,7 @@ import cats.{Id, Monoid}
 import shapeless.HList
 import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 
-trait Noop[A] {}
+trait Noop[+A] {}
 
 // object MonoidInterpreter2 extends Interpreter[Id, Monoid, Noop] {
 

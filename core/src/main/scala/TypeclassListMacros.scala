@@ -133,18 +133,14 @@ new TypeclassList[$hl, ${fType.typeSymbol}] {
     q"Map($s :_*)"
   }
 
-  def interpreter_impl[H <: Needs[_], A, ASKTC[_], TELLTC[_], F[_]](
-    program: Expr[Uniform[H,A]]
+  def interpreter_impl[H <: Needs[_], A, ASKTC[_], TELLTC[_], F[_], T](
+    program: Expr[Uniform[H,A,T]]
   )(
     implicit ttn: WeakTypeTag[H], 
     ttAskTc: WeakTypeTag[ASKTC[_]],
     ttTellTc: WeakTypeTag[TELLTC[_]]
   ): c.Expr[F[A]] = {
     val (askTypes, tellTypes) = getNeeds
-    val askList = c.Expr[HList](implicitKList(ttAskTc.tpe, askTypes))
-    val askList2 = fromImplicits2(ttAskTc.tpe, askTypes)
-    val tellList = c.Expr[HList](implicitKList(ttTellTc.tpe, tellTypes))
-    val tellList2 = fromImplicits2(ttTellTc.tpe, tellTypes)
     val askMap = implicitMaps(ttAskTc.tpe, askTypes)
     val tellMap = implicitMaps(ttTellTc.tpe, tellTypes)    
 

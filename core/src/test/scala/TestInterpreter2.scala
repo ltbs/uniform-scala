@@ -9,33 +9,26 @@ import validation.Rule
 import izumi.reflect.macrortti.LightTypeTag
 import izumi.reflect.Tag
 
-trait Example[A] { val value: A }
+trait Example[+A] { val value: A }
 
-object ListInterpreter extends Interpreter[List, Example, Noop] {
+trait Reader[+A] {
+  def name: String
+  def read(in: String): Either[String, A]
+}
 
+trait Writer[T] {
+  def write(v: T): String
+}
 
-  def ask[A](key: String, asker: Example[A]): List[A] = List(asker.value)
-  def tell[A](key: String, value: A, teller: Noop[A]): List[Unit] = Nil
+object ListInterpreter extends MonadInterpreter[List, Example, Noop] {
 
-
-  def executeImpl[H <: Needs[_], A: Tag](
-    program: Uniform[H,A],
-    askMap: Map[LightTypeTag, Example[_]],    
-    tellMap: Map[LightTypeTag, Noop[_]]
-  ): List[A] = {
-    import ltbs.uniform.{Uniform => U}
-    program match {
-      case U.Map(base, f) => executeImpl(base, askMap, tellMap).map(f)
-      case U.FlatMap(base, f) => executeImpl(base, askMap, tellMap).flatMap(f.map(executeImpl(_, askMap, tellMap)))
-      case U.Tell(key, value, tag) => Nil // tell(key, value, tellMap(tag.tag))
-      case U.Interact(key, value, askTag, tellTag) => Nil
-      case U.Ask(key, tag) => ask(key, askMap(tag.tag))
-      case U.EndTell(_, _, _) => Nil
-      case U.End(_) => Nil
-      case U.Pure(v) => List(v)
-    }
+  def ask[A](key: String, default: Option[A], validation: Rule[A], asker: Example[A]): List[A] = List(asker.value)
+  def tell[T](key: String, value: T, teller: Noop[T]): List[Unit] = {
+    println(value.toString)
+    List(())
   }
-  
+
+  override def end(key: String): List[Nothing] = Nil
 }
 
 class TestInterpreter3 extends AnyFlatSpec with Matchers {
@@ -67,6 +60,6 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
       _ <- tell[Option[String]]("_", c)
     } yield ((x, "test".some))
 
-    ListInterpreter.execute(program) should be (List(12, "some"))
+    ListInterpreter.execute(program) should be (List((12, Some("test"))))
   }
 }
