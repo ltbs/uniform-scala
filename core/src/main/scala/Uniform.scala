@@ -18,7 +18,7 @@ object Uniform {
   case class EndTell[A](key: String, value: A, tag: Tag[A]) extends Uniform[Needs.Tell[A], Nothing, A]
   case class End[A](key: String) extends Uniform[Needs[Any], Nothing, Unit]
   case class Pure[A](value: A) extends Uniform[Needs[_], A, Any]
-  case class Subjourney[-R <: Needs[_], A, T](path: List[String], base: Uniform[R, A, T]) extends Uniform[R, A, T]  
+  case class Subjourney[-R <: Needs[_], A, T](path: List[String], base: Uniform[R, A, T]) extends Uniform[R, A, T]
 }
 
 

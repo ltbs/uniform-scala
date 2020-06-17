@@ -42,7 +42,7 @@ class TypeclassListMacros(val c: blackbox.Context) {
 
     @tailrec
     def inner(found: List[Tree], remaining: Tree): List[Tree] = {
-      c.info(c.enclosingPosition, "REMAINING: " + remaining.toString, true)
+//      c.info(c.enclosingPosition, "REMAINING: " + remaining.toString, true)
       remaining match {
         case AppliedTypeTree(Ident(TypeName("$colon$colon")), List(typeIdent, n)) =>
           inner(typeIdent :: found, n)
@@ -123,9 +123,11 @@ new TypeclassList[$hl, ${fType.typeSymbol}] {
 
     val symbol = fType.typeSymbol
 
+    val typeArgs: List[Type] = fType.typeArgs.takeWhile(_.toString != "Any")
+
     @tailrec
     def inner(types: List[Tree], acc: Tree): Tree = types match {
-      case v::x => inner(x, q"(implicitly[izumi.reflect.Tag[$v]].tag, implicitly[${symbol}[$v]]) :: $acc")
+      case v::x => inner(x, q"(implicitly[izumi.reflect.Tag[$v]].tag, implicitly[${symbol}[..$typeArgs, $v]]) :: $acc")
       case Nil => acc
     }
 
@@ -142,9 +144,12 @@ new TypeclassList[$hl, ${fType.typeSymbol}] {
   ): c.Expr[F[A]] = {
     val (askTypes, tellTypes) = getNeeds
     val askMap = implicitMaps(ttAskTc.tpe, askTypes)
+    c.info(c.enclosingPosition, askMap.toString, true)
+
     val tellMap = implicitMaps(ttTellTc.tpe, tellTypes)    
 
     val r = q"${c.prefix}.executeImpl($program, $askMap, $tellMap)"
+    
 //    val r = reify{ clazz.splice.executeImpl(program.splice, askList.splice, tellList.splice) }
 //    println(r)
     c.Expr[F[A]](r)

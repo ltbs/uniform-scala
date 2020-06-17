@@ -47,10 +47,10 @@ object FutureInterpreterTestApp extends App {
   implicit val ec: ExecutionContext = ExecutionContext.global
   val i = FutureInterpreter()
 
+  val journey2 = ask[Coordinate]("one").flatMap{x => tell("three", x)}
+
   val journey = for {
-    x <- ask[Int]("one")
-    y <- ask[Int]("two")
-    r = Coordinate(x,y)
+    r <- ask[Coordinate]("one")
     _ <- tell("three", r)
   } yield (r)
 
@@ -61,9 +61,24 @@ object FutureInterpreterTestApp extends App {
     }.leftMap(_.getLocalizedMessage())
   }
 
+  implicit val c = new Reader[Coordinate] {
+    def name: String = "Comma separated coordinate"
+    def read(in: String): Either[String,Coordinate] = {
+      val (x::y::Nil) = in.split(",").toList
+      Either.catchOnly[NumberFormatException] {
+        Coordinate(x.trim.toInt, y.trim.toInt)
+      }.leftMap(_.getLocalizedMessage())
+    }
+  }
+
+
   implicit val w = new Writer[Coordinate] {
     def write(v: Coordinate): String = s"x: ${v.x}, y: ${v.y}"
   }
 
-  i.execute(journey)
+  import scala.concurrent.duration._
+  Await.result(
+    i.execute(journey),
+    100.minutes
+  )
 }

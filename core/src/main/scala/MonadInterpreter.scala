@@ -8,7 +8,7 @@ import izumi.reflect.macrortti.LightTypeTag
 import izumi.reflect.Tag
 import validation.Rule
 
-abstract class MonadInterpreter[F[+_]: cats.Monad, ASKTC[+_], TELLTC[_]] extends Interpreter[F, ASKTC, TELLTC]{
+abstract class MonadInterpreter[F[+_]: cats.Monad, ASKTC[_], TELLTC[_]] extends Interpreter[F, ASKTC, TELLTC]{
 
   def ask[A](key: String, default: Option[A], validation: Rule[A], asker: ASKTC[A]): F[A]
   def tell[T](key: String, value: T, teller: TELLTC[T]): F[Unit]
@@ -32,9 +32,9 @@ abstract class MonadInterpreter[F[+_]: cats.Monad, ASKTC[+_], TELLTC[_]] extends
       case U.Tell(key, value, tag: Tag[T]) =>
         tell[T](key, value, tellMap(tag.tag).asInstanceOf[TELLTC[T]])
       case U.Interact(key, value, default, validation, askTag, tellTag: Tag[T]) =>
-        interact[A, T](key, value, default, validation, askMap(askTag.tag), tellMap(tellTag.tag).asInstanceOf[TELLTC[T]])
+        interact[A, T](key, value, default, validation, askMap(askTag.tag).asInstanceOf[ASKTC[A]], tellMap(tellTag.tag).asInstanceOf[TELLTC[T]])
       case U.Ask(key, default, validation, tag) =>
-        ask(key, default, validation, askMap(tag.tag))
+        ask(key, default, validation, askMap(tag.tag).asInstanceOf[ASKTC[A]])
       case U.EndTell(key, value, tag: Tag[T]) =>
         endTell[T](key, value, tellMap(tag.tag).asInstanceOf[TELLTC[T]])
       case U.End(key) =>

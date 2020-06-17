@@ -5,7 +5,7 @@ import cats.Monad
 import cats.implicits._
 import concurrent._
 
-abstract class WebMonad[A,Html] {
+abstract class WebMonad[+A,Html] {
   def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]]
 }
 

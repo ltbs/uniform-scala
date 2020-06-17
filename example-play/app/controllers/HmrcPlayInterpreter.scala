@@ -10,13 +10,10 @@ import ScalatagsSupport._
 import ltbs.uniform.common.web.ListingTellRow
 
 case class HmrcPlayInterpreter(
-  results: Results,
   messagesApi: play.api.i18n.MessagesApi
-) extends PlayInterpreter[Tag](results)
-    with InferFormFieldProduct[Tag]
-    with InferFormFieldCoProduct[Tag]
-    with InferListingPages[Tag]
-    with examples.Widgets {
+) extends PlayInterpreter2[Tag] {
+
+  def unitAsk: WebMonadConstructor[Unit, Html]
 
   implicit val tellTwirlUnit = new WebTell[Unit] {
     def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = blankTell

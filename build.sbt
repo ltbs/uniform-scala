@@ -149,7 +149,8 @@ lazy val commonSettings = Seq(
   useGpg := true,
   licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
-    "org.scalatestplus" %%% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % "test",
+    "org.scalatest" %%% "scalatest" % "3.1.2" % "test", 
+    "org.scalatestplus" %%% "scalacheck-1-14" % "3.2.0.0-M4" % "test", 
     compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.0" cross CrossVersion.full),
     "com.github.ghik" % "silencer-lib" % "1.7.0" % Provided cross CrossVersion.full
   )
@@ -161,11 +162,11 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core" % "2.0.0",
+      "org.typelevel" %%% "cats-core" % "2.2.0-M2",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "org.typelevel" %%% "simulacrum" % "1.0.0",
-      "dev.zio" %% "izumi-reflect" % "1.0.0-M2"
+      "dev.zio" %%% "izumi-reflect" % "1.0.0-M2"
     ) ++ macroDependencies(scalaVersion.value),
     initialCommands in console := List(
       "import cats.implicits._",
