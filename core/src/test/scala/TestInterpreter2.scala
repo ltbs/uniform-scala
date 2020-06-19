@@ -42,7 +42,7 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
     implicit val exOptString = example("test".some)
 
     val p2 = pure(12)
-    val out2 = ListInterpreter.execute(p2)
+    val out2 = ListInterpreter.execute(p2)    
     out2 should be (List(12))
 
     val p3 = for {
@@ -59,7 +59,7 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
       b <- interact[Int,String]("hiya2", "in")
       _ <- tell[Option[String]]("_", c)
     } yield ((x, "test".some))
-
+    implicit val os: Option[Int] = Option(12)
     ListInterpreter.execute(program) should be (List((12, Some("test"))))
   }
 }

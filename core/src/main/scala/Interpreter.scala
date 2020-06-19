@@ -27,6 +27,5 @@ trait Interpreter[F[_], ASKTC[_], TELLTC[_]] {
 
   def execute[H <: Needs[_],A, T](
     program: Uniform[H, A, T]
-  ): F[A] = macro TypeclassListMacros.interpreter_impl[H, A, ASKTC, TELLTC, F, T]
-
+  ): F[A] = macro InterpreterMacros.interpreter_impl[H, A, ASKTC, TELLTC, F, T]
 }

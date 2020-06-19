@@ -5,11 +5,11 @@ import cats.instances.list._
 import cats.syntax.alternative._
 import com.github.ghik.silencer.silent
 import scala.language.higherKinds
-import scala.reflect.macros.blackbox
+import scala.reflect.macros.whitebox
 import shapeless.HList
 import scala.annotation.tailrec
 
-class TypeclassListMacros(val c: blackbox.Context) {
+class TypeclassListMacros(val c: whitebox.Context) {
   import c.universe._
 
   /**
@@ -59,27 +59,6 @@ class TypeclassListMacros(val c: blackbox.Context) {
     inner(Nil, ctt)
   }
 
-  /** 
-    * Turn a Needs[_] type into a (List[AskTypes], List[TellTypes]) 
-    */ 
-  @silent("never used") // quasiquoting seems to produce lots of false warnings  
-  def getNeeds[H <: Needs[_]](
-    implicit ttn: c.WeakTypeTag[H]
-  ): (List[Tree], List[Tree]) = {
-    val code = s"type X = ${ttn.tpe.toString}"
-    val xxx = c.parse(code)
-    val TypeDef(_, _, _, ctt) = xxx
-    val parents = ctt match {
-      case tq"..$p { }" => p
-      case x => List(x)
-    }
-    val ret = parents.collect{
-      case tq"ltbs.uniform.Needs.Ask[$x]" => Left(x)
-      case tq"ltbs.uniform.Needs.Tell[$x]" => Right(x)        
-    }
-    ret.separate
-  }
-
   def fromImplicits[L <: HList, TC[_]](
     hlistTypeTag: c.WeakTypeTag[L],
     fTypeTag: c.WeakTypeTag[TC[_]]
@@ -97,44 +76,60 @@ new TypeclassList[${hlistTypeTag.tpe}, ${fTypeTag.tpe}] {
 }"""
     r
   }
-
-  def fromImplicits2(
-    fType: Type,
-    elems: List[Tree]
-  ): Tree = {
-
-    val z = fType.typeSymbol
-    val kelems = elems.map(x => tq"$z[${x}]")
-    val hl = hlist(elems)
-    val list = implicitKList(fType, elems)
-     val r = q"""
-import shapeless._
-new TypeclassList[$hl, ${fType.typeSymbol}] {
-  type Repr = ${hlist(kelems)}
-  val list: Repr = $list
-}"""
-    r
-  }
-
-  def implicitMaps(
+  /*
+  def implicitMapsFuct(
     fType: Type, 
     types: List[Tree]
   ): Tree = {
 
     val symbol = fType.typeSymbol
-
-    val typeArgs: List[Type] = fType.typeArgs.takeWhile(_.toString != "Any")
+//    val p = symbol.asType.typeParams
+    val p = fType.typeParams    
+    // c.info(c.enclosingPosition, s"p for ${fType}: ${p}", true)        
+    // c.info(c.enclosingPosition, s"symbol for ${fType}: ${fType.typeSymbol}", true)    
+    // c.info(c.enclosingPosition, s"typeargs for ${fType}: ${fType.typeArgs}", true)        
+    val typeArgsPrefix: List[Type] = fType.typeArgs.takeWhile(_.toString != "Any")
+//    c.info(c.enclosingPosition, s"typeargsprefix: $typeArgsPrefix", true)    
+    val typeArgsPostfix: List[Type] = fType.typeArgs.dropWhile(_.toString != "Any").drop(1)
+//    c.info(c.enclosingPosition, s"typeargspostfix: $typeArgsPostfix", true)        
 
     @tailrec
     def inner(types: List[Tree], acc: Tree): Tree = types match {
-      case v::x => inner(x, q"(implicitly[izumi.reflect.Tag[$v]].tag, implicitly[${symbol}[..$typeArgs, $v]]) :: $acc")
+      case v::x =>
+
+        val implicitType: Type = fType match {
+          case TypeRef(a, b, d) =>
+//            c.info(c.enclosingPosition, s"TypeRef($a, $b, $d)", true)
+            //            val example = AppliedTypeTree(Ident(TypeName("Either")), List(Ident(TypeName("String")), Ident(TypeName("A"))))
+//            val example2 = AppliedTypeTree(Select(Select(Ident(TermName("blah")), TermName("bleaugh")), TypeName("Either")), List(Ident(TypeName("String")), Ident(TypeName("A"))))
+            val constructedType = tq"$a.${b.asType}[..$d]"
+//            c.info(c.enclosingPosition, s"gives '${constructedType}' (${showRaw(constructedType)})", true)
+            c.typecheck(constructedType).tpe
+          case _ => ???
+        }
+
+        // val implicitType: Type = Option(tq"$fType[$v]".tpe) match {
+        //   case None =>
+        //     c.abort(c.enclosingPosition, s"Cannot construct type for $fType with $v applied")
+        //   case Some(x) => 
+        //     c.info(c.enclosingPosition, s"Type for $fType with $v applied is $x", true)
+        //     x
+        // }
+
+        val lookupP = c.inferImplicitValue(implicitType)
+        val lookup = lookupP match {
+          case EmptyTree => c.abort(c.enclosingPosition, s"Cannot find an implicit ${implicitType}")
+          case x => x
+        }
+        val append = q"(implicitly[izumi.reflect.Tag[$v]].tag, $lookup) :: $acc"
+        inner(x, append)
       case Nil => acc
     }
 
     val s = inner(types, q"Nil")
     q"Map($s :_*)"
   }
-
+   
   def interpreter_impl[H <: Needs[_], A, ASKTC[_], TELLTC[_], F[_], T](
     program: Expr[Uniform[H,A,T]]
   )(
@@ -142,9 +137,18 @@ new TypeclassList[$hl, ${fType.typeSymbol}] {
     ttAskTc: WeakTypeTag[ASKTC[_]],
     ttTellTc: WeakTypeTag[TELLTC[_]]
   ): c.Expr[F[A]] = {
+
+    c.info(c.enclosingPosition, s"H: ${ttn.tpe} / " + showRaw(ttn.tpe), true)
+    
     val (askTypes, tellTypes) = getNeeds
+    c.info(c.enclosingPosition, s"ASKTC: ${ttAskTc.tpe} /" + showRaw(ttAskTc.tpe), true)
+    c.info(c.enclosingPosition, s"TELLTC: ${ttTellTc.tpe} / " + showRaw(ttTellTc.tpe), true)        
+
+//    c.info(c.enclosingPosition, "ASKTYPES: " ++ askTypes.map{_.toString}.mkString(", "), true)
+//    c.info(c.enclosingPosition, "TELLTYPES: " ++ tellTypes.map{_.toString}.mkString(", "), true)        
+//    c.info(c.enclosingPosition, ttAskTc.tpe.typeParams.toString(), true)
     val askMap = implicitMaps(ttAskTc.tpe, askTypes)
-    c.info(c.enclosingPosition, askMap.toString, true)
+//    c.info(c.enclosingPosition, askMap.toString, true)
 
     val tellMap = implicitMaps(ttTellTc.tpe, tellTypes)    
 
@@ -154,6 +158,6 @@ new TypeclassList[$hl, ${fType.typeSymbol}] {
 //    println(r)
     c.Expr[F[A]](r)
   }
-
+   */
 
 }
