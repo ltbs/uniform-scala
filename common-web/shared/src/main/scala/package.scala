@@ -59,13 +59,7 @@ package web {
       case (x::xs, y::ys) if x === y => removeCommon(xs, ys)
       case a => a
     }
-
-    implicit def formToWebMonad[A, Html](
-      implicit ff: FormField[A, Html]
-    ): WebMonadConstructor[A, Html] = PostAndGetPage(ff)
-
   }
-
 }
 
 package object web extends webcommon {

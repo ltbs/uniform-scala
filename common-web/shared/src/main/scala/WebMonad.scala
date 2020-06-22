@@ -26,7 +26,6 @@ abstract class WebMonad[+A,Html] {
 
   def map[B](f: A => B): WebMonad[B,Html] =
     WebMonad.webMonadMonadInstance.map(this)(f)
-
 }
 
 object WebMonad {

@@ -7,7 +7,7 @@ import scala.concurrent.ExecutionContext
 import validation._
 import cats.data.Ior
 
-abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
+trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
 
   def codec: Codec[A]
 
@@ -127,38 +127,4 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
       }
     }
   }
-}
-
-class SimplePostAndGetPage[A,Html](
-  fieldIn: FormField[A, Html]
-) extends PostAndGetPage[A, Html] {
-
-    def codec: Codec[A] = fieldIn
-
-    def getPage(
-      key: List[String],
-      state: DB,
-      existing: Input,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
-    )(implicit ec: ExecutionContext): Html =
-      fieldIn.render(key, key.last :: Nil, breadcrumbs, existing, ErrorTree.empty, messages)
-
-    def postPage(
-      key: List[String],
-      state: DB,
-      request: Input,
-      errors: ErrorTree,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
-    )(implicit ec: ExecutionContext): Html =
-      fieldIn.render(key, key.last :: Nil, breadcrumbs, request, errors, messages)
-}
-
-object PostAndGetPage {
-
-  def apply[A,Html](
-    fieldIn: FormField[A, Html]
-  ): WebMonadConstructor[A, Html] = new SimplePostAndGetPage[A, Html](fieldIn)
-
 }

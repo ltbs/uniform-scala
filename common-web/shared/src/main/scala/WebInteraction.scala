@@ -5,7 +5,7 @@ import validation.Rule
 trait WebInteraction[A, Html] {
   def apply(
     id: String,
-    tell: Html,
+    tell: Option[Html],
     defaultIn: Option[A],
     validationIn: Rule[A]
   ): WebMonad[A, Html]

@@ -2,7 +2,7 @@ package controllers
 
 import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc.{Results, Request, AnyContent}
-import ltbs.uniform.common.web.{formToWebMonad => _, _}
+import ltbs.uniform.common.web._
 import cats.syntax.semigroup._
 import scalatags.Text.all._
 import ltbs.uniform.examples.Widgets
@@ -13,9 +13,7 @@ trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] {
   def messagesForRequest[C <: AnyContent](request: Request[C]): UniformMessages[Tag] =
     {messagesApi.preferred(request).convertMessages() |+| UniformMessages.bestGuess }.map{span(_)}
 
-  def unitAsk: WebMonadConstructor[Unit,Tag] = formToWebMonad(
-    Widgets.unitField
-  )
+  def unitAsk: WebInteraction[Unit,Tag] = Widgets.unitField
 
   def unitTell: GenericWebTell[Unit, Tag] = autoTell
 

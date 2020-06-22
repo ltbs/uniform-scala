@@ -5,11 +5,11 @@ import validation.Rule
 
 trait GenericWebInterpreter2[Html] extends MonadInterpreter[
   WebMonad[+?, Html],
-  WebMonadConstructor[?, Html],
+  WebInteraction[?, Html],
   GenericWebTell[?, Html]
 ] {
 
-  def unitAsk: WebMonadConstructor[Unit, Html]
+  def unitAsk: WebInteraction[Unit, Html]
   def unitTell: GenericWebTell[Unit, Html]  
 
   implicit def monadInstance: cats.Monad[WebMonad[+?,Html]] =
@@ -19,7 +19,7 @@ trait GenericWebInterpreter2[Html] extends MonadInterpreter[
     key: String,
     default: Option[A],
     validation: Rule[A],
-    asker: WebMonadConstructor[A,Html]
+    asker: WebInteraction[A,Html]
   ): WebMonad[A,Html] = asker(
     key,
     None,
@@ -32,7 +32,7 @@ trait GenericWebInterpreter2[Html] extends MonadInterpreter[
     tellValue: T,
     default: Option[A],
     validation: Rule[A],
-    asker: WebMonadConstructor[A,Html],
+    asker: WebInteraction[A,Html],
     teller: GenericWebTell[T,Html]
   ): WebMonad[A, Html] =
     teller.pureHtml(tellValue, key) flatMap { t => 

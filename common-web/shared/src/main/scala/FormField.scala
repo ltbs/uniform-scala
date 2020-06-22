@@ -1,9 +1,12 @@
 package ltbs.uniform
 package common.web
-import cats.implicits._
+
+import cats.syntax.either._
+import cats.syntax.flatMap._
+import scala.concurrent.ExecutionContext
 
 /** Defines both the rendering and the encoding for a given datatype */
-trait FormField[A, Html] extends Codec[A] {
+trait FormField[A, Html] extends Codec[A] with PostAndGetPage[A, Html]{
 
   def render(
     pageKey: List[String],
@@ -37,4 +40,25 @@ trait FormField[A, Html] extends Codec[A] {
       ): Html = orig.render(pageKey, fieldKey, breadcrumbs, data, errors, messages)
     }
   }
+
+  def getPage(
+    key: List[String],
+    state: DB,
+    existing: Input,
+    breadcrumbs: Breadcrumbs,
+    messages: UniformMessages[Html]
+  )(implicit ec: ExecutionContext): Html =
+    render(key, key.last :: Nil, breadcrumbs, existing, ErrorTree.empty, messages)
+
+  def postPage(
+    key: List[String],
+    state: DB,
+    request: Input,
+    errors: ErrorTree,
+    breadcrumbs: Breadcrumbs,
+    messages: UniformMessages[Html]
+  )(implicit ec: ExecutionContext): Html =
+    render(key, key.last :: Nil, breadcrumbs, request, errors, messages)
+
+    def codec: Codec[A] = this
 }
