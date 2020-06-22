@@ -12,7 +12,7 @@ case class FutureAdapter[Html]() {
 
   def alwaysRerun = new ~>[Future, WM] {
     def apply[A](fa: Future[A]): WM[A] = new WM[A] {
-      def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] =
+      def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[A,Html]] =
         fa.map{ x => pageIn.toPageOut(AskResult.Success[A,Html](x)) }
     }
   }
@@ -29,7 +29,7 @@ case class FutureAdapter[Html]() {
 
     def apply[A](fa: => Future[A])(implicit codec: Codec[A]): WM[A] = new WM[A] {
 
-      def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A,Html]] = {
+      def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[A,Html]] = {
         import pageIn._
         val triggerValues: List[String] = breadcrumbs.sorted.flatMap{ state.get }
         val trigger: String = sha256Hash(triggerValues.mkString)

@@ -69,12 +69,6 @@ package object playframework extends common.web.webcommon {
       }
   }
 
-  implicit class RichTwirlInterpreter(interpreter: GenericWebInterpreter[TwirlHtml]) {
-    @deprecated("Please use RichPlayMessages instead", "4.5.2")
-    def convertMessages(input: i18n.Messages, escapeHtml: Boolean = false): UniformMessages[TwirlHtml] =
-      RichPlayMessages(input).convertMessagesTwirlHtml(escapeHtml)
-  }
-
   implicit val mon: cats.Monoid[TwirlHtml] = new cats.Monoid[TwirlHtml] {
     def empty: TwirlHtml = TwirlHtml("")
     def combine(a: TwirlHtml, b: TwirlHtml) = TwirlHtml(a.toString + b.toString)

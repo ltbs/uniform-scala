@@ -2,10 +2,10 @@ package ltbs.uniform
 package common.web
 import validation.Rule
 
-trait WebMonadConstructor[A, Html] {
+trait WebInteraction[A, Html] {
   def apply(
     id: String,
-    tell: Option[Html],
+    tell: Html,
     defaultIn: Option[A],
     validationIn: Rule[A]
   ): WebMonad[A, Html]

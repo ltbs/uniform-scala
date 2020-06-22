@@ -98,7 +98,7 @@ class InterpreterMacros(val c: whitebox.Context) {
     val (askTypes, tellTypes) = getNeeds[H, ASKTC, TELLTC]
     val askMap = implicitMaps(ttAskTc.tpe, askTypes)
     val tellMap = implicitMaps(ttTellTc.tpe, tellTypes)    
-    val r = q"${c.prefix}.executeImpl($program, $askMap, $tellMap)"
+    val r = q"${c.prefix}.interpretImpl($program, $askMap, $tellMap)"
     c.Expr[F[A]](r)
   }
 

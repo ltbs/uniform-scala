@@ -1,6 +1,8 @@
 package ltbs.uniform
 package common.web
 
+import cats.data.Ior
+
 /** An abstracted result from asking the user for a value via a web
   * interface. Each web interpreter will want to convert this into
   * it's own representation 
@@ -12,13 +14,11 @@ object AskResult {
   }
 
   final case class Payload[A,Html](
-    tell: Html,
-    ask: Html,
-    errors: ErrorTree,
-    messages: UniformMessages[Html],
-    stats: FormFieldStats
+    tellAndAsk: Ior[Html, Html],
+    errors: ErrorTree = ErrorTree.empty,
+    messages: UniformMessages[Html]
   ) extends AskResult[A,Html] {
-    def map[B] = Payload[B,Html](tell, ask, errors, messages, stats)
+    def map[B] = Payload[B,Html](tellAndAsk, errors, messages)
   }
 
   final case class Success[A,Html](objectOut: A) extends AskResult[A,Html]

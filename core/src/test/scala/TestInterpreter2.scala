@@ -2,12 +2,7 @@ package ltbs.uniform
 
 import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 import cats.implicits._
-import cats.{Id, Monad}
-import shapeless.{Id => _, _}
-import scala.language.higherKinds
 import validation.Rule
-import izumi.reflect.macrortti.LightTypeTag
-import izumi.reflect.Tag
 
 trait Example[+A] { val value: A }
 
@@ -21,6 +16,8 @@ trait Writer[T] {
 }
 
 object ListInterpreter extends MonadInterpreter[List, Example, Noop] {
+
+  def monadInstance = implicitly[cats.Monad[List]]
 
   def askImpl[A](key: String, default: Option[A], validation: Rule[A], asker: Example[A]): List[A] = List(asker.value)
   def tellImpl[T](key: String, value: T, teller: Noop[T]): List[Unit] = {
@@ -42,7 +39,7 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
     implicit val exOptString = example("test".some)
 
     val p2 = pure(12)
-    val out2 = ListInterpreter.execute(p2)    
+    val out2 = ListInterpreter.interpret(p2)    
     out2 should be (List(12))
 
     val p3 = for {
@@ -50,7 +47,7 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
       y <- pure(2)
       z <- pure("test")      
     } yield (x,y,z)
-    ListInterpreter.execute(p3) should be (List((1,2,"test")))
+    ListInterpreter.interpret(p3) should be (List((1,2,"test")))
 
     val program = for {
       x <- pure(12)
@@ -59,7 +56,6 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
       b <- interact[Int,String]("hiya2", "in")
       _ <- tell[Option[String]]("_", c)
     } yield ((x, "test".some))
-    implicit val os: Option[Int] = Option(12)
-    ListInterpreter.execute(program) should be (List((12, Some("test"))))
+    ListInterpreter.interpret(program) should be (List((12, Some("test"))))
   }
 }

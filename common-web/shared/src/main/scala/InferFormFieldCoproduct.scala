@@ -6,7 +6,6 @@ import shapeless._, labelled._
 trait CoproductFieldList[A, Html]{
   def decode(out: Input): Either[ErrorTree,A]
   def encode(in: A): Input
-  def stats: FormFieldStats
   val inner: List[(String, (List[String], List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
 }
 
@@ -28,7 +27,6 @@ trait InferFormFieldCoProduct[Html] {
       Left(ErrorMsg("required").toTree)
     override def encode(a: CNil): Input = Input.empty
     override val inner = List.empty
-    def stats = FormFieldStats()
   }
 
   implicit def coproductFieldList[K <: Symbol, H, T <: Coproduct](
@@ -59,12 +57,6 @@ trait InferFormFieldCoProduct[Html] {
         hField.encode(l).prefixWith(fname) ++ Map(Nil -> List(fname))
       case Inr(r) => tFields.encode(r)
     }
-
-    override def stats = FormFieldStats(
-      children = tFields.stats.children + 1,
-      compoundChildren =
-        tFields.stats.compoundChildren + {if (hField.stats.isCompound) 1 else 0}
-    )    
   }
 
   implicit def coproductField[A](implicit coproductFields: CoproductFieldList[A, Html]) =
@@ -74,8 +66,6 @@ trait InferFormFieldCoProduct[Html] {
 
       def decode(out: Input): Either[ErrorTree,A] = coproductFields.decode(out)
       def encode(in: A): Input = coproductFields.encode(in)
-
-      override def stats = coproductFields.stats
     }
 
 }

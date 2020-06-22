@@ -5,10 +5,9 @@ import cats.implicits._
 import concurrent.Future
 import scala.concurrent.ExecutionContext
 import validation._
+import cats.data.Ior
 
 abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
-
-  def stats: FormFieldStats
 
   def codec: Codec[A]
 
@@ -31,14 +30,18 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
     messages: UniformMessages[Html]
   )(implicit ec: ExecutionContext): Html
 
+  def iorOptLeft[L, R](left: Option[L], right: R): Ior[L, R] = left match {
+    case Some(l) => Ior.both(l, right)
+    case None => Ior.right(right)
+  }
+
   def apply(
     id: String,
-    tell: Html,
+    tell: Option[Html],
     default: Option[A],
-    validation: Rule[A],
-    messages: UniformMessages[Html]
+    validation: Rule[A]
   ): WebMonad[A, Html] = new WebMonad[A, Html] {
-    def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A, Html]] = {
+    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[A, Html]] = {
       import pageIn._
       val currentId = pageIn.pathPrefix :+ id
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
@@ -71,11 +74,12 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
                 ).pure[Future]
               case Left(error) =>
                 val html = AskResult.Payload[A, Html](
-                  tell,
-                  postPage(id :: Nil, state, localData, error, breadcrumbs, messages),
+                  iorOptLeft(
+                    tell, 
+                    postPage(id :: Nil, state, localData, error, breadcrumbs, messages)
+                  ),
                   error,
-                  messages,
-                  stats
+                  messages
                 )
                 pageIn.toPageOut(html).copy(
                   breadcrumbs = currentId :: pageIn.breadcrumbs
@@ -84,19 +88,20 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
 
           case None =>
             val html = AskResult.Payload[A, Html](
-              tell,
-              getPage(
-                id :: Nil,
-                state,
-                dbInput.flatMap{_.toOption} orElse            // db
-                  default.map{x => codec.encode(x)} getOrElse // default
-                  Input.empty,                                // neither
-                breadcrumbs,
-                messages
+              iorOptLeft(
+                tell,
+                getPage(
+                  id :: Nil,
+                  state,
+                  dbInput.flatMap{_.toOption} orElse            // db
+                    default.map{x => codec.encode(x)} getOrElse // default
+                    Input.empty,                                // neither
+                  breadcrumbs,
+                  messages
+                )
               ),
               ErrorTree.empty,
-              messages,
-              stats
+              messages
             )
             pageIn.toPageOut(html).copy(
               breadcrumbs =  currentId :: pageIn.breadcrumbs
@@ -127,8 +132,6 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
 class SimplePostAndGetPage[A,Html](
   fieldIn: FormField[A, Html]
 ) extends PostAndGetPage[A, Html] {
-
-    def stats: FormFieldStats = fieldIn.stats
 
     def codec: Codec[A] = fieldIn
 

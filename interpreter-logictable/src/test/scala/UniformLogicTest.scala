@@ -21,7 +21,7 @@ object UniformLogicTest {
   implicit val dateSample = SampleData.instance(LocalDate.now)
 
   def main(args: Array[String]): Unit = {
-    val output = LogicTableInterpreter.execute(journey)
+    val output = LogicTableInterpreter.interpret(journey)
     
     output match {
       case Left(x) => println(s"journey left output: $x")

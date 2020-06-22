@@ -8,36 +8,17 @@ import play.api._,mvc._
 import play.api.http.Writeable
 import scala.concurrent.Future
 
-trait PlayInterpreter2[Html] extends Results {
-
-  def messagesForRequest[C <: AnyContent](
-    request: Request[C]
-  ): UniformMessages[Html]
-
-  def forRequest[C <: AnyContent](request: Request[C]) = {
-    val that = this
-    new GenericWebInterpreter2[Html] {
-      def empty: Html = that.empty
-      def messages: UniformMessages[Html] = messagesForRequest(request)
-      def unitAsk: WebMonadConstructor[Unit,Html] =
-        that.unitAsk
-    }
-  }
+trait PlayInterpreter2[Html] extends Results with GenericWebInterpreter2[Html] {
 
   def pageChrome(
     key: List[String],
     errors: ErrorTree,
-    tell: Html,
-    ask: Html,
+    tell: Option[Html],
+    ask: Option[Html],
     breadcrumbs: List[String],
     request: Request[AnyContent],
-    messages: UniformMessages[Html],
-    fieldStats: FormFieldStats
+    messages: UniformMessages[Html]
   ): Html
-
-  def empty: Html
-
-  def unitAsk: WebMonadConstructor[Unit, Html]
 
   implicit class PlayWebMonad[A, Req <: Request[AnyContent]](wm: WebMonad[A, Html]) {
     import cats.implicits._
@@ -47,7 +28,8 @@ trait PlayInterpreter2[Html] extends Results {
       request: Req,
       persistence: PersistenceEngine[Req],
       ec: ExecutionContext,
-      writeable: Writeable[Html]
+      writeable: Writeable[Html],
+      messages: UniformMessages[Html]
     ): Future[Result] = run(path){f.map{_.pure[Future]}}
 
     def run(path: String, purgeStateUponCompletion: Boolean = false, config: JourneyConfig = JourneyConfig())(
@@ -56,7 +38,8 @@ trait PlayInterpreter2[Html] extends Results {
       request: Req,
       persistence: PersistenceEngine[Req],
       ec: ExecutionContext,
-      writeable: Writeable[Html]
+      writeable: Writeable[Html],
+      messages: UniformMessages[Html]
     ): Future[Result] = {
       val baseUrl = request.path.dropRight(path.size)
       val id = path.split("/", -1).toList
@@ -74,17 +57,19 @@ trait PlayInterpreter2[Html] extends Results {
       }
 
       persistence(request) { db =>
-        wm(PageIn(id, Nil, data, db, Nil, config)) flatMap {
+        wm(PageIn(id, Nil, data, db, Nil, config, messages)) flatMap {
           case common.web.PageOut(breadcrumbs, dbOut, pageOut, _, _) =>
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
                 val path = baseUrl + targetPath.mkString("/")
                 (dbOut, Redirect(path)).pure[Future]
-              case AskResult.Payload(tell, ask, errors, messagesOut, stats) =>
+              case AskResult.Payload(tellAndAsk, errors, messagesOut) =>
                 val convertedBreadcrumbs = breadcrumbs.map { c => 
                   baseUrl + c.mkString("/")
                 }
-                (db, Ok(pageChrome(breadcrumbs.head, errors, tell, ask, convertedBreadcrumbs, request, messagesOut,stats))).pure[Future]
+                val tell = tellAndAsk.left
+                val ask = tellAndAsk.right
+                (db, Ok(pageChrome(breadcrumbs.head, errors, tell, ask, convertedBreadcrumbs, request, messagesOut))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (if (purgeStateUponCompletion) DB.empty else dbOut, _) }
             }

@@ -194,12 +194,7 @@ package object uniform
       }
   }
 
-  def taggedEqInstance[A, Tag](eqBase: Eq[A]) = new Eq[A @@ Tag]{
-    def eqv(x: A @@ Tag, y: A @@ Tag): Boolean = eqBase.eqv(x,y)
-  }
-
-  def interact[A: Tag, T: Tag](key: String, value: T, default: Option[A] = None, validation: Rule[A] = Rule.alwaysPass[A]): Uniform[Needs.Ask[A] with Needs.Tell[T], A, T] =
-    Uniform.Interact(key, value, default, validation, implicitly[Tag[A]], implicitly[Tag[T]])
+  def interact[A] = new InteractBuilder[A]
   def ask[A: Tag](key: String, default: Option[A] = None, validation: Rule[A] = Rule.alwaysPass[A]): Uniform[Needs.Ask[A], A, Unit] = Uniform.Ask(key, default, validation, implicitly[Tag[A]])
   def tell[A: Tag](key: String, value: A): Uniform[Needs.Tell[A], Unit, A] =
     Uniform.Tell(key, value, implicitly[Tag[A]])

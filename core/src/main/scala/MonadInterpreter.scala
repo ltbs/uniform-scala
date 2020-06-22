@@ -21,16 +21,16 @@ trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_]] extends Interpreter[F, ASKTC,
   protected def endImpl(key: String): F[Nothing]
   protected def subjourneyImpl[A](path: List[String], inner: F[A]): F[A] = inner
 
-  def executeImpl[H <: Needs[_], A: Tag, T: Tag](
+  def interpretImpl[H <: Needs[_], A: Tag, T: Tag](
     program: Uniform[H, A, T], 
     askMap: Map[LightTypeTag, ASKTC[_]],    
     tellMap: Map[LightTypeTag, TELLTC[_]],
   ): F[A] = {
     program match {
       case U.Map(base, f) =>
-        executeImpl(base, askMap, tellMap).map(f)
+        interpretImpl(base, askMap, tellMap).map(f)
       case U.FlatMap(base, f) =>
-        executeImpl(base, askMap, tellMap).flatMap(f.map(executeImpl(_, askMap, tellMap)))
+        interpretImpl(base, askMap, tellMap).flatMap(f.map(interpretImpl(_, askMap, tellMap)))
       case U.Tell(key, value, tag: Tag[T]) =>
         tellImpl[T](key, value, tellMap(tag.tag).asInstanceOf[TELLTC[T]])
       case U.Interact(key, value, default, validation, askTag, tellTag: Tag[T]) =>
@@ -44,7 +44,7 @@ trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_]] extends Interpreter[F, ASKTC,
       case U.Pure(v) =>
         v.pure[F]
       case U.Subjourney(path, inner) =>
-        subjourneyImpl(path, executeImpl(inner, askMap, tellMap))
+        subjourneyImpl(path, interpretImpl(inner, askMap, tellMap))
     }
   }
 

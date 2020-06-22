@@ -17,32 +17,28 @@ trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] {
     Widgets.unitField
   )
 
-  implicit val tellTwirlUnit = new GenericWebTell[Unit, Tag] {
-    def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = empty
-  }
-
-  def empty: Tag = span("")
+  def unitTell: GenericWebTell[Unit, Tag] = autoTell
 
   implicit def autoTell[A] = new GenericWebTell[A, Tag] {
     def render(in: A, key: String, messages: UniformMessages[Tag]): Tag = span(in.toString)
   }
 
-  implicit def autoListingTell[A](implicit tell: GenericWebTell[A, Tag]) = new ListingTell[Tag, A] {
-    def apply(rows: List[ListingTellRow[A]], messages: UniformMessages[Tag]): Tag =
-      table (
-        tr( th("item"),th("edit"),th("delete")),
-        rows.map{ row => 
-          tr(
-            td(tell.render(row.value, "", messages)),
-            td(a(href:=row.editLink)(messages("edit"))),
-            td(a(href:=row.deleteLink)(messages("delete")))
-          )
-        }
-      )
-  }
+  // implicit def autoListingTell[A](implicit tell: GenericWebTell[A, Tag]) = new ListingTell[Tag, A] {
+  //   def apply(rows: List[ListingTellRow[A]], messages: UniformMessages[Tag]): Tag =
+  //     table (
+  //       tr( th("item"),th("edit"),th("delete")),
+  //       rows.map{ row => 
+  //         tr(
+  //           td(tell.render(row.value, "", messages)),
+  //           td(a(href:=row.editLink)(messages("edit"))),
+  //           td(a(href:=row.deleteLink)(messages("delete")))
+  //         )
+  //       }
+  //     )
+  // }
 
-  def messages(
-    request: Request[AnyContent]
+  implicit def messages(
+    implicit request: Request[AnyContent]
   ): UniformMessages[Tag] =
     { messagesApi.preferred(request).convertMessages() |+|
       UniformMessages.bestGuess }.map{span(_)}
@@ -140,12 +136,11 @@ trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] {
   def pageChrome(
     key: List[String],
     errors: ErrorTree,
-    tell: Tag,
-    ask: Tag,
+    tell: Option[Tag],
+    ask: Option[Tag],
     breadcrumbs: List[String],
     request: Request[AnyContent],
-    messages: UniformMessages[Tag],
-    stats: FormFieldStats
+    messages: UniformMessages[Tag]
   ): Tag = {
 
     import play.filters.csrf._
@@ -184,12 +179,14 @@ trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] {
                   h1(cls:="govuk-heading-xl")(messages(key.mkString(".")))
                 )
               ),
-              form(method:="post")(
-                input(tpe:="hidden", name:="csrfToken", value:=csrf),
-                tell,
-                ask,
-                button(tpe:="submit", cls:="govuk-button")(messages({key :+ "save.and.continue"}.mkString(".")))
-              )
+              tell,
+              ask.map { a => 
+                form(method:="post")(
+                  input(tpe:="hidden", name:="csrfToken", value:=csrf),
+                  a,
+                  button(tpe:="submit", cls:="govuk-button")(messages({key :+ "save.and.continue"}.mkString(".")))
+                )
+              }
             )
           )
         ),

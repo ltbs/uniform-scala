@@ -183,8 +183,6 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
 
   implicit val dateField = new FormField[LocalDate,Tag] {
 
-    override def stats = FormFieldStats(children = 3)
-
     def decode(out: Input): Either[ErrorTree,LocalDate] = {
 
       def intAtKey(key: String): Validated[ErrorTree, Int] =

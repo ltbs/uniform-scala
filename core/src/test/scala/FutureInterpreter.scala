@@ -5,7 +5,9 @@ import scala.concurrent._
 import cats.implicits._
 
 case class FutureInterpreter()(implicit ec: ExecutionContext) extends MonadInterpreter[Future, Reader, Writer] {
-  
+
+  def monadInstance = implicitly[cats.Monad[Future]]
+
   def askImpl[A](key: String, default: Option[A], validation: Rule[A], asker: Reader[A]): Future[A] = Future{
 
     @annotation.tailrec
@@ -77,7 +79,7 @@ object FutureInterpreterTestApp extends App {
 
   import scala.concurrent.duration._
   Await.result(
-    i.execute(journey),
+    i.interpret(journey),
     100.minutes
   )
 }

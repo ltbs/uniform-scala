@@ -8,7 +8,6 @@ import cats.implicits.{catsSyntaxEither => _,_}
 trait ProductFieldList[A, Html]{
   def decode(out: Input): Either[ErrorTree,A]
   def encode(in: A): Input
-  def stats: FormFieldStats
   val inner: List[(String, (List[String], List[String], Breadcrumbs, Input, ErrorTree, UniformMessages[Html]) => Html)]
 }
 
@@ -28,7 +27,6 @@ trait InferFormFieldProduct[Html] {
     override def decode(in: Input): Either[ErrorTree,HNil] = Right(HNil)
     override def encode(a: HNil): Input = Input.empty
     override val inner = List.empty
-    def stats = FormFieldStats()    
   }
 
   implicit def consFieldList[K <: Symbol, H, T <: HList](
@@ -60,12 +58,6 @@ trait InferFormFieldProduct[Html] {
         val headData: Input = hField.value.encode(a.head)
         tailData |+| headData.prefixWith(fieldName)
       }
-
-      override def stats = FormFieldStats(
-        children = tFields.stats.children + 1,
-        compoundChildren =
-          tFields.stats.compoundChildren + {if (hField.value.stats.isCompound) 1 else 0}
-      )
     }
 
   implicit def productField[A](implicit productFields: ProductFieldList[A,Html]) =
@@ -82,8 +74,6 @@ trait InferFormFieldProduct[Html] {
 
       def decode(out: Input): Either[ErrorTree,A] = productFields.decode(out)
       def encode(in: A): Input = productFields.encode(in)
-
-      override def stats = productFields.stats
     }
 
   implicit def genericField[A, H, T](implicit
@@ -109,7 +99,6 @@ trait InferFormFieldProduct[Html] {
       hlist.render(pageKey, fieldKey, path, data, errors, messages)
     }
 
-    override def stats = hlist.stats
   }
 
 }
