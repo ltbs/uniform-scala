@@ -8,16 +8,18 @@ import izumi.reflect.macrortti.LightTypeTag
 import izumi.reflect.Tag
 import validation.Rule
 
-abstract class MonadInterpreter[F[+_]: cats.Monad, ASKTC[_], TELLTC[_]] extends Interpreter[F, ASKTC, TELLTC]{
+trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_]] extends Interpreter[F, ASKTC, TELLTC]{
 
-  def ask[A](key: String, default: Option[A], validation: Rule[A], asker: ASKTC[A]): F[A]
-  def tell[T](key: String, value: T, teller: TELLTC[T]): F[Unit]
-  def interact[A,T](key: String, tellValue: T, default: Option[A], validation: Rule[A], asker: ASKTC[A], teller: TELLTC[T]): F[A] =
-    tell(key, tellValue, teller) >> ask(key, default, validation, asker)    
-  def endTell[T](key: String, value: T, teller: TELLTC[T]): F[Nothing] =
-    tell(key, value, teller) >> end(key)
-  def end(key: String): F[Nothing]
-  def subjourney[A](path: List[String], inner: F[A]): F[A] = inner
+  implicit def monadInstance: cats.Monad[F]
+
+  protected def askImpl[A](key: String, default: Option[A], validation: Rule[A], asker: ASKTC[A]): F[A]
+  protected def tellImpl[T](key: String, value: T, teller: TELLTC[T]): F[Unit]
+  protected def interactImpl[A,T](key: String, tellValue: T, default: Option[A], validation: Rule[A], asker: ASKTC[A], teller: TELLTC[T]): F[A] =
+    tellImpl(key, tellValue, teller) >> askImpl(key, default, validation, asker)    
+  protected def endTellImpl[T](key: String, value: T, teller: TELLTC[T]): F[Nothing] =
+    tellImpl(key, value, teller) >> endImpl(key)
+  protected def endImpl(key: String): F[Nothing]
+  protected def subjourneyImpl[A](path: List[String], inner: F[A]): F[A] = inner
 
   def executeImpl[H <: Needs[_], A: Tag, T: Tag](
     program: Uniform[H, A, T], 
@@ -30,19 +32,19 @@ abstract class MonadInterpreter[F[+_]: cats.Monad, ASKTC[_], TELLTC[_]] extends 
       case U.FlatMap(base, f) =>
         executeImpl(base, askMap, tellMap).flatMap(f.map(executeImpl(_, askMap, tellMap)))
       case U.Tell(key, value, tag: Tag[T]) =>
-        tell[T](key, value, tellMap(tag.tag).asInstanceOf[TELLTC[T]])
+        tellImpl[T](key, value, tellMap(tag.tag).asInstanceOf[TELLTC[T]])
       case U.Interact(key, value, default, validation, askTag, tellTag: Tag[T]) =>
-        interact[A, T](key, value, default, validation, askMap(askTag.tag).asInstanceOf[ASKTC[A]], tellMap(tellTag.tag).asInstanceOf[TELLTC[T]])
+        interactImpl[A, T](key, value, default, validation, askMap(askTag.tag).asInstanceOf[ASKTC[A]], tellMap(tellTag.tag).asInstanceOf[TELLTC[T]])
       case U.Ask(key, default, validation, tag) =>
-        ask(key, default, validation, askMap(tag.tag).asInstanceOf[ASKTC[A]])
+        askImpl(key, default, validation, askMap(tag.tag).asInstanceOf[ASKTC[A]])
       case U.EndTell(key, value, tag: Tag[T]) =>
-        endTell[T](key, value, tellMap(tag.tag).asInstanceOf[TELLTC[T]])
+        endTellImpl[T](key, value, tellMap(tag.tag).asInstanceOf[TELLTC[T]])
       case U.End(key) =>
-        end(key)
+        endImpl(key)
       case U.Pure(v) =>
         v.pure[F]
       case U.Subjourney(path, inner) =>
-        subjourney(path, executeImpl(inner, askMap, tellMap))
+        subjourneyImpl(path, executeImpl(inner, askMap, tellMap))
     }
   }
 

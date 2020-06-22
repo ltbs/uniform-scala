@@ -1,5 +1,5 @@
 package controllers
-
+/*
 import scala.language.higherKinds
 
 import cats.implicits._
@@ -35,3 +35,4 @@ class SubjourneyController @Inject()(
   }
 }
 
+ */

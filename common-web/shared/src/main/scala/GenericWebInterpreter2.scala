@@ -3,17 +3,20 @@ package common.web
 
 import validation.Rule
 
-class GenericWebInterpreter2[Html](
-  empty: Html, 
-  messages: UniformMessages[Html],
-  unitAsk: WebMonadConstructor[Unit, Html]
-) extends MonadInterpreter[
+trait GenericWebInterpreter2[Html] extends MonadInterpreter[
   WebMonad[+?, Html],
   WebMonadConstructor[?, Html],
   GenericWebTell[?, Html]
 ] {
 
-  def ask[A](
+  def empty: Html
+  def messages: UniformMessages[Html]
+  def unitAsk: WebMonadConstructor[Unit, Html]
+
+  implicit def monadInstance: cats.Monad[WebMonad[?,Html]] =
+    WebMonad.webMonadMonadInstance[Html]
+
+  override def askImpl[A](
     key: String,
     default: Option[A],
     validation: Rule[A],
@@ -26,7 +29,7 @@ class GenericWebInterpreter2[Html](
     messages
   )
 
-  override def interact[A, T](
+  override def interactImpl[A, T](
     key: String,
     tellValue: T,
     default: Option[A],
@@ -41,7 +44,7 @@ class GenericWebInterpreter2[Html](
     messages
   )
 
-  override def endTell[T](
+  override def endTellImpl[T](
     key: String,
     value: T,
     teller: GenericWebTell[T,Html]
@@ -56,7 +59,7 @@ class GenericWebInterpreter2[Html](
       )
     )(_ => throw new IllegalStateException("unable to continue - end of journey"))
 
-  def end(key: String): WebMonad[Nothing,Html] = 
+  override def endImpl(key: String): WebMonad[Nothing,Html] =
     WebMonad.webMonadMonadInstance.map(
       unitAsk(
         key,
@@ -67,7 +70,7 @@ class GenericWebInterpreter2[Html](
       )
     )(_ => throw new IllegalStateException("unable to continue - end of journey"))
 
-  def tell[T](
+  override def tellImpl[T](
     key: String,
     value: T,
     teller: GenericWebTell[T,Html]

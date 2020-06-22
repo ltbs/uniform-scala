@@ -22,6 +22,7 @@ object UniformLogicTest {
 
   def main(args: Array[String]): Unit = {
     val output = LogicTableInterpreter.execute(journey)
+    
     output match {
       case Left(x) => println(s"journey left output: $x")
       case Right(y) => println(s"journey right output: $y")

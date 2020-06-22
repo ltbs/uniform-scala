@@ -6,7 +6,7 @@ import cats.implicits._
 
 case class FutureInterpreter()(implicit ec: ExecutionContext) extends MonadInterpreter[Future, Reader, Writer] {
   
-  def ask[A](key: String, default: Option[A], validation: Rule[A], asker: Reader[A]): Future[A] = Future{
+  def askImpl[A](key: String, default: Option[A], validation: Rule[A], asker: Reader[A]): Future[A] = Future{
 
     @annotation.tailrec
     def inner(): A = {
@@ -28,11 +28,11 @@ case class FutureInterpreter()(implicit ec: ExecutionContext) extends MonadInter
     inner()
   }
 
-  def tell[T](key: String,value: T,teller: Writer[T]): Future[Unit] = Future {
+  def tellImpl[T](key: String,value: T,teller: Writer[T]): Future[Unit] = Future {
     println(teller.write(value))
   }
 
-  override def end(key: String): Future[Nothing] = Future {
+  override def endImpl(key: String): Future[Nothing] = Future {
     println(s"$key (ending)")
     System.exit(0)
     throw new IllegalStateException(key)
@@ -70,7 +70,6 @@ object FutureInterpreterTestApp extends App {
       }.leftMap(_.getLocalizedMessage())
     }
   }
-
 
   implicit val w = new Writer[Coordinate] {
     def write(v: Coordinate): String = s"x: ${v.x}, y: ${v.y}"

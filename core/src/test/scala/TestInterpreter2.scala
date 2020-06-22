@@ -22,13 +22,13 @@ trait Writer[T] {
 
 object ListInterpreter extends MonadInterpreter[List, Example, Noop] {
 
-  def ask[A](key: String, default: Option[A], validation: Rule[A], asker: Example[A]): List[A] = List(asker.value)
-  def tell[T](key: String, value: T, teller: Noop[T]): List[Unit] = {
+  def askImpl[A](key: String, default: Option[A], validation: Rule[A], asker: Example[A]): List[A] = List(asker.value)
+  def tellImpl[T](key: String, value: T, teller: Noop[T]): List[Unit] = {
     println(value.toString)
     List(())
   }
 
-  override def end(key: String): List[Nothing] = Nil
+  override def endImpl(key: String): List[Nothing] = Nil
 }
 
 class TestInterpreter3 extends AnyFlatSpec with Matchers {

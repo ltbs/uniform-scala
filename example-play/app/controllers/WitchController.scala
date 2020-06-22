@@ -1,5 +1,5 @@
 package controllers
-
+/*
 import scala.language.higherKinds
 
 import cats.implicits._
@@ -63,3 +63,4 @@ class WitchController @Inject()(
   }
 }
 
+ */

@@ -1,16 +1,7 @@
 package ltbs.uniform
 
 import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
-import cats.implicits._
-import cats.{Id, Monad}
-import shapeless.{Id => _, _}
 import scala.language.higherKinds
-import validation.Rule
-import izumi.reflect.macrortti.LightTypeTag
-import izumi.reflect.Tag
-
-import scala.reflect.macros.blackbox.Context
-
 
 class ColdImplicitSpec extends AnyFlatSpec with Matchers {
   import scala.language.experimental.macros
@@ -23,7 +14,14 @@ class ColdImplicitSpec extends AnyFlatSpec with Matchers {
 
   it should "work for kind projected types" in {
     implicit val i: Either[Int, String] = Right("test")
-    coldImplicit[Int, Either[?, String]] should be (i)
+    coldImplicit[Int, Either[?, String]] should be (i) 
   }
-  
+
+  it should "work for type aliases" in {
+    type EitherInt[A] = Either[Int, A]
+    implicit val i: Either[Int, String] = Right("test")
+    coldImplicit[String, EitherInt] should be (i) 
+  }
+
+
 }

@@ -8,7 +8,7 @@ import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
 import scalatags.Text.all._
-
+/*
 class HodConnector(implicit ec: ExecutionContext) extends Hod[Future] {
   def costOfBeard(beardStyle: BeardStyle, length: BeardLength): Future[Int] =
     Future{
@@ -50,3 +50,4 @@ class BeardController2 @Inject()(
   }
 
 }
+ */

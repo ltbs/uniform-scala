@@ -2,24 +2,26 @@ package controllers
 
 import ltbs.uniform._, interpreters.playframework._
 import play.api.mvc.{Results, Request, AnyContent}
-import scala.concurrent.ExecutionContext.Implicits.global
-import ltbs.uniform.common.web.{InferFormFieldProduct, InferFormFieldCoProduct, InferListingPages, FormFieldStats, ListingTell, ListingTellRow, GenericWebTell}
+import ltbs.uniform.common.web.{formToWebMonad => _, _}
 import cats.syntax.semigroup._
 import scalatags.Text.all._
-import ScalatagsSupport._
-import ltbs.uniform.common.web.ListingTellRow
+import ltbs.uniform.examples.Widgets
 
-case class HmrcPlayInterpreter(
-  messagesApi: play.api.i18n.MessagesApi
-) extends PlayInterpreter2[Tag] {
+trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] {
 
-  def unitAsk: WebMonadConstructor[Unit, Html]
+  def messagesApi: play.api.i18n.MessagesApi
+  def messagesForRequest[C <: AnyContent](request: Request[C]): UniformMessages[Tag] =
+    {messagesApi.preferred(request).convertMessages() |+| UniformMessages.bestGuess }.map{span(_)}
 
-  implicit val tellTwirlUnit = new WebTell[Unit] {
-    def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = blankTell
+  def unitAsk: WebMonadConstructor[Unit,Tag] = formToWebMonad(
+    Widgets.unitField
+  )
+
+  implicit val tellTwirlUnit = new GenericWebTell[Unit, Tag] {
+    def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = empty
   }
 
-  def blankTell: Tag = span("")
+  def empty: Tag = span("")
 
   implicit def autoTell[A] = new GenericWebTell[A, Tag] {
     def render(in: A, key: String, messages: UniformMessages[Tag]): Tag = span(in.toString)
@@ -176,7 +178,7 @@ case class HmrcPlayInterpreter(
               breadcrumbs.drop(1).headOption.map{ back =>
                 a (href:=back, cls:="govuk-back-link")(messages({back :+ "back"}.mkString(".")))
               },
-              if(errors.nonEmpty) errorSummary(key, errors, messages),
+//              if(errors.nonEmpty) errorSummary(key, errors, messages),
               div(cls:="govuk-width-container")(
                 tag("main")(cls:="govuk-main-wrapper ", id:="main-content", role:="main")(
                   h1(cls:="govuk-heading-xl")(messages(key.mkString(".")))
