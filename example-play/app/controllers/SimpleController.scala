@@ -20,18 +20,20 @@ class SimpleController @Inject()(
     with I18nSupport
     with HmrcPlayInterpreter {
 
-  implicit val persistence: PersistenceEngine[Request[AnyContent]] =
-    DebugPersistence(UnsafePersistence())
-
   val journey = for {
     x <- ask[Boolean]("x")
     x2 <- interact[String]("x-back", x)
+    _ <- tell("tell-int", 12)
+    _ <- tell("tell-string", "12")        
     y <- if (x) ask[Int]("y", validation = Rule.min(0)) else end("z")
   } yield (x, y)
 
   def simpleAction(targetId: String) = Action.async {
     implicit request: Request[AnyContent] =>
-    
+
+    implicit val persistence: PersistenceEngine[Request[AnyContent]] =
+      SessionPersistence("simple")
+
     interpret(journey).runSync(targetId){ onCompletion =>
       Ok("Done")
     }

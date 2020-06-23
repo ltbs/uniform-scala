@@ -7,6 +7,7 @@ import com.github.ghik.silencer.silent
 import scala.language.higherKinds
 import scala.reflect.macros.whitebox
 import scala.annotation.tailrec
+import izumi.reflect.TagK
 
 class InterpreterMacros(val c: whitebox.Context) {
   import c.universe._
@@ -19,21 +20,26 @@ class InterpreterMacros(val c: whitebox.Context) {
     implicit ttn: c.WeakTypeTag[H], 
     ttAskTc: WeakTypeTag[ASKTC[_]],
     ttTellTc: WeakTypeTag[TELLTC[_]]
-  ): (List[Type], List[Type]) = {
+  ): (List[Type], List[Type], List[Type]) = {
 
     val ASK = symbolOf[Needs.Ask[_]]
     val TELL = symbolOf[Needs.Tell[_]]
+    val CONV = symbolOf[Needs.Convert[_]]    
     
     ttn.tpe match {
-      case _: ExistentialType => (Nil, Nil)
-      case TypeRef(_, ASK, List(ask)) => (ask:: Nil, Nil)
-      case TypeRef(_, TELL, List(tell)) => (Nil, tell:: Nil)        
+      case _: ExistentialType => (Nil, Nil, Nil)
+      case TypeRef(_, ASK, List(ask)) => (ask :: Nil, Nil, Nil)
+      case TypeRef(_, TELL, List(tell)) => (Nil, tell :: Nil, Nil)
+      case TypeRef(_, CONV, List(conv)) => (Nil, Nil, conv :: Nil)        
       case RefinedType(parents,_) =>
         val ret = parents.collect{
-          case TypeRef(_, ASK, List(ask)) => Left(ask)
-          case TypeRef(_, TELL, List(tell)) => Right(tell)            
+          case TypeRef(_, ASK, List(ask)) => Left(Left(ask))
+          case TypeRef(_, TELL, List(tell)) => Left(Right(tell))
+          case TypeRef(_, CONV, List(conv)) => Right(conv)
         }
-        ret.separate
+        val (at, c) = ret.separate
+        val (a, t) = at.separate
+        (a, t, c)
       case other =>
         c.abort(c.enclosingPosition, s"I don't know how to extract Needs from $other (${showRaw(other)})")
     }
@@ -75,7 +81,12 @@ class InterpreterMacros(val c: whitebox.Context) {
       case bad =>
         c.abort(c.enclosingPosition, s"$bad is not of kind * -> *")
     }
-    c.typecheck(q"??? : ${name}[..$newTypeParams]").tpe
+    tq"${name}[..$newTypeParams]".toType
+  }
+
+  implicit class RichTree(t: Tree) {
+    def toType: Type =
+      c.typecheck(q"??? : $t").tpe    
   }
 
   // exists only for testing swapType
@@ -88,19 +99,41 @@ class InterpreterMacros(val c: whitebox.Context) {
     )
   }
 
+  def getConvMap(fType : Type, eTypes: List[Type]): Tree = {
+    val mapElems = eTypes.map{ hx =>
+      val h = hx match {
+        case ExistentialType(_ :: Nil, api: TypeApi) =>
+          api.typeArgs match {
+            case _ :: Nil => tq"${hx.typeSymbol}"
+            case manyArgs =>
+              val names: List[Tree] = manyArgs.map{
+                case TypeRef(NoPrefix, _, List()) => tq"A"
+                case x => tq"$x"
+              }
+              tq"({type L[A] = ${hx.typeSymbol}[..${names}]})#L"
+          }
+        case bad =>
+          c.abort(c.enclosingPosition, s"$bad is not of kind * -> * (${showRaw(bad)})")
+      }
+      q"implicitly[izumi.reflect.TagK[${h}]].tag -> (implicitly[cats.~>[${h},$fType]] : Any)"
+    }
+    q"Map( ..$mapElems )"
+  }
+
   def interpreter_impl[H <: Needs[_], A, ASKTC[_], TELLTC[_], F[_], T](
     program: Expr[Uniform[H,A,T]]
   )(
     implicit ttn: WeakTypeTag[H], 
     ttAskTc: WeakTypeTag[ASKTC[_]],
-    ttTellTc: WeakTypeTag[TELLTC[_]]
+    ttTellTc: WeakTypeTag[TELLTC[_]],
+    fTypeTag: WeakTypeTag[F[_]]
   ): c.Expr[F[A]] = {
-    val (askTypes, tellTypes) = getNeeds[H, ASKTC, TELLTC]
+    val (askTypes, tellTypes, convTypes) = getNeeds[H, ASKTC, TELLTC]
     val askMap = implicitMaps(ttAskTc.tpe, askTypes)
-    val tellMap = implicitMaps(ttTellTc.tpe, tellTypes)    
-    val r = q"${c.prefix}.interpretImpl($program, $askMap, $tellMap)"
+    val tellMap = implicitMaps(ttTellTc.tpe, tellTypes)
+    val convMap = getConvMap(fTypeTag.tpe, convTypes)
+    val r = q"${c.prefix}.interpretImpl($program, $askMap, $tellMap, $convMap)"
     c.Expr[F[A]](r)
   }
-
 
 }

@@ -1,8 +1,9 @@
 package ltbs.uniform
 
 import scala.language.higherKinds
-import izumi.reflect.Tag
+import izumi.reflect.{Tag, TagK}
 import validation.Rule
+import izumi.reflect.macrortti.LightTypeTag
 
 trait Uniform[-R <: Needs[_], +A, -T] {
   def map[F[_], B](f: A => B): Uniform[R, B, T] = Uniform.Map(this, f)
@@ -19,6 +20,7 @@ object Uniform {
   case class End[A](key: String) extends Uniform[Needs[Any], Nothing, Unit]
   case class Pure[A](value: A) extends Uniform[Needs[_], A, Any]
   case class Subjourney[-R <: Needs[_], A, T](path: List[String], base: Uniform[R, A, T]) extends Uniform[R, A, T]
+  case class Convert[F[_], A](action: F[A], tag: TagK[F]) extends Uniform[Needs.Convert[F[_]], A, Unit] 
 }
 
 

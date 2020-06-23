@@ -83,3 +83,4 @@ object FutureInterpreterTestApp extends App {
     100.minutes
   )
 }
+

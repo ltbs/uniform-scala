@@ -5,7 +5,7 @@ import org.scalatest._, funspec.AnyFunSpec, matchers.should.Matchers
 import cats.data.Validated.Invalid
 import cats.implicits._
 
-class RuleSpec extends AnyFunSpec with Matchers with OptTCOps {
+class RuleSpec extends AnyFunSpec with Matchers {
 
   describe("Rule.condAtPath") {
     it("should return an error at the correct path") {

@@ -56,3 +56,26 @@ final case class UnsafePersistence(
     Future.successful(())
   }
 }
+
+case class SessionPersistence[REQ <: Request[AnyContent]](name: String)(implicit req: REQ, ec: ExecutionContext)
+    extends PersistenceEngine[REQ] {
+
+  def convertIn(sessionData: Option[String]): DB = sessionData.fold(DB.empty){ str =>
+    Input.fromUrlEncodedString(str) match {
+      case Left(err) => throw new IllegalStateException(err.toString)
+      case Right(r) => r.collect{ case (k,v :: Nil) if v.trim.nonEmpty => (k,v) }
+    }
+  }
+
+  def convertOut(db: DB): String =
+    db.mapValues(List.apply(_)).toUrlEncodedString
+
+  def load: DB = convertIn(req.session.get(name))
+
+  def apply(request: REQ)(f: DB => Future[(DB,Result)]): Future[Result] = 
+    f(load).map{ case (newDb, result) =>
+      result.withSession(
+        request.session + (name -> convertOut(newDb))
+      )
+    }
+}

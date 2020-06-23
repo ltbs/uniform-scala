@@ -52,10 +52,11 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
     val program = for {
       x <- pure(12)
       c <- if (x < 11) pure(12.toString.some) else ask[Option[String]]("c")
-      a <- interact[Int,String]("hiya", "in")
-      b <- interact[Int,String]("hiya2", "in")
+      a <- interact[Int]("hiya", "in")
+      b <- interact[Int]("hiya2", "in")
       _ <- tell[Option[String]]("_", c)
     } yield ((x, "test".some))
     ListInterpreter.interpret(program) should be (List((12, Some("test"))))
   }
 }
+

@@ -5,10 +5,9 @@ import scala.language.higherKinds
 import cats.implicits._
 import cats.{Monoid, Applicative, Monad, Eq, Semigroup}
 import cats.data.{NonEmptyList, Validated}
-import shapeless.tag, tag.{@@}
 import collection.immutable.ListMap
 import uniform.validation.{Rule, Transformation}
-import izumi.reflect.Tag
+import izumi.reflect.{Tag, TagK}
 
 package object uniform
     extends TreeLike.ToTreeLikeOps
@@ -16,23 +15,9 @@ package object uniform
     with ScalaVersionCompatibility
 {
 
-  /** Used to represent multi-line input.
-    *
-    * Behaves identically to, and can be freely cast to, a
-    * String. However interpreters may decide to treat it
-    * differently - for example a web interpreter will usually render
-    * this a textarea or a cli interpreter may prompt for several
-    * lines.
-    */
-  type BigString = String @@ BigStringTag
-
-  type NonEmptyString = String @@ NonEmptyStringTag
-
   type InputPath = List[String]
   type Input = Map[InputPath, List[String]]
   type ErrorTree = ListMap[NonEmptyList[InputPath], NonEmptyList[ErrorMsg]]
-  type ::[H,T <: shapeless.HList] = shapeless.::[H,T]
-  type NilTypes = Unit :: shapeless.HNil
 
   implicit object Input extends MapTree[String, List[String]] {
 
@@ -209,4 +194,7 @@ package object uniform
   def pure[A](value: A) = Uniform.Pure(value)
   def subJourney[R <: Needs[_], A, T](pathHead: String, pathTail: String*)(base: Uniform[R, A, T]): Uniform[R, A, T] =
     Uniform.Subjourney[R,A,T](pathHead :: pathTail.toList, base)
+  def convert[F[_], A](action: F[A])(implicit tag: TagK[F]): Uniform[Needs.Convert[F[_]], A, Unit] =
+    Uniform.Convert(action, tag)
+
 }
