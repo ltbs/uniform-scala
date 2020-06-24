@@ -6,8 +6,9 @@ import cats.implicits._
 import cats.~>
 import ltbs.uniform.{Uniform => U}
 import izumi.reflect.macrortti.LightTypeTag
-import izumi.reflect.{Tag, TagK}
+import izumi.reflect.Tag
 import validation.Rule
+import com.github.ghik.silencer.silent
 
 trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_]] extends Interpreter[F, ASKTC, TELLTC]{
 
@@ -20,12 +21,12 @@ trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_]] extends Interpreter[F, ASKTC,
   protected def endTellImpl[T](key: String, value: T, teller: TELLTC[T]): F[Nothing] =
     tellImpl(key, value, teller) >> endImpl(key)
   protected def endImpl(key: String): F[Nothing]
-  protected def subjourneyImpl[A](path: List[String], inner: F[A]): F[A] = inner
+  @silent("never used") protected def subjourneyImpl[A](path: List[String], inner: F[A]): F[A] = inner
 
   protected def convertImpl[E[_], A](in: E[A], transformation: E ~> F): F[A] =
     transformation(in)
 
-  def interpretImpl[H <: Needs[_], A: Tag, T: Tag, E[_]](
+  @silent("erasure") def interpretImpl[H <: Needs[_], A: Tag, T: Tag, E[_]](
     program: Uniform[H, A, T], 
     askMap: Map[LightTypeTag, ASKTC[_]],    
     tellMap: Map[LightTypeTag, TELLTC[_]],
@@ -54,6 +55,5 @@ trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_]] extends Interpreter[F, ASKTC,
         convertImpl[E, A](action.asInstanceOf[E[A]], convertMap(tag.tag).asInstanceOf[E ~> F])
     }
   }
-
 
 }

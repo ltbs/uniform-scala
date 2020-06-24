@@ -1,10 +1,9 @@
 package ltbs.uniform
 
 import scala.language.higherKinds
-import cats.~>
 import scala.language.experimental.macros
 import izumi.reflect.macrortti.LightTypeTag
-import izumi.reflect.{Tag, TagK}
+import izumi.reflect.Tag
 
 trait Interpreter[F[_], ASKTC[_], TELLTC[_]] {
 
@@ -26,7 +25,6 @@ trait Interpreter[F[_], ASKTC[_], TELLTC[_]] {
   //     ): G[A] = f(that.interpretImpl[H, A, T, E](program, askMap, tellMap, convertMap))
   //   }
   // }
-  type CONV[A[_]] = cats.~>[A,F]
 
   def interpret[H <: Needs[_],A, T](
     program: Uniform[H, A, T]

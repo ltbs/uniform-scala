@@ -3,7 +3,6 @@ package ltbs.uniform
 import scala.language.higherKinds
 import izumi.reflect.{Tag, TagK}
 import validation.Rule
-import izumi.reflect.macrortti.LightTypeTag
 
 trait Uniform[-R <: Needs[_], +A, -T] {
   def map[F[_], B](f: A => B): Uniform[R, B, T] = Uniform.Map(this, f)

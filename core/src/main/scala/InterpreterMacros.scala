@@ -7,7 +7,6 @@ import com.github.ghik.silencer.silent
 import scala.language.higherKinds
 import scala.reflect.macros.whitebox
 import scala.annotation.tailrec
-import izumi.reflect.TagK
 
 class InterpreterMacros(val c: whitebox.Context) {
   import c.universe._

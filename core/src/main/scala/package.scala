@@ -3,7 +3,7 @@ package ltbs
 import scala.language.higherKinds
 
 import cats.implicits._
-import cats.{Monoid, Applicative, Monad, Eq, Semigroup}
+import cats.{Monoid, Applicative, Monad, Semigroup}
 import cats.data.{NonEmptyList, Validated}
 import collection.immutable.ListMap
 import uniform.validation.{Rule, Transformation}
