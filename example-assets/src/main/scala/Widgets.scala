@@ -15,42 +15,6 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
   
   import bundle.all._
 
-  def renderProduct[A](
-    pageKey: List[String],
-    fieldKey: List[String],    
-    path: Breadcrumbs,
-    values: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Tag],
-    pfl: ProductFieldList[A, Tag]
-  ): Tag = div(
-    pfl.inner map { case (subFieldId, f) =>
-      f(pageKey, fieldKey :+ subFieldId, path, values / subFieldId, errors / subFieldId, messages)
-    }
-  )
-
-  def renderCoproduct[A](
-    pageKey: List[String],
-    fieldKey: List[String],    
-    path: Breadcrumbs,
-    values: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Tag],
-    cfl: CoproductFieldList[A, Tag]
-  ): Tag = {
-    val value: Option[String] = values.valueAtRoot.flatMap{_.headOption}
-    radios(
-      fieldKey,
-      cfl.inner.map{_._1},
-      value,
-      errors,
-      messages,
-      cfl.inner.map{
-        case(subkey,f) => subkey -> f(pageKey, fieldKey :+ subkey, path, {values / subkey}, errors / subkey, messages)
-      }.filter(_._2.toString.trim.nonEmpty).toMap
-    )
-  }
-
   implicit val unitField = new FormField[Unit,Tag] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
@@ -62,7 +26,6 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       errors: ErrorTree,
       messages: UniformMessages[Tag]
     ): Tag = span(cls:="unit")("")
-
   }
 
   implicit class RichError(errors: ErrorTree) {

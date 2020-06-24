@@ -20,8 +20,15 @@ class SimpleController @Inject()(
     with I18nSupport
     with HmrcPlayInterpreter {
 
+  sealed trait Maybe
+  case object Yes extends Maybe
+  case object No extends Maybe
+
   val journey = for {
-    x <- ask[Boolean]("x")
+    x <- ask[Maybe]("x").map{
+      case Yes => true
+      case No => false
+    }
     x2 <- interact[String]("x-back", x)
     _ <- tell("tell-int", 12)
     _ <- tell("tell-string", "12")        

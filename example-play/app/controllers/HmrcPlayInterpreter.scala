@@ -7,7 +7,42 @@ import cats.syntax.semigroup._
 import scalatags.Text.all._
 import ltbs.uniform.examples.Widgets
 
-trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] {
+trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] with InferFormFields[Tag] {
+
+  def renderAnd(
+    pageKey: List[String],
+    fieldKey: List[String],
+    breadcrumbs: Breadcrumbs,
+    data: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    members: Seq[(String, Tag)]
+  ): Tag =
+    Widgets.fieldSurround(fieldKey, errors, messages) {
+      table(
+        members.map { case (label, html) => 
+          tr(th(label), td(html))
+        }
+      )
+    }
+
+  def renderOr(
+    pageKey: List[String],
+    fieldKey: List[String],
+    breadcrumbs: Breadcrumbs,
+    data: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    alternatives: Seq[(String, Tag)],
+    selected: Option[String]
+  ): Tag = Widgets.radios(
+    fieldKey,
+    alternatives.map(_._1),
+    selected,
+    errors,
+    messages,
+    alternatives.toMap
+  )
 
   def messagesApi: play.api.i18n.MessagesApi
   def messagesForRequest[C <: AnyContent](request: Request[C]): UniformMessages[Tag] =

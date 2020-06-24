@@ -41,7 +41,7 @@ def macroDependencies(scalaVersion: String) =
     case Some((2, minor)) if minor < 13 =>
       Seq(
         compilerPlugin(("org.scalamacros" %% "paradise" % "2.1.1").cross(CrossVersion.patch)),
-        "org.scala-lang" % "scala-reflect" % scalaVersion
+        "org.scala-lang" % "scala-reflect" % scalaVersion % Provided
       )
     case _ => Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion
@@ -164,7 +164,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core" % "2.2.0-M2",
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
-//      "com.chuusai" %%% "shapeless" % "2.3.3",
       "org.typelevel" %%% "simulacrum" % "1.0.0",
       "dev.zio" %%% "izumi-reflect" % "1.0.0-M2",
       "org.typelevel" %%% "cats-effect" % "2.1.3" % "test",      
@@ -188,7 +187,9 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "org.typelevel" %%% "simulacrum" % "1.0.0"
+      "org.typelevel" %%% "simulacrum" % "1.0.0",
+      "com.propensive" %% "magnolia" % "0.16.0", 
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
     ) ++ macroDependencies(scalaVersion.value)
   )
 
