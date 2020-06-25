@@ -5,10 +5,10 @@ import cats.instances.list._
 import cats.syntax.alternative._
 import com.github.ghik.silencer.silent
 import scala.language.higherKinds
-import scala.reflect.macros.whitebox
+import scala.reflect.macros.blackbox
 import scala.annotation.tailrec
 
-class InterpreterMacros(val c: whitebox.Context) {
+class InterpreterMacros(val c: blackbox.Context) {
   import c.universe._
 
   /**

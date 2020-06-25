@@ -19,12 +19,14 @@ trait GenericWebInterpreter2[Html] extends MonadInterpreter[
     key: String,
     default: Option[A],
     validation: Rule[A],
+    customContent: Map[String,(String,List[Any])],    
     asker: WebInteraction[A,Html]
   ): WebMonad[A,Html] = asker(
     key,
     None,
     default,
-    validation
+    validation,
+    customContent
   )
 
   override def interactImpl[A, T](
@@ -32,39 +34,51 @@ trait GenericWebInterpreter2[Html] extends MonadInterpreter[
     tellValue: T,
     default: Option[A],
     validation: Rule[A],
+    customContent: Map[String,(String,List[Any])],    
     asker: WebInteraction[A,Html],
     teller: GenericWebTell[T,Html]
   ): WebMonad[A, Html] =
-    teller.pureHtml(tellValue, key) flatMap { t => 
+    teller.pureHtml(tellValue, key, customContent) flatMap { t => 
       asker(
         key,
         Some(t),
         default,
-        validation
+        validation,
+        customContent
       )
     }
 
   override def endTellImpl[T](
     key: String,
     tellValue: T,
+    customContent: Map[String,(String,List[Any])],    
     teller: GenericWebTell[T,Html]
   ): WebMonad[Nothing, Html] =
-    teller.end(tellValue, key)
+    teller.end(tellValue, key, customContent)
 
-  override def endImpl(key: String): WebMonad[Nothing,Html] =
-    unitTell.end((), key)
+  override def endImpl(
+    key: String,
+    customContent: Map[String,(String,List[Any])],    
+  ): WebMonad[Nothing,Html] =
+    unitTell.end((), key, customContent)
 
   override def tellImpl[T](
     key: String,
     tellValue: T,
+    customContent: Map[String,(String,List[Any])],    
     teller: GenericWebTell[T,Html]
   ): WebMonad[Unit,Html] =
-    teller.pureHtml(tellValue, key).flatMap{ t => 
+    teller.pureHtml(
+      tellValue,
+      key,
+      customContent
+    ) flatMap { t =>
       unitAsk(
         key,
         Some(t), 
         None,
-        Rule.alwaysPass
+        Rule.alwaysPass,
+        customContent
       )
     }
 }

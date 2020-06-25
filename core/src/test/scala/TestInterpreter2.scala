@@ -19,13 +19,29 @@ object ListInterpreter extends MonadInterpreter[List, Example, Noop] {
 
   def monadInstance = implicitly[cats.Monad[List]]
 
-  def askImpl[A](key: String, default: Option[A], validation: Rule[A], asker: Example[A]): List[A] = List(asker.value)
-  def tellImpl[T](key: String, value: T, teller: Noop[T]): List[Unit] = {
+  override def askImpl[A](
+    key: String,
+    default: Option[A],
+    validation: Rule[A],
+    customContent: Map[String,(String,List[Any])],
+    asker: Example[A]
+  ): List[A] = List(asker.value)
+
+  override def tellImpl[T](
+    key: String,
+    value: T,
+    customContent: Map[String,(String,List[Any])],
+    teller: Noop[T]
+  ): List[Unit] = {
     println(value.toString)
     List(())
   }
 
-  override def endImpl(key: String): List[Nothing] = Nil
+  override def endImpl(
+    key: String,
+    customContent: Map[String,(String,List[Any])]
+  ): List[Nothing] = Nil
+
 }
 
 class TestInterpreter3 extends AnyFlatSpec with Matchers {

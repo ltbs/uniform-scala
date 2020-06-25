@@ -39,10 +39,12 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
     id: String,
     tell: Option[Html],
     default: Option[A],
-    validation: Rule[A]
+    validation: Rule[A],
+    customContent: Map[String,(String,List[Any])] = Map.empty    
   ): WebMonad[A, Html] = new WebMonad[A, Html] {
     def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[A, Html]] = {
-      import pageIn._
+      import pageIn.{messages => _, _}
+      val messages = pageIn.messages.withCustomContent(customContent)
       val currentId = pageIn.pathPrefix :+ id
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}

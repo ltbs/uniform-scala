@@ -10,5 +10,5 @@ case class InteractBuilder[A] private[uniform] () {
     default: Option[A] = None,
     validation: Rule[A] = Rule.alwaysPass[A]
   )(implicit taga: Tag[A]): Uniform[Needs.Ask[A] with Needs.Tell[T], A, T] =
-    Uniform.Interact(key, value, default, validation, implicitly[Tag[A]], implicitly[Tag[T]])
+    Uniform.Interact(key, value, default, validation, Map.empty, implicitly[Tag[A]], implicitly[Tag[T]])
 }

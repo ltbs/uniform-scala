@@ -1,11 +1,9 @@
 package ltbs.uniform
 
 import validation.Rule
-import scala.concurrent._
 import cats.implicits._
 import cats.effect._
 import izumi.reflect.Tag
-import cats.arrow.FunctionK
 
 trait ConsoleAsk[A] {
 
@@ -69,6 +67,7 @@ case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleAsk, Console
     key: String,
     default: Option[A],
     validation: Rule[A],
+    customContent: Map[String,(String,List[Any])],        
     asker: ConsoleAsk[A]
   ): IO[A] =
     asker(key, default, validation)
@@ -76,11 +75,15 @@ case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleAsk, Console
   def tellImpl[T](
     key: String,
     value: T,
+    customContent: Map[String,(String,List[Any])],    
     teller: ConsoleTell[T]
   ): IO[Unit] =
     teller(key, value)
 
-  override def endImpl(key: String): IO[Nothing] = {
+  override def endImpl(
+    key: String,
+    customContent: Map[String,(String,List[Any])]    
+  ): IO[Nothing] = {
     IO { throw new IllegalStateException("end of journey") }
   }
 

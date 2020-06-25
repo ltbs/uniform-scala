@@ -7,6 +7,7 @@ trait WebInteraction[A, Html] {
     id: String,
     tell: Option[Html],
     defaultIn: Option[A],
-    validationIn: Rule[A]
+    validationIn: Rule[A],
+    customContent: Map[String,(String,List[Any])]
   ): WebMonad[A, Html]
 }

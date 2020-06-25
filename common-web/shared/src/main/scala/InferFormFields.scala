@@ -73,15 +73,15 @@ trait InferFormFields[Html] {
   def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] = new FormField[T, Html] {
     def decode(out: Input): Either[ErrorTree,T] = {
       sealedTrait.subtypes.collectFirst{
-        case subtype if List(subtype.typeName.full).some === out.valueAtRoot =>
-          subtype.typeclass.decode(out / subtype.typeName.full)
+        case subtype if List(subtype.typeName.short).some === out.valueAtRoot =>
+          subtype.typeclass.decode(out / subtype.typeName.short).leftMap{_.prefixWith(subtype.typeName.short)}
       }.getOrElse(ErrorMsg("required").toTree.asLeft)
     }
 
     def encode(in: T): Input = {
       sealedTrait.dispatch(in) { subtype =>
-        subtype.typeclass.encode(subtype.cast(in)).prefixWith(subtype.typeName.full) |+|
-        (Map(Nil -> List(subtype.typeName.full)): Input)
+        subtype.typeclass.encode(subtype.cast(in)).prefixWith(subtype.typeName.short) |+|
+        (Map(Nil -> List(subtype.typeName.short)): Input)
       } 
     }
 
@@ -103,20 +103,20 @@ trait InferFormFields[Html] {
         messages,
         sealedTrait.subtypes.map{ subtype => 
           (
-            subtype.typeName.full,
+            subtype.typeName.short,
             subtype.typeclass.render(
               pageKey,
-              fieldKey :+ subtype.typeName.full,
+              fieldKey :+ subtype.typeName.short,
               breadcrumbs,
-              data / subtype.typeName.full,
-              errors / subtype.typeName.full,
+              data / subtype.typeName.short,
+              errors / subtype.typeName.short,
               messages
             )
           )
         },
         sealedTrait.subtypes.collectFirst {
-          case subtype if List(subtype.typeName.full).some === data.valueAtRoot =>
-            subtype.typeName.full
+          case subtype if List(subtype.typeName.short).some === data.valueAtRoot =>
+            subtype.typeName.short
         }
       )
     }

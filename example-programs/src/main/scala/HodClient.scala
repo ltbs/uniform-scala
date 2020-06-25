@@ -1,10 +1,9 @@
 package ltbs.uniform
+
 package examples
 
 import scala.language.higherKinds
-
-import cats.Monad
-import cats.implicits._
+import izumi.reflect.TagK
 
 case class User(
   forename: String,
@@ -18,32 +17,21 @@ trait HodLanguage[F[_]] {
 
 object HodClient {
 
-  //TODO: Adapters for new language
+  def beardTax[F[_]: TagK](
+    hod: HodLanguage[F]
+  ) = for {
+    userName      <- ask[String]("username")
+    userOpt       <- convert(hod.lookupUser(userName))
+    _             <- userOpt match {
+      case Some(user) => tell("found-user", user)
+      case None       => tell("no-user-found", "No user found!")
+    }
+  } yield userOpt
 
-  // def beardTax(
-  //   hod: HodLanguage[F]
-  // ) = {
-  //   import interpreter._
-  //   for {
-  //     userName      <- ask[String]("username")
-  //     userOpt       <- hod.lookupUser(userName)
-  //     _             <- userOpt match {
-  //       case Some(user) => tell("found-user", user)
-  //       case None       => tell("no-user-found", "No user found!")
-  //     }
-  //   } yield userOpt
-  // }
-
-  // type AUAskTypes = String :: Int :: NilTypes
-  // def addUser[F[_] : cats.Applicative](
-  //   interpreter: Language[F, NilTypes, AUAskTypes]
-  // ): F[User] = {
-  //   import interpreter._
-  //   (
-  //     ask[String]("forename"), 
-  //     ask[String]("surname"),
-  //     ask[Int]("age")
-  //   ).mapN(User)
-  // }
+  // def addUser = (
+  //   ask[String]("forename"),
+  //   ask[String]("surname"),
+  //   ask[Int]("age")
+  // ).mapN(User)
 
 }

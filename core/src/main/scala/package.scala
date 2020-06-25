@@ -180,20 +180,100 @@ package object uniform
   }
 
   def interact[A] = new InteractBuilder[A]
-  def ask[A: Tag](key: String, default: Option[A] = None, validation: Rule[A] = Rule.alwaysPass[A]): Uniform[Needs.Ask[A], A, Unit] = Uniform.Ask(key, default, validation, implicitly[Tag[A]])
-  def tell[A: Tag](key: String, value: A): Uniform[Needs.Tell[A], Unit, A] =
-    Uniform.Tell(key, value, implicitly[Tag[A]])
-  def end[A: Tag](key: String, value: A): Uniform[Needs.Tell[A], Nothing, A] =
-    Uniform.EndTell(key, value, implicitly[Tag[A]])
-  def end(key: String): Uniform[Needs[Any], Nothing, Unit] =
-    Uniform.End(key)
-  def endIf[T: Tag](pred: Boolean, key: String, value: T): Uniform[Needs.Tell[T], Unit, T] =
-    if(pred) end(key, value) else Uniform.Pure(())
-  def endIf(pred: Boolean, key: String): Uniform[Needs[Any], Unit, Unit] =
-    if(pred) end(key) else Uniform.Pure(())
+
+  def ask[A: Tag](
+    key: String,
+    default: Option[A] = None,
+    validation: Rule[A] = Rule.alwaysPass[A],
+    customContent: Map[String,(String,List[Any])] = Map.empty
+  ): Uniform[Needs.Ask[A], A, Unit] = Uniform.Ask(key, default, validation, customContent, implicitly[Tag[A]])
+
+  def tell[A: Tag](
+    key: String,
+    value: A,
+    customContent: Map[String,(String,List[Any])] = Map.empty    
+  ): Uniform[Needs.Tell[A], Unit, A] =
+    Uniform.Tell(
+      key,
+      value,
+      customContent,
+      implicitly[Tag[A]]
+    )
+
+  def end[A: Tag](
+    key: String,
+    value: A,
+    customContent: Map[String,(String,List[Any])]
+  ): Uniform[Needs.Tell[A], Nothing, A] =
+    Uniform.EndTell(
+      key,
+      value,
+      customContent,
+      implicitly[Tag[A]]
+    )
+
+  def end(
+    key: String,
+    customContent: Map[String,(String,List[Any])]
+  ): Uniform[Needs[Any], Nothing, Unit] = Uniform.End(
+    key,
+    customContent
+  )
+
+  def end[A: Tag](
+    key: String,
+    value: A
+  ): Uniform[Needs.Tell[A], Nothing, A] =
+    Uniform.EndTell(
+      key,
+      value,
+      Map.empty,
+      implicitly[Tag[A]]
+    )
+
+  def end(
+    key: String
+  ): Uniform[Needs[Any], Nothing, Unit] = Uniform.End(
+    key,
+    Map.empty
+  )
+
+  def endIf[T: Tag](
+    pred: Boolean,
+    key: String,
+    value: T,
+    customContent: Map[String,(String,List[Any])]
+  ): Uniform[Needs.Tell[T], Unit, T] =
+    if(pred) end(key, value, customContent) else Uniform.Pure(())
+
+  def endIf[T: Tag](
+    pred: Boolean,
+    key: String,
+    value: T
+  ): Uniform[Needs.Tell[T], Unit, T] =
+    if(pred) end(key, value, Map.empty) else Uniform.Pure(())
+
+  def endIf(
+    pred: Boolean,
+    key: String,
+    customContent: Map[String,(String,List[Any])]
+  ): Uniform[Needs[Any], Unit, Unit] =
+    if(pred) end(key, customContent) else Uniform.Pure(())
+
+  def endIf(
+    pred: Boolean,
+    key: String
+  ): Uniform[Needs[Any], Unit, Unit] =
+    if(pred) end(key, Map.empty) else Uniform.Pure(())
+
   def pure[A](value: A) = Uniform.Pure(value)
-  def subJourney[R <: Needs[_], A, T](pathHead: String, pathTail: String*)(base: Uniform[R, A, T]): Uniform[R, A, T] =
+
+  def subJourney[R <: Needs[_], A, T](
+    pathHead: String,
+    pathTail: String*
+  )(base: Uniform[R, A, T]): Uniform[R, A, T] =
     Uniform.Subjourney[R,A,T](pathHead :: pathTail.toList, base)
+
   def convert[F[_], A](action: F[A])(implicit tag: TagK[F]): Uniform[Needs.Convert[F[_]], A, Unit] =
     Uniform.Convert(action, tag)
 

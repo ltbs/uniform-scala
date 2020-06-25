@@ -7,7 +7,7 @@ import cats.syntax.semigroup._
 import scalatags.Text.all._
 import ltbs.uniform.examples.Widgets
 
-trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] with InferFormFields[Tag] {
+trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] with InferFormFields[Tag] with ScalatagsSupport {
 
   def renderAnd(
     pageKey: List[String],
@@ -206,7 +206,7 @@ trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] with InferFormFields[Tag
               breadcrumbs.drop(1).headOption.map{ back =>
                 a (href:=back, cls:="govuk-back-link")(messages({back :+ "back"}.mkString(".")))
               },
-//              if(errors.nonEmpty) errorSummary(key, errors, messages),
+              Some(errors).filter(_.nonEmpty).map{ x => span (x.toString) }, 
               div(cls:="govuk-width-container")(
                 tag("main")(cls:="govuk-main-wrapper ", id:="main-content", role:="main")(
                   h1(cls:="govuk-heading-xl")(messages(key.mkString(".")))

@@ -4,11 +4,19 @@ import validation.Rule
 import scala.concurrent._
 import cats.implicits._
 
-case class FutureInterpreter()(implicit ec: ExecutionContext) extends MonadInterpreter[Future, Reader, Writer] {
+case class FutureInterpreter()(
+  implicit ec: ExecutionContext
+) extends MonadInterpreter[Future, Reader, Writer] {
 
   def monadInstance = implicitly[cats.Monad[Future]]
 
-  def askImpl[A](key: String, default: Option[A], validation: Rule[A], asker: Reader[A]): Future[A] = Future{
+  override def askImpl[A](
+    key: String,
+    default: Option[A],
+    validation: Rule[A],
+    customContent: Map[String,(String,List[Any])],
+    asker: Reader[A]
+  ): Future[A] = Future{
 
     @annotation.tailrec
     def inner(): A = {
@@ -30,11 +38,19 @@ case class FutureInterpreter()(implicit ec: ExecutionContext) extends MonadInter
     inner()
   }
 
-  def tellImpl[T](key: String,value: T,teller: Writer[T]): Future[Unit] = Future {
+  override def tellImpl[T](
+    key: String,
+    value: T,
+    customContent: Map[String,(String,List[Any])],
+    teller: Writer[T]
+  ): Future[Unit] = Future {
     println(teller.write(value))
   }
 
-  override def endImpl(key: String): Future[Nothing] = Future {
+  override def endImpl(
+    key: String,
+    customContent: Map[String,(String,List[Any])]
+  ): Future[Nothing] = Future {
     println(s"$key (ending)")
     System.exit(0)
     throw new IllegalStateException(key)

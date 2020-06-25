@@ -14,13 +14,44 @@ trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_]] extends Interpreter[F, ASKTC,
 
   implicit def monadInstance: cats.Monad[F]
 
-  protected def askImpl[A](key: String, default: Option[A], validation: Rule[A], asker: ASKTC[A]): F[A]
-  protected def tellImpl[T](key: String, value: T, teller: TELLTC[T]): F[Unit]
-  protected def interactImpl[A,T](key: String, tellValue: T, default: Option[A], validation: Rule[A], asker: ASKTC[A], teller: TELLTC[T]): F[A] =
-    tellImpl(key, tellValue, teller) >> askImpl(key, default, validation, asker)    
-  protected def endTellImpl[T](key: String, value: T, teller: TELLTC[T]): F[Nothing] =
-    tellImpl(key, value, teller) >> endImpl(key)
-  protected def endImpl(key: String): F[Nothing]
+  protected def askImpl[A](
+    key: String,
+    default: Option[A],
+    validation: Rule[A],
+    customContent: Map[String,(String,List[Any])],
+    asker: ASKTC[A]
+  ): F[A]
+
+  protected def tellImpl[T](
+    key: String,
+    value: T,
+    customContent: Map[String,(String,List[Any])],
+    teller: TELLTC[T]
+  ): F[Unit]
+
+  protected def interactImpl[A,T](
+    key: String,
+    tellValue: T,
+    default: Option[A],
+    validation: Rule[A],
+    customContent: Map[String,(String,List[Any])],
+    asker: ASKTC[A],
+    teller: TELLTC[T]
+  ): F[A] = tellImpl(key, tellValue, customContent, teller) >>
+    askImpl(key, default, validation, customContent, asker)
+
+  protected def endTellImpl[T](
+    key: String,
+    value: T,
+    customContent: Map[String,(String,List[Any])],
+    teller: TELLTC[T]
+  ): F[Nothing] =
+    tellImpl(key, value, customContent, teller) >> endImpl(key, customContent)
+
+  protected def endImpl(
+    key: String,
+    customContent: Map[String,(String,List[Any])]
+  ): F[Nothing]
   @silent("never used") protected def subjourneyImpl[A](path: List[String], inner: F[A]): F[A] = inner
 
   protected def convertImpl[E[_], A](in: E[A], transformation: E ~> F): F[A] =
@@ -36,23 +67,50 @@ trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_]] extends Interpreter[F, ASKTC,
       case U.Map(base, f) =>
         interpretImpl(base, askMap, tellMap, convertMap ).map(f)
       case U.FlatMap(base, f) =>
-        interpretImpl(base, askMap, tellMap, convertMap).flatMap(f.map(interpretImpl(_, askMap, tellMap, convertMap)))
-      case U.Tell(key, value, tag: Tag[T]) =>
-        tellImpl[T](key, value, tellMap(tag.tag).asInstanceOf[TELLTC[T]])
-      case U.Interact(key, value, default, validation, askTag, tellTag: Tag[T]) =>
-        interactImpl[A, T](key, value, default, validation, askMap(askTag.tag).asInstanceOf[ASKTC[A]], tellMap(tellTag.tag).asInstanceOf[TELLTC[T]])
-      case U.Ask(key, default, validation, tag) =>
-        askImpl(key, default, validation, askMap(tag.tag).asInstanceOf[ASKTC[A]])
-      case U.EndTell(key, value, tag: Tag[T]) =>
-        endTellImpl[T](key, value, tellMap(tag.tag).asInstanceOf[TELLTC[T]])
-      case U.End(key) =>
-        endImpl(key)
+        val g = f.map(interpretImpl(_, askMap, tellMap, convertMap))
+        interpretImpl(base, askMap, tellMap, convertMap).flatMap(g)
+      case U.Tell(key, value, customContent, tag: Tag[T]) => tellImpl[T](
+          key,
+          value,
+          customContent,
+          tellMap(tag.tag).asInstanceOf[TELLTC[T]]
+        )
+      case U.Interact(key, value, default, validation, customContent, askTag, tellTag: Tag[T]) =>
+        interactImpl[A, T](
+          key,
+          value,
+          default,
+          validation,
+          customContent,
+          askMap(askTag.tag).asInstanceOf[ASKTC[A]],
+          tellMap(tellTag.tag).asInstanceOf[TELLTC[T]]
+        )
+      case U.Ask(key, default, validation, customContent, tag) =>
+        askImpl(
+          key,
+          default,
+          validation,
+          customContent,
+          askMap(tag.tag).asInstanceOf[ASKTC[A]]
+        )
+      case U.EndTell(key, value, customContent, tag: Tag[T]) =>
+        endTellImpl[T](
+          key,
+          value,
+          customContent,
+          tellMap(tag.tag).asInstanceOf[TELLTC[T]]
+        )
+      case U.End(key, customContent) =>
+        endImpl(key, customContent)
       case U.Pure(v) =>
         v.pure[F]
       case U.Subjourney(path, inner) =>
         subjourneyImpl(path, interpretImpl(inner, askMap, tellMap, convertMap))
       case U.Convert(action, tag) =>
-        convertImpl[E, A](action.asInstanceOf[E[A]], convertMap(tag.tag).asInstanceOf[E ~> F])
+        convertImpl[E, A](
+          action.asInstanceOf[E[A]],
+          convertMap(tag.tag).asInstanceOf[E ~> F]
+        )
     }
   }
 

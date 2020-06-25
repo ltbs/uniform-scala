@@ -11,17 +11,22 @@ import cats.syntax.eq._
 trait GenericWebTell[A,Html] {
   def render(in: A, key: String, messages: UniformMessages[Html]): Html
 
-  def end(in: A, key: String) = new WebMonad[Nothing, Html] {
+  def end(
+    in: A,
+    key: String,
+    customContent: Map[String,(String,List[Any])]
+  ) = new WebMonad[Nothing, Html] {
     def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Nothing, Html]] =
       Future.successful{
         import pageIn._
+        val messages = pageIn.messages.withCustomContent(customContent)
         val targetIdP = targetId.reverse.dropWhile(_ == "").reverse
         val currentId = pageIn.pathPrefix :+ key
 
         if (targetIdP === currentId) {
           pageIn.toPageOut(AskResult.Payload(
-            Ior.left(render(in, key, pageIn.messages)),
-            ErrorTree.empty, pageIn.messages)
+            Ior.left(render(in, key, messages)),
+            ErrorTree.empty, messages)
           )
         } else {
           // unlike in PostAndGetPage we don't care if they are trying
@@ -32,10 +37,15 @@ trait GenericWebTell[A,Html] {
       }
   }
 
-  def pureHtml(in: A, key: String) = new WebMonad[Html, Html] {
+  def pureHtml(
+    in: A,
+    key: String,
+    customContent: Map[String,(String,List[Any])]
+  ) = new WebMonad[Html, Html] {
     def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, Html]] =
       Future.successful{
-        pageIn.toPageOut(AskResult.Success(render(in, key, pageIn.messages)))
+        val messages = pageIn.messages.withCustomContent(customContent)
+        pageIn.toPageOut(AskResult.Success(render(in, key, messages)))
       }
   }
 }

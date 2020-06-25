@@ -10,10 +10,10 @@ GET         /simple/*id        controllers.SimpleController.simpleAction(id: Str
 POST        /simple/           controllers.SimpleController.simpleAction(id = "")
 POST        /simple/*id        controllers.SimpleController.simpleAction(id: String)
 
-# GET         /beardtax/           controllers.BeardController2.beardAction(id = "")
-# GET         /beardtax/*id        controllers.BeardController2.beardAction(id: String)
-# POST        /beardtax/           controllers.BeardController2.beardAction(id = "")
-# POST        /beardtax/*id        controllers.BeardController2.beardAction(id: String)
+GET         /beardtax/           controllers.BeardController2.beardAction(id = "")
+GET         /beardtax/*id        controllers.BeardController2.beardAction(id: String)
+POST        /beardtax/           controllers.BeardController2.beardAction(id = "")
+POST        /beardtax/*id        controllers.BeardController2.beardAction(id: String)
 
 # GET         /reportwitch/        controllers.WitchController.reportWitch(id = "")
 # GET         /reportwitch/*id     controllers.WitchController.reportWitch(id: String)
