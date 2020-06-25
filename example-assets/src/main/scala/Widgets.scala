@@ -25,7 +25,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
-    ): Tag = span(cls:="unit")("")
+    ): Option[Tag] = Some(span(cls:="unit")(""))
   }
 
   implicit class RichError(errors: ErrorTree) {
@@ -60,7 +60,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
-    ): Tag = {
+    ): Option[Tag] = Some{
 
       val existingValue: String = data.valueAtRoot.flatMap{_.headOption}.getOrElse("")
       fieldSurround(fieldKey, errors, messages) {
@@ -97,7 +97,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
-    ): Tag = {
+    ): Option[Tag] = Some{
       val existingValue: Option[String] = data.valueAtRoot.flatMap{_.headOption}
       radios(fieldKey, List(true.toString,false.toString), existingValue, errors, messages)
     }
@@ -177,7 +177,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
-    ): Tag = {
+    ): Option[Tag] = Some{
       fieldSurround(fieldKey, errors, messages)(
         Seq("day","month","year") flatMap { field => 
           Seq(

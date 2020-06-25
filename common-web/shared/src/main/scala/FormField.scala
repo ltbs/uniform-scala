@@ -15,7 +15,7 @@ trait FormField[A, Html] extends Codec[A] with PostAndGetPage[A, Html]{
     data: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html]
-  ): Html
+  ): Option[Html]
 
   /** Produce a new `FormField` from this one by mapping the types */
   override def imap[B](f: A => B)(g: B => A): FormField[B, Html] =
@@ -37,7 +37,7 @@ trait FormField[A, Html] extends Codec[A] with PostAndGetPage[A, Html]{
         data: Input,
         errors: ErrorTree,
         messages: UniformMessages[Html]
-      ): Html = orig.render(pageKey, fieldKey, breadcrumbs, data, errors, messages)
+      ): Option[Html] = orig.render(pageKey, fieldKey, breadcrumbs, data, errors, messages)
     }
   }
 
@@ -47,7 +47,7 @@ trait FormField[A, Html] extends Codec[A] with PostAndGetPage[A, Html]{
     existing: Input,
     breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
-  )(implicit ec: ExecutionContext): Html =
+  )(implicit ec: ExecutionContext): Option[Html] =
     render(key, key.last :: Nil, breadcrumbs, existing, ErrorTree.empty, messages)
 
   def postPage(
@@ -57,7 +57,7 @@ trait FormField[A, Html] extends Codec[A] with PostAndGetPage[A, Html]{
     errors: ErrorTree,
     breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
-  )(implicit ec: ExecutionContext): Html =
+  )(implicit ec: ExecutionContext): Option[Html] =
     render(key, key.last :: Nil, breadcrumbs, request, errors, messages)
 
     def codec: Codec[A] = this

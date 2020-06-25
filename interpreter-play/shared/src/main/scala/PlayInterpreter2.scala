@@ -63,12 +63,10 @@ trait PlayInterpreter2[Html] extends Results with GenericWebInterpreter2[Html] {
               case AskResult.GotoPath(targetPath) =>
                 val path = baseUrl + targetPath.mkString("/")
                 (dbOut, Redirect(path)).pure[Future]
-              case AskResult.Payload(tellAndAsk, errors, messagesOut) =>
+              case AskResult.Payload(tell, ask, errors, messagesOut) =>
                 val convertedBreadcrumbs = breadcrumbs.map { c => 
                   baseUrl + c.mkString("/")
                 }
-                val tell = tellAndAsk.left
-                val ask = tellAndAsk.right
                 (db, Ok(pageChrome(breadcrumbs.head, errors, tell, ask, convertedBreadcrumbs, request, messagesOut))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (if (purgeStateUponCompletion) DB.empty else dbOut, _) }

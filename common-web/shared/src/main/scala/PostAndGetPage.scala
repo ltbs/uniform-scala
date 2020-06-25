@@ -19,7 +19,7 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
     existing: Input,
     breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
-  )(implicit ec: ExecutionContext): Html
+  )(implicit ec: ExecutionContext): Option[Html]
 
   def postPage(
     key: List[String],
@@ -28,7 +28,7 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
     errors: ErrorTree,
     breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
-  )(implicit ec: ExecutionContext): Html
+  )(implicit ec: ExecutionContext): Option[Html]
 
   def iorOptLeft[L, R](left: Option[L], right: R): Ior[L, R] = left match {
     case Some(l) => Ior.both(l, right)
@@ -76,10 +76,8 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
                 ).pure[Future]
               case Left(error) =>
                 val html = AskResult.Payload[A, Html](
-                  iorOptLeft(
-                    tell, 
-                    postPage(id :: Nil, state, localData, error, breadcrumbs, messages)
-                  ),
+                  tell,
+                  postPage(id :: Nil, state, localData, error, breadcrumbs, messages), 
                   error,
                   messages
                 )
@@ -90,17 +88,15 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
 
           case None =>
             val html = AskResult.Payload[A, Html](
-              iorOptLeft(
-                tell,
-                getPage(
-                  id :: Nil,
-                  state,
-                  dbInput.flatMap{_.toOption} orElse            // db
-                    default.map{x => codec.encode(x)} getOrElse // default
-                    Input.empty,                                // neither
-                  breadcrumbs,
-                  messages
-                )
+              tell,
+              getPage(
+                id :: Nil,
+                state,
+                dbInput.flatMap{_.toOption} orElse            // db
+                  default.map{x => codec.encode(x)} getOrElse // default
+                  Input.empty,                                // neither
+                breadcrumbs,
+                messages
               ),
               ErrorTree.empty,
               messages

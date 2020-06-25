@@ -33,7 +33,7 @@ trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] with InferFormFields[Tag
     data: Input,
     errors: ErrorTree,
     messages: UniformMessages[Tag],
-    alternatives: Seq[(String, Tag)],
+    alternatives: Seq[(String, Option[Tag])],
     selected: Option[String]
   ): Tag = Widgets.radios(
     fieldKey,
@@ -41,7 +41,7 @@ trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] with InferFormFields[Tag
     selected,
     errors,
     messages,
-    alternatives.toMap
+    alternatives.collect{case (k, Some(v)) => (k,v)}.toMap
   )
 
   def messagesApi: play.api.i18n.MessagesApi

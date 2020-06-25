@@ -24,7 +24,7 @@ trait InferFormFields[Html] {
     data: Input,
     errors: ErrorTree,
     messages: UniformMessages[Html],
-    alternatives: Seq[(String, Html)],
+    alternatives: Seq[(String, Option[Html])],
     selected: Option[String]
   ): Html
 
@@ -50,7 +50,10 @@ trait InferFormFields[Html] {
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
-    ): Html = renderAnd(
+    ): Option[Html] =
+
+    if (caseClass.isObject) None else 
+    renderAnd(
       pageKey,
       fieldKey,
       breadcrumbs,
@@ -66,8 +69,8 @@ trait InferFormFields[Html] {
           errors / p.label,
           messages
         )
-      }
-    )
+      }.collect{ case (k, Some(v)) => (k,v)}
+    ).some
   }
 
   def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] = new FormField[T, Html] {
@@ -93,7 +96,7 @@ trait InferFormFields[Html] {
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Html]
-    ): Html = {
+    ): Option[Html] = {
       renderOr(
         pageKey,
         fieldKey,
@@ -101,9 +104,10 @@ trait InferFormFields[Html] {
         data,
         errors,
         messages,
-        sealedTrait.subtypes.map{ subtype => 
+        sealedTrait.subtypes.map{ subtype =>
           (
             subtype.typeName.short,
+            {
             subtype.typeclass.render(
               pageKey,
               fieldKey :+ subtype.typeName.short,
@@ -112,6 +116,7 @@ trait InferFormFields[Html] {
               errors / subtype.typeName.short,
               messages
             )
+            }
           )
         },
         sealedTrait.subtypes.collectFirst {
@@ -119,7 +124,7 @@ trait InferFormFields[Html] {
             subtype.typeName.short
         }
       )
-    }
+    }.some
   }
 
   implicit def gen[T]: FormField[T, Html] = macro Magnolia.gen[T]

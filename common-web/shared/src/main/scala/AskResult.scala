@@ -14,11 +14,12 @@ object AskResult {
   }
 
   final case class Payload[A,Html](
-    tellAndAsk: Ior[Html, Html],
+    tell: Option[Html],
+    ask: Option[Html], 
     errors: ErrorTree = ErrorTree.empty,
     messages: UniformMessages[Html]
   ) extends AskResult[A,Html] {
-    def map[B] = Payload[B,Html](tellAndAsk, errors, messages)
+    def map[B] = Payload[B,Html](tell, ask, errors, messages)
   }
 
   final case class Success[A,Html](objectOut: A) extends AskResult[A,Html]

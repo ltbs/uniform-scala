@@ -23,8 +23,7 @@ package object playframework extends common.web.webcommon {
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[TwirlHtml]
-    ): TwirlHtml = TwirlHtml("")
-
+    ): Option[TwirlHtml] = None
   }
 
   implicit class RichPlayMessages(input: i18n.Messages) {

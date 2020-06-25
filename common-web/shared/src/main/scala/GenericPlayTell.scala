@@ -2,7 +2,6 @@ package ltbs.uniform
 package common.web
 
 import scala.concurrent._
-import cats.data.Ior
 import cats.syntax.eq._
 
 /** Represents rendering a type for a `tell` interaction used in a web
@@ -25,7 +24,8 @@ trait GenericWebTell[A,Html] {
 
         if (targetIdP === currentId) {
           pageIn.toPageOut(AskResult.Payload(
-            Ior.left(render(in, key, messages)),
+            Some(render(in, key, messages)),
+            None,
             ErrorTree.empty, messages)
           )
         } else {
