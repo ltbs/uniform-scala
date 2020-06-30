@@ -15,30 +15,37 @@ class InterpreterMacros(val c: blackbox.Context) {
     * Turn a Needs[_] type into a (List[AskTypes], List[TellTypes]) 
     */ 
   @silent("never used") // quasiquoting seems to produce lots of false warnings  
-  def getNeeds[H <: Needs[_], ASKTC[_], TELLTC[_]](
+  def getNeeds[H <: Needs[_], ASKTC[_], TELLTC[_], ASKLISTTC[_]](
     implicit ttn: c.WeakTypeTag[H], 
     ttAskTc: WeakTypeTag[ASKTC[_]],
-    ttTellTc: WeakTypeTag[TELLTC[_]]
-  ): (List[Type], List[Type], List[Type]) = {
+    ttTellTc: WeakTypeTag[TELLTC[_]],
+    ttAskListTc: WeakTypeTag[ASKLISTTC[_]]
+  ): (List[Type], List[Type], List[Type], List[Type]) = {
 
     val ASK = symbolOf[Needs.Ask[_]]
     val TELL = symbolOf[Needs.Tell[_]]
-    val CONV = symbolOf[Needs.Convert[_]]    
-    
+    val CONV = symbolOf[Needs.Convert[_]]
+    val ASKLIST = symbolOf[Needs.AskList[_]]        
+
+
     ttn.tpe match {
-      case _: ExistentialType => (Nil, Nil, Nil)
-      case TypeRef(_, ASK, List(ask)) => (ask :: Nil, Nil, Nil)
-      case TypeRef(_, TELL, List(tell)) => (Nil, tell :: Nil, Nil)
-      case TypeRef(_, CONV, List(conv)) => (Nil, Nil, conv :: Nil)        
+      case _: ExistentialType => (Nil, Nil, Nil, Nil)
+      case TypeRef(_, ASK, List(ask)) => (ask :: Nil, Nil, Nil, Nil)
+      case TypeRef(_, TELL, List(tell)) => (Nil, tell :: Nil, Nil, Nil)
+      case TypeRef(_, CONV, List(conv)) => (Nil, Nil, conv :: Nil, Nil)
+      case TypeRef(_, ASKLIST, List(askl)) => (Nil, Nil, Nil, askl :: Nil)                
       case RefinedType(parents,_) =>
+        //TODO - a fold would be better
         val ret = parents.collect{
           case TypeRef(_, ASK, List(ask)) => Left(Left(ask))
           case TypeRef(_, TELL, List(tell)) => Left(Right(tell))
-          case TypeRef(_, CONV, List(conv)) => Right(conv)
+          case TypeRef(_, CONV, List(conv)) => Right(Left(conv))
+          case TypeRef(_, ASKLIST, List(askl)) => Right(Right(askl))            
         }
-        val (at, c) = ret.separate
+        val (at, cl) = ret.separate
         val (a, t) = at.separate
-        (a, t, c)
+        val (c, l) = cl.separate        
+        (a, t, c, l)
       case other =>
         c.abort(c.enclosingPosition, s"I don't know how to extract Needs from $other (${showRaw(other)})")
     }
@@ -119,19 +126,21 @@ class InterpreterMacros(val c: blackbox.Context) {
     q"Map( ..$mapElems )"
   }
 
-  def interpreter_impl[H <: Needs[_], A, ASKTC[_], TELLTC[_], F[_], T](
+  def interpreter_impl[H <: Needs[_], A, ASKTC[_], TELLTC[_], ASKLISTTC[_], F[_], T](
     program: Expr[Uniform[H,A,T]]
   )(
     implicit ttn: WeakTypeTag[H], 
     ttAskTc: WeakTypeTag[ASKTC[_]],
     ttTellTc: WeakTypeTag[TELLTC[_]],
+    ttAskListTc: WeakTypeTag[ASKLISTTC[_]],    
     fTypeTag: WeakTypeTag[F[_]]
   ): c.Expr[F[A]] = {
-    val (askTypes, tellTypes, convTypes) = getNeeds[H, ASKTC, TELLTC]
+    val (askTypes, tellTypes, convTypes, listTypes) = getNeeds[H, ASKTC, TELLTC, ASKLISTTC]
     val askMap = implicitMaps(ttAskTc.tpe, askTypes)
     val tellMap = implicitMaps(ttTellTc.tpe, tellTypes)
+    val listMap = implicitMaps(ttAskListTc.tpe, listTypes)    
     val convMap = getConvMap(fTypeTag.tpe, convTypes)
-    val r = q"${c.prefix}.interpretImpl($program, $askMap, $tellMap, $convMap)"
+    val r = q"${c.prefix}.interpretImpl($program, $askMap, $tellMap, $convMap, $listMap)"
     c.Expr[F[A]](r)
   }
 

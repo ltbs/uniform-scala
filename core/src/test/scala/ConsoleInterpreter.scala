@@ -59,11 +59,11 @@ object ConsoleTell {
   }
 }
 
-case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleAsk, ConsoleTell] {
+case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleAsk, ConsoleTell, ConsoleAsk] {
 
   def monadInstance = implicitly[cats.Monad[IO]]
 
-  def askImpl[A](
+  override def askImpl[A](
     key: String,
     default: Option[A],
     validation: Rule[A],
@@ -72,7 +72,7 @@ case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleAsk, Console
   ): IO[A] =
     asker(key, default, validation)
 
-  def tellImpl[T](
+  override def tellImpl[T](
     key: String,
     value: T,
     customContent: Map[String,(String,List[Any])],    
@@ -83,10 +83,17 @@ case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleAsk, Console
   override def endImpl(
     key: String,
     customContent: Map[String,(String,List[Any])]    
-  ): IO[Nothing] = {
-    IO { throw new IllegalStateException("end of journey") }
-  }
+  ): IO[Nothing] = 
+    IO.raiseError { new InterruptedException(s"End of journey: $key") }
 
+  override def askListImpl[A](
+    key: String,
+    askJourney: (Option[Int], List[A]) => IO[A],
+    default: Option[List[A]], 
+    validation: Rule[List[A]],
+    customContent: Map[String,(String,List[Any])],    
+    asker: ConsoleAsk[A]
+  ): IO[List[A]] = ???
 }
 
 object ConsoleApp extends IOApp {

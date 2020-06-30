@@ -2,11 +2,13 @@ package ltbs.uniform
 package common.web
 
 import validation.Rule
+import scala.concurrent._
 
-trait GenericWebInterpreter2[Html] extends MonadInterpreter[
+trait GenericWebInterpreter2[Html] extends Primatives[Html] with MonadInterpreter [
   WebMonad[+?, Html],
   WebInteraction[?, Html],
-  GenericWebTell[?, Html]
+  GenericWebTell[?, Html],
+  WebAskList[?, Html]
 ] {
 
   def unitAsk: WebInteraction[Unit, Html]
@@ -81,4 +83,26 @@ trait GenericWebInterpreter2[Html] extends MonadInterpreter[
         customContent
       )
     }
+
+  override def subjourneyImpl[A](
+    path: List[String],
+    inner: WebMonad[A, Html]
+  ): WebMonad[A, Html] = {
+    for {
+      _      <- pushPathPrefix(path)
+      result <- inner
+      _      <- popPathPrefix(path.size)
+    } yield result
+  }
+
+  override def askListImpl[A](
+    key: String,
+    askJourney: (Option[Int], List[A]) => WebMonad[A,Html],
+    default: Option[List[A]],
+    validation: Rule[List[A]],
+    customContent: Map[String,(String, List[Any])],
+    asker: WebAskList[A,Html]
+  ): WebMonad[List[A],Html] =
+    asker(key, askJourney, default, validation, customContent)
+
 }

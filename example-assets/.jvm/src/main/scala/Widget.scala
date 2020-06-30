@@ -3,6 +3,8 @@ package examples
 
 import scalatags._
 
-object Widgets extends AbstractWidgets[text.Builder, String, String] {
+trait Widgets extends AbstractWidgets[text.Builder, String, String] {
   val bundle = Text
 }
+
+object Widgets extends Widgets

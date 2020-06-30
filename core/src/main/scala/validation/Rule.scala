@@ -126,4 +126,5 @@ object Rule extends Quantifiable.ToQuantifiableOps {
 
   def forEachInList[A](inner: Rule[A]): Rule[List[A]] =
     ForEachInList[A](inner)
+
 }

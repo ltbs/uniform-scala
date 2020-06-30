@@ -15,7 +15,7 @@ trait Writer[T] {
   def write(v: T): String
 }
 
-object ListInterpreter extends MonadInterpreter[List, Example, Noop] {
+object ListInterpreter extends MonadInterpreter[List, Example, Noop, Noop] {
 
   def monadInstance = implicitly[cats.Monad[List]]
 
@@ -42,6 +42,15 @@ object ListInterpreter extends MonadInterpreter[List, Example, Noop] {
     customContent: Map[String,(String,List[Any])]
   ): List[Nothing] = Nil
 
+
+  override def askListImpl[A](
+    key: String,
+    askJourney: (Option[Int], List[A]) => List[A],
+    default: Option[List[A]],
+    validation: Rule[List[A]],
+    customContent: Map[String,(String,List[Any])],    
+    asker: Noop[A]
+  ): List[List[A]] = askJourney(None, Nil).replicateA(3)
 }
 
 class TestInterpreter3 extends AnyFlatSpec with Matchers {
@@ -52,6 +61,8 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
   "A simple interpreter" should "be able to compose Id monad instances" in {
 
     implicit val exInt = example[Int](1)
+    implicit val exIntTuple = example((1,1))    
+    implicit val exIntList = example(List(1))    
     implicit val exOptString = example("test".some)
 
     val p2 = pure(12)
@@ -70,8 +81,17 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
       c <- if (x < 11) pure(12.toString.some) else ask[Option[String]]("c")
       a <- interact[Int]("hiya", "in")
       b <- interact[Int]("hiya2", "in")
+      l <- askList[(Int, Int)]("coordinates")
+      l2 <- askListJourney("coordinates2")( (editIndex, existing: List[(Int, Int)]) => {
+        val editRow: Option[(Int, Int)] = editIndex.map(existing.apply)
+        for {
+          x <- ask[Int]("x", default = editRow.map(_._1))
+          y <- ask[Int]("y", default = editRow.map(_._2))
+        } yield (x,y)
+      })
       _ <- tell[Option[String]]("_", c)
     } yield ((x, "test".some))
+
     ListInterpreter.interpret(program) should be (List((12, Some("test"))))
   }
 }

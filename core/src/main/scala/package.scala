@@ -277,4 +277,28 @@ package object uniform
   def convert[F[_], A](action: F[A])(implicit tag: TagK[F]): Uniform[Needs.Convert[F[_]], A, Unit] =
     Uniform.Convert(action, tag)
 
+  def askListJourney[R <: Needs[_], A](
+    key: String,
+    default: Option[List[A]] = None, 
+    validation: Rule[List[A]] = Rule.alwaysPass[List[A]]
+  )(
+    base: (Option[Int], List[A]) => Uniform[R, A, Unit]
+  )(
+    implicit tag: Tag[A]
+  ) = Uniform.ListOf[R, A](key, base, default, validation, Map.empty, tag)
+
+  def askList[A](
+    key: String,
+    default: Option[List[A]] = None,
+    validation: Rule[List[A]] = Rule.alwaysPass[List[A]],
+    customContent: Map[String,(String,List[Any])] = Map.empty,    
+  )(
+    implicit tag: Tag[A]
+  ) = {
+    val base: (Option[Int], List[A]) => Uniform[Needs.Ask[A], A, Unit] = {
+      case (index, elems) => ask[A]("add", default = index.flatMap(elems.get(_)))
+    }
+    Uniform.ListOf[Needs.Ask[A], A](key, base, default, validation, customContent, tag)
+  }
+
 }

@@ -7,6 +7,10 @@ import cats.implicits._
 
 trait InferFormFields[Html] {
 
+  @annotation.implicitAmbiguous("Unable to ask[Traversable[${A}]] - consider using askList[${A}] instead")
+  implicit def blockCollections[X[_] <: Traversable[_], A]: FormField[X[A], Html] = ???
+  implicit def blockCollections2[X[_] <: Traversable[_], A]: FormField[X[A], Html] = ???  
+
   def renderAnd(
     pageKey: List[String],
     fieldKey: List[String],

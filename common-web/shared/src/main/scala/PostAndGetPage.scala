@@ -5,7 +5,6 @@ import cats.implicits._
 import concurrent.Future
 import scala.concurrent.ExecutionContext
 import validation._
-import cats.data.Ior
 
 trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
 
@@ -29,11 +28,6 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
     breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
   )(implicit ec: ExecutionContext): Option[Html]
-
-  def iorOptLeft[L, R](left: Option[L], right: R): Ior[L, R] = left match {
-    case Some(l) => Ior.both(l, right)
-    case None => Ior.right(right)
-  }
 
   def apply(
     id: String,

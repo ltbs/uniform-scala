@@ -21,6 +21,7 @@ trait Uniform[-R <: Needs[_], +A, -T] {
 
 object Uniform {
   case class Map[-R <: Needs[_], A, +B, T](base: Uniform[R, A, T], f: A => B) extends Uniform[R, B, T]
+
   case class FlatMap[R <: Needs[_], -R2 <: R, A, +B, T](base: Uniform[R, A, T], f: A => Uniform[R2, B, T]) extends Uniform[R2, B, T]
   case class Interact[A, T](
     key: String,
@@ -80,7 +81,24 @@ object Uniform {
   }
 
   case class Pure[A](value: A) extends Uniform[Needs[_], A, Any]
-  case class Subjourney[-R <: Needs[_], A, T](path: List[String], base: Uniform[R, A, T]) extends Uniform[R, A, T]
 
-  case class Convert[F[_], A](action: F[A], tag: TagK[F]) extends Uniform[Needs.Convert[F[_]], A, Unit] 
+  case class Subjourney[-R <: Needs[_], A, T](
+    path: List[String],
+    base: Uniform[R, A, T]
+  ) extends Uniform[R, A, T]
+
+  case class ListOf[-R <: Needs[_], A](
+    key: String,
+    base: (Option[Int], List[A]) => Uniform[R, A, Unit],
+    default: Option[List[A]],    
+    validation: Rule[List[A]],
+    customContent: IMap[String,(String,List[Any])],    
+    tag: Tag[A]
+  ) extends Uniform[R with Needs.AskList[A], List[A], Any]
+
+  case class Convert[F[_], A](
+    action: F[A],
+    tag: TagK[F]
+  ) extends Uniform[Needs.Convert[F[_]], A, Unit]
+
 }

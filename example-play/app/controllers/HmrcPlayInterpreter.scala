@@ -1,13 +1,46 @@
 package controllers
 
-import ltbs.uniform._, interpreters.playframework._
-import play.api.mvc.{Results, Request, AnyContent}
+import ltbs.uniform._, interpreters.playframework._, validation.Rule
+import play.api.mvc.{Request, AnyContent}
 import ltbs.uniform.common.web._
 import cats.syntax.semigroup._
 import scalatags.Text.all._
 import ltbs.uniform.examples.Widgets
 
-trait HmrcPlayInterpreter extends PlayInterpreter2[Tag] with InferFormFields[Tag] with ScalatagsSupport {
+trait HmrcPlayInterpreter
+    extends PlayInterpreter2[Tag]
+    with InferFormFields[Tag]
+    with ScalatagsSupport
+    with Widgets
+    with AutoListingPage[Tag]
+{
+
+  def renderListPage[A](
+    pageKey: List[String],
+    breadcrumbs: Breadcrumbs,
+    existingEntries: List[ListingRow[Tag]],
+    data: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    validation: Rule[List[A]]
+  ): Tag = div (
+    table (
+      tr( th("item"),th("edit"),th("delete")),
+      existingEntries.map{ row =>
+        tr(
+          td(row.content),
+          td(a(href:=row.editLink)(messages("edit"))),
+          td(a(href:=row.deleteLink)(messages("delete")))
+        )
+      }
+    ),
+    radios(pageKey, List("add", "continue"), None, errors, messages)
+  )
+
+
+//  implicit def tellInstance: ltbs.uniform.common.web.GenericWebTell[ltbs.uniform.examples.witchcraft.Evidence,scalatags.Text.all.Tag] = ???
+  
+//  implicit def e: WebInteraction[List[Evidence], Tag] = singlePageForm[Evidence]
 
   def renderAnd(
     pageKey: List[String],

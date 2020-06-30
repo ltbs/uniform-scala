@@ -7,9 +7,13 @@ import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
 import scalatags.Text.all._
-import ltbs.uniform.examples.Widgets._
-import ScalatagsSupport._
 import validation._
+
+sealed trait Maybe
+object Maybe {
+  case object Yes extends Maybe
+  case object No extends Maybe
+}
 
 @Singleton
 class SimpleController @Inject()(
@@ -20,14 +24,10 @@ class SimpleController @Inject()(
     with I18nSupport
     with HmrcPlayInterpreter {
 
-  sealed trait Maybe
-  case object Yes extends Maybe
-  case object No extends Maybe
-
   val journey = for {
     x <- ask[Maybe]("x").map{
-      case Yes => true
-      case No => false
+      case Maybe.Yes => true
+      case Maybe.No => false
     }
     x2 <- interact[String]("x-back", x)
     _ <- tell("tell-int", 12)

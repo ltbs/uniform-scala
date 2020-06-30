@@ -1,5 +1,5 @@
 package controllers
-/*
+
 import scala.language.higherKinds
 
 import cats.implicits._
@@ -9,30 +9,19 @@ import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
 
-
 @Singleton
 class SubjourneyController @Inject()(
   implicit ec:ExecutionContext,
   val controllerComponents: ControllerComponents
-) extends BaseController with ControllerHelpers with I18nSupport {
-
-  implicit val persistence: PersistenceEngine[Request[AnyContent]] =
-    UnsafePersistence()
-
-  lazy val interpreter = HmrcPlayInterpreter(this, messagesApi)
-
-  import interpreter._
+) extends BaseController with ControllerHelpers with I18nSupport with HmrcPlayInterpreter {
 
   def main(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
 
-    val playProgram = subjourneyProg[interpreter.WM](
-      create[TellTypes, AskTypes](interpreter.messages(request))
-    )
+    implicit val persistence: PersistenceEngine[Request[AnyContent]] =
+      SessionPersistence("subjourney")
 
-    playProgram.run(targetId) {
+    interpret(subjourneyProg).run(targetId) {
       _ => Future(Ok("Ta!"))
     }
   }
 }
-
- */
