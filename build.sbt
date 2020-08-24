@@ -2,8 +2,8 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import AutoDocs._
 
 val allCrossScala = Seq(
-  "2.11.12",
-  "2.12.11",
+//  "2.11.12",
+  "2.12.12",
   "2.13.2"
 )
 
@@ -230,11 +230,11 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
     .crossType(CrossType.Full)
     .settings(commonSettings)
     .configure(_.dependsOn(core.jvm, `common-web`.jvm))
-    .configurePlatform(Play25) {_.settings(
-      name := "interpreter-play25",
-      scalaVersion := allCrossScala.find(_.startsWith("2.11")).get,
-      crossScalaVersions := allCrossScala.filter{_.startsWith("2.11")}
-    )}
+    // .configurePlatform(Play25) {_.settings(
+    //   name := "interpreter-play25",
+    //   scalaVersion := allCrossScala.find(_.startsWith("2.11")).get,
+    //   crossScalaVersions := allCrossScala.filter{_.startsWith("2.11")}
+    // )}
     .configurePlatform(Play26) {_.settings(
       name := "interpreter-play26",      
       crossScalaVersions := allCrossScala.filter{x => x.startsWith("2.11") || x.startsWith("2.12")}
