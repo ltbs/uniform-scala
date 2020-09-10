@@ -126,8 +126,14 @@ object BeardTaxApp extends JsInterpreter[Tag]($("#uniform")) with InferFormField
     jsJourney.run()(PageIn(crumbs.init.last, crumbs, None, state, Nil, JourneyConfig(), messages))
 
   @JSExportTopLevel("submit")
-  def submit(): Future[Unit] =
-    jsJourney.run()(PageIn(crumbs.last, crumbs, None, state, Nil, JourneyConfig(), messages))    
+  def submit(): Future[Unit] = 
+      jsJourney.run()(PageIn(key, Nil, getData.toOption, state, Nil, JourneyConfig(), messages)).andThen{
+        case _ =>
+          $("#key").html(key.toString)
+          $("#state").html(state.toString)
+          $("#crumbs").html(crumbs.toString)
+      }
+
 
   def main(args: Array[String]): Unit = {
     println("Hello world!")

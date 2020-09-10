@@ -7,6 +7,7 @@ import org.querki.jquery._
 
 abstract class JsInterpreter[Html](selector: JQuery)(implicit ec: ExecutionContext) extends GenericWebInterpreter2[Html] {
 
+  var key: List[String] = Nil
   var state: DB = DB.empty
   var crumbs: Breadcrumbs = Nil
 
@@ -21,6 +22,7 @@ abstract class JsInterpreter[Html](selector: JQuery)(implicit ec: ExecutionConte
     messages: UniformMessages[Html]
   ): Future[Unit] = Future{
     selector.html(render(tell) ++ render(ask))
+    $("#errors").html(errors.toString)
     ()
   }
 
@@ -43,9 +45,10 @@ abstract class JsInterpreter[Html](selector: JQuery)(implicit ec: ExecutionConte
 
         pageOut match {
           case AskResult.GotoPath(targetPath) =>
-            run(config)(request.copy(targetId = targetPath, breadcrumbs = Nil, request = None, state = state, pathPrefix = Nil))
+            key = targetPath            
+            run(config)(request.copy(targetId = targetPath, breadcrumbs = pathOut, request = None, state = dbOut, pathPrefix = Nil))
           case AskResult.Payload(tell, ask, errors, messagesOut) =>
-            renderFrame(request.targetId, tell, ask, crumbs, errors, messagesOut)
+            renderFrame(key, tell, ask, crumbs, errors, messagesOut)
           case AskResult.Success(result) =>
             Future{selector.html(result.toString); ()}
         }
