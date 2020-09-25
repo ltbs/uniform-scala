@@ -278,16 +278,31 @@ lazy val `example-assets` = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.9.1"
   )
 
+
+lazy val `example-assets2` = project
+  .enablePlugins(SbtTwirl)
+  .settings(commonSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "uk.gov.hmrc"             %% "play-frontend-hmrc"         % "0.17.0-play-27",
+      "uk.gov.hmrc"             %% "play-frontend-govuk"        % "0.49.0-play-27"
+    ),
+    resolvers ++= Seq(
+      "HMRC Releases" at "https://dl.bintray.com/hmrc/releases",
+    )
+  )
+  .dependsOn(`common-web`.jvm)
+  
 lazy val exampleAssetsJS = `example-assets`.js.dependsOn(`common-web`.js)
 lazy val exampleAssetsJVM = `example-assets`.jvm.dependsOn(`common-web`.jvm)
 
 lazy val `example-play` = project.settings(commonSettings)
   .enablePlugins(PlayScala)
   .dependsOn(
-    `interpreter-play`.projects(Play26),
+    `interpreter-play`.projects(Play27),
     core.jvm,
     `example-programs`.jvm,
-    `example-assets`.jvm
+    `example-assets2`
   )
   .settings(
 //    scalacOptions += "-Xprint:typer",
