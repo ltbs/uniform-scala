@@ -34,7 +34,7 @@ class SimpleController @Inject()(
       SessionPersistence("simple")
 
     interpret(journey).runSync(targetId){ onCompletion =>
-      Ok("Done")
+      Ok(onCompletion.toString)
     }
   }
 

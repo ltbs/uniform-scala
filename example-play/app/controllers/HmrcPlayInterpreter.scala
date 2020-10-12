@@ -69,7 +69,7 @@ trait HmrcPlayInterpreter
   ): UniformMessages[Html] =
     { messagesApi.preferred(request).convertMessages() |+|
       UniformMessages.bestGuess }.map{Html(_)}
-    
+
   def pageChrome(
     key: List[String],
     errors: ErrorTree,
@@ -78,7 +78,35 @@ trait HmrcPlayInterpreter
     breadcrumbs: List[String],
     request: Request[AnyContent],
     messages: UniformMessages[Html]
-  ): Html = ??? // TODO: Implement Me
+  ): Html = {
+
+    val errorHtml = Some(errors).filter(_.nonEmpty).map(errorSummary(key, _, messages))
+
+    implicit val playMessages = messagesApi.preferred(request)
+    import uk.gov.hmrc.govukfrontend.views.html.layouts._    
+    import uk.gov.hmrc.govukfrontend.views.html.components._
+    val header = new GovukHeader()
+    val footer = new GovukFooter()
+    implicit val r = request
+    val askForm = ask.map{ inner => 
+      val form = new FormWithCSRF()
+      form.apply(new play.api.mvc.Call("post", "."))(Html(inner.toString + (new govukButton()).render(Button(content = HtmlContent(messages("submit")))).toString()))
+    }
+
+    (new govukLayout(
+        new GovukTemplate(header, footer, new GovukSkipLink()),
+        header,
+        footer,
+        new GovukBackLink()
+      )).apply(
+      pageTitle = Some(key.head.toString),
+      headBlock = None,
+      scriptsBlock = None,
+      beforeContentBlock = None, 
+      footerItems = Nil,
+      bodyEndBlock = None
+    )(Html(List(tell, errorHtml, askForm).flatten.mkString("<br />")))
+  }
 }
 
 

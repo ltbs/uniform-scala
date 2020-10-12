@@ -5,6 +5,9 @@
 
 # An example controller showing a sample home page
 
+->         /govuk-frontend                govuk.Routes
+->         /hmrc-frontend                 hmrcfrontend.Routes
+
 GET         /simple/           controllers.SimpleController.simpleAction(id = "")
 GET         /simple/*id        controllers.SimpleController.simpleAction(id: String)
 POST        /simple/           controllers.SimpleController.simpleAction(id = "")

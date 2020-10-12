@@ -55,7 +55,7 @@ trait PlayInterpreter2[Html] extends Results with GenericWebInterpreter2[Html] {
       val data: Option[Input] = request.body.asFormUrlEncoded.map {
         _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
       }
-
+      println(data)
       persistence(request) { db =>
         wm(PageIn(id, Nil, data, db, Nil, config, messages)) flatMap {
           case common.web.PageOut(breadcrumbs, dbOut, pageOut, _, _) =>
@@ -64,6 +64,7 @@ trait PlayInterpreter2[Html] extends Results with GenericWebInterpreter2[Html] {
                 val path = baseUrl + targetPath.mkString("/")
                 (dbOut, Redirect(path)).pure[Future]
               case AskResult.Payload(tell, ask, errors, messagesOut) =>
+                println(errors)
                 val convertedBreadcrumbs = breadcrumbs.map { c => 
                   baseUrl + c.mkString("/")
                 }

@@ -307,8 +307,11 @@ lazy val `example-play` = project.settings(commonSettings)
   .settings(
 //    scalacOptions += "-Xprint:typer",
     TwirlKeys.templateImports ++= Seq(
-      "ltbs.uniform._",
-      "ltbs.uniform.interpreters.playframework._"
+      "ltbs.uniform.{Input => _, _}",
+      "ltbs.uniform.interpreters.playframework._",
+      "uk.gov.hmrc.govukfrontend.views.html.components._",
+      "uk.gov.hmrc.govukfrontend.views.html.helpers._",
+      "uk.gov.hmrc.hmrcfrontend.views.html.components._"
     ),
     PlayKeys.playDefaultPort := 9001,
     libraryDependencies ++= Seq(
