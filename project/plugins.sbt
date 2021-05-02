@@ -25,7 +25,7 @@ addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.0.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.5.0")
 
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.1")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.7.1")
 
 // ========================================
 // https://github.com/sbt/sbt/issues/5107
