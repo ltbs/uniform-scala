@@ -18,7 +18,7 @@ trait SampleFormFields {
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[String]
-    ): String = ""
+    ): Option[String] = Some("")
   }
 
 
@@ -30,7 +30,7 @@ trait SampleFormFields {
       @silent("never used") data: Input,
       @silent("never used") errors: ErrorTree,
       @silent("never used") messages: UniformMessages[String]
-    ): String = {
+    ): Option[String] = Some {
       val k = fieldKey.mkString(".")
       s"STRING[$k]"
     }
@@ -50,7 +50,7 @@ trait SampleFormFields {
   }
 
   implicit val intFieldR = new FormField[Int, String] {
-    val codec: Codec[Int] = stringFieldR.
+    override def codec: Codec[Int] = stringFieldR.
       simap(x =>
         Either.catchOnly[NumberFormatException](x.toInt)
           .leftMap(_ => ErrorMsg("bad.value").toTree)
@@ -63,7 +63,7 @@ trait SampleFormFields {
       @silent("never used") data: Input,
       @silent("never used") errors: ErrorTree,
       @silent("never used") messages: UniformMessages[String]
-    ): String = {
+    ): Option[String] = Some {
       val k = fieldKey.mkString(".")
       s"INT[$k]"
     }

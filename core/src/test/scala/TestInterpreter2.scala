@@ -81,14 +81,14 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
       c <- if (x < 11) pure(12.toString.some) else ask[Option[String]]("c")
       a <- interact[Int]("hiya", "in")
       b <- interact[Int]("hiya2", "in")
-      l <- askList[(Int, Int)]("coordinates")
-      l2 <- askListJourney("coordinates2")( (editIndex, existing: List[(Int, Int)]) => {
-        val editRow: Option[(Int, Int)] = editIndex.map(existing.apply)
-        for {
-          x <- ask[Int]("x", default = editRow.map(_._1))
-          y <- ask[Int]("y", default = editRow.map(_._2))
-        } yield (x,y)
-      })
+      // l <- ask[List[(Int, Int)]]("coordinates")
+      // l2 <- askList("coordinates2")( (editIndex, existing: List[(Int, Int)]) => {
+      //   val editRow: Option[(Int, Int)] = editIndex.map(existing.apply)
+      //   for {
+      //     x <- ask[Int]("x", default = editRow.map(_._1))
+      //     y <- ask[Int]("y", default = editRow.map(_._2))
+      //   } yield (x,y)
+      // })
       _ <- tell[Option[String]]("_", c)
     } yield ((x, "test".some))
 

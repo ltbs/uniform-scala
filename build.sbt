@@ -11,10 +11,10 @@ lazy val root = project.in(file("."))
   .aggregate(
     coreJS,
     coreJVM,
-    `interpreter-cli`,
+    // `interpreter-cli`,
     `interpreter-gui`,
-    interpreterLogictableJS,
-    interpreterLogictableJVM,
+    // interpreterLogictableJS,
+    // interpreterLogictableJVM,
 //    `interpreter-play`.projects(Play25), // please see README.md
     `interpreter-play`.projects(Play26),
     `interpreter-play`.projects(Play27),
@@ -200,29 +200,29 @@ lazy val commonWebJS = `common-web`.js
 
 lazy val commonWebDocumentation = docProject(commonWebJVM, docs)
 
-lazy val `interpreter-cli` = project
-  .settings(commonSettings)
-  .dependsOn(coreJVM)
-  .dependsOn(exampleProgramsJVM % "test")
+// lazy val `interpreter-cli` = project
+//   .settings(commonSettings)
+//   .dependsOn(coreJVM)
+//   .dependsOn(exampleProgramsJVM % "test")
 
 lazy val `interpreter-gui` = project
   .settings(commonSettings)
   .dependsOn(coreJVM)
 
-lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(commonSettings)
+// lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
+//   .withoutSuffixFor(JVMPlatform)
+//   .crossType(CrossType.Pure)
+//   .settings(commonSettings)
 
-lazy val interpreterLogictableJS = `interpreter-logictable`.js
-  .dependsOn(coreJS)
-  .dependsOn(exampleProgramsJS % "test")
+// lazy val interpreterLogictableJS = `interpreter-logictable`.js
+//   .dependsOn(coreJS)
+//   .dependsOn(exampleProgramsJS % "test")
 
-lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
-  .dependsOn(coreJVM)
-  .dependsOn(exampleProgramsJVM % "test")
+// lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
+//   .dependsOn(coreJVM)
+//   .dependsOn(exampleProgramsJVM % "test")
 
-lazy val interpreterLogictableDocs = docProject(interpreterLogictableJVM, docs)
+// lazy val interpreterLogictableDocs = docProject(interpreterLogictableJVM, docs)
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
   crossProject(Play25, Play26, Play27, Play28)

@@ -37,11 +37,6 @@ trait HmrcPlayInterpreter
     radios(pageKey, List("add", "continue"), None, errors, messages)
   )
 
-
-//  implicit def tellInstance: ltbs.uniform.common.web.GenericWebTell[ltbs.uniform.examples.witchcraft.Evidence,scalatags.Text.all.Tag] = ???
-  
-//  implicit def e: WebInteraction[List[Evidence], Tag] = singlePageForm[Evidence]
-
   def renderAnd(
     pageKey: List[String],
     fieldKey: List[String],

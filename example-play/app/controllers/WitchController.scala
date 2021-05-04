@@ -34,19 +34,10 @@ class WitchController @Inject()(
 
   }
 
-  // implicit def familiarListing(
-  //   implicit request: Request[AnyContent]
-  // ) = interpreter.listingPageWM[Familiar](
-  //   familiarProgram[interpreter.WM](_,_,_,_)(create[NilTypes, Boolean :: String :: NilTypes](interpreter.messages(request)))
-  // )
-
   def reportWitch(targetId: String) = Action.async { implicit request: Request[AnyContent] =>
 
     implicit val persistence: PersistenceEngine[Request[AnyContent]] =
       SessionPersistence("witches")
-
-//    implicit val e: WebInteraction[List[Evidence], Tag] = singlePageForm[Evidence]
-//    implicit def ff: FormField[List[Evidence], Tag] = ???
 
     interpret(witchProgram).runSync(targetId) {
       case WitchReport(acc, _, fam) => Ok(

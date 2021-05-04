@@ -68,7 +68,7 @@ case class SessionPersistence[REQ <: Request[AnyContent]](name: String)(implicit
   }
 
   def convertOut(db: DB): String =
-    db.mapValues(List.apply(_)).toUrlEncodedString
+    db.mapValues(List.apply(_)).toMap.toUrlEncodedString
 
   def load: DB = convertIn(req.session.get(name))
 
