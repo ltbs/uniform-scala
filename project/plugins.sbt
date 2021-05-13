@@ -30,5 +30,5 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.7.2")
 // ========================================
 // https://github.com/sbt/sbt/issues/5107
 resolvers += "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.7.0") 
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.9.1") 
 // ========================================
