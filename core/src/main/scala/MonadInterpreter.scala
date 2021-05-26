@@ -8,7 +8,6 @@ import ltbs.uniform.{Uniform => U}
 import izumi.reflect.macrortti.LightTypeTag
 import izumi.reflect.Tag
 import validation.Rule
-import com.github.ghik.silencer.silent
 
 trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_], ASKLISTTC[_]] extends Interpreter[F, ASKTC, TELLTC, ASKLISTTC]{
 
@@ -53,7 +52,6 @@ trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_], ASKLISTTC[_]] extends Interpr
     customContent: Map[String,(String,List[Any])]
   ): F[Nothing]
 
-  @silent("never used")
   protected def subjourneyImpl[A](
     path: List[String],
     inner: F[A]
@@ -71,70 +69,70 @@ trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_], ASKLISTTC[_]] extends Interpr
   protected def convertImpl[E[_], A](in: E[A], transformation: E ~> F): F[A] =
     transformation(in)
 
-  @silent("erasure") override def interpretImpl[H <: Needs[_], A: Tag, T: Tag, E[_]](
+  override def interpretImpl[H <: Needs[_], A: Tag, T: Tag, E[_]](
     program: Uniform[H, A, T], 
     askMap: Map[LightTypeTag, ASKTC[_]],    
     tellMap: Map[LightTypeTag, TELLTC[_]],
     convertMap: Map[LightTypeTag, Any],
     listAskMap: Map[LightTypeTag, ASKLISTTC[_]] 
-  ): F[A] = {
-    program match {
-      case U.Map(base, f) =>
-        interpretImpl(base, askMap, tellMap, convertMap, listAskMap ).map(f)
-      case U.FlatMap(base, f) =>
-        val g = f.map(interpretImpl(_, askMap, tellMap, convertMap, listAskMap))
-        interpretImpl(base, askMap, tellMap, convertMap, listAskMap).flatMap(g)
-      case U.Tell(key, value, customContent, tag: Tag[T]) => tellImpl[T](
-          key,
-          value,
-          customContent,
-          tellMap(tag.tag).asInstanceOf[TELLTC[T]]
-        )
-      case U.Interact(key, value, default, validation, customContent, askTag, tellTag: Tag[T]) =>
-        interactImpl[A, T](
-          key,
-          value,
-          default,
-          validation,
-          customContent,
-          askMap(askTag.tag).asInstanceOf[ASKTC[A]],
-          tellMap(tellTag.tag).asInstanceOf[TELLTC[T]]
-        )
-      case U.Ask(key, default, validation, customContent, tag) =>
-        askImpl(
-          key,
-          default,
-          validation,
-          customContent,
-          askMap(tag.tag).asInstanceOf[ASKTC[A]]
-        )
-      case U.EndTell(key, value, customContent, tag: Tag[T]) =>
-        endTellImpl[T](
-          key,
-          value,
-          customContent,
-          tellMap(tag.tag).asInstanceOf[TELLTC[T]]
-        )
-      case U.End(key, customContent) =>
-        endImpl(key, customContent)
-      case U.Pure(v) =>
-        v.pure[F]
-      case U.Subjourney(path, inner) =>
-        subjourneyImpl(path, interpretImpl(inner, askMap, tellMap, convertMap, listAskMap))
-      case U.Convert(action, tag) =>
-        convertImpl[E, A](
-          action.asInstanceOf[E[A]],
-          convertMap(tag.tag).asInstanceOf[E ~> F]
-        )
-      case U.ListOf(key, base, default, validation, customContent, tag: Tag[A]) => 
-        askListImpl[A](
-          key,
-          (index, existing) => interpretImpl(base(index, existing), askMap, tellMap, convertMap, listAskMap),
-          default,
-          validation,
-          customContent, 
-          listAskMap(tag.tag).asInstanceOf[ASKLISTTC[A]]
-        )
-    }
-  }
+  ): F[A] = ???// {
+  //   program match {
+  //     case U.Map(base, f) =>
+  //       interpretImpl(base, askMap, tellMap, convertMap, listAskMap ).map(f)
+  //     case U.FlatMap(base, f) =>
+  //       val g = f.map(interpretImpl(_, askMap, tellMap, convertMap, listAskMap))
+  //       interpretImpl(base, askMap, tellMap, convertMap, listAskMap).flatMap(g)
+  //     case U.Tell(key, value, customContent, tag: Tag[T]) => tellImpl[T](
+  //         key,
+  //         value,
+  //         customContent,
+  //         tellMap(tag.tag).asInstanceOf[TELLTC[T]]
+  //       )
+  //     case U.Interact(key, value, default, validation, customContent, askTag, tellTag: Tag[T]) =>
+  //       interactImpl[A, T](
+  //         key,
+  //         value,
+  //         default,
+  //         validation,
+  //         customContent,
+  //         askMap(askTag.tag).asInstanceOf[ASKTC[A]],
+  //         tellMap(tellTag.tag).asInstanceOf[TELLTC[T]]
+  //       )
+  //     case U.Ask(key, default, validation, customContent, tag) =>
+  //       askImpl(
+  //         key,
+  //         default,
+  //         validation,
+  //         customContent,
+  //         askMap(tag.tag).asInstanceOf[ASKTC[A]]
+  //       )
+  //     case U.EndTell(key, value, customContent, tag: Tag[T]) =>
+  //       endTellImpl[T](
+  //         key,
+  //         value,
+  //         customContent,
+  //         tellMap(tag.tag).asInstanceOf[TELLTC[T]]
+  //       )
+  //     case U.End(key, customContent) =>
+  //       endImpl(key, customContent)
+  //     case U.Pure(v) =>
+  //       v.pure[F]
+  //     case U.Subjourney(path, inner) =>
+  //       subjourneyImpl(path, interpretImpl(inner, askMap, tellMap, convertMap, listAskMap))
+  //     case U.Convert(action, tag) =>
+  //       convertImpl[E, A](
+  //         action.asInstanceOf[E[A]],
+  //         convertMap(tag.tag).asInstanceOf[E ~> F]
+  //       )
+  //     case U.ListOf(key, base, default, validation, customContent, tag: Tag[A]) => 
+  //       askListImpl[A](
+  //         key,
+  //         (index, existing) => interpretImpl(base(index, existing), askMap, tellMap, convertMap, listAskMap),
+  //         default,
+  //         validation,
+  //         customContent, 
+  //         listAskMap(tag.tag).asInstanceOf[ASKLISTTC[A]]
+  //       )
+  //   }
+  // }
 }

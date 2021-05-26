@@ -280,7 +280,7 @@ object UniformMessages {
 
   def bestGuess: UniformMessages[String] = BestGuessMessages
 
-  implicit def contentMonoidInstance[A] = new Monoid[UniformMessages[A]] {
+  implicit def contentMonoidInstance[A]: Monoid[UniformMessages[A]] = new Monoid[UniformMessages[A]] {
     def empty: UniformMessages[A] = noop[A]
     def combine(a: UniformMessages[A], b: UniformMessages[A]):UniformMessages[A] = new UniformMessages[A] {
       def get(key: String, args: Any*): Option[A] = a.get(key, args:_*).orElse(b.get(key, args:_*))

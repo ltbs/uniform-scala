@@ -23,24 +23,24 @@ trait EmptyInstances {
     def isEmpty(in: A): Boolean = in == empty
   }
 
-  implicit val emptyString = instance("")
-  implicit val emptyInt = instance(0)
-  implicit def emptyOpt[A] = {
+  implicit val emptyString: Empty[String] = instance("")
+  implicit val emptyInt: Empty[Int] = instance(0)
+  implicit def emptyOpt[A]: Empty[Option[A]] = {
     import cats.syntax.option._
     instance(none[A])
   }
 
   implicit def emptyNumeric[A](
     implicit num: Numeric[A]
-  ) = instance(num.zero)
+  ): Empty[A] = instance(num.zero)
 
   implicit def emptyMonoid[A](
     implicit mon: cats.Monoid[A]
-  ) = instance(mon.empty)
+  ): Empty[A] = instance(mon.empty)
 
   implicit def emptyQuantifiable[A](
     implicit qty: Quantifiable[A]
-  ) = new Empty[A] {
+  ): Empty[A] = new Empty[A] {
     def isEmpty(in: A): Boolean = qty.qty(in) == 0
   }
 

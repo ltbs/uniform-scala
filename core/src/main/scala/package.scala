@@ -8,18 +8,25 @@ import cats.data.{NonEmptyList, Validated}
 import collection.immutable.ListMap
 import uniform.validation.{Rule, Transformation}
 import izumi.reflect.{Tag, TagK}
+import cats.data.{NonEmptyList => NEL}
 
-package object uniform
-    extends TreeLike.ToTreeLikeOps
-    with TreeLikeInstances
-    with ScalaVersionCompatibility
-{
+package object uniform extends ScalaVersionCompatibility {
 
   type InputPath = List[String]
   type Input = Map[InputPath, List[String]]
   type ErrorTree = ListMap[NonEmptyList[InputPath], NonEmptyList[ErrorMsg]]
 
-  implicit object Input extends MapTree[String, List[String]] {
+  object ErrorTree extends TreeLike[ErrorTree] {
+    def one(in: NEL[ErrorMsg]): ErrorTree = ListMap (
+      NEL.one(Nil) -> in
+    )
+
+    def oneErr(in: ErrorMsg): ErrorTree = ListMap (
+      NEL.one(Nil) -> NEL.one(in)
+    )
+  }
+
+  object Input extends MapTree[String, List[String]] {
 
     /** Extract an [[Input]] from a UTF-8 URL encoded String. */
     def fromUrlEncodedString(in: String): Either[ErrorTree,Input] = {
@@ -169,7 +176,7 @@ package object uniform
 
   }
 
-  implicit def monListMap[K,V: Semigroup] = new Monoid[ListMap[K,V]] {
+  implicit def monListMap[K,V: Semigroup]: Monoid[ListMap[K,V]] = new Monoid[ListMap[K,V]] {
     def empty = ListMap.empty
 
     def combine(xs: ListMap[K, V], ys: ListMap[K, V]): ListMap[K, V] =

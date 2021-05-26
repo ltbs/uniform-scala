@@ -9,7 +9,7 @@ import collection.immutable.ListMap
 /** Can be navigated like a tree. Has a `Value` at branches and
   * leaves, and edges are labelled with `Key`.
   */
-@typeclass trait TreeLike[T] {
+trait TreeLike[T] {
 
   type Key
   type Value
@@ -43,26 +43,16 @@ import collection.immutable.ListMap
   def valueAt(a: T, key: Key): Option[Value] =
     valueAtRoot(subTree(a, key))
 
-  def valueAtPath(a: T, key: List[Key]): Option[Value] = {
-    valueAtRoot(atPath(a, key))
-  }
-
-  def valueAtRoot(a: T): Option[Value]
+  def root(a: T): Option[Value]
 
   /** returns 'true' if there is a subtree at the given key */
-  def definedAt(a: T, key: Key): Boolean =
-    valueAt(a, key).isDefined
+  // def definedAt(a: T, key: Key): Boolean =
+  //   valueAt(a, key).isDefined
 
   /** returns 'true' if there is a subtree at the given path */  
-  def definedAtPath(a: T, key: List[Key]): Boolean =
-    valueAtPath(a, key).isDefined
 
   /** returns 'true' if there is a subtree at the given path */    
-  def definedAtRoot(a: T): Boolean =
-    valueAtRoot(a).isDefined
 
-  def isEmpty(a: T): Boolean = a == empty
-  def isNonEmpty(a: T): Boolean = !isEmpty(a)
 
   /** a null-graph (no verticies/K0) */
   def empty: T
@@ -71,23 +61,42 @@ import collection.immutable.ListMap
   def one(in: Value): T
 
   /** gives the subtree at a given path */    
-  def atPath(a: T, path: List[Key]): T = {
 
-    @annotation.tailrec
-    def inner(a1: T, path1: List[Key]): T = {
-      path1 match {
-        case Nil => a1
-        case (x::xs) => inner(subTree(a1,x), xs)
+  extension(a: T)
+    def definedAt(key: Key): Boolean =
+      valueAt(a, key).isDefined
+
+    def atPath(path: List[Key]): T = {
+      @annotation.tailrec
+      def inner(a1: T, path1: List[Key]): T = {
+        path1 match {
+          case Nil => a1
+          case (x::xs) => inner(subTree(a1,x), xs)
+        }
       }
+      inner(a, path)
     }
-    inner(a, path)
-  }
+
+    def valueAtPath(key: List[Key]): Option[Value] = {
+      atPath(key).valueAtRoot
+    }
+
+    def definedAtPath(key: List[Key]): Boolean =
+      valueAtPath(key).isDefined
+
+    def definedAtRoot: Boolean =
+      valueAtRoot.isDefined
+
+    def isEmpty: Boolean = a == empty
+    def isNonEmpty: Boolean = !isEmpty
+
+    def valueAtRoot: Option[Value] = root(a)
 
 }
 
-trait TreeLikeInstances {
+trait MapTree[K,V] extends Map[List[K],V]
 
-  class MapTree[K,V] extends TreeLike[Map[List[K],V]] {
+given [K,V]: TreeLike[MapTree[K,V]] with
     type Key = K
     type Value = V
     type T = Map[List[K],V]
@@ -115,11 +124,8 @@ trait TreeLikeInstances {
     def prefixWith(a: T, key: Key): T = a.map{ case (k,v) =>
       (key :: k) -> v
     }
-    
-  }
 
-  implicit object ErrorTree extends TreeLike[ErrorTree] {
-
+given TreeLike[ErrorTree] with
     type Key = String
     type Value = NEL[ErrorMsg]
 
@@ -142,13 +148,6 @@ trait TreeLikeInstances {
       if (a.definedAt(keyPath)) Some(subTree(a, keyPath)) else None
 
     val empty: ErrorTree = ListMap.empty
-    def one(in: NEL[ErrorMsg]): ErrorTree = ListMap (
-      NEL.one(Nil) -> in
-    )
-
-    def oneErr(in: ErrorMsg): ErrorTree = ListMap (
-      NEL.one(Nil) -> NEL.one(in)
-    )
 
     def valueAtRoot(a: ErrorTree): Option[NEL[ErrorMsg]] = a.get(NEL.one(Nil))
 
@@ -169,5 +168,4 @@ trait TreeLikeInstances {
         (k.map{key :: _}) -> v
       }
 
-  }
-}
+

@@ -5,14 +5,14 @@ import cats.implicits._
 import cats.Order
 import cats.data.Validated
 
-object Rule extends Quantifiable.ToQuantifiableOps {
+object Rule {
 
   def error(errorMsg: String, args: Any*): ErrorTree =
     ErrorTree.oneErr(ErrorMsg(errorMsg, args:_*))
 
   /** A custom rule from a predicate and an error tree */  
   def condError[A](predicate: A => Boolean, errorTree: ErrorTree): Rule[A] = {
-    a: A => Validated.cond(predicate(a), a, errorTree)
+    (a: A) => Validated.cond(predicate(a), a, errorTree)
   }
 
   /** A custom rule from a predicate and an error message */

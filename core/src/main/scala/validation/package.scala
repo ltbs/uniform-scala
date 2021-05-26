@@ -7,19 +7,13 @@ import cats.data.Validated
 /** Validation and data transformation capabilities used in
   * uniform. 
   */
-package object validation
-    extends validation.Compat
-    with Quantifiable.ToQuantifiableOps
-    with QuantifiableInstances
-    with Empty.ToEmptyOps
-    with EmptyInstances
-{
+package object validation extends validation.Compat {
   type Transformation[A, B] = A => Validated[ErrorTree, B]
 
   /** A validation rule used to check input data. */
   type Rule[A] = Transformation[A,A]
 
-  implicit def ruleMonoidInstance[A] = new Monoid[Rule[A]] {
+  implicit def ruleMonoidInstance[A]: Monoid[Rule[A]] = new Monoid[Rule[A]] {
     def empty: Rule[A] = Rule.alwaysPass[A]
    
     def combine(x: Rule[A],y: Rule[A]): Rule[A] = new Rule[A] {

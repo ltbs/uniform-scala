@@ -10,16 +10,15 @@ import scala.language.implicitConversions
   * "test".qty
   * }}}
   */
-@simulacrum.typeclass trait Quantifiable[A] {
-
+trait Quantifiable[A] {
   /** Returns the cardinality (number of elements) */
   def qty(in: A): Int
 }
 
-trait QuantifiableInstances {
+object Quantifiable:
   def instance[A](f: A => Int) = new Quantifiable[A] {
     def qty(in: A): Int = f(in)
   }
 
-  implicit val quantString = instance[String](x => x.length)  
-}
+given Quantifiable[String] with
+  def qty(in: String): Int = in.length
