@@ -9,14 +9,90 @@ trait Uniform[-R <: Needs[_], +A, -T] {
   def map[F[_], B](f: A => B): Uniform[R, B, T] = Uniform.Map(this, f)
   def flatMap[R1 <: R, B, T1 <: T](f: A => Uniform[R1, B, T1]): Uniform[R1, B, T1] = Uniform.FlatMap(this, f)
 
-  def unless(predicate: => Boolean): Uniform[R, Option[A], T] = this.map{ v => 
+  /** Returns None unless the predicate given is true, will short
+    * circuit if possible.
+    *
+    * {{{
+    * ask[Salary]("salary") when user.isEmployed
+    * }}}
+    */
+  def when(predicate: => Boolean): Uniform[R, Option[A], T] = this.map{ v =>
     if (predicate) Some(v) else None
   }
 
-  def emptyUnless[B >: A](predicate: => Boolean)(implicit mon: cats.Monoid[B]): Uniform[R, B, T] = this.map{ v => 
+  /** Returns None unless the predicate given is true, will short
+    * circuit if possible.
+    *
+    * {{{
+    * ask[Salary]("salary") when ask[Boolean]("employed")
+    * }}}
+    */
+  def when[R1 <: R, T1 <: T](wmb: Uniform[R1, Boolean, T1]): Uniform[R1, Option[A], T1] = for {
+    opt <- wmb
+    ret <- if (opt) this map (x => Some(x)) else Uniform.Pure(None: Option[A])
+  } yield ret
+
+  /** Returns None when the predicate given is true, will short
+    * circuit if possible.
+    *
+    * {{{
+    * ask[Salary]("salary") unless user.isExempt
+    * }}}
+    */
+  def unless(predicate: => Boolean): Uniform[R, Option[A], T] = when(!predicate)
+
+  /** Returns None when the predicate given is true, will short
+    * circuit if possible.
+    *
+    * {{{
+    * ask[Salary]("salary") unless ask[Boolean]("is-exempt")
+    * }}}
+    */
+  def unless[R1 <: R, T1 <: T](wmb: Uniform[R1, Boolean, T1]): Uniform[R1, Option[A], T1] =
+    when[R1, T1](wmb.map(x => !x))
+
+  /** Returns monoid empty unless the predicate given is true, will short
+    * circuit if possible.
+    *
+    * {{{
+    * ask[Salary]("salary") emptyUnless user.isEmployed
+    * }}}
+    */
+  def emptyUnless[B >: A](predicate: => Boolean)(implicit mon: cats.Monoid[B]): Uniform[R, B, T] = this.map{ v =>
     if (predicate) v else mon.empty
   }
-  
+
+  /** Returns monoid empty unless the predicate given is true, will short
+    * circuit if possible.
+    *
+    * {{{
+    * ask[Salary]("salary") emptyUnless ask[Boolean]("employed")
+    * }}}
+    */
+  def emptyUnless[B >: A, R1 <: R, T1 <: T](wmb: Uniform[R1, Boolean, T1])(implicit mon: cats.Monoid[B]): Uniform[R1, B, T1] = for {
+    opt <- wmb
+    ret <- if (opt) this else Uniform.Pure(mon.empty)
+  } yield ret
+
+  /** Returns monoid empty when the predicate given is true, will short
+    * circuit if possible.
+    *
+    * {{{
+    * ask[Salary]("salary") emptyWhen user.isExempt
+    * }}}
+    */
+  def emptyWhen[B >: A](predicate: => Boolean)(implicit mon: cats.Monoid[B]): Uniform[R, B, T] =
+    emptyUnless[B](!predicate)
+
+  /** Returns monoid empty when the predicate given is true, will short
+    * circuit if possible.
+    *
+    * {{{
+    * ask[Salary]("salary") emptyWhen ask[Boolean]("is-exempt")
+    * }}}
+    */
+  def emptyWhen[B >: A, R1 <: R, T1 <: T](wmb: Uniform[R1, Boolean, T1])(implicit mon: cats.Monoid[B]): Uniform[R1, B, T1] = emptyUnless[B, R1, T1](wmb map (x => !x))
+
 }
 
 object Uniform {
@@ -90,9 +166,9 @@ object Uniform {
   case class ListOf[-R <: Needs[_], A](
     key: String,
     base: (Option[Int], List[A]) => Uniform[R, A, Unit],
-    default: Option[List[A]],    
+    default: Option[List[A]],
     validation: Rule[List[A]],
-    customContent: IMap[String,(String,List[Any])],    
+    customContent: IMap[String,(String,List[Any])],
     tag: Tag[A]
   ) extends Uniform[R with Needs.AskList[A], List[A], Any]
 
@@ -100,5 +176,12 @@ object Uniform {
     action: F[A],
     tag: TagK[F]
   ) extends Uniform[Needs.Convert[F[_]], A, Unit]
+
+  implicit def uniformMonadInstance[R <: Needs[_], T]: cats.Monad[Uniform[R, ?, T]] =
+    new cats.StackSafeMonad[Uniform[R, ?, T]] {
+      def pure[A](x: A): Uniform[R,A,T] = Uniform.Pure(x)
+      def flatMap[A, B](fa: Uniform[R,A,T])(f: A => Uniform[R,B,T]): Uniform[R,B,T] =
+        Uniform.FlatMap(fa, f)
+    }
 
 }

@@ -3,7 +3,7 @@ package ltbs
 import scala.language.higherKinds
 
 import cats.implicits._
-import cats.{Monoid, Applicative, Monad, Semigroup}
+import cats.{Monoid, Semigroup}
 import cats.data.{NonEmptyList, Validated}
 import collection.immutable.ListMap
 import uniform.validation.{Rule, Transformation}
@@ -107,65 +107,6 @@ package object uniform
 
     def errorsAtPath(key: List[String]): List[ErrorMsg] =
       a.valueAtPath(key).fold(List.empty[ErrorMsg])(_.toList)
-
-  }
-
-  implicit class RichAppOps[F[_]: Applicative, A](e: F[A]) {
-
-    /** Returns empty unless the predicate given is true, will short
-      * circuit if possible.
-      * 
-      * {{{
-      * ask[Salary]("salary") emptyUnless user.isEmployed
-      * 
-      * Future[Int]{"illegal".toInt} emptyUnless (false)
-      * }}}
-      */
-    def emptyUnless(b: => Boolean)(implicit mon: Monoid[A]): F[A] =
-      if(b) e else Monoid[A].empty.pure[F]
-
-    /** Returns empty unless the predicate given is true, will short
-      * circuit if possible.
-      * 
-      * {{{
-      * ask[Salary]("salary") emptyUnless ask[Boolean]("employed")
-      * 
-      * Future[Int]{"illegal".toInt} emptyUnless Future{false}
-      * }}}
-      */    
-    def emptyUnless(eb: F[Boolean])(
-      implicit mon: Monoid[A],
-      monad: Monad[F]
-    ): F[A] = for {
-      opt <- eb
-      ret <- if (opt) e else mon.empty.pure[F]
-    } yield ret
-
-    /** Returns None unless the predicate given is true, will short
-      * circuit if possible.
-      * 
-      * {{{
-      * ask[Salary]("salary") when user.isEmployed
-      * 
-      * Future[Int]{"illegal".toInt} when (false)
-      * }}}
-      */    
-    def when(b: => Boolean): F[Option[A]] =
-      if(b) e.map{_.some} else none[A].pure[F]
-
-    /** Returns None unless the predicate given is true, will short
-      * circuit if possible.
-      * 
-      * {{{
-      * ask[Salary]("salary") when ask[Boolean]("employed")
-      * 
-      * Future[Int]{"illegal".toInt} when Future{false}
-      * }}}
-      */        
-    def when(wmb: F[Boolean])(implicit monad: Monad[F]): F[Option[A]] = for {
-      opt <- wmb
-      ret <- if (opt) e map {_.some} else none[A].pure[F]
-    } yield ret
 
   }
 

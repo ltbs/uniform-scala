@@ -8,7 +8,8 @@ case class InteractBuilder[A] private[uniform] () {
     key: String,
     value: T,
     default: Option[A] = None,
-    validation: Rule[A] = Rule.alwaysPass[A]
+    validation: Rule[A] = Rule.alwaysPass[A],
+    customContent: Map[String,(String,List[Any])] = Map.empty
   )(implicit taga: Tag[A]): Uniform[Needs.Ask[A] with Needs.Tell[T], A, T] =
-    Uniform.Interact(key, value, default, validation, Map.empty, implicitly[Tag[A]], implicitly[Tag[T]])
+    Uniform.Interact(key, value, default, validation, customContent, implicitly[Tag[A]], implicitly[Tag[T]])
 }
