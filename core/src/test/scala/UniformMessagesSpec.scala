@@ -1,8 +1,6 @@
 package ltbs.uniform
 
-import org.scalatest._, funspec.AnyFunSpec, matchers.should.Matchers
-
-class UniformMessagesSpec extends AnyFunSpec with Matchers {
+class UniformMessagesSpec extends munit.FunSuite {
 
   // def argInsensitive[A](msg: UniformMessages[A]): Unit = {
   //   it("stuff") {
@@ -10,40 +8,40 @@ class UniformMessagesSpec extends AnyFunSpec with Matchers {
   //   }
   // }
 
-  describe("UniformMessages.fromMap") {
+  test("UniformMessages.fromMap") {
     val msg = UniformMessages.fromMap(Map("one.two.three" -> List(1), "four" -> List(Int.MinValue, Int.MaxValue)))
 
-    it("provides a basic UniformMessages instance") {
-      msg.get("one.two.three") shouldBe (Some(1))
-      msg("one.two.three") shouldBe (1)
-      msg.list("four") shouldBe (List(Int.MinValue, Int.MaxValue))
+    test("provides a basic UniformMessages instance") {
+      assertEquals(msg.get("one.two.three"), Some(1))
+      assertEquals(msg("one.two.three"), 1)
+      assertEquals(msg.list("four"), List(Int.MinValue, Int.MaxValue))
     }
 
-    it("is insensitive to arguments") {
-      msg("one.two.three") shouldBe (msg("one.two.three", 1, true, "test"))      
+    test("is insensitive to arguments") {
+      assertEquals(msg("one.two.three"), msg("one.two.three", 1, true, "test"))
     }
 
 //    argInsensitive(msg)
   }
 
-  describe("UniformMessages.echo") {
+  test("UniformMessages.echo") {
     val msg = UniformMessages.echo
 
-    it("returns what is sent, unless it is optional") {
-      msg.get("one.two.three") shouldBe (None)
-      msg("one.two.three") shouldBe ("one.two.three")
-      msg.list("four") shouldBe (Nil)
+    test("returns what is sent, unless it is optional") {
+      assertEquals(msg.get("one.two.three"), None)
+      assertEquals(msg("one.two.three"), "one.two.three")
+      assertEquals(msg.list("four"), Nil)
     }
 
   }
 
-  describe("UniformMessages.attentionSeeker") {
+  test("UniformMessages.attentionSeeker") {
     val msg = UniformMessages.attentionSeeker
 
-    it("returns what is sent, even if it is optional") {
-      msg.get("one.two.three") shouldBe (Some("one.two.three"))
-      msg("one.two.three") shouldBe ("one.two.three")
-      msg.list("four") shouldBe (List("four"))
+    test("returns what is sent, even if it is optional") {
+      assertEquals(msg.get("one.two.three"), Some("one.two.three"))
+      assertEquals(msg("one.two.three"), "one.two.three")
+      assertEquals(msg.list("four"), List("four"))
     }
 
   }

@@ -149,8 +149,7 @@ lazy val commonSettings = Seq(
   useGpg := true,
   licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
-    "org.scalatest" %%% "scalatest" % "3.1.2" % "test", 
-    "org.scalatestplus" %%% "scalacheck-1-14" % "3.2.0.0-M4" % "test", 
+    "org.scalameta" %% "munit-scalacheck" % "0.7.26" % Test, 
     compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.0" cross CrossVersion.full),
     "com.github.ghik" % "silencer-lib" % "1.7.0" % Provided cross CrossVersion.full
   )
@@ -166,7 +165,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "org.typelevel" %%% "simulacrum" % "1.0.0",
       "dev.zio" %%% "izumi-reflect" % "1.0.0-M2",
-      "org.typelevel" %%% "cats-effect" % "2.1.3" % "test",      
+      "org.typelevel" %%% "cats-effect" % "2.1.3" % "test"
     ) ++ macroDependencies(scalaVersion.value),
     initialCommands in console := List(
       "import cats.implicits._",
@@ -188,7 +187,6 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= Seq(
       "com.propensive" %%% "magnolia" % "0.16.0",
       "org.portable-scala" %%% "portable-scala-reflect" % "1.0.0"
-//      "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
     ) ++ macroDependencies(scalaVersion.value)
   )
 
@@ -351,7 +349,7 @@ lazy val docs = project
       "white-color"     -> "#FFFFFF"),
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play" % "2.6.20", // used for the play interpreter demo
-      "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
+//      "org.scalatest" %%% "scalatest" % "3.0.5" // used to demo unit tests from logictables
     ),
     // makeMicrosite := (makeMicrosite
     //   dependsOn (coreDocs / mdoc)

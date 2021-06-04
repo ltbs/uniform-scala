@@ -10,7 +10,7 @@ import izumi.reflect.Tag
 import validation.Rule
 import com.github.ghik.silencer.silent
 
-trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_], ASKLISTTC[_]] extends Interpreter[F, ASKTC, TELLTC, ASKLISTTC]{
+trait MonadInterpreter[F[+_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] extends Interpreter[F, TELLTC, ASKTC, ASKLISTTC]{
 
   implicit def monadInstance: cats.Monad[F]
 
@@ -71,8 +71,8 @@ trait MonadInterpreter[F[+_], ASKTC[_], TELLTC[_], ASKLISTTC[_]] extends Interpr
   protected def convertImpl[E[_], A](in: E[A], transformation: E ~> F): F[A] =
     transformation(in)
 
-  @silent("erasure") override def interpretImpl[H <: Needs[_], A: Tag, T: Tag, E[_]](
-    program: Uniform[H, A, T], 
+  @silent("erasure") override def interpretImpl[H <: Needs[_], T: Tag, A: Tag, E[_]](
+    program: Uniform[H, T, A], 
     askMap: Map[LightTypeTag, ASKTC[_]],    
     tellMap: Map[LightTypeTag, TELLTC[_]],
     convertMap: Map[LightTypeTag, Any],

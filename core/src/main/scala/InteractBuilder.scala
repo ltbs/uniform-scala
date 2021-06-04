@@ -10,6 +10,6 @@ case class InteractBuilder[A] private[uniform] () {
     default: Option[A] = None,
     validation: Rule[A] = Rule.alwaysPass[A],
     customContent: Map[String,(String,List[Any])] = Map.empty
-  )(implicit taga: Tag[A]): Uniform[Needs.Ask[A] with Needs.Tell[T], A, T] =
+  )(implicit taga: Tag[A]): Uniform[Needs.Ask[A] with Needs.Tell[T], T, A] =
     Uniform.Interact(key, value, default, validation, customContent, implicitly[Tag[A]], implicitly[Tag[T]])
 }

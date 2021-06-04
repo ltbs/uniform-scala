@@ -6,8 +6,8 @@ import scala.concurrent._
 
 trait GenericWebInterpreter2[Html] extends Primatives[Html] with MonadInterpreter [
   WebMonad[+?, Html],
+  GenericWebTell[?, Html],  
   WebInteraction[?, Html],
-  GenericWebTell[?, Html],
   WebAskList[?, Html]
 ] {
 

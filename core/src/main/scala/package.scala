@@ -91,8 +91,6 @@ package object uniform
       key: String,
       pipeline: Rule[String] = {Validated.Valid(_)}
     ): Validated[ErrorTree, String] = subField(key, pipeline)
-
-
   }
 
   implicit class RichErrorTree(a: ErrorTree) {
@@ -127,13 +125,13 @@ package object uniform
     default: Option[A] = None,
     validation: Rule[A] = Rule.alwaysPass[A],
     customContent: Map[String,(String,List[Any])] = Map.empty
-  ): Uniform[Needs.Ask[A], A, Unit] = Uniform.Ask(key, default, validation, customContent, implicitly[Tag[A]])
+  ): Uniform[Needs.Ask[A], Unit, A] = Uniform.Ask(key, default, validation, customContent, implicitly[Tag[A]])
 
   def tell[A: Tag](
     key: String,
     value: A,
     customContent: Map[String,(String,List[Any])] = Map.empty    
-  ): Uniform[Needs.Tell[A], Unit, A] =
+  ): Uniform[Needs.Tell[A], A, Unit] =
     Uniform.Tell(
       key,
       value,
@@ -145,7 +143,7 @@ package object uniform
     key: String,
     value: A,
     customContent: Map[String,(String,List[Any])]
-  ): Uniform[Needs.Tell[A], Nothing, A] =
+  ): Uniform[Needs.Tell[A], A, Nothing] =
     Uniform.EndTell(
       key,
       value,
@@ -156,7 +154,7 @@ package object uniform
   def end(
     key: String,
     customContent: Map[String,(String,List[Any])]
-  ): Uniform[Needs[Any], Nothing, Unit] = Uniform.End(
+  ): Uniform[Needs[Any], Unit, Nothing] = Uniform.End(
     key,
     customContent
   )
@@ -164,7 +162,7 @@ package object uniform
   def end[A: Tag](
     key: String,
     value: A
-  ): Uniform[Needs.Tell[A], Nothing, A] =
+  ): Uniform[Needs.Tell[A], A, Nothing] =
     Uniform.EndTell(
       key,
       value,
@@ -174,7 +172,7 @@ package object uniform
 
   def end(
     key: String
-  ): Uniform[Needs[Any], Nothing, Unit] = Uniform.End(
+  ): Uniform[Needs[Any], Unit, Nothing] = Uniform.End(
     key,
     Map.empty
   )
@@ -184,14 +182,14 @@ package object uniform
     key: String,
     value: T,
     customContent: Map[String,(String,List[Any])]
-  ): Uniform[Needs.Tell[T], Unit, T] =
+  ): Uniform[Needs.Tell[T], T, Unit] =
     if(pred) end(key, value, customContent) else Uniform.Pure(())
 
   def endIf[T: Tag](
     pred: Boolean,
     key: String,
     value: T
-  ): Uniform[Needs.Tell[T], Unit, T] =
+  ): Uniform[Needs.Tell[T], T, Unit] =
     if(pred) end(key, value, Map.empty) else Uniform.Pure(())
 
   def endIf(
@@ -207,15 +205,15 @@ package object uniform
   ): Uniform[Needs[Any], Unit, Unit] =
     if(pred) end(key, Map.empty) else Uniform.Pure(())
 
-  def pure[A](value: A) = Uniform.Pure(value)
+  def pure[A](value: A): Uniform[Needs[_], Any, A] = Uniform.Pure(value)
 
-  def subJourney[R <: Needs[_], A, T](
+  def subJourney[R <: Needs[_], T, A](
     pathHead: String,
     pathTail: String*
-  )(base: Uniform[R, A, T]): Uniform[R, A, T] =
-    Uniform.Subjourney[R,A,T](pathHead :: pathTail.toList, base)
+  )(base: Uniform[R, T, A]): Uniform[R, T, A] =
+    Uniform.Subjourney[R,T,A](pathHead :: pathTail.toList, base)
 
-  def convert[F[_], A](action: F[A])(implicit tag: TagK[F]): Uniform[Needs.Convert[F[_]], A, Unit] =
+  def convert[F[_], A](action: F[A])(implicit tag: TagK[F]): Uniform[Needs.Convert[F[_]], Unit, A] =
     Uniform.Convert(action, tag)
 
   def askList[A](

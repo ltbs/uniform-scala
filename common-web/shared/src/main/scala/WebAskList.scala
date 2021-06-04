@@ -5,7 +5,7 @@ import validation.Rule
 
 trait WebAskList[A, Html] {
 
-  def deleteConfirmationJourney: Uniform[Needs[_], Boolean, Any]
+  def deleteConfirmationJourney: Uniform[Needs[_], Any, Boolean]
 
   def apply(
     key: String,

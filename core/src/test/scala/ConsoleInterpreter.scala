@@ -59,7 +59,7 @@ object ConsoleTell {
   }
 }
 
-case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleAsk, ConsoleTell, ConsoleAsk] {
+case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleTell, ConsoleAsk, ConsoleAsk] {
 
   def monadInstance = implicitly[cats.Monad[IO]]
 

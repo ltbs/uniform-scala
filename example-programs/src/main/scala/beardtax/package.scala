@@ -5,6 +5,7 @@ import cats.Monad
 import izumi.reflect.TagK
 import scala.language.higherKinds
 import validation.Rule
+import cats.implicits._
 
 package object beardtax {
 
@@ -13,18 +14,22 @@ package object beardtax {
   def beardProgram[F[_] : Monad : TagK](
     hod: Hod[F]
   ) = for {
-      memberOfPublic <- ask[Option[MemberOfPublic]]("is-public")
-      beardStyle     <- ask[BeardStyle]("beard-style", customContent = Map(
-        "beard-style" -> {memberOfPublic match {
-          case None                              => ("beard-style-sycophantic", Nil)
-          case Some(MemberOfPublic(_, sname, _)) => ("beard-style-menacing", List(sname))
-        }}
-      ))
-      beardLength    <- ask[BeardLength]("beard-length-mm", validation = 
-        Rule.condAtPath("_2")(x => x._1 <= x._2, "lower.less.than.higher")
-      ) emptyUnless (memberOfPublic.isDefined    )
-      cost           <- convert(hod.costOfBeard(beardStyle, beardLength))
+    _ <- (
+      ask[Int]("a"),
+      ask[Int]("b")
+    ).mapN{case (a,b) => a + b}    
+    memberOfPublic <- ask[Option[MemberOfPublic]]("is-public")
+    beardStyle     <- ask[BeardStyle]("beard-style", customContent = Map(
+      "beard-style" -> {memberOfPublic match {
+        case None                              => ("beard-style-sycophantic", Nil)
+        case Some(MemberOfPublic(_, sname, _)) => ("beard-style-menacing", List(sname))
+      }}
+    ))
+    beardLength    <- ask[BeardLength]("beard-length-mm", validation =
+      Rule.condAtPath("_2")(x => x._1 <= x._2, "lower.less.than.higher")
+    ) emptyUnless (memberOfPublic.isDefined    )
+    cost           <- convert(hod.costOfBeard(beardStyle, beardLength))
 
-    } yield cost
+  } yield cost
 
 }

@@ -4,7 +4,7 @@ package interpreters.logictable
 import cats.implicits._
 import ltbs.uniform.validation._
 
-object LogicTableInterpreter extends MonadInterpreter[Either[ErrorTree, +?], SampleData, TellRenderer, SampleData] {
+object LogicTableInterpreter extends MonadInterpreter[Either[ErrorTree, +?], TellRenderer, SampleData, SampleData] {
 
   def monadInstance = implicitly[cats.Monad[Either[ErrorTree, +?]]]
 

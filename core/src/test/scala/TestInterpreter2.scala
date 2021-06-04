@@ -1,6 +1,5 @@
 package ltbs.uniform
 
-import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 import cats.implicits._
 import validation.Rule
 
@@ -15,7 +14,7 @@ trait Writer[T] {
   def write(v: T): String
 }
 
-object ListInterpreter extends MonadInterpreter[List, Example, Noop, Noop] {
+object ListInterpreter extends MonadInterpreter[List, Noop, Example, Noop] {
 
   def monadInstance = implicitly[cats.Monad[List]]
 
@@ -53,12 +52,12 @@ object ListInterpreter extends MonadInterpreter[List, Example, Noop, Noop] {
   ): List[List[A]] = askJourney(None, Nil).replicateA(3)
 }
 
-class TestInterpreter3 extends AnyFlatSpec with Matchers {
+class TestInterpreter3 extends munit.FunSuite {
 
   def example[A](x: A): Example[A] = new Example[A] { val value: A = x }
   implicit def noop[A]: Noop[A] = new Noop[A] {}
 
-  "A simple interpreter" should "be able to compose Id monad instances" in {
+  test ("A simple interpreter should be able to compose Id monad instances") {
 
     implicit val exInt = example[Int](1)
     implicit val exIntTuple = example((1,1))    
@@ -67,14 +66,14 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
 
     val p2 = pure(12)
     val out2 = ListInterpreter.interpret(p2)    
-    out2 should be (List(12))
+    assertEquals(out2, List(12))
 
-    val p3 = for {
+    val p3: Uniform[Needs[_],Any,(Int, Int, String)] = for {
       x <- pure(1)
       y <- pure(2)
       z <- pure("test")      
     } yield (x,y,z)
-    ListInterpreter.interpret(p3) should be (List((1,2,"test")))
+    assertEquals(ListInterpreter.interpret(p3), List((1,2,"test")))
 
     val program = for {
       x <- pure(12)
@@ -92,7 +91,7 @@ class TestInterpreter3 extends AnyFlatSpec with Matchers {
       _ <- tell[Option[String]]("_", c)
     } yield ((x, "test".some))
 
-    ListInterpreter.interpret(program) should be (List((12, Some("test"))))
+    assertEquals(ListInterpreter.interpret(program), List((12, Some("test"))))
   }
 }
 

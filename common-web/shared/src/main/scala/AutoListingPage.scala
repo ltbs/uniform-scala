@@ -258,7 +258,7 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
       }
     }
 
-    def deleteConfirmationJourney: Uniform[Needs[_],Boolean,Any] =
+    def deleteConfirmationJourney: Uniform[Needs[_], Any, Boolean] =
       pure(true)
   }
   

@@ -5,10 +5,10 @@ import scala.language.experimental.macros
 import izumi.reflect.macrortti.LightTypeTag
 import izumi.reflect.Tag
 
-trait Interpreter[F[_], ASKTC[_], TELLTC[_], ASKLISTTC[_]] {
+trait Interpreter[F[_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] {
 
-  def interpretImpl[H <: Needs[_], A: Tag, T: Tag, E[_]](
-    program: Uniform[H, A, T], 
+  def interpretImpl[H <: Needs[_], T: Tag, A: Tag, E[_]](
+    program: Uniform[H, T, A], 
     askMap: Map[LightTypeTag, ASKTC[_]],    
     tellMap: Map[LightTypeTag, TELLTC[_]],
     convertMap: Map[LightTypeTag, Any],
@@ -27,7 +27,7 @@ trait Interpreter[F[_], ASKTC[_], TELLTC[_], ASKLISTTC[_]] {
   //   }
   // }
 
-  def interpret[H <: Needs[_],A, T](
-    program: Uniform[H, A, T]
+  def interpret[H <: Needs[_],T, A](
+    program: Uniform[H, T, A]
   ): F[A] = macro InterpreterMacros.interpreter_impl[H, A, ASKTC, TELLTC, ASKLISTTC, F, T]
 }
