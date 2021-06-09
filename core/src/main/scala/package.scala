@@ -213,10 +213,10 @@ package object uniform
   )(base: Uniform[R, T, A]): Uniform[R, T, A] =
     Uniform.Subjourney[R,T,A](pathHead :: pathTail.toList, base)
 
-  def convertWithKey[F[_], A](key: String)(action: F[A])(implicit tagF: TagK[F], tagA: Tag[A]): Uniform[Needs.Convert[F, A], Unit, A] =
-    Uniform.Convert(key, action, tagF, tagA)
+  def convertWithKey[F[_], A](key: String)(action: => F[A])(implicit tagF: TagK[F], tagA: Tag[A]): Uniform[Needs.Convert[F, A], Unit, A] =
+    Uniform.Convert(key, () => action, tagF, tagA)
 
-  def convert[F[_], A](action: F[A])(implicit tagF: TagK[F], tagA: Tag[A]): Uniform[Needs.Convert[F, A], Unit, A] =
+  def convert[F[_], A](action: => F[A])(implicit tagF: TagK[F], tagA: Tag[A]): Uniform[Needs.Convert[F, A], Unit, A] =
     convertWithKey(scala.util.Random.alphanumeric.take(20).mkString)(action)
 
   def askList[A](

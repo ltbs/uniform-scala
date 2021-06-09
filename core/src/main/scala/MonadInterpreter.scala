@@ -120,7 +120,7 @@ trait MonadInterpreter[F[+_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] extends Interpr
       case U.Convert(key, action, tagF, tagA) =>
         convertImpl[E, A](
           key, 
-          action.asInstanceOf[E[A]],
+          action.asInstanceOf[() => E[A]],
           convertMap((tagF.tag, tagA.tag)).asInstanceOf[Converter[E, F, A]]
         )
       case U.ListOf(key, base, default, validation, customContent, tag: Tag[A]) => 

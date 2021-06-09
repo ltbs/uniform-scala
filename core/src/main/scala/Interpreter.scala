@@ -7,7 +7,7 @@ import izumi.reflect.Tag
 
 trait Interpreter[F[_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] {
 
-  protected def convertImpl[E[_], A](key: String, in: E[A], transformation: Converter[E, F, A]): F[A] = 
+  protected def convertImpl[E[_], A](key: String, in: () => E[A], transformation: Converter[E, F, A]): F[A] = 
     transformation(key, in)
 
   def interpretImpl[H <: Needs[_], T: Tag, A: Tag, E[_]](

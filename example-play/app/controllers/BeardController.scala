@@ -14,12 +14,12 @@ import scala.concurrent.duration._
 
 class HodConnector(implicit ec: ExecutionContext) extends Hod[Future] {
 
-  def recordBeardHeight(height: Int): Future[Unit] = Future.successful{
-    println(height)
+  def recordBeardHeight(height: Int): Future[Unit] = Future{
+    println(s"HOD CALL: $height")
   }
 
   def costOfBeard(beardStyle: BeardStyle, length: BeardLength): Future[Int] =
-    Future.successful{
+    Future{
       Thread.sleep(2000)
       IdDummyHod.costOfBeard(beardStyle, length)
     }
@@ -66,7 +66,7 @@ class BeardController2 @Inject()(
 
         val lifetime: Duration = 1.minute // needs to be configurable
 
-        override def apply(cacheId: String, fa: Future[A]): WM[A] = new WM[A] {
+        override def apply(cacheId: String, fa: () => Future[A]): WM[A] = new WM[A] {
           def apply(pageIn: PageIn[Tag])(implicit ec: ExecutionContext): Future[PageOut[Tag,A]] = {
             import pageIn._
             val triggerValues: List[String] = breadcrumbs.sorted.flatMap{ state.get }
@@ -77,15 +77,15 @@ class BeardController2 @Inject()(
               .map{LocalDateTime.parse}
             if (oldTrigger == Some(trigger) && timestamp.fold(false)(_ + lifetime > LocalDateTime.now)) {
               val oldValue: Either[ErrorTree,A] =
-                Input.fromUrlEncodedString(state(List(cacheId, "value"))) >>= codec.decode
+                Input.fromUrlEncodedString(state(List(cacheId, "value")).tail) >>= codec.decode
 
               val Right(oldie) = oldValue
               pageIn.toPageOut(AskResult.Success[Tag, A](oldie)).pure[Future]
             } else {
-
-              fa.map{ result =>
+              fa().map{ result =>
+                val value = codec.encode(result)
                 val newData = Map(
-                  List(cacheId, "value") -> codec.encode(result).toUrlEncodedString,
+                  List(cacheId, "value") -> ("V" + value.toUrlEncodedString),
                   List(cacheId, "trigger") -> trigger,
                   List(cacheId, "timestamp") -> LocalDateTime.now.toString
                 )
@@ -99,7 +99,7 @@ class BeardController2 @Inject()(
       }
     }
 
-    import FutureAdaptorZ.alwaysRerun
+    import FutureAdaptorZ.rerunOnPriorStateChange
 
     interpret(beardProgram(new HodConnector)).runSync(targetId){ 
       i: Int => Ok(s"$i")

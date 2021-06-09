@@ -174,7 +174,7 @@ object Uniform {
 
   case class Convert[F[_], A](
     key: String, 
-    action: F[A],
+    action: () => F[A],
     tagF: TagK[F],
     tagA: Tag[A]    
   ) extends Uniform[Needs.Convert[F, A], Unit, A]
