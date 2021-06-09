@@ -76,11 +76,11 @@ trait HmrcPlayInterpreter
   def messagesForRequest[C <: AnyContent](request: Request[C]): UniformMessages[Tag] =
     {messagesApi.preferred(request).convertMessages() |+| UniformMessages.bestGuess }.map{span(_)}
 
-  def unitAsk: WebInteraction[Unit,Tag] = Widgets.unitField
+  def unitAsk: WebInteraction[Tag,Unit] = Widgets.unitField
 
-  def unitTell: GenericWebTell[Unit, Tag] = autoTell
+  def unitTell: GenericWebTell[Tag, Unit] = autoTell
 
-  implicit def autoTell[A] = new GenericWebTell[A, Tag] {
+  implicit def autoTell[A] = new GenericWebTell[Tag, A] {
     def render(in: A, key: String, messages: UniformMessages[Tag]): Tag = span(in.toString)
   }
 

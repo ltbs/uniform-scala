@@ -3,7 +3,6 @@ package ltbs.uniform
 import scala.language.higherKinds
 
 import cats.implicits._
-import cats.~>
 import ltbs.uniform.{Uniform => U}
 import izumi.reflect.macrortti.LightTypeTag
 import izumi.reflect.Tag
@@ -68,14 +67,11 @@ trait MonadInterpreter[F[+_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] extends Interpr
     asker: ASKLISTTC[A]
   ): F[List[A]]
 
-  protected def convertImpl[E[_], A](in: E[A], transformation: E ~> F): F[A] =
-    transformation(in)
-
   @silent("erasure") override def interpretImpl[H <: Needs[_], T: Tag, A: Tag, E[_]](
     program: Uniform[H, T, A], 
     askMap: Map[LightTypeTag, ASKTC[_]],    
     tellMap: Map[LightTypeTag, TELLTC[_]],
-    convertMap: Map[LightTypeTag, Any],
+    convertMap: Map[(LightTypeTag, LightTypeTag), Any],
     listAskMap: Map[LightTypeTag, ASKLISTTC[_]] 
   ): F[A] = {
     program match {
@@ -121,10 +117,11 @@ trait MonadInterpreter[F[+_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] extends Interpr
         v.pure[F]
       case U.Subjourney(path, inner) =>
         subjourneyImpl(path, interpretImpl(inner, askMap, tellMap, convertMap, listAskMap))
-      case U.Convert(action, tag) =>
+      case U.Convert(key, action, tagF, tagA) =>
         convertImpl[E, A](
+          key, 
           action.asInstanceOf[E[A]],
-          convertMap(tag.tag).asInstanceOf[E ~> F]
+          convertMap((tagF.tag, tagA.tag)).asInstanceOf[Converter[E, F, A]]
         )
       case U.ListOf(key, base, default, validation, customContent, tag: Tag[A]) => 
         askListImpl[A](

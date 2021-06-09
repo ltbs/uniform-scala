@@ -5,16 +5,16 @@ import validation.Rule
 import scala.concurrent._
 
 trait GenericWebInterpreter2[Html] extends Primatives[Html] with MonadInterpreter [
-  WebMonad[+?, Html],
-  GenericWebTell[?, Html],  
-  WebInteraction[?, Html],
-  WebAskList[?, Html]
+  WebMonad[Html, +?],
+  GenericWebTell[Html, ?],  
+  WebInteraction[Html, ?],
+  WebAskList[Html, ?]
 ] {
 
-  def unitAsk: WebInteraction[Unit, Html]
-  def unitTell: GenericWebTell[Unit, Html]  
+  def unitAsk: WebInteraction[Html, Unit]
+  def unitTell: GenericWebTell[Html, Unit]  
 
-  implicit def monadInstance: cats.Monad[WebMonad[+?,Html]] =
+  implicit def monadInstance: cats.Monad[WebMonad[Html, +?]] =
     WebMonad.webMonadMonadInstance[Html]
 
   override def askImpl[A](
@@ -22,8 +22,8 @@ trait GenericWebInterpreter2[Html] extends Primatives[Html] with MonadInterprete
     default: Option[A],
     validation: Rule[A],
     customContent: Map[String,(String,List[Any])],    
-    asker: WebInteraction[A,Html]
-  ): WebMonad[A,Html] = asker(
+    asker: WebInteraction[Html,A]
+  ): WebMonad[Html,A] = asker(
     key,
     None,
     default,
@@ -37,9 +37,9 @@ trait GenericWebInterpreter2[Html] extends Primatives[Html] with MonadInterprete
     default: Option[A],
     validation: Rule[A],
     customContent: Map[String,(String,List[Any])],    
-    asker: WebInteraction[A,Html],
-    teller: GenericWebTell[T,Html]
-  ): WebMonad[A, Html] =
+    asker: WebInteraction[Html,A],
+    teller: GenericWebTell[Html,T]
+  ): WebMonad[Html, A] =
     teller.pureHtml(tellValue, key, customContent) flatMap { t => 
       asker(
         key,
@@ -54,22 +54,22 @@ trait GenericWebInterpreter2[Html] extends Primatives[Html] with MonadInterprete
     key: String,
     tellValue: T,
     customContent: Map[String,(String,List[Any])],    
-    teller: GenericWebTell[T,Html]
-  ): WebMonad[Nothing, Html] =
+    teller: GenericWebTell[Html,T]
+  ): WebMonad[Html, Nothing] =
     teller.end(tellValue, key, customContent)
 
   override def endImpl(
     key: String,
     customContent: Map[String,(String,List[Any])],    
-  ): WebMonad[Nothing,Html] =
+  ): WebMonad[Html,Nothing] =
     unitTell.end((), key, customContent)
 
   override def tellImpl[T](
     key: String,
     tellValue: T,
     customContent: Map[String,(String,List[Any])],    
-    teller: GenericWebTell[T,Html]
-  ): WebMonad[Unit,Html] =
+    teller: GenericWebTell[Html,T]
+  ): WebMonad[Html,Unit] =
     teller.pureHtml(
       tellValue,
       key,
@@ -86,8 +86,8 @@ trait GenericWebInterpreter2[Html] extends Primatives[Html] with MonadInterprete
 
   override def subjourneyImpl[A](
     path: List[String],
-    inner: WebMonad[A, Html]
-  ): WebMonad[A, Html] = {
+    inner: WebMonad[Html, A]
+  ): WebMonad[Html, A] = {
     for {
       _      <- pushPathPrefix(path)
       result <- inner
@@ -97,12 +97,12 @@ trait GenericWebInterpreter2[Html] extends Primatives[Html] with MonadInterprete
 
   override def askListImpl[A](
     key: String,
-    askJourney: (Option[Int], List[A]) => WebMonad[A,Html],
+    askJourney: (Option[Int], List[A]) => WebMonad[Html,A],
     default: Option[List[A]],
     validation: Rule[List[A]],
     customContent: Map[String,(String, List[Any])],
-    asker: WebAskList[A,Html]
-  ): WebMonad[List[A],Html] =
+    asker: WebAskList[Html,A]
+  ): WebMonad[Html, List[A]] =
     asker(key, askJourney, default, validation, customContent)
 
 }

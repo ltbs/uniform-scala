@@ -7,11 +7,14 @@ import izumi.reflect.Tag
 
 trait Interpreter[F[_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] {
 
+  protected def convertImpl[E[_], A](key: String, in: E[A], transformation: Converter[E, F, A]): F[A] = 
+    transformation(key, in)
+
   def interpretImpl[H <: Needs[_], T: Tag, A: Tag, E[_]](
     program: Uniform[H, T, A], 
     askMap: Map[LightTypeTag, ASKTC[_]],    
     tellMap: Map[LightTypeTag, TELLTC[_]],
-    convertMap: Map[LightTypeTag, Any],
+    convertMap: Map[(LightTypeTag, LightTypeTag), Any], // effectively Map[(TagE, TagA), Converter[E,A,_]]. I hope to remove this field and have it handled directly in the macros
     listAskMap: Map[LightTypeTag, ASKLISTTC[_]]    
   ): F[A]
 

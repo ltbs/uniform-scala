@@ -7,15 +7,15 @@ import cats.syntax.eq._
 /** Represents rendering a type for a `tell` interaction used in a web
   * interpreter 
   */
-trait GenericWebTell[A,Html] {
+trait GenericWebTell[Html,A] {
   def render(in: A, key: String, messages: UniformMessages[Html]): Html
 
   def end(
     in: A,
     key: String,
     customContent: Map[String,(String,List[Any])]
-  ) = new WebMonad[Nothing, Html] {
-    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Nothing, Html]] =
+  ) = new WebMonad[Html, Nothing] {
+    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, Nothing]] =
       Future.successful{
         import pageIn._
         val messages = pageIn.messages.withCustomContent(customContent)
@@ -32,7 +32,7 @@ trait GenericWebTell[A,Html] {
           // unlike in PostAndGetPage we don't care if they are trying
           // to access a page after this one, because there are no
           // pages after this one!
-          pageIn.toPageOut(AskResult.GotoPath[Nothing,Html](currentId))
+          pageIn.toPageOut(AskResult.GotoPath[Html,Nothing](currentId))
         }
       }
   }

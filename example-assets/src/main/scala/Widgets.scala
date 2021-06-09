@@ -15,7 +15,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
   
   import bundle.all._
 
-  implicit val unitField = new FormField[Unit,Tag] {
+  implicit val unitField = new FormField[Tag,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
@@ -49,7 +49,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       inner
     )
 
-  implicit val stringField = new FormField[String,Tag] {
+  implicit val stringField = new FormField[Tag,String] {
     def decode(out: Input): Either[ErrorTree,String] = out.toStringField().toEither
     def encode(in: String): Input = Input.one(List(in))
 
@@ -74,7 +74,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     }
   }
 
-  implicit val intField: FormField[Int,Tag] =
+  implicit val intField: FormField[Tag,Int] =
     stringField.simap(x => 
       {
         Rule.nonEmpty[String].apply(x) andThen
@@ -82,7 +82,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       }.toEither
     )(_.toString)
 
-  implicit val booleanField = new FormField[Boolean,Tag] {
+  implicit val booleanField = new FormField[Tag,Boolean] {
     def decode(out: Input): Either[ErrorTree,Boolean] =
       out.toField[Boolean]{x: String =>
         Validated.catchOnly[IllegalArgumentException](x.toBoolean).leftMap(_ => ErrorMsg("invalid").toTree)
@@ -144,7 +144,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     )
   }
 
-  implicit val dateField = new FormField[LocalDate,Tag] {
+  implicit val dateField = new FormField[Tag,LocalDate] {
 
     def decode(out: Input): Either[ErrorTree,LocalDate] = {
 

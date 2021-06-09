@@ -173,10 +173,11 @@ object Uniform {
   ) extends Uniform[R with Needs.AskList[A], Any, List[A]]
 
   case class Convert[F[_], A](
+    key: String, 
     action: F[A],
-    tag: TagK[F]
-  ) extends Uniform[Needs.Convert[F[_]], Unit, A]
-
+    tagF: TagK[F],
+    tagA: Tag[A]    
+  ) extends Uniform[Needs.Convert[F, A], Unit, A]
 
   // R -> Uniform Type (asks, tells and converts)
   // A -> Ask type

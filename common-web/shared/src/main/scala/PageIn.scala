@@ -11,9 +11,9 @@ case class PageIn[Html](
   messages: UniformMessages[Html]
 ) {
   def toPageOut[A](
-    output: AskResult[A, Html],
+    output: AskResult[Html, A],
     stateManipulation: DB => DB = identity
-  ): PageOut[A,Html] = PageOut[A, Html](
+  ): PageOut[Html,A] = PageOut[Html, A](
     breadcrumbs,
     stateManipulation(state),
     output,

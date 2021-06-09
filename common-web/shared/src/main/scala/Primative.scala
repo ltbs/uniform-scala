@@ -5,18 +5,18 @@ import scala.concurrent._
 
 trait Primatives[Html] {
 
-  type WM[A] = WebMonad[A, Html]
+  type WM[A] = WebMonad[Html, A]
   object db {
-    def updateF(dbf: DB => DB): WM[Unit] = new WebMonad[Unit, Html] {
-      def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] =
+    def updateF(dbf: DB => DB): WM[Unit] = new WebMonad[Html, Unit] {
+      def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html,Unit]] =
         Future.successful(
-          pageIn.toPageOut(AskResult.Success[Unit,Html](())).copy(db = dbf(pageIn.state))
+          pageIn.toPageOut(AskResult.Success[Html,Unit](())).copy(db = dbf(pageIn.state))
         )
     }
 
     def get[A](key: List[String])(implicit codec: Codec[A]): WM[Option[Either[ErrorTree,A]]] =
-      new WebMonad[Option[Either[ErrorTree,A]], Html] {
-        def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Option[Either[ErrorTree,A]],Html]] =
+      new WebMonad[Html, Option[Either[ErrorTree,A]]] {
+        def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html,Option[Either[ErrorTree,A]]]] =
           Future.successful(
             pageIn.toPageOut(AskResult.Success(
                 pageIn.state.get(key).
@@ -40,22 +40,22 @@ trait Primatives[Html] {
   }
 
   def goto[A](target: String): WM[A] = new WM[A] {
-    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[A,Html]] =
-      Future.successful(pageIn.toPageOut(AskResult.GotoPath[A,Html](List(target))))
+    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html,A]] =
+      Future.successful(pageIn.toPageOut(AskResult.GotoPath[Html,A](List(target))))
   }
 
-  protected def pushPathPrefix(key: List[String]) = new WebMonad[Unit, Html] {
-    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Unit,Html]] =
+  protected def pushPathPrefix(key: List[String]) = new WebMonad[Html, Unit] {
+    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html,Unit]] =
       Future.successful(
-        pageIn.toPageOut(AskResult.Success[Unit, Html](())).copy(
+        pageIn.toPageOut(AskResult.Success[Html, Unit](())).copy(
           pathPrefix = pageIn.pathPrefix ++ key.toList
         )
       )
   }
-  protected def popPathPrefix(qty: Int) = new WebMonad[Seq[String], Html] {
-    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Seq[String],Html]] =
+  protected def popPathPrefix(qty: Int) = new WebMonad[Html, Seq[String]] {
+    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, Seq[String]]] =
       Future.successful(
-        pageIn.toPageOut(AskResult.Success[Seq[String],Html](pageIn.pathPrefix.take(qty))) copy (
+        pageIn.toPageOut(AskResult.Success[Html, Seq[String]](pageIn.pathPrefix.take(qty))) copy (
           pathPrefix = pageIn.pathPrefix.drop(qty)
         )
       )

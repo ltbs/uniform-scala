@@ -211,6 +211,7 @@ lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
+  .settings( libraryDependencies ++= macroDependencies(scalaVersion.value))
 
 lazy val interpreterLogictableJS = `interpreter-logictable`.js
   .dependsOn(coreJS)

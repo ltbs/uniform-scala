@@ -20,7 +20,7 @@ trait PlayInterpreter2[Html] extends Results with GenericWebInterpreter2[Html] {
     messages: UniformMessages[Html]
   ): Html
 
-  implicit class PlayWebMonad[A, Req <: Request[AnyContent]](wm: WebMonad[A, Html]) {
+  implicit class PlayWebMonad[A, Req <: Request[AnyContent]](wm: WebMonad[Html, A]) {
     import cats.implicits._
     def runSync(path: String)(
       f: A => Result

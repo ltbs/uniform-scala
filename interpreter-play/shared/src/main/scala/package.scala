@@ -9,11 +9,11 @@ package object playframework extends common.web.webcommon {
 
   type Encoded = String
 
-  implicit val tellTwirlUnit = new GenericWebTell[Unit,TwirlHtml] {
+  implicit val tellTwirlUnit = new GenericWebTell[TwirlHtml,Unit] {
     def render(in: Unit, key: String, messages: UniformMessages[TwirlHtml]): TwirlHtml = TwirlHtml("")
   }
 
-  implicit val twirlUnitField = new FormField[Unit,TwirlHtml] {
+  implicit val twirlUnitField = new FormField[TwirlHtml,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(

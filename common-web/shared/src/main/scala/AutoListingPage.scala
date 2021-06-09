@@ -32,20 +32,20 @@ case class ListingRow[Html](
 
 trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] {
 
-  override def blockCollections[X[_] <: Traversable[_], A]: FormField[X[A], Html] = ???
-  override def blockCollections2[X[_] <: Traversable[_], A]: FormField[X[A], Html] = ???
+  override def blockCollections[X[_] <: Traversable[_], A]: FormField[Html, X[A]] = ???
+  override def blockCollections2[X[_] <: Traversable[_], A]: FormField[Html, X[A]] = ???
 
   implicit def inferListingPage[A](
-    implicit ff: FormField[A, Html],
-    teller: GenericWebTell[A, Html]
-  ) = new WebInteraction[List[A], Html] {
+    implicit ff: FormField[Html, A],
+    teller: GenericWebTell[Html, A]
+  ) = new WebInteraction[Html, List[A]] {
     def apply(
       id: String,
       tell: Option[Html],
       defaultIn: Option[List[A]],
       validationIn: Rule[List[A]],
       customContent: Map[String,(String, List[Any])]
-    ): WebMonad[List[A],Html] = {
+    ): WebMonad[Html,List[A]] = {
       val askList = fromTell(teller, ff)
       askList.apply(
         id,
@@ -72,9 +72,9 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
     key: String, 
     existingEntries: List[A],
     validation: Rule[List[A]],
-    tell: GenericWebTell[A, Html],
+    tell: GenericWebTell[Html, A],
     customOrdering: Option[Ordering[A]] = None    
-  ) = new FormField[ListAction, Html] {
+  ) = new FormField[Html, ListAction] {
     override val customRouting: PartialFunction[List[String],ListAction] = {
       case "edit" :: Pos(x) :: _   => ListAction.Edit(x)
       case "delete" :: Pos(x) :: Nil => ListAction.Delete(x)
@@ -154,16 +154,16 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
   }
 
   implicit def fromTell[A](
-    implicit tell: GenericWebTell[A, Html],
+    implicit tell: GenericWebTell[Html, A],
     codec: Codec[A]
-  ) = new WebAskList[A, Html] {
+  ) = new WebAskList[Html, A] {
     def apply(
       key: String,
-      askJourney: (Option[Int], List[A]) => WebMonad[A,Html],
+      askJourney: (Option[Int], List[A]) => WebMonad[Html,A],
       default: Option[List[A]],
       validation: Rule[List[A]],
       customContent: Map[String,(String, List[Any])]
-    ) = new WebMonad[List[A],Html] {
+    ) = new WebMonad[Html,List[A]] {
 
       implicit def listCodec = new Codec[List[A]] {
 
@@ -192,7 +192,7 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
         }
       }
 
-      def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[List[A],Html]] = {
+      def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html,List[A]]] = {
 
         import pageIn._
 
@@ -206,8 +206,8 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
 
         val min = 1  // TODO
 
-        val decision: WebMonad[ListAction, Html] = if (config.askFirstListItem && data.isEmpty && min > 0) {
-            (ListAction.Add: ListAction).pure[WebMonad[?, Html]]
+        val decision: WebMonad[Html, ListAction] = if (config.askFirstListItem && data.isEmpty && min > 0) {
+            (ListAction.Add: ListAction).pure[WebMonad[Html, ?]]
         } else {
           listingForm(key, data, validation, tell).apply(key, None, None, Rule.alwaysPass)
         }

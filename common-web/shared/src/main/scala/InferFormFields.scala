@@ -8,8 +8,8 @@ import cats.implicits._
 trait InferFormFields[Html] {
 
   @annotation.implicitAmbiguous("Unable to ask[Traversable[${A}]] - consider using askList[${A}] instead")
-  implicit def blockCollections[X[_] <: Traversable[_], A]: FormField[X[A], Html] = ???
-  implicit def blockCollections2[X[_] <: Traversable[_], A]: FormField[X[A], Html] = ???  
+  implicit def blockCollections[X[_] <: Traversable[_], A]: FormField[Html, X[A]] = ???
+  implicit def blockCollections2[X[_] <: Traversable[_], A]: FormField[Html, X[A]] = ???  
 
   def renderAnd(
     pageKey: List[String],
@@ -32,8 +32,8 @@ trait InferFormFields[Html] {
     selected: Option[String]
   ): Html
 
-  type Typeclass[T] = FormField[T, Html] // is this needed?
-  def combine[T](caseClass: CaseClass[FormField[?, Html], T]) = new FormField[T, Html] {
+  type Typeclass[T] = FormField[Html, T] // is this needed?
+  def combine[T](caseClass: CaseClass[FormField[Html, ?], T]) = new FormField[Html, T] {
     def decode(out: Input): Either[ErrorTree,T] = {
       caseClass.constructEither {
         p => p.typeclass.decode(out / p.label).leftMap{_.prefixWith(p.label)}
@@ -77,7 +77,7 @@ trait InferFormFields[Html] {
     ).some
   }
 
-  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] = new FormField[T, Html] {
+  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] = new FormField[Html, T] {
     def decode(out: Input): Either[ErrorTree,T] = {
       sealedTrait.subtypes.collectFirst{
         case subtype if List(subtype.typeName.short).some === out.valueAtRoot =>
@@ -131,5 +131,5 @@ trait InferFormFields[Html] {
     }.some
   }
 
-  implicit def gen[T]: FormField[T, Html] = macro Magnolia.gen[T]
+  implicit def gen[T]: FormField[Html, T] = macro Magnolia.gen[T]
 }

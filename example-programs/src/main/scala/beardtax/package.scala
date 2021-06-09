@@ -14,10 +14,11 @@ package object beardtax {
   def beardProgram[F[_] : Monad : TagK](
     hod: Hod[F]
   ) = for {
-    _ <- (
-      ask[Int]("a"),
-      ask[Int]("b")
-    ).mapN{case (a,b) => a + b}    
+    beardHeight <- (
+      ask[Int]("chin-height"),
+      ask[Int]("sideburn-height")
+    ).mapN{case (a,b) => a + b}
+    _ <- convertWithKey("rec-height")(hod.recordBeardHeight(beardHeight))
     memberOfPublic <- ask[Option[MemberOfPublic]]("is-public")
     beardStyle     <- ask[BeardStyle]("beard-style", customContent = Map(
       "beard-style" -> {memberOfPublic match {
@@ -28,8 +29,9 @@ package object beardtax {
     beardLength    <- ask[BeardLength]("beard-length-mm", validation =
       Rule.condAtPath("_2")(x => x._1 <= x._2, "lower.less.than.higher")
     ) emptyUnless (memberOfPublic.isDefined    )
-    cost           <- convert(hod.costOfBeard(beardStyle, beardLength))
-
+    cost           <- convert(hod.costOfBeard(beardStyle, beardLength))  // Future ~> WM
+                                                                         // Future[A] => WM[A]
+                                                                         // Converter[Future, WM, A]
   } yield cost
 
 }

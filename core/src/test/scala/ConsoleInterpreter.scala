@@ -116,12 +116,12 @@ object ConsoleApp extends IOApp {
   }
 
   val program = for {
-    three <- convert(Future.successful(3))
-    stringTest2 <- convert("four".asRight[String])
-    stringTest <- convert(Future.successful("three"))
+    three <- convert(Future.successful(3000))
+    _ <- convert(12.asRight[String])
+    _ <- convert(Future.successful("five"))
     _ <- tell("stringout", "stringTest")
     one <- ask[Int]("one")
-    blah <- interact[Boolean]("one", 12)    
+    _ <- interact[Boolean]("one", 12)    
     two <- ask[Int]("two")    
   } yield (one + two + three)
 

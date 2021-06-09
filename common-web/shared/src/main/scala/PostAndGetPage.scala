@@ -6,7 +6,7 @@ import concurrent.Future
 import scala.concurrent.ExecutionContext
 import validation._
 
-trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
+trait PostAndGetPage[Html, A] extends WebInteraction[Html, A] {
 
   def codec: Codec[A]
 
@@ -35,8 +35,8 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
     default: Option[A],
     validation: Rule[A],
     customContent: Map[String,(String,List[Any])] = Map.empty    
-  ): WebMonad[A, Html] = new WebMonad[A, Html] {
-    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[A, Html]] = {
+  ): WebMonad[Html, A] = new WebMonad[Html, A] {
+    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, A]] = {
       import pageIn.{messages => _, _}
       val messages = pageIn.messages.withCustomContent(customContent)
       val currentId = pageIn.pathPrefix :+ id
@@ -64,12 +64,12 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
 
             parsed match {
               case Right(valid) =>
-                pageIn.toPageOut(AskResult.Success[A, Html](valid)).copy (
+                pageIn.toPageOut(AskResult.Success[Html, A](valid)).copy (
                   breadcrumbs = currentId :: pageIn.breadcrumbs,
                   db = pageIn.state + (currentId -> localData.toUrlEncodedString)
                 ).pure[Future]
               case Left(error) =>
-                val html = AskResult.Payload[A, Html](
+                val html = AskResult.Payload[Html, A](
                   tell,
                   postPage(id :: Nil, state, localData, error, breadcrumbs, messages), 
                   error,
@@ -81,7 +81,7 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
             }
 
           case None =>
-            val html = AskResult.Payload[A, Html](
+            val html = AskResult.Payload[Html, A](
               tell,
               getPage(
                 id :: Nil,
@@ -101,7 +101,7 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
         }
       } else if (targetIdP.startsWith(currentId) && customRouting.isDefinedAt(residual)) {
         val residualData = customRouting(residual)
-        pageIn.toPageOut(AskResult.Success[A, Html](residualData)).copy(
+        pageIn.toPageOut(AskResult.Success[Html, A](residualData)).copy(
           db = state + (currentId -> codec.encode(residualData).toUrlEncodedString)
         ).pure[Future]
       } else {
@@ -109,11 +109,11 @@ trait PostAndGetPage[A, Html] extends WebInteraction[A, Html] {
           dbObject match {
             case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && !breadcrumbs.contains(targetId) =>
               // they're replaying the journey
-              pageIn.toPageOut(AskResult.Success[A,Html](data)).copy(
+              pageIn.toPageOut(AskResult.Success[Html,A](data)).copy(
                 breadcrumbs = currentId :: pageIn.breadcrumbs
               )
             case _ =>
-              pageIn.toPageOut(AskResult.GotoPath[A,Html](currentId))
+              pageIn.toPageOut(AskResult.GotoPath[Html,A](currentId))
           }
         }
       }
