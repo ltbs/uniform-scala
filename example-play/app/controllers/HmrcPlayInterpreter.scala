@@ -8,7 +8,7 @@ import scalatags.Text.all._
 import ltbs.uniform.examples.Widgets
 
 trait HmrcPlayInterpreter
-    extends PlayInterpreter2[Tag]
+    extends PlayInterpreter[Tag]
     with InferFormFields[Tag]
     with ScalatagsSupport
     with Widgets

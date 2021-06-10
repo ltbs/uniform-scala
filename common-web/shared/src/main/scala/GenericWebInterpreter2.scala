@@ -2,9 +2,8 @@ package ltbs.uniform
 package common.web
 
 import validation.Rule
-import scala.concurrent._
 
-trait GenericWebInterpreter2[Html] extends Primatives[Html] with MonadInterpreter [
+trait GenericWebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
   WebMonad[Html, +?],
   GenericWebTell[Html, ?],  
   WebInteraction[Html, ?],

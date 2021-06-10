@@ -108,17 +108,7 @@ class InterpreterMacros(val c: blackbox.Context) {
   def getConvMap(fType : Type, eTypes: List[(Type, Type)]): Tree = {
     val mapElems = eTypes.map{
       case (e: Type, a: Type) =>
-        val ea = swapType(e, a)
-        val fa = swapType(fType, a)
-        val r = q"(implicitly[izumi.reflect.TagK[${e}]].tag, implicitly[izumi.reflect.Tag[${a}]].tag) -> ((implicitly[ltbs.uniform.Converter[$e, $fType, $a]]): Any)"
-        println("==============================")
-        println(r.getClass().toString() + " " + r.toString())
-        println(e.getClass().toString() + " " + e.toString())
-//        println(a.getClass())
-        println("==============================")
-        r
-      case (bad, _) =>
-        c.abort(c.enclosingPosition, s"$bad is not of kind * -> * (${showRaw(bad)})")
+        q"(implicitly[izumi.reflect.TagK[${e}]].tag, implicitly[izumi.reflect.Tag[${a}]].tag) -> ((implicitly[ltbs.uniform.Converter[$e, $fType, $a]]): Any)"
     }
     q"Map( ..$mapElems )"
   }

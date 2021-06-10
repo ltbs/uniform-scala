@@ -8,7 +8,7 @@ import play.api._,mvc._
 import play.api.http.Writeable
 import scala.concurrent.Future
 
-trait PlayInterpreter2[Html] extends Results with GenericWebInterpreter2[Html] {
+trait PlayInterpreter[Html] extends Results with GenericWebInterpreter[Html] {
 
   def pageChrome(
     key: List[String],

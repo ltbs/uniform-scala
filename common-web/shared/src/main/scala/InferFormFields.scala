@@ -4,6 +4,7 @@ package common.web
 import magnolia._
 import scala.language.experimental.macros
 import cats.implicits._
+import scala.language.higherKinds
 
 trait InferFormFields[Html] {
 
