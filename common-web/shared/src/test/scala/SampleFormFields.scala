@@ -8,7 +8,7 @@ object SampleFormFields extends SampleFormFields
 
 trait SampleFormFields {
 
-  implicit val twirlUnitField = new FormField[Unit,String] {
+  implicit val twirlUnitField = new FormField[String,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
@@ -49,7 +49,7 @@ trait SampleFormFields {
 
   }
 
-  implicit val intFieldR = new FormField[Int, String] {
+  implicit val intFieldR = new FormField[String, Int] {
     override def codec: Codec[Int] = stringFieldR.
       simap(x =>
         Either.catchOnly[NumberFormatException](x.toInt)
