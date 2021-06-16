@@ -4,7 +4,7 @@ import play.api.http.{Writeable, ContentTypeOf, ContentTypes}
 import play.api.mvc.Codec
 import scalatags.Text.all._
 
-object ScalatagsSupport {
+trait ScalatagsSupport {
 
   implicit def contentTypeOfTag(implicit codec: Codec): ContentTypeOf[Tag] = {
     ContentTypeOf[Tag](Some(ContentTypes.HTML))
@@ -15,3 +15,5 @@ object ScalatagsSupport {
   }
 
 }
+
+object ScalatagsSupport extends ScalatagsSupport

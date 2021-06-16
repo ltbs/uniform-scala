@@ -1,16 +1,16 @@
 package ltbs.uniform
 package interpreters.playframework
 
-import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
+class PackageSpec extends munit.FunSuite {
 
-class PackageSpec extends AnyFlatSpec with Matchers {
+  test("relativePath") {
+    test("should move to sibling correctly") {
+      assertEquals(relativePath(List("one"), List("two")),"two")
+    }
 
-  "relativePath" should "move to sibling correctly" in {
-    relativePath(List("one"), List("two")) shouldBe ("two")
-  }
-
-  it should "move up correctly" in {
-    relativePath(List("parentOne", "one"), List("parentTwo", "two")) shouldBe ("../parentTwo/two")
+    test("should move up correctly") {
+      assertEquals(relativePath(List("parentOne", "one"), List("parentTwo", "two")), "../parentTwo/two")
+    }
   }
 
 }

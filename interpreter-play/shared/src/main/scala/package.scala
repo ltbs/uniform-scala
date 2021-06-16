@@ -9,11 +9,11 @@ package object playframework extends common.web.webcommon {
 
   type Encoded = String
 
-  implicit val tellTwirlUnit = new GenericWebTell[Unit,TwirlHtml] {
+  implicit val tellTwirlUnit = new GenericWebTell[TwirlHtml,Unit] {
     def render(in: Unit, key: String, messages: UniformMessages[TwirlHtml]): TwirlHtml = TwirlHtml("")
   }
 
-  implicit val twirlUnitField = new FormField[Unit,TwirlHtml] {
+  implicit val twirlUnitField = new FormField[TwirlHtml,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
@@ -23,8 +23,7 @@ package object playframework extends common.web.webcommon {
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[TwirlHtml]
-    ): TwirlHtml = TwirlHtml("")
-
+    ): Option[TwirlHtml] = None
   }
 
   implicit class RichPlayMessages(input: i18n.Messages) {
@@ -67,12 +66,6 @@ package object playframework extends common.web.webcommon {
           List(key, s"$key.1").map(get(_, args: _*)).flatten ++ inner().reverse
         }
       }
-  }
-
-  implicit class RichTwirlInterpreter(interpreter: GenericWebInterpreter[TwirlHtml]) {
-    @deprecated("Please use RichPlayMessages instead", "4.5.2")
-    def convertMessages(input: i18n.Messages, escapeHtml: Boolean = false): UniformMessages[TwirlHtml] =
-      RichPlayMessages(input).convertMessagesTwirlHtml(escapeHtml)
   }
 
   implicit val mon: cats.Monoid[TwirlHtml] = new cats.Monoid[TwirlHtml] {

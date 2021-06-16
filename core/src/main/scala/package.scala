@@ -3,11 +3,11 @@ package ltbs
 import scala.language.higherKinds
 
 import cats.implicits._
-import cats.{Monoid, Applicative, Monad, Eq, Semigroup}
+import cats.{Monoid, Semigroup}
 import cats.data.{NonEmptyList, Validated}
-import shapeless.tag, tag.{@@}
 import collection.immutable.ListMap
 import uniform.validation.{Rule, Transformation}
+import izumi.reflect.{Tag, TagK}
 
 package object uniform
     extends TreeLike.ToTreeLikeOps
@@ -15,23 +15,9 @@ package object uniform
     with ScalaVersionCompatibility
 {
 
-  /** Used to represent multi-line input.
-    *
-    * Behaves identically to, and can be freely cast to, a
-    * String. However interpreters may decide to treat it
-    * differently - for example a web interpreter will usually render
-    * this a textarea or a cli interpreter may prompt for several
-    * lines.
-    */
-  type BigString = String @@ BigStringTag
-
-  type NonEmptyString = String @@ NonEmptyStringTag
-
   type InputPath = List[String]
   type Input = Map[InputPath, List[String]]
   type ErrorTree = ListMap[NonEmptyList[InputPath], NonEmptyList[ErrorMsg]]
-  type ::[H,T <: shapeless.HList] = shapeless.::[H,T]
-  type NilTypes = Unit :: shapeless.HNil
 
   implicit object Input extends MapTree[String, List[String]] {
 
@@ -105,8 +91,6 @@ package object uniform
       key: String,
       pipeline: Rule[String] = {Validated.Valid(_)}
     ): Validated[ErrorTree, String] = subField(key, pipeline)
-
-
   }
 
   implicit class RichErrorTree(a: ErrorTree) {
@@ -124,65 +108,6 @@ package object uniform
 
   }
 
-  implicit class RichAppOps[F[_]: Applicative, A](e: F[A]) {
-
-    /** Returns empty unless the predicate given is true, will short
-      * circuit if possible.
-      * 
-      * {{{
-      * ask[Salary]("salary") emptyUnless user.isEmployed
-      * 
-      * Future[Int]{"illegal".toInt} emptyUnless (false)
-      * }}}
-      */
-    def emptyUnless(b: => Boolean)(implicit mon: Monoid[A]): F[A] =
-      if(b) e else Monoid[A].empty.pure[F]
-
-    /** Returns empty unless the predicate given is true, will short
-      * circuit if possible.
-      * 
-      * {{{
-      * ask[Salary]("salary") emptyUnless ask[Boolean]("employed")
-      * 
-      * Future[Int]{"illegal".toInt} emptyUnless Future{false}
-      * }}}
-      */    
-    def emptyUnless(eb: F[Boolean])(
-      implicit mon: Monoid[A],
-      monad: Monad[F]
-    ): F[A] = for {
-      opt <- eb
-      ret <- if (opt) e else mon.empty.pure[F]
-    } yield ret
-
-    /** Returns None unless the predicate given is true, will short
-      * circuit if possible.
-      * 
-      * {{{
-      * ask[Salary]("salary") when user.isEmployed
-      * 
-      * Future[Int]{"illegal".toInt} when (false)
-      * }}}
-      */    
-    def when(b: => Boolean): F[Option[A]] =
-      if(b) e.map{_.some} else none[A].pure[F]
-
-    /** Returns None unless the predicate given is true, will short
-      * circuit if possible.
-      * 
-      * {{{
-      * ask[Salary]("salary") when ask[Boolean]("employed")
-      * 
-      * Future[Int]{"illegal".toInt} when Future{false}
-      * }}}
-      */        
-    def when(wmb: F[Boolean])(implicit monad: Monad[F]): F[Option[A]] = for {
-      opt <- wmb
-      ret <- if (opt) e map {_.some} else none[A].pure[F]
-    } yield ret
-
-  }
-
   implicit def monListMap[K,V: Semigroup] = new Monoid[ListMap[K,V]] {
     def empty = ListMap.empty
 
@@ -193,8 +118,112 @@ package object uniform
       }
   }
 
-  def taggedEqInstance[A, Tag](eqBase: Eq[A]) = new Eq[A @@ Tag]{
-    def eqv(x: A @@ Tag, y: A @@ Tag): Boolean = eqBase.eqv(x,y)
-  }
+  def interact[A] = new InteractBuilder[A]
+
+  def ask[A: Tag](
+    key: String,
+    default: Option[A] = None,
+    validation: Rule[A] = Rule.alwaysPass[A],
+    customContent: Map[String,(String,List[Any])] = Map.empty
+  ): Uniform[Needs.Ask[A], Unit, A] = Uniform.Ask(key, default, validation, customContent, implicitly[Tag[A]])
+
+  def tell[A: Tag](
+    key: String,
+    value: A,
+    customContent: Map[String,(String,List[Any])] = Map.empty    
+  ): Uniform[Needs.Tell[A], A, Unit] =
+    Uniform.Tell(
+      key,
+      value,
+      customContent,
+      implicitly[Tag[A]]
+    )
+
+  def end[A: Tag](
+    key: String,
+    value: A,
+    customContent: Map[String,(String,List[Any])]
+  ): Uniform[Needs.Tell[A], A, Nothing] =
+    Uniform.EndTell(
+      key,
+      value,
+      customContent,
+      implicitly[Tag[A]]
+    )
+
+  def end(
+    key: String,
+    customContent: Map[String,(String,List[Any])]
+  ): Uniform[Needs[Any], Unit, Nothing] = Uniform.End(
+    key,
+    customContent
+  )
+
+  def end[A: Tag](
+    key: String,
+    value: A
+  ): Uniform[Needs.Tell[A], A, Nothing] =
+    Uniform.EndTell(
+      key,
+      value,
+      Map.empty,
+      implicitly[Tag[A]]
+    )
+
+  def end(
+    key: String
+  ): Uniform[Needs[Any], Unit, Nothing] = Uniform.End(
+    key,
+    Map.empty
+  )
+
+  def endIf[T: Tag](
+    pred: Boolean,
+    key: String,
+    value: T,
+    customContent: Map[String,(String,List[Any])]
+  ): Uniform[Needs.Tell[T], T, Unit] =
+    if(pred) end(key, value, customContent) else Uniform.Pure(())
+
+  def endIf[T: Tag](
+    pred: Boolean,
+    key: String,
+    value: T
+  ): Uniform[Needs.Tell[T], T, Unit] =
+    if(pred) end(key, value, Map.empty) else Uniform.Pure(())
+
+  def endIf(
+    pred: Boolean,
+    key: String,
+    customContent: Map[String,(String,List[Any])]
+  ): Uniform[Needs[Any], Unit, Unit] =
+    if(pred) end(key, customContent) else Uniform.Pure(())
+
+  def endIf(
+    pred: Boolean,
+    key: String
+  ): Uniform[Needs[Any], Unit, Unit] =
+    if(pred) end(key, Map.empty) else Uniform.Pure(())
+
+  def pure[A](value: A): Uniform[Needs[_], Any, A] = Uniform.Pure(value)
+
+  def subJourney[R <: Needs[_], T, A](
+    pathHead: String,
+    pathTail: String*
+  )(base: Uniform[R, T, A]): Uniform[R, T, A] =
+    Uniform.Subjourney[R,T,A](pathHead :: pathTail.toList, base)
+
+  def convertWithKey[F[_], A](key: String)(action: => F[A])(implicit tagF: TagK[F], tagA: Tag[A]): Uniform[Needs.Convert[F, A], Unit, A] =
+    Uniform.Convert(key, () => action, tagF, tagA)
+
+  def convert[F[_], A](action: => F[A])(implicit tagF: TagK[F], tagA: Tag[A]): Uniform[Needs.Convert[F, A], Unit, A] =
+    convertWithKey(scala.util.Random.alphanumeric.take(20).mkString)(action)
+
+  def askList[A](
+    key: String,
+    default: Option[List[A]] = None, 
+    validation: Rule[List[A]] = Rule.alwaysPass[List[A]]
+  ) = new AskListBuilder[A](key, default, validation)
 
 }
+

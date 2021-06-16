@@ -15,43 +15,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
   
   import bundle.all._
 
-  def renderProduct[A](
-    pageKey: List[String],
-    fieldKey: List[String],    
-    path: Breadcrumbs,
-    values: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Tag],
-    pfl: ProductFieldList[A, Tag]
-  ): Tag = div(
-    pfl.inner map { case (subFieldId, f) =>
-      f(pageKey, fieldKey :+ subFieldId, path, values / subFieldId, errors / subFieldId, messages)
-    }
-  )
-
-  def renderCoproduct[A](
-    pageKey: List[String],
-    fieldKey: List[String],    
-    path: Breadcrumbs,
-    values: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Tag],
-    cfl: CoproductFieldList[A, Tag]
-  ): Tag = {
-    val value: Option[String] = values.valueAtRoot.flatMap{_.headOption}
-    radios(
-      fieldKey,
-      cfl.inner.map{_._1},
-      value,
-      errors,
-      messages,
-      cfl.inner.map{
-        case(subkey,f) => subkey -> f(pageKey, fieldKey :+ subkey, path, {values / subkey}, errors / subkey, messages)
-      }.filter(_._2.toString.trim.nonEmpty).toMap
-    )
-  }
-
-  implicit val unitField = new FormField[Unit,Tag] {
+  implicit val unitField = new FormField[Tag,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
@@ -61,8 +25,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
-    ): Tag = span(cls:="unit")("")
-
+    ): Option[Tag] = Some(span(cls:="unit")(""))
   }
 
   implicit class RichError(errors: ErrorTree) {
@@ -86,7 +49,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       inner
     )
 
-  implicit val stringField = new FormField[String,Tag] {
+  implicit val stringField = new FormField[Tag,String] {
     def decode(out: Input): Either[ErrorTree,String] = out.toStringField().toEither
     def encode(in: String): Input = Input.one(List(in))
 
@@ -97,7 +60,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
-    ): Tag = {
+    ): Option[Tag] = Some{
 
       val existingValue: String = data.valueAtRoot.flatMap{_.headOption}.getOrElse("")
       fieldSurround(fieldKey, errors, messages) {
@@ -111,7 +74,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     }
   }
 
-  implicit val intField: FormField[Int,Tag] =
+  implicit val intField: FormField[Tag,Int] =
     stringField.simap(x => 
       {
         Rule.nonEmpty[String].apply(x) andThen
@@ -119,7 +82,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       }.toEither
     )(_.toString)
 
-  implicit val booleanField = new FormField[Boolean,Tag] {
+  implicit val booleanField = new FormField[Tag,Boolean] {
     def decode(out: Input): Either[ErrorTree,Boolean] =
       out.toField[Boolean]{x: String =>
         Validated.catchOnly[IllegalArgumentException](x.toBoolean).leftMap(_ => ErrorMsg("invalid").toTree)
@@ -134,7 +97,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
-    ): Tag = {
+    ): Option[Tag] = Some{
       val existingValue: Option[String] = data.valueAtRoot.flatMap{_.headOption}
       radios(fieldKey, List(true.toString,false.toString), existingValue, errors, messages)
     }
@@ -181,9 +144,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     )
   }
 
-  implicit val dateField = new FormField[LocalDate,Tag] {
-
-    override def stats = FormFieldStats(children = 3)
+  implicit val dateField = new FormField[Tag,LocalDate] {
 
     def decode(out: Input): Either[ErrorTree,LocalDate] = {
 
@@ -216,7 +177,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
-    ): Tag = {
+    ): Option[Tag] = Some{
       fieldSurround(fieldKey, errors, messages)(
         Seq("day","month","year") flatMap { field => 
           Seq(

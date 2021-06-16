@@ -5,10 +5,15 @@ import scala.language.higherKinds
 import cats.Id
 
 trait Hod[F[_]] {
+  def recordBeardHeight(height: Int): F[Unit]
   def costOfBeard(beardStyle: BeardStyle, length: BeardLength): F[Int]  
 }
 
 object IdDummyHod extends Hod[Id] {
+
+  def recordBeardHeight(height: Int): Id[Unit] = {
+    println(height)
+  }
 
   def costOfBeard(beardStyle: BeardStyle, length: BeardLength): Id[Int] = 
       beardStyle match {

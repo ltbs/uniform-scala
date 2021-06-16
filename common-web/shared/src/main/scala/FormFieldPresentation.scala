@@ -2,7 +2,7 @@ package ltbs.uniform
 package common.web
 
 /** Controls the rendering of a field in a web form */
-trait FormFieldPresentation[A, Html]{
+trait FormFieldPresentation[Html, A]{
   def render(
     key: List[String],
     path: Breadcrumbs,
@@ -13,7 +13,7 @@ trait FormFieldPresentation[A, Html]{
 
   def mapToType[B] = {
     val orig = this
-    new FormFieldPresentation[B, Html] {
+    new FormFieldPresentation[Html, B] {
       def render(
         key: List[String],
         path: Breadcrumbs,
