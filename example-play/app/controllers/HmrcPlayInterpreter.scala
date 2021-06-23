@@ -45,14 +45,12 @@ trait HmrcPlayInterpreter
     errors: ErrorTree,
     messages: UniformMessages[Tag],
     members: Seq[(String, Tag)]
-  ): Tag =
-    Widgets.fieldSurround(fieldKey, errors, messages) {
-      table(
-        members.map { case (label, html) => 
-          tr(th(label), td(html))
-        }
-      )
-    }
+  ): Tag = members.toList match {
+    case (_, sole) :: Nil => sole
+    case many =>
+      Widgets.fieldSurround(fieldKey, errors, messages, "border: 2px dotted blue;padding: 10px;") (many.map(_._2) :_*)
+
+  }
 
   def renderOr(
     pageKey: List[String],

@@ -9,7 +9,7 @@ import java.time.LocalDate
 import scalatags._, generic.Bundle
 import validation.{Rule, Transformation}
 
-private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
+private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
 
   val bundle: Bundle[Builder, Output, FragT]
   
@@ -33,8 +33,8 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
       if (errors.definedAtRoot) { className } else ""
   }
 
-  def fieldSurround(key: List[String], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag*): Tag = 
-    div(cls := s"govuk-form-group ${errors.cls("govuk-form-group--error")}")(
+  def fieldSurround(key: List[String], errors: ErrorTree, messages: UniformMessages[Tag], styleIn: String = "")(inner: Tag*): Tag = 
+    div(cls := s"govuk-form-group ${errors.cls("govuk-form-group--error")}", style:= styleIn)(
       label(cls := "govuk-label", attr("for") := key.mkString("_"))(
         messages(key.mkString("."))
       ),
@@ -48,6 +48,13 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
         )},
       inner
     )
+
+  def optLabel(key: List[String], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag): Tag = {
+    key match {
+      case _ :: Nil => inner
+      case _ => fieldSurround(key, errors, messages, "border: 2px dotted green;padding: 10px;")(inner)
+    }
+  }
 
   implicit val stringField = new FormField[Tag,String] {
     def decode(out: Input): Either[ErrorTree,String] = out.toStringField().toEither
@@ -63,7 +70,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT]{
     ): Option[Tag] = Some{
 
       val existingValue: String = data.valueAtRoot.flatMap{_.headOption}.getOrElse("")
-      fieldSurround(fieldKey, errors, messages) {
+      optLabel(fieldKey, errors, messages) {
         input(
           cls   := s"govuk-input ${errors.cls("govuk-input--error")}",
           id    := fieldKey.mkString("_"),
