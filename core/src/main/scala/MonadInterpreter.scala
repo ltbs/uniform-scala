@@ -9,48 +9,31 @@ import izumi.reflect.Tag
 import validation.Rule
 import com.github.ghik.silencer.silent
 
-trait MonadInterpreter[F[+_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] extends Interpreter[F, TELLTC, ASKTC, ASKLISTTC]{
+trait MonadInterpreter[F[+_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[F, INTERACTTC, ASKLISTTC]{
 
   implicit def monadInstance: cats.Monad[F]
 
-  protected def askImpl[A](
-    key: String,
-    default: Option[A],
-    validation: Rule[A],
-    customContent: Map[String,(String,List[Any])],
-    asker: ASKTC[A]
-  ): F[A]
-
-  protected def tellImpl[T](
-    key: String,
-    value: T,
-    customContent: Map[String,(String,List[Any])],
-    teller: TELLTC[T]
-  ): F[Unit]
-
-  protected def interactImpl[A,T](
+  protected def interactImpl[T,A](
     key: String,
     tellValue: T,
     default: Option[A],
     validation: Rule[A],
     customContent: Map[String,(String,List[Any])],
-    asker: ASKTC[A],
-    teller: TELLTC[T]
-  ): F[A] = tellImpl(key, tellValue, customContent, teller) >>
-    askImpl(key, default, validation, customContent, asker)
+    interaction: INTERACTTC[T,A]
+  ): F[A]
 
-  protected def endTellImpl[T](
-    key: String,
-    value: T,
-    customContent: Map[String,(String,List[Any])],
-    teller: TELLTC[T]
-  ): F[Nothing] =
-    tellImpl(key, value, customContent, teller) >> endImpl(key, customContent)
+  // protected def endTellImpl[T](
+  //   key: String,
+  //   value: T,
+  //   customContent: Map[String,(String,List[Any])],
+  //   teller: TELLTC[T]
+  // ): F[Nothing] =
+  //   tellImpl(key, value, customContent, teller) >> endImpl(key, customContent)
 
-  protected def endImpl(
-    key: String,
-    customContent: Map[String,(String,List[Any])]
-  ): F[Nothing]
+  // protected def endImpl(
+  //   key: String,
+  //   customContent: Map[String,(String,List[Any])]
+  // ): F[Nothing]
 
   @silent("never used")
   protected def subjourneyImpl[A](
@@ -67,56 +50,31 @@ trait MonadInterpreter[F[+_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] extends Interpr
     asker: ASKLISTTC[A]
   ): F[List[A]]
 
-  @silent("erasure") override def interpretImpl[H <: Needs[_], T: Tag, A: Tag, E[_]](
+  @silent("erasure") override def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
     program: Uniform[H, T, A], 
-    askMap: Map[LightTypeTag, ASKTC[_]],    
-    tellMap: Map[LightTypeTag, TELLTC[_]],
+    interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[_,_]],
     convertMap: Map[(LightTypeTag, LightTypeTag), Any],
     listAskMap: Map[LightTypeTag, ASKLISTTC[_]] 
   ): F[A] = {
     program match {
       case U.Map(base, f) =>
-        interpretImpl(base, askMap, tellMap, convertMap, listAskMap ).map(f)
+        interpretImpl(base, interactMap, convertMap, listAskMap ).map(f)
       case U.FlatMap(base, f) =>
-        val g = f.map(interpretImpl(_, askMap, tellMap, convertMap, listAskMap))
-        interpretImpl(base, askMap, tellMap, convertMap, listAskMap).flatMap(g)
-      case U.Tell(key, value, customContent, tag: Tag[T]) => tellImpl[T](
-          key,
-          value,
-          customContent,
-          tellMap(tag.tag).asInstanceOf[TELLTC[T]]
-        )
-      case U.Interact(key, value, default, validation, customContent, askTag, tellTag: Tag[T]) =>
-        interactImpl[A, T](
+        val g = f.map(interpretImpl(_, interactMap, convertMap, listAskMap))
+        interpretImpl(base, interactMap, convertMap, listAskMap).flatMap(g)
+      case U.Interact(key, value, default, validation, customContent, tellTag: Tag[T], askTag) =>
+        interactImpl[T, A](
           key,
           value,
           default,
           validation,
           customContent,
-          askMap(askTag.tag).asInstanceOf[ASKTC[A]],
-          tellMap(tellTag.tag).asInstanceOf[TELLTC[T]]
+          interactMap((tellTag.tag, askTag.tag)).asInstanceOf[INTERACTTC[T, A]]
         )
-      case U.Ask(key, default, validation, customContent, tag) =>
-        askImpl(
-          key,
-          default,
-          validation,
-          customContent,
-          askMap(tag.tag).asInstanceOf[ASKTC[A]]
-        )
-      case U.EndTell(key, value, customContent, tag: Tag[T]) =>
-        endTellImpl[T](
-          key,
-          value,
-          customContent,
-          tellMap(tag.tag).asInstanceOf[TELLTC[T]]
-        )
-      case U.End(key, customContent) =>
-        endImpl(key, customContent)
       case U.Pure(v) =>
         v.pure[F]
       case U.Subjourney(path, inner) =>
-        subjourneyImpl(path, interpretImpl(inner, askMap, tellMap, convertMap, listAskMap))
+        subjourneyImpl(path, interpretImpl(inner, interactMap, convertMap, listAskMap))
       case U.Convert(key, action, tagF, tagA) =>
         convertImpl[E, A](
           key, 
@@ -126,7 +84,7 @@ trait MonadInterpreter[F[+_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] extends Interpr
       case U.ListOf(key, base, default, validation, customContent, tag: Tag[A]) => 
         askListImpl[A](
           key,
-          (index, existing) => interpretImpl(base(index, existing), askMap, tellMap, convertMap, listAskMap),
+          (index, existing) => interpretImpl(base(index, existing), interactMap, convertMap, listAskMap),
           default,
           validation,
           customContent, 

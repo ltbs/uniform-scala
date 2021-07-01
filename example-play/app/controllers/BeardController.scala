@@ -2,7 +2,7 @@ package controllers
 
 import cats.implicits._
 import javax.inject._
-import ltbs.uniform._, interpreters.playframework.{twirlUnitField => _, _}, examples.beardtax._
+import ltbs.uniform._, interpreters.playframework._, examples.beardtax._
 import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent.{Future, ExecutionContext}

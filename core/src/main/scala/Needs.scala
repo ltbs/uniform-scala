@@ -2,11 +2,12 @@ package ltbs.uniform
 
 import scala.language.higherKinds
 
-sealed trait Needs[+A]
+sealed trait Needs[T, +A]
 
 object Needs {
-  trait Tell[T] extends Needs[T]
-  trait Ask[T] extends Needs[T]
-  trait AskList[T] extends Needs[T]  
-  trait Convert[F[_], A] extends Needs[F[A]]
+
+  trait Interact[T, A] extends Needs[T, A]
+  trait AskList[A] extends Needs[Unit, A]
+  trait Convert[F[_], A] extends Needs[Unit, F[A]]
+  
 }

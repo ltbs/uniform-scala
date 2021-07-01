@@ -20,6 +20,12 @@ object UniformLogicTest {
 
   implicit val dateSample = SampleData.instance(LocalDate.now)
 
+  implicit def anythingRenderer[A]: TellRenderer[A] = ???
+
+  implicit val nothingSample = new SampleData[Nothing] {
+    def apply(key: String): List[Nothing] = Nil
+  }
+
   def main(args: Array[String]): Unit = {
     val output = LogicTableInterpreter.interpret(journey)
     

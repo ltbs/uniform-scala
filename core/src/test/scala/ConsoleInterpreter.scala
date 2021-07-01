@@ -59,32 +59,27 @@ object ConsoleTell {
   }
 }
 
-case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleTell, ConsoleAsk, ConsoleAsk] {
+case class ConsoleInteract[T,A](teller: ConsoleTell[T], asker: ConsoleAsk[A])
+
+object ConsoleInteract {
+  implicit def autoInteract[T,A](implicit teller: ConsoleTell[T], asker: ConsoleAsk[A]): ConsoleInteract[T,A] =
+    ConsoleInteract(teller, asker)
+}
+
+case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleInteract, ConsoleAsk] {
 
   def monadInstance = implicitly[cats.Monad[IO]]
 
-  override def askImpl[A](
+  override def interactImpl[T, A](
     key: String,
+    tellValue: T,
     default: Option[A],
-    validation: Rule[A],
-    customContent: Map[String,(String,List[Any])],        
-    asker: ConsoleAsk[A]
-  ): IO[A] =
-    asker(key, default, validation)
-
-  override def tellImpl[T](
-    key: String,
-    value: T,
-    customContent: Map[String,(String,List[Any])],    
-    teller: ConsoleTell[T]
-  ): IO[Unit] =
-    teller(key, value)
-
-  override def endImpl(
-    key: String,
-    customContent: Map[String,(String,List[Any])]    
-  ): IO[Nothing] = 
-    IO.raiseError { new InterruptedException(s"End of journey: $key") }
+    validation: ltbs.uniform.validation.Rule[A],
+    customContent: Map[String,(String, List[Any])],
+    interaction: ltbs.uniform.ConsoleInteract[T,A]
+  ): cats.effect.IO[A] =
+    interaction.teller(key, tellValue) >>
+      interaction.asker(key, default, validation)
 
   override def askListImpl[A](
     key: String,
@@ -137,6 +132,9 @@ object ConsoleApp extends IOApp {
       case _ => Right(false)
     }
   }
+
+  implicit val tellString: ConsoleTell[String] = ???
+  implicit val askUnit: ConsoleAsk[Unit] = ???  
 
   def run(args: List[String]): IO[ExitCode] = {
     val r: IO[Int] = ConsoleInterpreter().interpret(program)

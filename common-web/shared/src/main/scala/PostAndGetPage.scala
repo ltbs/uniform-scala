@@ -6,7 +6,7 @@ import concurrent.Future
 import scala.concurrent.ExecutionContext
 import validation._
 
-trait PostAndGetPage[Html, A] extends WebInteraction[Html, A] {
+trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
 
   def codec: Codec[A]
 
@@ -14,6 +14,7 @@ trait PostAndGetPage[Html, A] extends WebInteraction[Html, A] {
 
   def getPage(
     key: List[String],
+    tell: Option[T],
     state: DB,
     existing: Input,
     breadcrumbs: Breadcrumbs,
@@ -22,6 +23,7 @@ trait PostAndGetPage[Html, A] extends WebInteraction[Html, A] {
 
   def postPage(
     key: List[String],
+    tell: Option[T], 
     state: DB,
     request: Input,
     errors: ErrorTree,
@@ -29,9 +31,9 @@ trait PostAndGetPage[Html, A] extends WebInteraction[Html, A] {
     messages: UniformMessages[Html]
   )(implicit ec: ExecutionContext): Option[Html]
 
-  def apply(
+  override def apply(
     id: String,
-    tell: Option[Html],
+    tell: Option[T],
     default: Option[A],
     validation: Rule[A],
     customContent: Map[String,(String,List[Any])] = Map.empty    
@@ -70,8 +72,7 @@ trait PostAndGetPage[Html, A] extends WebInteraction[Html, A] {
                 ).pure[Future]
               case Left(error) =>
                 val html = AskResult.Payload[Html, A](
-                  tell,
-                  postPage(id :: Nil, state, localData, error, breadcrumbs, messages), 
+                  postPage(id :: Nil, tell, state, localData, error, breadcrumbs, messages), 
                   error,
                   messages
                 )
@@ -82,9 +83,9 @@ trait PostAndGetPage[Html, A] extends WebInteraction[Html, A] {
 
           case None =>
             val html = AskResult.Payload[Html, A](
-              tell,
               getPage(
                 id :: Nil,
+                tell,
                 state,
                 dbInput.flatMap{_.toOption} orElse            // db
                   default.map{x => codec.encode(x)} getOrElse // default

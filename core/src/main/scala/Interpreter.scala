@@ -4,16 +4,16 @@ import scala.language.higherKinds
 import scala.language.experimental.macros
 import izumi.reflect.macrortti.LightTypeTag
 import izumi.reflect.Tag
+import com.github.ghik.silencer.silent
 
-trait Interpreter[F[_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] {
+trait Interpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] {
 
   protected def convertImpl[E[_], A](key: String, in: () => E[A], transformation: Converter[E, F, A]): F[A] = 
     transformation(key, in)
 
-  def interpretImpl[H <: Needs[_], T: Tag, A: Tag, E[_]](
+  def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
     program: Uniform[H, T, A], 
-    askMap: Map[LightTypeTag, ASKTC[_]],    
-    tellMap: Map[LightTypeTag, TELLTC[_]],
+    interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[_,_]],    
     convertMap: Map[(LightTypeTag, LightTypeTag), Any], // effectively Map[(TagE, TagA), Converter[E,A,_]]. I hope to remove this field and have it handled directly in the macros
     listAskMap: Map[LightTypeTag, ASKLISTTC[_]]    
   ): F[A]
@@ -30,7 +30,8 @@ trait Interpreter[F[_], TELLTC[_], ASKTC[_], ASKLISTTC[_]] {
   //   }
   // }
 
-  def interpret[H <: Needs[_],T, A](
+  @silent("dead code")
+  def interpret[H <: Needs[_,_],T, A](
     program: Uniform[H, T, A]
-  ): F[A] = macro InterpreterMacros.interpreter_impl[H, A, ASKTC, TELLTC, ASKLISTTC, F, T]
+  ): F[A] = macro InterpreterMacros.interpreter_impl[H, A, INTERACTTC, ASKLISTTC, F, T]
 }

@@ -34,12 +34,13 @@ trait HmrcPlayInterpreter
         )
       }
     ),
-    radios(pageKey, List("add", "continue"), None, errors, messages)
+    radios(pageKey, None, List("add", "continue"), None, errors, messages)
   )
 
   def renderAnd(
     pageKey: List[String],
     fieldKey: List[String],
+    tell: Option[Tag], 
     breadcrumbs: Breadcrumbs,
     data: Input,
     errors: ErrorTree,
@@ -48,13 +49,13 @@ trait HmrcPlayInterpreter
   ): Tag = members.toList match {
     case (_, sole) :: Nil => sole
     case many =>
-      Widgets.fieldSurround(fieldKey, errors, messages, "border: 2px dotted blue;padding: 10px;") (many.map(_._2) :_*)
-
+      Widgets.fieldSurround(fieldKey, tell, errors, messages) (many.map(_._2) :_*)
   }
 
   def renderOr(
     pageKey: List[String],
     fieldKey: List[String],
+    tell: Option[Tag],    
     breadcrumbs: Breadcrumbs,
     data: Input,
     errors: ErrorTree,
@@ -63,6 +64,7 @@ trait HmrcPlayInterpreter
     selected: Option[String]
   ): Tag = Widgets.radios(
     fieldKey,
+    tell,
     alternatives.map(_._1),
     selected,
     errors,
@@ -74,12 +76,9 @@ trait HmrcPlayInterpreter
   def messagesForRequest[C <: AnyContent](request: Request[C]): UniformMessages[Tag] =
     {messagesApi.preferred(request).convertMessages() |+| UniformMessages.bestGuess }.map{span(_)}
 
-  def unitAsk: WebInteraction[Tag,Unit] = Widgets.unitField
-
-  def unitTell: GenericWebTell[Tag, Unit] = autoTell
-
-  implicit def autoTell[A] = new GenericWebTell[Tag, A] {
-    def render(in: A, key: String, messages: UniformMessages[Tag]): Tag = span(in.toString)
+  implicit def bogus[A]: WebAskList[Tag, A] = new WebAskList[Tag,A] {
+    def apply(key: String,askJourney: (Option[Int], List[A]) => WebMonad[Tag,A],default: Option[List[A]],validation: Rule[List[A]],customContent: Map[String,(String, List[Any])]): WebMonad[Tag,List[A]] = ???
+    def deleteConfirmationJourney: Uniform[Needs[_, _],Any,Boolean] = ???
   }
 
   // implicit def autoListingTell[A](implicit tell: GenericWebTell[A, Tag]) = new ListingTell[Tag, A] {
@@ -195,8 +194,7 @@ trait HmrcPlayInterpreter
   def pageChrome(
     key: List[String],
     errors: ErrorTree,
-    tell: Option[Tag],
-    ask: Option[Tag],
+    tellAndAsk: Option[Tag],
     breadcrumbs: List[String],
     request: Request[AnyContent],
     messages: UniformMessages[Tag]
@@ -232,14 +230,15 @@ trait HmrcPlayInterpreter
               breadcrumbs.drop(1).headOption.map{ back =>
                 a (href:=back, cls:="govuk-back-link")(messages({back :+ "back"}.mkString(".")))
               },
-              Some(errors).filter(_.nonEmpty).map{ x => span (x.toString) }, 
               div(cls:="govuk-width-container")(
                 tag("main")(cls:="govuk-main-wrapper ", id:="main-content", role:="main")(
-                  h1(cls:="govuk-heading-xl")(messages(key.mkString(".")))
+                  h1(cls:="govuk-heading-xl")(messages(key.mkString("."))),
+                  messages.get((key :+ "hint").mkString(".")).map { hintMsg =>
+                    span( id := (key :+ "hint").mkString("_"), cls := "govuk-hint") (hintMsg)
+                  }
                 )
               ),
-              tell,
-              ask.map { a => 
+              tellAndAsk.map { a => 
                 form(method:="post")(
                   input(tpe:="hidden", name:="csrfToken", value:=csrf),
                   a,

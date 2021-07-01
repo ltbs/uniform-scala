@@ -6,11 +6,12 @@ import cats.syntax.flatMap._
 import scala.concurrent.ExecutionContext
 
 /** Defines both the rendering and the encoding for a given datatype */
-trait FormField[Html, A] extends Codec[A] with PostAndGetPage[Html, A]{
+trait FormField[Html, A] extends Codec[A] {
 
   def render(
     pageKey: List[String],
-    fieldKey: List[String],    
+    fieldKey: List[String],
+    tell: Option[Html],
     breadcrumbs: Breadcrumbs,
     data: Input,
     errors: ErrorTree,
@@ -32,33 +33,36 @@ trait FormField[Html, A] extends Codec[A] with PostAndGetPage[Html, A]{
       def decode(out: Input): Either[ErrorTree,B] = orig.decode(out) >>= f
       def render(
         pageKey: List[String],
-        fieldKey: List[String],        
+        fieldKey: List[String],
+        tell: Option[Html],
         breadcrumbs: Breadcrumbs,
         data: Input,
         errors: ErrorTree,
         messages: UniformMessages[Html]
-      ): Option[Html] = orig.render(pageKey, fieldKey, breadcrumbs, data, errors, messages)
+      ): Option[Html] = orig.render(pageKey, fieldKey, tell, breadcrumbs, data, errors, messages)
     }
   }
 
   def getPage(
     key: List[String],
+    tell: Option[Html],    
     state: DB,
     existing: Input,
     breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
   )(implicit ec: ExecutionContext): Option[Html] =
-    render(key, key.last :: Nil, breadcrumbs, existing, ErrorTree.empty, messages)
+    render(key, key.last :: Nil, tell, breadcrumbs, existing, ErrorTree.empty, messages)
 
   def postPage(
     key: List[String],
+    tell: Option[Html],        
     state: DB,
     request: Input,
     errors: ErrorTree,
     breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
   )(implicit ec: ExecutionContext): Option[Html] =
-    render(key, key.last :: Nil, breadcrumbs, request, errors, messages)
+    render(key, key.last :: Nil, tell, breadcrumbs, request, errors, messages)
 
     def codec: Codec[A] = this
 }

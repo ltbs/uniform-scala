@@ -25,7 +25,7 @@ protected[web] object Pos {
 
 case class ListingRow[Html](
   index: Int,
-  content: Html,
+  content: Option[Html],
   editLink: String,
   deleteLink: String
 )
@@ -38,18 +38,19 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
   implicit def inferListingPage[A](
     implicit ff: FormField[Html, A],
     teller: GenericWebTell[Html, A]
-  ) = new WebInteraction[Html, List[A]] {
+  ) = new WebInteraction[Html, Unit, List[A]] {
     def apply(
       id: String,
-      tell: Option[Html],
+      tell: Option[Unit],
       defaultIn: Option[List[A]],
       validationIn: Rule[List[A]],
       customContent: Map[String,(String, List[Any])]
     ): WebMonad[Html,List[A]] = {
       val askList = fromTell(teller, ff)
+      val interaction = new StandardTellAndAskForm(teller, ff)
       askList.apply(
         id,
-        {(index, existing) => ff.apply("entry", None, index.map(existing), Rule.alwaysPass) },
+        {(index, existing) => interaction.apply("entry", None, index.map(existing), Rule.alwaysPass, Map.empty) },
         defaultIn,
         validationIn,
         customContent
@@ -74,84 +75,90 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
     validation: Rule[List[A]],
     tell: GenericWebTell[Html, A],
     customOrdering: Option[Ordering[A]] = None    
-  ) = new FormField[Html, ListAction] {
-    override val customRouting: PartialFunction[List[String],ListAction] = {
-      case "edit" :: Pos(x) :: _   => ListAction.Edit(x)
-      case "delete" :: Pos(x) :: Nil => ListAction.Delete(x)
-    }
+  ) = {
+    val ff = new FormField[Html, ListAction] {
 
-    val orderWithIndex: Ordering[(A, Int)] = {
-      new cats.Order[(A, Int)] {
-        def compare(a: (A, Int), b: (A, Int)): Int = customOrdering match {
-          case Some(o) => o.compare(a._1, b._1)
-          case None => a._2 compareTo b._2
+      val orderWithIndex: Ordering[(A, Int)] = {
+        new cats.Order[(A, Int)] {
+          def compare(a: (A, Int), b: (A, Int)): Int = customOrdering match {
+            case Some(o) => o.compare(a._1, b._1)
+            case None => a._2 compareTo b._2
+          }
         }
-      }
-    }.toOrdering
+      }.toOrdering
 
-    def decode(out: Input): Either[ErrorTree,ListAction] = {
+      def decode(out: Input): Either[ErrorTree,ListAction] = {
 
-      def readInt[Z](prefix: String, f: Int => Z)(data: Input): Either[ErrorTree, Z] = {
-        Either.fromOption(
-          data.valueAt(prefix),
-          new NumberFormatException
-        ).flatMap {
-          case x :: Nil => Either.catchOnly[NumberFormatException](x.toInt)
-          case _ => (new NumberFormatException).asLeft[Int]
-        }.bimap(
-          _ => ErrorMsg("invalid").toTree,
-          f
-        )
-      }
-
-      out match {
-        case i if i.valueAtRoot == Some("add" :: Nil) => Right(ListAction.Add)
-        case i if i.valueAtRoot == Some("continue" :: Nil) => Right(ListAction.Continue)
-        case i if i.isDefinedAt("edit" :: Nil) => readInt("edit", ListAction.Edit)(i)
-        case i if i.isDefinedAt("delete" :: Nil) => readInt("delete", ListAction.Edit)(i)
-        case _ => Left(ErrorMsg("invalid").toTree)
-      }
-    }
-
-    def encode(in: ListAction): Input = in match {
-      case ListAction.Add => Input.one("add" :: Nil)
-      case ListAction.Edit(i) => Input.one(i.toString :: Nil).prefixWith("edit")
-      case ListAction.Delete(i) => Input.one(i.toString :: Nil).prefixWith("delete")
-      case ListAction.Continue => Input.one("continue" :: Nil)
-    }
-    def render(
-      pageKey: List[String],
-      fieldKey: List[String],
-      breadcrumbs: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Html]
-    ): Option[Html] = {
-
-      val indexedRows: List[ListingRow[Html]] = existingEntries.zipWithIndex.
-        sorted(orderWithIndex).
-        map { case (v, index) =>
-          val editLink = s"$key/edit/$index/"
-          val deleteLink = s"$key/delete/$index/"
-          ListingRow[Html](
-            index,
-            tell.render(v, index.toString, messages),
-            editLink,
-            deleteLink
+        def readInt[Z](prefix: String, f: Int => Z)(data: Input): Either[ErrorTree, Z] = {
+          Either.fromOption(
+            data.valueAt(prefix),
+            new NumberFormatException
+          ).flatMap {
+            case x :: Nil => Either.catchOnly[NumberFormatException](x.toInt)
+            case _ => (new NumberFormatException).asLeft[Int]
+          }.bimap(
+            _ => ErrorMsg("invalid").toTree,
+            f
           )
         }
 
-      Some(renderListPage(
-        pageKey,
-        breadcrumbs,
-        indexedRows,
-        data,
-        errors,
-        messages,
-        validation
-      ))
+        out match {
+          case i if i.valueAtRoot == Some("add" :: Nil) => Right(ListAction.Add)
+          case i if i.valueAtRoot == Some("continue" :: Nil) => Right(ListAction.Continue)
+          case i if i.isDefinedAt("edit" :: Nil) => readInt("edit", ListAction.Edit)(i)
+          case i if i.isDefinedAt("delete" :: Nil) => readInt("delete", ListAction.Edit)(i)
+          case _ => Left(ErrorMsg("invalid").toTree)
+        }
+      }
+
+      def encode(in: ListAction): Input = in match {
+        case ListAction.Add => Input.one("add" :: Nil)
+        case ListAction.Edit(i) => Input.one(i.toString :: Nil).prefixWith("edit")
+        case ListAction.Delete(i) => Input.one(i.toString :: Nil).prefixWith("delete")
+        case ListAction.Continue => Input.one("continue" :: Nil)
+      }
+      def render(
+        pageKey: List[String],
+        fieldKey: List[String],
+        tell: Option[Html],
+        breadcrumbs: Breadcrumbs,
+        data: Input,
+        errors: ErrorTree,
+        messages: UniformMessages[Html]
+      ): Option[Html] = {
+
+        val indexedRows: List[ListingRow[Html]] = existingEntries.zipWithIndex.
+          sorted(orderWithIndex).
+          map { case (v, index) =>
+            val editLink = s"$key/edit/$index/"
+            val deleteLink = s"$key/delete/$index/"
+            ListingRow[Html](
+              index,
+              tell,
+              editLink,
+              deleteLink
+            )
+          }
+
+        Some(renderListPage(
+          pageKey,
+          breadcrumbs,
+          indexedRows,
+          data,
+          errors,
+          messages,
+          validation
+        ))
+      }
+    }
+    new StandardTellAndAskForm(tell, ff) {
+      override val customRouting: PartialFunction[List[String],ListAction] = {
+        case "edit" :: Pos(x) :: _   => ListAction.Edit(x)
+        case "delete" :: Pos(x) :: Nil => ListAction.Delete(x)
+      }
     }
   }
+  
 
   implicit def fromTell[A](
     implicit tell: GenericWebTell[Html, A],
@@ -209,7 +216,9 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
         val decision: WebMonad[Html, ListAction] = if (config.askFirstListItem && data.isEmpty && min > 0) {
             (ListAction.Add: ListAction).pure[WebMonad[Html, ?]]
         } else {
-          listingForm(key, data, validation, tell).apply(key, None, None, Rule.alwaysPass)
+          // (id: String, tell: Option[Unit], defaultIn: Option[ltbs.uniform.common.web.ListAction], validationIn: ltbs.uniform.validation.Rule[ltbs.uniform.common.web.ListAction], customContent: Map[String,(String, List[Any])])
+          val wi = listingForm(key, data, validation, tell)
+          wi.apply(key, None, None, Rule.alwaysPass, Map.empty)
         }
 
         def deleteJourney(data: List[A], index: Int) = true.pure[WM]
@@ -258,7 +267,7 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
       }
     }
 
-    def deleteConfirmationJourney: Uniform[Needs[_], Any, Boolean] =
+    def deleteConfirmationJourney: Uniform[Needs[_,_], Any, Boolean] =
       pure(true)
   }
   

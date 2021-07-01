@@ -14,6 +14,7 @@ trait InferFormFields[Html] {
   def renderAnd(
     pageKey: List[String],
     fieldKey: List[String],
+    tell: Option[Html],
     breadcrumbs: Breadcrumbs,
     data: Input,
     errors: ErrorTree,
@@ -24,6 +25,7 @@ trait InferFormFields[Html] {
   def renderOr(
     pageKey: List[String],
     fieldKey: List[String],
+    tell: Option[Html],    
     breadcrumbs: Breadcrumbs,
     data: Input,
     errors: ErrorTree,
@@ -50,6 +52,7 @@ trait InferFormFields[Html] {
     def render(
       pageKey: List[String],
       fieldKey: List[String],
+      tell: Option[Html], 
       breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
@@ -60,6 +63,7 @@ trait InferFormFields[Html] {
     renderAnd(
       pageKey,
       fieldKey,
+      tell, 
       breadcrumbs,
       data,
       errors,
@@ -68,6 +72,7 @@ trait InferFormFields[Html] {
         p => p.label -> p.typeclass.render(
           pageKey,
           fieldKey :+ p.label,
+          tell, 
           breadcrumbs,
           data / p.label,
           errors / p.label,
@@ -92,10 +97,10 @@ trait InferFormFields[Html] {
       } 
     }
 
-    // Members declared in ltbs.uniform.common.web.FormField
     def render(
       pageKey: List[String],
       fieldKey: List[String],
+      tell: Option[Html], 
       breadcrumbs: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
@@ -104,6 +109,7 @@ trait InferFormFields[Html] {
       renderOr(
         pageKey,
         fieldKey,
+        tell,
         breadcrumbs,
         data,
         errors,
@@ -115,6 +121,7 @@ trait InferFormFields[Html] {
             subtype.typeclass.render(
               pageKey,
               fieldKey :+ subtype.typeName.short,
+              tell, 
               breadcrumbs,
               data / subtype.typeName.short,
               errors / subtype.typeName.short,

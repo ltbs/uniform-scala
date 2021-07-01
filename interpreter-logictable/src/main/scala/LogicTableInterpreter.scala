@@ -4,17 +4,9 @@ package interpreters.logictable
 import cats.implicits._
 import ltbs.uniform.validation._
 
-object LogicTableInterpreter extends MonadInterpreter[Either[ErrorTree, +?], TellRenderer, SampleData, SampleData] {
+object LogicTableInterpreter extends MonadInterpreter[Either[ErrorTree, +?], LTInteraction, SampleData] {
 
   def monadInstance = implicitly[cats.Monad[Either[ErrorTree, +?]]]
-
-  override def askImpl[A](
-    key: String,
-    default: Option[A],
-    validation: Rule[A],
-    customContent: Map[String,(String, List[Any])],
-    asker: SampleData[A]
-  ): Either[ErrorTree, A] = validation.either(asker(key).head)
 
   override def askListImpl[A](
     key: String,
@@ -24,16 +16,12 @@ object LogicTableInterpreter extends MonadInterpreter[Either[ErrorTree, +?], Tel
     customContent: Map[String,(String, List[Any])],asker: SampleData[A]
   ): Either[ErrorTree,List[A]] = validation.either(asker(key))
 
-  override def tellImpl[T](
+  def interactImpl[T, A](
     key: String,
-    value: T,
+    tellValue: T,
+    default: Option[A],
+    validation: Rule[A],
     customContent: Map[String,(String, List[Any])],
-    teller: TellRenderer[T]
-  ):Either[ErrorTree, Unit] = Right(())
-
-  override def endImpl(
-    key: String,
-    customContent: Map[String,(String, List[Any])]
-  ): Either[ErrorTree,Nothing] =
-    Left(ErrorMsg(s"$key (end)").toTree)
+    interaction: LTInteraction[T,A]
+  ) = validation.either(interaction.askRenderer(key).head)
 }

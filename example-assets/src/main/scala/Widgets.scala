@@ -20,12 +20,13 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     def encode(in: Unit): Input = Input.empty
     def render(
       pageKey: List[String],
-      fieldKey: List[String],      
+      fieldKey: List[String],
+      tell: Option[Tag],
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
-    ): Option[Tag] = Some(span(cls:="unit")(""))
+    ): Option[Tag] = tell
   }
 
   implicit class RichError(errors: ErrorTree) {
@@ -33,8 +34,36 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
       if (errors.definedAtRoot) { className } else ""
   }
 
-  def fieldSurround(key: List[String], errors: ErrorTree, messages: UniformMessages[Tag], styleIn: String = "")(inner: Tag*): Tag = 
-    div(cls := s"govuk-form-group ${errors.cls("govuk-form-group--error")}", style:= styleIn)(
+  // implicit def autoTell[A] = new GenericWebTell[Tag, A] {
+  //   def render(in: A, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in.toString))
+  // }
+
+  implicit val tellInt = new GenericWebTell[Tag, Int] {
+    def render(in: Int, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in.toString))
+  }
+
+  implicit val tellString = new GenericWebTell[Tag, String] {
+    def render(in: String, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in))
+  }
+
+  implicit val tellBoolean = new GenericWebTell[Tag, Boolean] {
+    def render(in: Boolean, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in.toString))
+  }
+
+  def formSurround(key: String, tell: Option[Tag], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag*): Tag =
+    div(cls := s"govuk-form-group ${errors.cls("govuk-form-group--error")}")(
+      tell.map{x => div(x, br(), br())},
+      errorSummary(List(key), errors, messages),
+      errors.valueAtRootList.map { error => 
+        span ( id := s"${key}-error", cls := "govuk-error-message" )(
+          span( cls := "govuk-visually-hidden")(messages("error"),":"), 
+          error.prefixWith(List(key)).render(messages)
+        )},
+      inner
+    )
+
+  def subfieldSurround(key: List[String], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag*): Tag =
+    div(cls := s"govuk-form-group ${errors.cls("govuk-form-group--error")}")(
       label(cls := "govuk-label", attr("for") := key.mkString("_"))(
         messages(key.mkString("."))
       ),
@@ -49,10 +78,17 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
       inner
     )
 
-  def optLabel(key: List[String], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag): Tag = {
+  def fieldSurround(key: List[String], tell: Option[Tag], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag*): Tag = 
+    key match {
+      case (topLevel :: Nil) => formSurround(topLevel, tell, errors, messages)(inner:_*)
+      case _ => subfieldSurround(key, errors, messages)(inner:_*)        
+    }
+
+
+  def optLabel(key: List[String], tell: Option[Tag], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag): Tag = {
     key match {
       case _ :: Nil => inner
-      case _ => fieldSurround(key, errors, messages, "border: 2px dotted green;padding: 10px;")(inner)
+      case _ => fieldSurround(key, tell, errors, messages)(inner)
     }
   }
 
@@ -62,7 +98,8 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
 
     def render(
       pageKey: List[String],
-      fieldKey: List[String],      
+      fieldKey: List[String],
+      tell: Option[Tag], 
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
@@ -70,7 +107,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     ): Option[Tag] = Some{
 
       val existingValue: String = data.valueAtRoot.flatMap{_.headOption}.getOrElse("")
-      optLabel(fieldKey, errors, messages) {
+      optLabel(fieldKey, tell, errors, messages) {
         input(
           cls   := s"govuk-input ${errors.cls("govuk-input--error")}",
           id    := fieldKey.mkString("_"),
@@ -100,18 +137,20 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     def render(
       pageKey: List[String],      
       fieldKey: List[String],
+      tell: Option[Tag],
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
     ): Option[Tag] = Some{
       val existingValue: Option[String] = data.valueAtRoot.flatMap{_.headOption}
-      radios(fieldKey, List(true.toString,false.toString), existingValue, errors, messages)
+      radios(fieldKey, tell, List(true.toString,false.toString), existingValue, errors, messages)
     }
   }
 
   def radios(
     fieldKey: List[String],
+    tell: Option[Tag],
     options: Seq[String],
     existing: Option[String],
     errors: ErrorTree,
@@ -120,7 +159,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
   ): Tag = {
     val keyNoDots=fieldKey.mkString("-")
 
-    fieldSurround(fieldKey, errors, messages) (
+    fieldSurround(fieldKey, tell, errors, messages) ( 
       div (cls:= "govuk-radios") {
         options.zipWithIndex.map{ case (opt,num) =>
             div(cls:="govuk-radios__item", attr("data-target"):=keyNoDots)(
@@ -180,12 +219,13 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     def render(
       pageKey: List[String],      
       fieldKey: List[String],
+      tell: Option[Tag],
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
       messages: UniformMessages[Tag]
     ): Option[Tag] = Some{
-      fieldSurround(fieldKey, errors, messages)(
+      fieldSurround(fieldKey, tell, errors, messages)(
         Seq("day","month","year") flatMap { field => 
           Seq(
             div(cls:="govuk-date-input__item") (
@@ -213,33 +253,35 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     key: List[String],
     errors: ErrorTree,
     messages: UniformMessages[Tag]
-  ): Tag = {
+  ): Option[Tag] = errors match {
+    case ErrorTree.empty => None
+    case _ => Some{
 
-    val errorTags: List[Tag] =
-      ErrorTree.simplified(errors).map { case (path, errormsg) =>
-        li()(
-          a(href:=s"#${(key ++ path).mkString("_")}")(
-            errormsg.prefixWith(key ++ path).render(messages)
+      val errorTags: List[Tag] =
+        ErrorTree.simplified(errors).map { case (path, errormsg) =>
+          li()(
+            a(href:=s"#${(key ++ path).mkString("_")}")(
+              errormsg.prefixWith(key ++ path).render(messages)
+              )
+          )
+        }.toList
+
+      div(
+        cls:="govuk-error-summary",
+        attr("aria-labelledby"):="error-summary-title",
+        attr("role"):="alert",
+        tabindex:="-1",
+          attr("data-module"):="error-summary"
+      )(
+        h2(cls:="govuk-error-summary__title", id:="error-summary-title")(
+          messages({key :+ "there.is.a.problem"}.mkString("."))
+        ),
+        div(cls:="govuk-error-summary__body")(
+          ul(cls:="govuk-list govuk-error-summary__list")(
+            errorTags
           )
         )
-      }.toList
-
-    div(
-      cls:="govuk-error-summary",
-      attr("aria-labelledby"):="error-summary-title",
-      attr("role"):="alert",
-      tabindex:="-1",
-      attr("data-module"):="error-summary"
-    )(
-      h2(cls:="govuk-error-summary__title", id:="error-summary-title")(
-        messages({key :+ "there.is.a.problem"}.mkString("."))
-      ),
-      div(cls:="govuk-error-summary__body")(
-        ul(cls:="govuk-list govuk-error-summary__list")(
-          errorTags
-        )
       )
-    )
+    }
   }
-
 }

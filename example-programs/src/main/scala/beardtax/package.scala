@@ -14,12 +14,13 @@ package object beardtax {
   def beardProgram[F[_] : Monad : TagK](
     hod: Hod[F]
   ) = for {
-    beardHeight <- (
-      ask[Int]("chin-height"),
-      ask[Int]("sideburn-height")
-    ).mapN{case (a,b) => a + b}
-    _ <- convertWithKey("rec-height")(hod.recordBeardHeight(beardHeight))
-    memberOfPublic <- ask[Option[MemberOfPublic]]("is-public")
+    // beardHeight <- (
+    //   ask[Int]("chin-height"),
+    //   ask[Int]("sideburn-height")
+    // ).mapN{case (a,b) => a + b}
+    //_ <- convertWithKey("rec-height")(hod.recordBeardHeight(beardHeight))
+
+    memberOfPublic <- interact[Option[MemberOfPublic]]("is-public", 42)
     beardStyle     <- ask[BeardStyle]("beard-style", customContent = Map(
       "beard-style" -> {memberOfPublic match {
         case None                              => ("beard-style-sycophantic", Nil)

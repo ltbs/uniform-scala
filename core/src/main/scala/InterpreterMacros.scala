@@ -1,8 +1,5 @@
 package ltbs.uniform
 
-import cats.instances.either._
-import cats.instances.list._
-import cats.syntax.alternative._
 import com.github.ghik.silencer.silent
 import scala.language.higherKinds
 import scala.reflect.macros.blackbox
@@ -12,40 +9,34 @@ class InterpreterMacros(val c: blackbox.Context) {
   import c.universe._
 
   /**
-    * Turn a Needs[_] type into a (List[AskTypes], List[TellTypes]) 
+    * Turn a Needs[_] type into a (List[InteractTypes], List[(ConvFrom, ConvTo)], List[AskListType]) 
     */ 
   @silent("never used") // quasiquoting seems to produce lots of false warnings  
-  def getNeeds[H <: Needs[_], ASKTC[_], TELLTC[_], ASKLISTTC[_]](
+  def getNeeds[H <: Needs[_, _], INTERACTTC[_,_], ASKLISTTC[_]](
     implicit ttn: c.WeakTypeTag[H], 
-    ttAskTc: WeakTypeTag[ASKTC[_]],
-    ttTellTc: WeakTypeTag[TELLTC[_]],
+    ttInteractTc: WeakTypeTag[INTERACTTC[_,_]],
     ttAskListTc: WeakTypeTag[ASKLISTTC[_]]
-  ): (List[Type], List[Type], List[(Type, Type)], List[Type]) = {
+  ): (List[(Type, Type)], List[(Type, Type)], List[Type]) = {
 
-    val ASK = symbolOf[Needs.Ask[_]]
-    val TELL: TypeSymbol = symbolOf[Needs.Tell[_]]
+    val INTERACT: TypeSymbol = symbolOf[Needs.Interact[_,_]]
     val CONV = symbolOf[Needs.Convert[Any,_]]
     val ASKLIST = symbolOf[Needs.AskList[_]]        
 
-
     ttn.tpe match {
-      case _: ExistentialType => (Nil, Nil, Nil, Nil)
-      case TypeRef(_, ASK, List(ask)) => (ask :: Nil, Nil, Nil, Nil)
-      case TypeRef(_, TELL, List(tell)) => (Nil, tell :: Nil, Nil, Nil)
-      case TypeRef(_, CONV, List(convf, conva)) => (Nil, Nil, (convf, conva) :: Nil, Nil)
-      case TypeRef(_, ASKLIST, List(askl)) => (Nil, Nil, Nil, askl :: Nil)                
+      case _: ExistentialType => (Nil, Nil, Nil)
+      case TypeRef(_, INTERACT, List(inta, intb)) => ((inta,intb) :: Nil, Nil, Nil)
+      case TypeRef(_, CONV, List(convf, conva)) => (Nil, (convf, conva) :: Nil, Nil)
+      case TypeRef(_, ASKLIST, List(askl)) => (Nil, Nil, askl :: Nil)                
       case RefinedType(parents,_) =>
-        //TODO - a fold would be better
-        val ret = parents.collect{
-          case TypeRef(_, ASK, List(ask)) => Left(Left(ask))
-          case TypeRef(_, TELL, List(tell)) => Left(Right(tell))
-          case TypeRef(_, CONV, List(convf, conva)) => Right(Left((convf, conva)))
-          case TypeRef(_, ASKLIST, List(askl)) => Right(Right(askl))            
+        parents.foldLeft((List.empty[(Type,Type)], List.empty[(Type, Type)], List.empty[Type])){
+          case ((iacc, convacc, alacc), x) =>
+            x match {
+              case TypeRef(_, INTERACT, List(inta, intb)) => ((inta,intb) :: iacc, convacc, alacc)
+              case TypeRef(_, CONV, List(convf, conva)) => (iacc, (convf, conva):: convacc, alacc)
+              case TypeRef(_, ASKLIST, List(askl)) => (iacc, convacc, askl :: alacc)
+              case _ => (iacc, convacc, alacc)
+            }
         }
-        val (at, cl) = ret.separate
-        val (a, t) = at.separate
-        val (c, l) = cl.separate        
-        (a, t, c, l)
       case other =>
         c.abort(c.enclosingPosition, s"I don't know how to extract Needs from $other (${showRaw(other)})")
     }
@@ -59,7 +50,7 @@ class InterpreterMacros(val c: blackbox.Context) {
     @tailrec
     def inner(types: List[Type], acc: Tree): Tree = types match {
       case v::x =>
-        val resultingType = swapType(fType, v)
+        val resultingType = injectType(fType, v)
         inner(x, q"(implicitly[izumi.reflect.Tag[$v]].tag, implicitly[$resultingType]) :: $acc")
       case Nil => acc
     }
@@ -71,9 +62,9 @@ class InterpreterMacros(val c: blackbox.Context) {
   /** Given a unary type constructor and a proper type will apply that
     * type to the constructor and return the result.
     * 
-    * e.g. swapType(Either[?, Int], String) == Either[String, Int]
+    * e.g. injectType(Either[?, Int], String) == Either[String, Int]
     */
-  def swapType(
+  def injectType(
     higherKind: Type,
     inject: Type
   ): Type = {
@@ -90,77 +81,86 @@ class InterpreterMacros(val c: blackbox.Context) {
     tq"${name}[..$newTypeParams]".toType
   }
 
+  def injectType2(
+    higherKind: Type,
+    injectOne: Type,
+    injectTwo: Type    
+  ): Type = {
+    val (name: Symbol, newTypeParams: List[Type]) = higherKind match {
+      case TypeRef(_,name,_) =>
+        (name, List(injectOne, injectTwo))
+      case PolyType(paramA :: paramB :: Nil, TypeRef(_,_,allParams)) => (
+        higherKind.typeSymbol,
+        allParams.map{
+          case TypeRef(_,`paramA`,_) => injectOne
+          case TypeRef(_,`paramB`,_) => injectTwo
+          case x => x
+        }
+      )
+      case bad =>
+        c.abort(c.enclosingPosition, s"$bad is not of kind * -> * -> *")
+    }
+    tq"${name}[..$newTypeParams]".toType
+  }
+
   implicit class RichTree(t: Tree) {
     def toType: Type =
       c.typecheck(q"??? : $t").tpe    
   }
 
-  // exists only for testing swapType
+  // exists only for testing injectType
   def coldImplicit[A, TC[_]](
     implicit tta: WeakTypeTag[A],    
     ttn: WeakTypeTag[TC[_]]
   ): Expr[TC[A]] = {
     c.Expr(
-      c.inferImplicitValue(swapType(ttn.tpe, tta.tpe), false)
+      c.inferImplicitValue(injectType(ttn.tpe, tta.tpe), false)
     )
   }
 
+  // E[A] => F[A] // where F is interpreted type (perhaps WebMonad)
+  // Future[A] => WebMonad[A]
+  /** for {
+    *    a <- convert(callApiOne()) // Future[Int]
+    *    b <- convert(callApiTwo()) // IO[String]
+    * }
+    */
   def getConvMap(fType : Type, eTypes: List[(Type, Type)]): Tree = {
     val mapElems = eTypes.map{
       case (e: Type, a: Type) =>
-        val ea = swapType(e, a)
-        val fa = swapType(fType, a)
-        val r = q"(implicitly[izumi.reflect.TagK[${e}]].tag, implicitly[izumi.reflect.Tag[${a}]].tag) -> ((implicitly[ltbs.uniform.Converter[$e, $fType, $a]]): Any)"
-        println("==============================")
-        println(r.getClass().toString() + " " + r.toString())
-        println(e.getClass().toString() + " " + e.toString())
-//        println(a.getClass())
-        println("==============================")
-        r
+        q"(implicitly[izumi.reflect.TagK[${e}]].tag, implicitly[izumi.reflect.Tag[${a}]].tag) -> ((implicitly[ltbs.uniform.Converter[$e, $fType, $a]]): Any)"
       case (bad, _) =>
         c.abort(c.enclosingPosition, s"$bad is not of kind * -> * (${showRaw(bad)})")
     }
     q"Map( ..$mapElems )"
   }
 
-
-  def getConvMapP(fType : Type, eTypes: List[(Type, Type)]): Tree = {
-    val mapElems = eTypes.map{ case (hx, _) =>
-      val h = hx match {
-        case ExistentialType(_ :: Nil, api: TypeApi) =>
-          api.typeArgs match {
-            case _ :: Nil => tq"${hx.typeSymbol}"
-            case manyArgs =>
-              val names: List[Tree] = manyArgs.map{
-                case TypeRef(NoPrefix, _, List()) => tq"A"
-                case x => tq"$x"
-              }
-              tq"({type L[A] = ${hx.typeSymbol}[..${names}]})#L"
-          }
-        case bad =>
-          c.abort(c.enclosingPosition, s"$bad is not of kind * -> * (${showRaw(bad)})")
-      }
-      q"implicitly[izumi.reflect.TagK[${h}]].tag -> (implicitly[cats.~>[${h},$fType]] : Any)"
+  def getInteractMap(fType : Type, eTypes: List[(Type, Type)]): Tree = {
+    val mapElems = eTypes.map{
+      case (t: Type, a: Type) =>
+        val key = q"(implicitly[izumi.reflect.Tag[${t}]].tag, implicitly[izumi.reflect.Tag[${a}]].tag)"
+        val faType = injectType2(fType, t, a)
+        val value = q"((implicitly[$faType]))"
+        q"$key -> $value"
+      case (bad, _) =>
+        c.abort(c.enclosingPosition, s"$bad is not of kind * -> * (${showRaw(bad)})")
     }
     q"Map( ..$mapElems )"
   }
 
-
-  def interpreter_impl[H <: Needs[_], A, ASKTC[_], TELLTC[_], ASKLISTTC[_], F[_], T](
-    program: Expr[Uniform[H,A,T]]
+  def interpreter_impl[H <: Needs[_, _], A, INTERACTTC[_,_], ASKLISTTC[_], F[_], T](
+    program: Expr[Uniform[H,T,A]]
   )(
     implicit ttn: WeakTypeTag[H], 
-    ttAskTc: WeakTypeTag[ASKTC[_]],
-    ttTellTc: WeakTypeTag[TELLTC[_]],
+    ttInteractTc: WeakTypeTag[INTERACTTC[_,_]],
     ttAskListTc: WeakTypeTag[ASKLISTTC[_]],    
     fTypeTag: WeakTypeTag[F[_]]
   ): c.Expr[F[A]] = {
-    val (askTypes, tellTypes, convTypes, listTypes) = getNeeds[H, ASKTC, TELLTC, ASKLISTTC]
-    val askMap = implicitMaps(ttAskTc.tpe, askTypes)
-    val tellMap = implicitMaps(ttTellTc.tpe, tellTypes)
+    val (interactTypes, convTypes, listTypes) = getNeeds[H, INTERACTTC, ASKLISTTC]
+    val interactMap = getInteractMap(ttInteractTc.tpe, interactTypes)
     val listMap = implicitMaps(ttAskListTc.tpe, listTypes)    
     val convMap = getConvMap(fTypeTag.tpe, convTypes)
-    val r = q"${c.prefix}.interpretImpl($program, $askMap, $tellMap, $convMap, $listMap)"
+    val r = q"${c.prefix}.interpretImpl($program, $interactMap, $convMap, $listMap)"
     c.Expr[F[A]](r)
   }
 

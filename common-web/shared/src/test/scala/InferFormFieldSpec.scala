@@ -35,7 +35,7 @@ final case class TestCaseClass(a: Int, b: String, c: (Int, Int))
 class InferFormFieldSpec extends munit.FunSuite {
 
   import Presenter._
-  val renderer = implicitly[FormField[TestCaseClass, String]]
+  val renderer = implicitly[FormField[String, TestCaseClass]]
 
   def testEncoding[A](in: A)(implicit codec: Codec[A]) = {
     import codec._
@@ -49,16 +49,16 @@ class InferFormFieldSpec extends munit.FunSuite {
 
     test ("should render correctly") {
       assertEquals(
-        renderer.render(Nil, List("testRecord"), Nil, Input.empty, ErrorTree.empty, UniformMessages.noop),
+        renderer.render(Nil, List("testRecord"), None, Nil, Input.empty, ErrorTree.empty, UniformMessages.noop),
         Some("INT[testRecord.a]∧STRING[testRecord.b]∧INT[testRecord.c._1]∧INT[testRecord.c._2]")
       )
     }
 
     test ("should instances should be inductively inferable for an either (coproduct)") {
-      val presentation = implicitly[FormField[Either[String, Int], String]]
+      val presentation = implicitly[FormField[String, Either[String, Int]]]
 
       assertEquals(
-        presentation.render(Nil, List("testRecord"), Nil, Input.empty, ErrorTree.empty, UniformMessages.noop),
+        presentation.render(Nil, List("testRecord"), None, Nil, Input.empty, ErrorTree.empty, UniformMessages.noop),
         Some("STRING[testRecord.Left.value]∨INT[testRecord.Right.value]")
       )
 
