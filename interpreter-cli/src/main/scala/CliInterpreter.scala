@@ -1,104 +1,74 @@
 package ltbs.uniform
 package interpreters.cli
 
-import scala.language.higherKinds
-
-import cats.implicits._
-import com.github.ghik.silencer.silent
-import shapeless._
 import validation.Rule
+import izumi.reflect.Tag
 
-trait TellCli[A] {
-  def render(in: A): String
+trait ConsoleAsk[A] {
+
+  def name: String
+  def read(in: String): Either[String, A]
+  def apply(
+    key: String,
+    default: Option[A],
+    validation: Rule[A]
+  ): Either[String,A] =
+    read(scala.io.StdIn.readLine(s"$key [$name]: "))
 }
 
-trait AskCli[A] {
-  def apply(in: String, validation: Rule[A]): A
-}
-
-class CliInterpreter[
-  SupportedTell <: HList : TypeclassList[?, TellCli],
-  SupportedAsk  <: HList : TypeclassList[?, AskCli]
-] extends Language[Id, SupportedTell, SupportedAsk] {
-
-  override def interact[Tell, Ask](
-    id            : String,
-    t             : Tell,
-    default       : Option[Ask],
-    validation    : Rule[Ask],
-    customContent : Map[String,(String,List[Any])]
-  )( implicit
-    selectorTell : IndexOf[SupportedTell, Tell],
-    selectorAsk  : IndexOf[SupportedAsk, Ask]
-  ): Ask = {
-    val teller = the[TypeclassList[SupportedTell,TellCli]].
-      forType[Tell].render(t)
-    val asker = the[TypeclassList[SupportedAsk,AskCli]].
-      forType[Ask]
-    print(teller)
-    asker(id, validation)
+object ConsoleAsk {
+  def apply[A: Tag](f: String => Either[String,A]) = new ConsoleAsk[A] {
+    def read(in: String) = f(in)
+    def name: String = implicitly[Tag[A]].tag.shortName
   }
 }
 
-object CliInterpreter {
+trait ConsoleTell[A] {
 
-  implicit val tellUnit = new TellCli[Unit] {
-    def render(in: Unit): String = ""
-  }
+  def format(in: A): String
 
-  implicit def tellAny[A](
-    implicit @silent lp:LowPriority
-  ): TellCli[A] = new TellCli[A] {
-    def render(in: A): String = in.toString + "\n"
-  }
-
-  def askCliInstance[A](f: String => Either[String,A]) = new AskCli[A] {
-    @annotation.tailrec
-    def apply(key: String, validation: Rule[A]): A = {
-      print(s"$key: ")
-      val rawIn = scala.io.StdIn.readLine()
-
-      f(rawIn).flatMap(validation(_).toEither) match {
-        case Left(err) => println(err); apply(key, validation)
-        case Right(v) => v
-      }
-    }
-  }
-
-  implicit val askString = askCliInstance[String](x => Right(x))
-  implicit val askInt = askCliInstance(x => util.Try(x.toInt)
-    .toEither
-    .leftMap(_.getLocalizedMessage())
-  )
-
-  implicit val askBool = askCliInstance{
-    case "Y" => Right(true)
-    case "N" => Right(false)
-    case _   => Left("please enter 'Y' or 'N'")
-  }
-
-  implicit val askUnit = askCliInstance { _ => Right(()) }
-
+  def apply(
+    key: String,
+    value: A
+  ): Unit = { println(s"$key : ${format(value)}") }
 }
 
-object CliApp extends App {
-
-  type TellTypes = Unit :: String :: HNil
-  type AskTypes = Unit :: Int :: String :: Boolean :: HNil
-
-  def program[F[_]: cats.Monad](interpreter: Language[F,  // F must be a monad
-    TellTypes,
-    AskTypes // data types we're interested in
-  ]): F[Int] = {
-    import interpreter._
-
-    for {
-      one <- ask[Int]("one")
-      two <- ask[Int]("two")
-      _   <- interact[String, Boolean]("confirm", tell = s"Confirm you are happy with ${one + two}")
-    } yield (one + two)
+object ConsoleTell {
+  implicit def anyInstance[A] = new ConsoleTell[A] {
+    def format(in: A): String = in.toString
   }
+}
 
-  import CliInterpreter._
-  program(new CliInterpreter[TellTypes, AskTypes])
+case class ConsoleInterpreter() extends MonadInterpreter[Either[String,+?], ConsoleAsk, ConsoleTell, ConsoleAsk] {
+
+  def monadInstance = implicitly[cats.Monad[Either[String,+?]]]
+
+  override def askImpl[A](
+    key: String,
+    default: Option[A],
+    validation: Rule[A],
+    customContent: Map[String,(String,List[Any])],
+    asker: ConsoleAsk[A]
+  ): Either[String, A] = asker(key, default, validation)
+
+  override def tellImpl[T](
+    key: String,
+    value: T,
+    customContent: Map[String,(String,List[Any])],
+    teller: ConsoleTell[T]
+  ): Either[String,Unit] = Right(teller(key, value))
+
+  override def endImpl(
+    key: String,
+    customContent: Map[String,(String,List[Any])]
+  ): Either[String, Nothing] = Left(s"End of journey: $key")
+
+  override def askListImpl[A](
+    key: String,
+    askJourney: (Option[Int], List[A]) => Either[String,A],
+    default: Option[List[A]],
+    validation: Rule[List[A]],
+    customContent: Map[String,(String,List[Any])],
+    asker: ConsoleAsk[A]
+  ): Either[String,List[A]] = ???
 }

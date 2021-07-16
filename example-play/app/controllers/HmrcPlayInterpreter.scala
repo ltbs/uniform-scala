@@ -1,53 +1,107 @@
 package controllers
 
-import ltbs.uniform._, interpreters.playframework._
-import play.api.mvc.{Results, Request, AnyContent}
-import scala.concurrent.ExecutionContext.Implicits.global
-import ltbs.uniform.common.web.{InferFormFieldProduct, InferFormFieldCoProduct, InferListingPages, FormFieldStats, ListingTell, ListingTellRow, GenericWebTell}
+import ltbs.uniform._, common.web._, interpreters.playframework._, validation.Rule
+import play.api.mvc.{Request, AnyContent}
 import cats.syntax.semigroup._
 import scalatags.Text.all._
-import ScalatagsSupport._
-import ltbs.uniform.common.web.ListingTellRow
+import ltbs.uniform.examples.Widgets
+import com.github.ghik.silencer.silent
 
-case class HmrcPlayInterpreter(
-  results: Results,
-  messagesApi: play.api.i18n.MessagesApi
-) extends PlayInterpreter[Tag](results)
-    with InferFormFieldProduct[Tag]
-    with InferFormFieldCoProduct[Tag]
-    with InferListingPages[Tag]
-    with examples.Widgets {
+trait HmrcPlayInterpreter
+    extends PlayInterpreter[Tag]
+    with InferWebAsk[Tag]
+    with ScalatagsSupport
+    with Widgets
+    with AutoListingPage[Tag]
+{
 
-  implicit val tellTwirlUnit = new WebTell[Unit] {
-    def render(in: Unit, key: String, messages: UniformMessages[Tag]): Tag = blankTell
+  def renderListPage[A](
+    pageKey: List[String],
+    breadcrumbs: Breadcrumbs,
+    existingEntries: List[ListingRow[Tag]],
+    data: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    validation: Rule[List[A]]
+  ): Tag = div (
+    table (
+      tr( th("item"),th("edit"),th("delete")),
+      existingEntries.map{ row =>
+        tr(
+          td(row.content),
+          td(a(href:=row.editLink)(messages("edit"))),
+          td(a(href:=row.deleteLink)(messages("delete")))
+        )
+      }
+    ),
+    radios(pageKey, None, List("add", "continue"), None, errors, messages)
+  )
+
+  def renderAnd(
+    pageKey: List[String],
+    fieldKey: List[String],
+    tell: Option[Tag], 
+    breadcrumbs: Breadcrumbs,
+    data: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    members: Seq[(String, Tag)]
+  ): Tag = members.toList match {
+    case (_, sole) :: Nil => sole
+    case many =>
+      Widgets.fieldSurround(fieldKey, tell, errors, messages) (many.map(_._2) :_*)
   }
 
-  def blankTell: Tag = span("")
+  def renderOr(
+    pageKey: List[String],
+    fieldKey: List[String],
+    tell: Option[Tag],    
+    breadcrumbs: Breadcrumbs,
+    data: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    alternatives: Seq[(String, Option[Tag])],
+    selected: Option[String]
+  ): Tag = Widgets.radios(
+    fieldKey,
+    tell,
+    alternatives.map(_._1),
+    selected,
+    errors,
+    messages,
+    alternatives.collect{case (k, Some(v)) => (k,v)}.toMap
+  )
 
-  implicit def autoTell[A] = new GenericWebTell[A, Tag] {
-    def render(in: A, key: String, messages: UniformMessages[Tag]): Tag = span(in.toString)
+  def messagesApi: play.api.i18n.MessagesApi
+  def messagesForRequest[C <: AnyContent](request: Request[C]): UniformMessages[Tag] =
+    {messagesApi.preferred(request).convertMessages() |+| UniformMessages.bestGuess }.map{span(_)}
+
+  implicit def bogus[A]: WebAskList[Tag, A] = new WebAskList[Tag,A] {
+    def apply(key: String,askJourney: (Option[Int], List[A]) => WebMonad[Tag,A],default: Option[List[A]],validation: Rule[List[A]],customContent: Map[String,(String, List[Any])]): WebMonad[Tag,List[A]] = ???
+    def deleteConfirmationJourney: Uniform[Needs[_, _],Any,Boolean] = ???
   }
 
-  implicit def autoListingTell[A](implicit tell: GenericWebTell[A, Tag]) = new ListingTell[Tag, A] {
-    def apply(rows: List[ListingTellRow[A]], messages: UniformMessages[Tag]): Tag =
-      table (
-        tr( th("item"),th("edit"),th("delete")),
-        rows.map{ row => 
-          tr(
-            td(tell.render(row.value, "", messages)),
-            td(a(href:=row.editLink)(messages("edit"))),
-            td(a(href:=row.deleteLink)(messages("delete")))
-          )
-        }
-      )
-  }
+  // implicit def autoListingTell[A](implicit tell: GenericWebTell[A, Tag]) = new ListingTell[Tag, A] {
+  //   def apply(rows: List[ListingTellRow[A]], messages: UniformMessages[Tag]): Tag =
+  //     table (
+  //       tr( th("item"),th("edit"),th("delete")),
+  //       rows.map{ row => 
+  //         tr(
+  //           td(tell.render(row.value, "", messages)),
+  //           td(a(href:=row.editLink)(messages("edit"))),
+  //           td(a(href:=row.deleteLink)(messages("delete")))
+  //         )
+  //       }
+  //     )
+  // }
 
-  def messages(
-    request: Request[AnyContent]
+  implicit def messages(
+    implicit request: Request[AnyContent]
   ): UniformMessages[Tag] =
     { messagesApi.preferred(request).convertMessages() |+|
       UniformMessages.bestGuess }.map{span(_)}
 
+  @silent("never used")
   def headerBar(
     serviceName: Option[String],
     navLinks: List[(String, String)],
@@ -141,12 +195,10 @@ case class HmrcPlayInterpreter(
   def pageChrome(
     key: List[String],
     errors: ErrorTree,
-    tell: Tag,
-    ask: Tag,
+    tellAndAsk: Option[Tag],
     breadcrumbs: List[String],
     request: Request[AnyContent],
-    messages: UniformMessages[Tag],
-    stats: FormFieldStats
+    messages: UniformMessages[Tag]
   ): Tag = {
 
     import play.filters.csrf._
@@ -179,18 +231,21 @@ case class HmrcPlayInterpreter(
               breadcrumbs.drop(1).headOption.map{ back =>
                 a (href:=back, cls:="govuk-back-link")(messages({back :+ "back"}.mkString(".")))
               },
-              if(errors.nonEmpty) errorSummary(key, errors, messages),
               div(cls:="govuk-width-container")(
                 tag("main")(cls:="govuk-main-wrapper ", id:="main-content", role:="main")(
-                  h1(cls:="govuk-heading-xl")(messages(key.mkString(".")))
+                  h1(cls:="govuk-heading-xl")(messages(key.mkString("."))),
+                  messages.get((key :+ "hint").mkString(".")).map { hintMsg =>
+                    span( id := (key :+ "hint").mkString("_"), cls := "govuk-hint") (hintMsg)
+                  }
                 )
               ),
-              form(method:="post")(
-                input(tpe:="hidden", name:="csrfToken", value:=csrf),
-                tell,
-                ask,
-                button(tpe:="submit", cls:="govuk-button")(messages({key :+ "save.and.continue"}.mkString(".")))
-              )
+              tellAndAsk.map { a => 
+                form(method:="post")(
+                  input(tpe:="hidden", name:="csrfToken", value:=csrf),
+                  a,
+                  button(tpe:="submit", cls:="govuk-button")(messages({key :+ "save.and.continue"}.mkString(".")))
+                )
+              }
             )
           )
         ),

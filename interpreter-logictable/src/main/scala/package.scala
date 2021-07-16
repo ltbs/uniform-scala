@@ -19,9 +19,7 @@ package object logictable {
     def apply(key: String): List[Unit] = List(())
   }
 
-  implicit def automaticTell[A](
-    implicit @silent lp: shapeless.LowPriority
-  ) = new TellRenderer[A] {
+  implicit def automaticTell[A] = new TellRenderer[A] {
     def apply(key: String, value: A): List[String] =
       List(value.toString)
   }

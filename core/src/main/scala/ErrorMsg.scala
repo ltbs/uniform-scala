@@ -4,6 +4,10 @@ import cats.data.NonEmptyList
 
 /** an error, usually constructed into an ErrorTree to provide the
   * paths to the fields where the errors occurred
+  * 
+  * {{{
+  * val errorTree = ErrorMsg("myform.myfield.badinput").toTree
+  * }}}
   */
 case class ErrorMsg(msg: String, args: Any*) {
 
