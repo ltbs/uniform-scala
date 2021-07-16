@@ -59,11 +59,6 @@ package web {
       case (x::xs, y::ys) if x === y => removeCommon(xs, ys)
       case a => a
     }
-
-    implicit def formToWebMonad[A, Html](
-      implicit ff: FormField[A, Html]
-    ): WebMonadConstructor[A, Html] = PostAndGetPage(ff)
-
   }
 
 }
@@ -88,4 +83,9 @@ package object web extends webcommon {
     def compare(x: LocalDateTime, y: LocalDateTime): Int =
       x compareTo y
   }
+
+  implicit def tellUnit[HTML]: WebTell[HTML, Unit] = new WebTell[HTML, Unit] {
+    def render(in: Unit, key: String, messages: UniformMessages[HTML]): Option[HTML] = None
+  }
+  
 }

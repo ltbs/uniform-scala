@@ -34,9 +34,11 @@ import collection.immutable.ListMap
 
   /** gives the subtree at a given key */
   def subTree(a: T, key: Key): T
+  def subTreeOpt(a: T, key: Key): Option[T]  
 
   /** gives the subtree at a given key */  
   def /(a: T, key: Key): T = subTree(a,key)
+  def /?(a: T, key: Key): Option[T] = subTreeOpt(a,key)  
 
   def valueAt(a: T, key: Key): Option[Value] =
     valueAtRoot(subTree(a, key))
@@ -99,6 +101,9 @@ trait TreeLikeInstances {
         (rem, v)
       }
 
+    def subTreeOpt(a: T, key: Key): Option[T] =
+      Some(subTree(a, key)).filter(_.nonEmpty)
+
     val empty: Map[List[K],V] = Map.empty
     def one(in: Value): T = Map(List.empty[Key] -> in)
     def valueAtRoot(a: T): Option[Value] = a.get(List.empty[Key])
@@ -132,6 +137,9 @@ trait TreeLikeInstances {
         }
       }
     }
+
+    def subTreeOpt(a: ErrorTree, keyPath: String): Option[ErrorTree] = 
+      if (a.definedAt(keyPath)) Some(subTree(a, keyPath)) else None
 
     val empty: ErrorTree = ListMap.empty
     def one(in: NEL[ErrorMsg]): ErrorTree = ListMap (
