@@ -9,7 +9,7 @@ trait PersistenceEngine[A <: Request[AnyContent]] {
   def apply(request: A)(f: DB => Future[(DB,Result)]): Future[Result]
 }
 
-case class DebugPersistence(underlying: UUIDPersistence)(implicit ec: ExecutionContext) extends UUIDPersistence {
+case class DebugPersistence[REQ <: Request[AnyContent]](underlying: UUIDPersistence[REQ])(implicit ec: ExecutionContext) extends UUIDPersistence[REQ] {
 
   val log: Logger = Logger("persistence")
 
@@ -26,10 +26,10 @@ case class DebugPersistence(underlying: UUIDPersistence)(implicit ec: ExecutionC
   }
 }
 
-abstract class UUIDPersistence()(implicit ec: ExecutionContext) extends PersistenceEngine[Request[AnyContent]] {
+abstract class UUIDPersistence[REQ <: Request[AnyContent]]()(implicit ec: ExecutionContext) extends PersistenceEngine[REQ] {
   def load(uuid: UUID): Future[DB]
   def save(uuid: UUID, db: DB): Future[Unit]
-  def apply(request: Request[AnyContent])(f: DB => Future[(DB,Result)]): Future[Result] = {
+  def apply(request: REQ)(f: DB => Future[(DB,Result)]): Future[Result] = {
 
     val uuid: UUID = request.session.get("uuid").map{UUID.fromString}
       .getOrElse( UUID.randomUUID )
@@ -44,9 +44,9 @@ abstract class UUIDPersistence()(implicit ec: ExecutionContext) extends Persiste
   }
 }
 
-final case class UnsafePersistence(
+final case class UnsafePersistence[REQ <: Request[AnyContent]](
   var state: Map[UUID,DB] = Map.empty
-)(implicit ec: ExecutionContext) extends UUIDPersistence()(ec) {
+)(implicit ec: ExecutionContext) extends UUIDPersistence[REQ]()(ec) {
 
   def load(uuid: UUID): Future[DB] =
     Future.successful(state.withDefaultValue(Map.empty)(uuid))

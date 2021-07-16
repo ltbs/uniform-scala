@@ -5,6 +5,7 @@ import scala.concurrent._
 import cats.implicits._
 import validation.Rule
 import scala.language.higherKinds
+import com.github.ghik.silencer.silent
 
 sealed trait ListAction
 sealed trait ListActionRow extends ListAction
@@ -30,14 +31,14 @@ case class ListingRow[Html](
   deleteLink: String
 )
 
-trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] {
+trait AutoListingPage[Html] extends InferWebAsk[Html] with Primatives[Html] {
 
-  override def blockCollections[X[_] <: Traversable[_], A]: FormField[Html, X[A]] = ???
-  override def blockCollections2[X[_] <: Traversable[_], A]: FormField[Html, X[A]] = ???
+  override def blockCollections[X[_] <: Traversable[_], A]: WebAsk[Html, X[A]] = ???
+  override def blockCollections2[X[_] <: Traversable[_], A]: WebAsk[Html, X[A]] = ???
 
   implicit def inferListingPage[A](
-    implicit ff: FormField[Html, A],
-    teller: GenericWebTell[Html, A]
+    implicit ff: WebAsk[Html, A],
+    teller: WebTell[Html, A]
   ) = new WebInteraction[Html, Unit, List[A]] {
     def apply(
       id: String,
@@ -47,7 +48,7 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
       customContent: Map[String,(String, List[Any])]
     ): WebMonad[Html,List[A]] = {
       val askList = fromTell(teller, ff)
-      val interaction = new StandardTellAndAskForm(teller, ff)
+      val interaction = new WebInteraction.StandardTellAndAskForm(teller, ff)
       askList.apply(
         id,
         {(index, existing) => interaction.apply("entry", None, index.map(existing), Rule.alwaysPass, Map.empty) },
@@ -73,10 +74,10 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
     key: String, 
     existingEntries: List[A],
     validation: Rule[List[A]],
-    tell: GenericWebTell[Html, A],
+    tell: WebTell[Html, A],
     customOrdering: Option[Ordering[A]] = None    
   ) = {
-    val ff = new FormField[Html, ListAction] {
+    val ff = new WebAsk[Html, ListAction] {
 
       val orderWithIndex: Ordering[(A, Int)] = {
         new cats.Order[(A, Int)] {
@@ -129,7 +130,7 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
 
         val indexedRows: List[ListingRow[Html]] = existingEntries.zipWithIndex.
           sorted(orderWithIndex).
-          map { case (v, index) =>
+          map { case (_, index) =>
             val editLink = s"$key/edit/$index/"
             val deleteLink = s"$key/delete/$index/"
             ListingRow[Html](
@@ -151,7 +152,7 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
         ))
       }
     }
-    new StandardTellAndAskForm(tell, ff) {
+    new WebInteraction.StandardTellAndAskForm(tell, ff) {
       override val customRouting: PartialFunction[List[String],ListAction] = {
         case "edit" :: Pos(x) :: _   => ListAction.Edit(x)
         case "delete" :: Pos(x) :: Nil => ListAction.Delete(x)
@@ -161,7 +162,7 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
   
 
   implicit def fromTell[A](
-    implicit tell: GenericWebTell[Html, A],
+    implicit tell: WebTell[Html, A],
     codec: Codec[A]
   ) = new WebAskList[Html, A] {
     def apply(
@@ -209,18 +210,16 @@ trait AutoListingPage[Html] extends InferFormFields[Html] with Primatives[Html] 
             (listCodec.decode(_).toOption)
         ).orElse(default).getOrElse(List.empty)
 
-        println(state)
-
         val min = 1  // TODO
 
         val decision: WebMonad[Html, ListAction] = if (config.askFirstListItem && data.isEmpty && min > 0) {
             (ListAction.Add: ListAction).pure[WebMonad[Html, ?]]
         } else {
-          // (id: String, tell: Option[Unit], defaultIn: Option[ltbs.uniform.common.web.ListAction], validationIn: ltbs.uniform.validation.Rule[ltbs.uniform.common.web.ListAction], customContent: Map[String,(String, List[Any])])
           val wi = listingForm(key, data, validation, tell)
           wi.apply(key, None, None, Rule.alwaysPass, Map.empty)
         }
 
+        @silent("never used")
         def deleteJourney(data: List[A], index: Int) = true.pure[WM]
 
         val wm = decision flatMap {

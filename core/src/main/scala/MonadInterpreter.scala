@@ -22,19 +22,6 @@ trait MonadInterpreter[F[+_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter
     interaction: INTERACTTC[T,A]
   ): F[A]
 
-  // protected def endTellImpl[T](
-  //   key: String,
-  //   value: T,
-  //   customContent: Map[String,(String,List[Any])],
-  //   teller: TELLTC[T]
-  // ): F[Nothing] =
-  //   tellImpl(key, value, customContent, teller) >> endImpl(key, customContent)
-
-  // protected def endImpl(
-  //   key: String,
-  //   customContent: Map[String,(String,List[Any])]
-  // ): F[Nothing]
-
   @silent("never used")
   protected def subjourneyImpl[A](
     path: List[String],

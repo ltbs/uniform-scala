@@ -3,18 +3,11 @@ package common.web
 
 import validation.Rule
 
-trait GenericWebInterpreter2[Html] extends Primatives[Html] with MonadInterpreter [
+trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
   WebMonad[Html, +?],
   WebInteraction[Html, ?, ?],
   WebAskList[Html, ?]
 ] {
-
-  implicit def createInteraction[T,A](
-    implicit tell: GenericWebTell[Html, T],
-    ask: FormField[Html, A]
-  ): WebInteraction[Html, T,A] = new StandardTellAndAskForm(tell, ask)
-
-//  def unitInteraction: WebInteraction[Html, Unit, Unit]
 
   implicit def monadInstance: cats.Monad[WebMonad[Html, +?]] =
     WebMonad.webMonadMonadInstance[Html]

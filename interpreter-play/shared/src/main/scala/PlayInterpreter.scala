@@ -1,5 +1,4 @@
 package ltbs.uniform
-
 package interpreters.playframework
 
 import scala.concurrent.ExecutionContext
@@ -8,7 +7,7 @@ import play.api._,mvc._
 import play.api.http.Writeable
 import scala.concurrent.Future
 
-trait PlayInterpreter2[Html] extends Results with GenericWebInterpreter2[Html] {
+trait PlayInterpreter[Html] extends Results with WebInterpreter[Html] {
 
   def pageChrome(
     key: List[String],
@@ -43,14 +42,6 @@ trait PlayInterpreter2[Html] extends Results with GenericWebInterpreter2[Html] {
       val baseUrl = request.path.dropRight(path.size)
       val id = path.split("/", -1).toList
       
-      // //this is a nasty bodge to prevent hitting URL's with a trailing slash
-      // //which seem to be caused by the UA handling '..' in the redirection target. 
-      // if (id.lastOption == Some("")) {
-      //   return (controller.Redirect(
-      //     request.path.dropRight(1)
-      //   )).pure[Future]
-      // }
-
       val data: Option[Input] = request.body.asFormUrlEncoded.map {
         _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
       }

@@ -1,7 +1,8 @@
 package ltbs.uniform
 package common.web
 
-import cats.implicits._
+import cats.syntax.eq._, cats.syntax.flatMap._, cats.syntax.applicative._
+import cats.instances.future.catsStdInstancesForFuture
 import concurrent.Future
 import scala.concurrent.ExecutionContext
 import validation._

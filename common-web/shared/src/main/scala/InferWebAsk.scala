@@ -4,12 +4,13 @@ package common.web
 import magnolia._
 import scala.language.experimental.macros
 import cats.implicits._
+import scala.language.higherKinds
 
-trait InferFormFields[Html] {
+trait InferWebAsk[Html] {
 
   @annotation.implicitAmbiguous("Unable to ask[Traversable[${A}]] - consider using askList[${A}] instead")
-  implicit def blockCollections[X[_] <: Traversable[_], A]: FormField[Html, X[A]] = ???
-  implicit def blockCollections2[X[_] <: Traversable[_], A]: FormField[Html, X[A]] = ???  
+  implicit def blockCollections[X[_] <: Traversable[_], A]: WebAsk[Html, X[A]] = ???
+  implicit def blockCollections2[X[_] <: Traversable[_], A]: WebAsk[Html, X[A]] = ???  
 
   def renderAnd(
     pageKey: List[String],
@@ -34,8 +35,9 @@ trait InferFormFields[Html] {
     selected: Option[String]
   ): Html
 
-  type Typeclass[T] = FormField[Html, T] // is this needed?
-  def combine[T](caseClass: CaseClass[FormField[Html, ?], T]) = new FormField[Html, T] {
+  type Typeclass[T] = WebAsk[Html, T]
+
+  def combine[T](caseClass: CaseClass[Typeclass, T]) = new WebAsk[Html, T] {
     def decode(out: Input): Either[ErrorTree,T] = {
       caseClass.constructEither {
         p => p.typeclass.decode(out / p.label).leftMap{_.prefixWith(p.label)}
@@ -48,7 +50,6 @@ trait InferFormFields[Html] {
       members.toList.combineAll
     }
 
-    // Members declared in ltbs.uniform.common.web.FormField
     def render(
       pageKey: List[String],
       fieldKey: List[String],
@@ -81,8 +82,8 @@ trait InferFormFields[Html] {
       }.collect{ case (k, Some(v)) => (k,v)}
     ).some
   }
-
-  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] = new FormField[Html, T] {
+  
+  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] = new WebAsk[Html, T] {
     def decode(out: Input): Either[ErrorTree,T] = {
       sealedTrait.subtypes.collectFirst{
         case subtype if List(subtype.typeName.short).some === out.valueAtRoot =>
@@ -138,5 +139,5 @@ trait InferFormFields[Html] {
     }.some
   }
 
-  implicit def gen[T]: FormField[Html, T] = macro Magnolia.gen[T]
+  implicit def gen[T]: WebAsk[Html, T] = macro Magnolia.gen[T]
 }

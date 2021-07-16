@@ -6,9 +6,9 @@ import ltbs.uniform._, interpreters.playframework._, examples.witchcraft._, comm
 import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 import scala.concurrent._
-import play.twirl.api.Html
 import scalatags.Text.all._
-import ltbs.uniform.examples.Widgets._
+import com.github.ghik.silencer.silent
+import scala.language.higherKinds
 
 @Singleton
 class WitchController @Inject()(
@@ -16,6 +16,7 @@ class WitchController @Inject()(
   val controllerComponents: ControllerComponents
 ) extends BaseController with ControllerHelpers with I18nSupport with HmrcPlayInterpreter {
 
+  @silent("never used")
   def familiarProgram(
     existing: List[Familiar],
     editIndex: Option[Int],

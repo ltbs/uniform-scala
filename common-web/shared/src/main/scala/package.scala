@@ -84,7 +84,7 @@ package object web extends webcommon {
       x compareTo y
   }
 
-  implicit def tellUnit[HTML]: GenericWebTell[HTML, Unit] = new GenericWebTell[HTML, Unit] {
+  implicit def tellUnit[HTML]: WebTell[HTML, Unit] = new WebTell[HTML, Unit] {
     def render(in: Unit, key: String, messages: UniformMessages[HTML]): Option[HTML] = None
   }
   

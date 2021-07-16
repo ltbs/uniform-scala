@@ -1,15 +1,15 @@
 package controllers
 
-import ltbs.uniform._, interpreters.playframework._, validation.Rule
+import ltbs.uniform._, common.web._, interpreters.playframework._, validation.Rule
 import play.api.mvc.{Request, AnyContent}
-import ltbs.uniform.common.web._
 import cats.syntax.semigroup._
 import scalatags.Text.all._
 import ltbs.uniform.examples.Widgets
+import com.github.ghik.silencer.silent
 
 trait HmrcPlayInterpreter
-    extends PlayInterpreter2[Tag]
-    with InferFormFields[Tag]
+    extends PlayInterpreter[Tag]
+    with InferWebAsk[Tag]
     with ScalatagsSupport
     with Widgets
     with AutoListingPage[Tag]
@@ -101,6 +101,7 @@ trait HmrcPlayInterpreter
     { messagesApi.preferred(request).convertMessages() |+|
       UniformMessages.bestGuess }.map{span(_)}
 
+  @silent("never used")
   def headerBar(
     serviceName: Option[String],
     navLinks: List[(String, String)],

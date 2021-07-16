@@ -5,7 +5,16 @@ import scala.language.experimental.macros
 import izumi.reflect.macrortti.LightTypeTag
 import izumi.reflect.Tag
 import com.github.ghik.silencer.silent
+import cats.~>
 
+/** Maps a journey from its abstract form into a concrete one. 
+  * 
+  * Must target a specific higher kinded type (for example, WebMonad). 
+  * 
+  * When creating your own interpreter you may be better served by
+  * inheriting MonadInterpreter as this already has some of the wiring 
+  * 
+  */
 trait Interpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] {
 
   protected def convertImpl[E[_], A](key: String, in: () => E[A], transformation: Converter[E, F, A]): F[A] = 
@@ -18,18 +27,23 @@ trait Interpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] {
     listAskMap: Map[LightTypeTag, ASKLISTTC[_]]    
   ): F[A]
 
-  // def transform[G[_]](f: F ~> G) = {
-  //   val that = this
-  //   new Interpreter[G, ASKTC, TELLTC] {
-  //     def interpretImpl[H <: Needs[_], A: Tag, T: Tag, E[_]](
-  //       program: Uniform[H, A, T],
-  //       askMap: Map[LightTypeTag, ASKTC[_]],
-  //       tellMap: Map[LightTypeTag, TELLTC[_]],
-  //       convertMap: Map[LightTypeTag, ~>[E,F]]
-  //     ): G[A] = f(that.interpretImpl[H, A, T, E](program, askMap, tellMap, convertMap))
-  //   }
-  // }
+  def transform[G[_]](f: F ~> G) = {
+    val that = this
+    new Interpreter[G, INTERACTTC, ASKLISTTC] {
+      def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
+        program: Uniform[H, T, A],
+        interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[_,_]],
+        convertMap: Map[(LightTypeTag, LightTypeTag), Any],
+        listAskMap: Map[LightTypeTag, ASKLISTTC[_]]
+      ): G[A] = f(that.interpretImpl[H, T, A, E](program, interactMap, convertMap, listAskMap))
+    }
+  }
 
+  /** Convert the supplied abstract journey into the target type
+    *
+    * @param program - the uniform journey to be interpreted 
+    * @return the journey in it's new interpreted representation
+    */
   @silent("dead code")
   def interpret[H <: Needs[_,_],T, A](
     program: Uniform[H, T, A]

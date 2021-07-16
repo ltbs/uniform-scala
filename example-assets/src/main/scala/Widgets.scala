@@ -15,7 +15,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
   
   import bundle.all._
 
-  implicit val unitField = new FormField[Tag,Unit] {
+  implicit val unitField = new WebAsk[Tag,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
@@ -38,15 +38,15 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
   //   def render(in: A, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in.toString))
   // }
 
-  implicit val tellInt = new GenericWebTell[Tag, Int] {
+  implicit val tellInt = new WebTell[Tag, Int] {
     def render(in: Int, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in.toString))
   }
 
-  implicit val tellString = new GenericWebTell[Tag, String] {
+  implicit val tellString = new WebTell[Tag, String] {
     def render(in: String, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in))
   }
 
-  implicit val tellBoolean = new GenericWebTell[Tag, Boolean] {
+  implicit val tellBoolean = new WebTell[Tag, Boolean] {
     def render(in: Boolean, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in.toString))
   }
 
@@ -92,7 +92,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     }
   }
 
-  implicit val stringField = new FormField[Tag,String] {
+  implicit val stringField = new WebAsk[Tag,String] {
     def decode(out: Input): Either[ErrorTree,String] = out.toStringField().toEither
     def encode(in: String): Input = Input.one(List(in))
 
@@ -118,7 +118,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     }
   }
 
-  implicit val intField: FormField[Tag,Int] =
+  implicit val intField: WebAsk[Tag,Int] =
     stringField.simap(x => 
       {
         Rule.nonEmpty[String].apply(x) andThen
@@ -126,7 +126,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
       }.toEither
     )(_.toString)
 
-  implicit val booleanField = new FormField[Tag,Boolean] {
+  implicit val booleanField = new WebAsk[Tag,Boolean] {
     def decode(out: Input): Either[ErrorTree,Boolean] =
       out.toField[Boolean]{x: String =>
         Validated.catchOnly[IllegalArgumentException](x.toBoolean).leftMap(_ => ErrorMsg("invalid").toTree)
@@ -190,7 +190,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     )
   }
 
-  implicit val dateField = new FormField[Tag,LocalDate] {
+  implicit val dateField = new WebAsk[Tag,LocalDate] {
 
     def decode(out: Input): Either[ErrorTree,LocalDate] = {
 
