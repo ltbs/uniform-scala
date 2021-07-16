@@ -50,6 +50,15 @@ object Rule extends Quantifiable.ToQuantifiableOps {
   /** The simplest validation rule - accepts any value */
   def alwaysPass[A]: Rule[A] = AlwaysPass[A]()
 
+  case class AlwaysFail[A] private () extends Rule[A] {
+    def apply(in: A): Validated[ErrorTree, A] =
+      Validated.Invalid(error("impossible-to-continue"))
+  }
+
+  /** The simplest validation rule - accepts any value */
+  def alwaysFail[A]: Rule[A] = AlwaysFail[A]()
+
+
   case class LengthBetween[A: Quantifiable] private (min: Int, max: Int) extends Rule[A] {
     def apply(in: A): Validated[ErrorTree, A] =
       minLength[A](min).apply(in) andThen (maxLength[A](max).apply(_))
@@ -117,4 +126,5 @@ object Rule extends Quantifiable.ToQuantifiableOps {
 
   def forEachInList[A](inner: Rule[A]): Rule[List[A]] =
     ForEachInList[A](inner)
+
 }

@@ -1,43 +1,27 @@
 package ltbs.uniform
 package interpreters.logictable
 
-import shapeless._
-import cats.data._
-import validation._
+import cats.implicits._
+import ltbs.uniform.validation._
 
-case class LogicTableInterpreter[
-  SupportedTell <: HList,
-  SupportedAsk  <: HList
-]()(implicit
-  tellSummoner : TypeclassList[SupportedTell, TellRenderer],
-  askSummoner  : TypeclassList[SupportedAsk, SampleData]
-) extends Language[Logic, SupportedTell, SupportedAsk] {
+object LogicTableInterpreter extends MonadInterpreter[Either[ErrorTree, +?], LTInteraction, SampleData] {
 
-  override def interact[Tell, Ask](
-    id            : String,
-    t             : Tell,
-    default       : Option[Ask],
-    validation    : Rule[Ask],
-    customContent : Map[String,(String,List[Any])]
-  )( implicit
-    selectorTell : IndexOf[SupportedTell, Tell],
-    selectorAsk  : IndexOf[SupportedAsk, Ask]
-  ): Logic[Ask] = {
-    val tellStrings = tellSummoner.forType[Tell].apply(id, t).map {
-      s"$id (tell): " ++ _
-    }
-    val askSamples = askSummoner.forType[Ask].apply(id)
+  def monadInstance = implicitly[cats.Monad[Either[ErrorTree, +?]]]
 
-    EitherT {
-      WriterT {
-        askSamples.map { sample =>
-          (
-            tellStrings :+ s"$id ask: ${sample.toString}",
-            validation.either(sample)
-          )
-        }
-      }
-    }
-  }
+  override def askListImpl[A](
+    key: String,
+    askJourney: (Option[Int], List[A]) => Either[ErrorTree,A],
+    default: Option[List[A]],
+    validation: Rule[List[A]],
+    customContent: Map[String,(String, List[Any])],asker: SampleData[A]
+  ): Either[ErrorTree,List[A]] = validation.either(asker(key))
 
+  def interactImpl[T, A](
+    key: String,
+    tellValue: T,
+    default: Option[A],
+    validation: Rule[A],
+    customContent: Map[String,(String, List[Any])],
+    interaction: LTInteraction[T,A]
+  ) = validation.either(interaction.askRenderer(key).head)
 }

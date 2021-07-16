@@ -1,60 +1,70 @@
 package ltbs.uniform
 package common.web
 
-import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
-
+import scala.language.higherKinds
 import cats.implicits._
 
-object Presenter extends InferFormFieldProduct[String] with SampleFormFields {
+object Presenter extends InferFormFields[String] with SampleFormFields {
 
-  def renderProduct[A](
+  def renderAnd(
     pageKey: List[String],
-    fieldKey: List[String],    
-    path: Breadcrumbs,
-    values: Input,
+    fieldKey: List[String],
+    breadcrumbs: Breadcrumbs,
+    data: Input,
     errors: ErrorTree,
     messages: UniformMessages[String],
-    pfl: ProductFieldList[A, String]
+    members: Seq[(String, String)]
   ): String =
-    pfl.inner.map { case (subFieldId, f) =>
-      f(pageKey, fieldKey :+ subFieldId, path, values, errors, messages)
-    }.mkString
+    members.map(_._2).mkString("∧")
+
+  def renderOr(
+    pageKey: List[String],
+    fieldKey: List[String],
+    breadcrumbs: Breadcrumbs,
+    data: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[String],
+    alternatives: Seq[(String, Option[String])],
+    selected: Option[String]): String =
+    alternatives.flatMap(_._2).mkString("∨")
 
 }
 
 final case class TestCaseClass(a: Int, b: String, c: (Int, Int))
 
-class InferFormFieldSpec extends AnyFlatSpec with Matchers {
+class InferFormFieldSpec extends munit.FunSuite {
 
   import Presenter._
+  val renderer = implicitly[FormField[String, TestCaseClass]]
 
-  val renderer = implicitly[FormField[TestCaseClass, String]]
-
-  def testEncoding[A](in: A)(implicit codec: Codec[A]): org.scalatest.Assertion = {
+  def testEncoding[A](in: A)(implicit codec: Codec[A]) = {
     import codec._
-    decode(encode(in)) should be ((in).asRight[ErrorTree])
+    assertEquals(decode(encode(in)), (in).asRight[ErrorTree])
   }
 
-  "An inductively inferred FormField for a case class " should "encode correctly" in {
-    testEncoding(TestCaseClass(1,"test2", (12, 23)))
+  test("An inductively inferred FormField for a case class ") {
+    test ("should encode correctly") {
+      testEncoding(TestCaseClass(1,"test2", (12, 23)))
+    }
 
+    test ("should render correctly") {
+      assertEquals(
+        renderer.render(Nil, List("testRecord"), None, Nil, Input.empty, ErrorTree.empty, UniformMessages.noop),
+        Some("INT[testRecord.a]∧STRING[testRecord.b]∧INT[testRecord.c._1]∧INT[testRecord.c._2]")
+      )
+    }
+
+    test ("should instances should be inductively inferable for an either (coproduct)") {
+      val presentation = implicitly[FormField[String, Either[String, Int]]]
+
+      assertEquals(
+        presentation.render(Nil, List("testRecord"), None, Nil, Input.empty, ErrorTree.empty, UniformMessages.noop),
+        Some("STRING[testRecord.Left.value]∨INT[testRecord.Right.value]")
+      )
+
+      testEncoding("test".asLeft[Int])
+      testEncoding(12.asRight[Int])
+    }
   }
 
-  it should "render correctly" in {
-    renderer.render(List("testPage"), List("testRecord"), Nil, Input.empty, ErrorTree.empty, UniformMessages.noop) should be (
-      "INT[testRecord.a]STRING[testRecord.b]INT[testRecord.c._1]INT[testRecord.c._2]"
-    )
-  }
-
-  // it should "instances should be inductively inferable for an either (coproduct)" in {
-  //   type TestType = Either[String, Int]
-  //   val presentation = implicitly[FormField[TestType, String]]
-
-  //   presentation.render(List("testRecord"), Nil, Input.empty, ErrorTree.empty, UniformMessages.noop) should be (
-  //     "testRecord:Left,Right"
-  //   )
-
-  //   testEncoding("test".asLeft[Int])
-  //   testEncoding(12.asRight[Int])
-  // }
 }

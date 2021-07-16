@@ -1,22 +1,10 @@
 package ltbs.uniform
 
-import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
-
-class BestGuessMessagesSpec extends AnyFlatSpec with Matchers {
-  "BestGuessMessages" should "remove initial parts" in {
-    BestGuessMessages.apply("one.two.three") shouldBe ("Three")
+class BestGuessMessagesSpec extends munit.FunSuite {
+  test("BestGuessMessages.apply") {
+    assertEquals(BestGuessMessages.apply("remove.initial.parts"), "Parts")
+    assertEquals(BestGuessMessages.apply("camelCaseSentence"), "Camel Case Sentence")
+    assertEquals(BestGuessMessages.apply("TitleCaseSentence"), "Title Case Sentence")
+    assertEquals(BestGuessMessages.apply("Hyphenated-Sentence"), "Hyphenated Sentence")
   }
-
-  it should "process camel case" in {
-    BestGuessMessages.apply("camelCaseSentence") shouldBe ("Camel Case Sentence")
-  }
-
-  it should "process title case" in {
-    BestGuessMessages.apply("TitleCaseSentence") shouldBe ("Title Case Sentence")
-  }
-
-  it should "process hyphenated text" in {
-    BestGuessMessages.apply("Hyphenated-Sentence") shouldBe ("Hyphenated Sentence")
-  }
-
 }

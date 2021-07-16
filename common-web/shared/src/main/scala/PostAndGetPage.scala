@@ -1,14 +1,13 @@
 package ltbs.uniform
 package common.web
 
-import cats.implicits._
+import cats.syntax.eq._, cats.syntax.flatMap._, cats.syntax.applicative._
+import cats.instances.future.catsStdInstancesForFuture
 import concurrent.Future
 import scala.concurrent.ExecutionContext
 import validation._
 
-abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
-
-  def stats: FormFieldStats
+trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
 
   def codec: Codec[A]
 
@@ -16,30 +15,33 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
 
   def getPage(
     key: List[String],
+    tell: Option[T],
     state: DB,
     existing: Input,
     breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
-  )(implicit ec: ExecutionContext): Html
+  )(implicit ec: ExecutionContext): Option[Html]
 
   def postPage(
     key: List[String],
+    tell: Option[T], 
     state: DB,
     request: Input,
     errors: ErrorTree,
     breadcrumbs: Breadcrumbs,
     messages: UniformMessages[Html]
-  )(implicit ec: ExecutionContext): Html
+  )(implicit ec: ExecutionContext): Option[Html]
 
-  def apply(
+  override def apply(
     id: String,
-    tell: Html,
+    tell: Option[T],
     default: Option[A],
     validation: Rule[A],
-    messages: UniformMessages[Html]
-  ): WebMonad[A, Html] = new WebMonad[A, Html] {
-    def apply(pageIn: PageIn)(implicit ec: ExecutionContext): Future[PageOut[A, Html]] = {
-      import pageIn._
+    customContent: Map[String,(String,List[Any])] = Map.empty    
+  ): WebMonad[Html, A] = new WebMonad[Html, A] {
+    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, A]] = {
+      import pageIn.{messages => _, _}
+      val messages = pageIn.messages.withCustomContent(customContent)
       val currentId = pageIn.pathPrefix :+ id
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}
@@ -65,17 +67,15 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
 
             parsed match {
               case Right(valid) =>
-                pageIn.toPageOut(AskResult.Success[A, Html](valid)).copy (
+                pageIn.toPageOut(AskResult.Success[Html, A](valid)).copy (
                   breadcrumbs = currentId :: pageIn.breadcrumbs,
                   db = pageIn.state + (currentId -> localData.toUrlEncodedString)
                 ).pure[Future]
               case Left(error) =>
-                val html = AskResult.Payload[A, Html](
-                  tell,
-                  postPage(id :: Nil, state, localData, error, breadcrumbs, messages),
+                val html = AskResult.Payload[Html, A](
+                  postPage(id :: Nil, tell, state, localData, error, breadcrumbs, messages), 
                   error,
-                  messages,
-                  stats
+                  messages
                 )
                 pageIn.toPageOut(html).copy(
                   breadcrumbs = currentId :: pageIn.breadcrumbs
@@ -83,10 +83,10 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
             }
 
           case None =>
-            val html = AskResult.Payload[A, Html](
-              tell,
+            val html = AskResult.Payload[Html, A](
               getPage(
                 id :: Nil,
+                tell,
                 state,
                 dbInput.flatMap{_.toOption} orElse            // db
                   default.map{x => codec.encode(x)} getOrElse // default
@@ -95,8 +95,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
                 messages
               ),
               ErrorTree.empty,
-              messages,
-              stats
+              messages
             )
             pageIn.toPageOut(html).copy(
               breadcrumbs =  currentId :: pageIn.breadcrumbs
@@ -104,7 +103,7 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
         }
       } else if (targetIdP.startsWith(currentId) && customRouting.isDefinedAt(residual)) {
         val residualData = customRouting(residual)
-        pageIn.toPageOut(AskResult.Success[A, Html](residualData)).copy(
+        pageIn.toPageOut(AskResult.Success[Html, A](residualData)).copy(
           db = state + (currentId -> codec.encode(residualData).toUrlEncodedString)
         ).pure[Future]
       } else {
@@ -112,50 +111,14 @@ abstract class PostAndGetPage[A, Html] extends WebMonadConstructor[A, Html] {
           dbObject match {
             case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && !breadcrumbs.contains(targetId) =>
               // they're replaying the journey
-              pageIn.toPageOut(AskResult.Success[A,Html](data)).copy(
+              pageIn.toPageOut(AskResult.Success[Html,A](data)).copy(
                 breadcrumbs = currentId :: pageIn.breadcrumbs
               )
             case _ =>
-              pageIn.toPageOut(AskResult.GotoPath[A,Html](currentId))
+              pageIn.toPageOut(AskResult.GotoPath[Html,A](currentId))
           }
         }
       }
     }
   }
-}
-
-class SimplePostAndGetPage[A,Html](
-  fieldIn: FormField[A, Html]
-) extends PostAndGetPage[A, Html] {
-
-    def stats: FormFieldStats = fieldIn.stats
-
-    def codec: Codec[A] = fieldIn
-
-    def getPage(
-      key: List[String],
-      state: DB,
-      existing: Input,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
-    )(implicit ec: ExecutionContext): Html =
-      fieldIn.render(key, key.last :: Nil, breadcrumbs, existing, ErrorTree.empty, messages)
-
-    def postPage(
-      key: List[String],
-      state: DB,
-      request: Input,
-      errors: ErrorTree,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
-    )(implicit ec: ExecutionContext): Html =
-      fieldIn.render(key, key.last :: Nil, breadcrumbs, request, errors, messages)
-}
-
-object PostAndGetPage {
-
-  def apply[A,Html](
-    fieldIn: FormField[A, Html]
-  ): WebMonadConstructor[A, Html] = new SimplePostAndGetPage[A, Html](fieldIn)
-
 }

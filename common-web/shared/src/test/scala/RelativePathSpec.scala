@@ -1,30 +1,40 @@
 package ltbs.uniform
 package common.web
 
-import org.scalatest._, flatspec.AnyFlatSpec, matchers.should.Matchers
 import cats.implicits._
 
-class RelativePathSpec extends AnyFlatSpec with Matchers {
+class RelativePathSpec extends munit.FunSuite {
 
-  "removeCommon" should "be correct for example cases" in {
-    removeCommon(List("is-public", "aoeu"), List("is-public")) should be ((List("aoeu"),Nil))
-    removeCommon(List("is-public"), List("is-public", "aoeu")) should be ((Nil, List("aoeu")))
-    removeCommon(List("is-public"), List("beard-style")) should be ((List("is-public"), List("beard-style")))        
+  test("removeCommon should be correct for example cases") {
+    assertEquals(
+      removeCommon(List("is-public", "aoeu"), (List("is-public"))),
+      (List("aoeu"), Nil)
+    )
+    assertEquals(
+      removeCommon(List("is-public"), List("is-public", "aoeu")),
+      (Nil, List("aoeu"))
+    )
+    assertEquals(
+      removeCommon(List("is-public"), List("beard-style")),
+      (List("is-public"), List("beard-style"))
+    )
   }
 
-  "relativePath" should "be correct for parent" in {
-    relativePath(List("is-public", "aoeu"), List("is-public")) should be ("..")
-  }
+  test("relativePath") {
+    test ("should be correct for parent") {
+      assertEquals(relativePath(List("is-public", "aoeu"), List("is-public")), "..")
+    }
 
-  it should "be correct for child" in {
-    relativePath(List("is-public"), List("is-public", "aoeu")) should be ("is-public/aoeu")
-  }
+    test("should be correct for child") {
+      assertEquals(relativePath(List("is-public"), List("is-public", "aoeu")), "is-public/aoeu")
+    }
 
-  it should "be correct for sibling" in {
-    relativePath(List("is-public"), List("beard-style")) should be ("beard-style")
-  }
+    test("should be correct for sibling") {
+      assertEquals(relativePath(List("is-public"), List("beard-style")), "beard-style")
+    }
 
-  it should "be correct for example case" in {
-    relativePath(List("evidence", "add", "add"), List("evidence")) should be ("../..")
-  }  
+    test("should be correct for example case") {
+      assertEquals(relativePath(List("evidence", "add", "add"), List("evidence")), "../..")
+    }
+  }
 }

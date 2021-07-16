@@ -1,4 +1,4 @@
-package ltbs.uniform
+/*package ltbs.uniform
 package examples
 package js
 
@@ -86,3 +86,4 @@ object SubjourneyApp extends App {
   def submit(): Future[Unit] = runner.submit()
 
 }
+*/
