@@ -162,7 +162,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core" % "2.6.1",
-      "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.0.0",
       "org.typelevel" %%% "simulacrum" % "1.0.0",
       "dev.zio" %%% "izumi-reflect" % "1.0.0-M2",
       "org.typelevel" %%% "cats-effect" % "2.1.3" % "test"
