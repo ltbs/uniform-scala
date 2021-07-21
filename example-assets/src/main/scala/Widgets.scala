@@ -29,6 +29,24 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     ): Option[Tag] = tell
   }
 
+  implicit val nothingField = new WebAsk[Tag,Nothing] {
+    def decode(out: Input): Either[ltbs.uniform.ErrorTree,Nothing] =
+      Left(ErrorMsg("tried to decode to nothing").toTree)
+
+    def encode(in: Nothing): Input =
+      sys.error("encoding nothing is not possible!")
+
+    def render(
+      pageKey: List[String],
+      fieldKey: List[String],
+      tell: Option[Tag],
+      path: Breadcrumbs,
+      data: Input,
+      errors: ErrorTree,
+      messages: UniformMessages[Tag]
+    ): Option[Tag] = tell
+  }
+
   implicit class RichError(errors: ErrorTree) {
     def cls(className: String): String =
       if (errors.definedAtRoot) { className } else ""
@@ -59,7 +77,9 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
           span( cls := "govuk-visually-hidden")(messages("error"),":"), 
           error.prefixWith(List(key)).render(messages)
         )},
-      inner
+      inner,
+      br(),
+      button(tpe:="submit", cls:="govuk-button")(messages({key :+ "save.and.continue"}.mkString(".")))
     )
 
   def subfieldSurround(key: List[String], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag*): Tag =
@@ -86,6 +106,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
 
 
   def optLabel(key: List[String], tell: Option[Tag], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag): Tag = {
+    println(key)
     key match {
       case _ :: Nil => inner
       case _ => fieldSurround(key, tell, errors, messages)(inner)
@@ -107,7 +128,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     ): Option[Tag] = Some{
 
       val existingValue: String = data.valueAtRoot.flatMap{_.headOption}.getOrElse("")
-      optLabel(fieldKey, tell, errors, messages) {
+      fieldSurround(fieldKey, tell, errors, messages) {
         input(
           cls   := s"govuk-input ${errors.cls("govuk-input--error")}",
           id    := fieldKey.mkString("_"),
@@ -117,6 +138,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
       }
     }
   }
+  
 
   implicit val intField: WebAsk[Tag,Int] =
     stringField.simap(x => 

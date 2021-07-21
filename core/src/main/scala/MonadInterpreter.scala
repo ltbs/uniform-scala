@@ -58,6 +58,16 @@ trait MonadInterpreter[F[+_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter
           customContent,
           interactMap((tellTag.tag, askTag.tag)).asInstanceOf[INTERACTTC[T, A]]
         )
+      case U.End(key, value, customContent, tellTag: Tag[T]) =>
+        val m = interactMap((tellTag.tag, Tag[Nothing].tag)).asInstanceOf[INTERACTTC[T, Nothing]]
+        interactImpl[T, Nothing](
+          key,
+          value,
+          None,
+          Rule.alwaysFail,
+          customContent,
+          m
+        )
       case U.Pure(v) =>
         v.pure[F]
       case U.Subjourney(path, inner) =>

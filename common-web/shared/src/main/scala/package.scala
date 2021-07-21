@@ -59,6 +59,10 @@ package web {
       case (x::xs, y::ys) if x === y => removeCommon(xs, ys)
       case a => a
     }
+
+    implicit def tellUnit[HTML]: WebTell[HTML, Unit] = new WebTell[HTML, Unit] {
+      def render(in: Unit, key: String, messages: UniformMessages[HTML]): Option[HTML] = None
+    }
   }
 
 }
@@ -82,10 +86,6 @@ package object web extends webcommon {
   implicit val orderLocalDateTime = new cats.Order[LocalDateTime] {
     def compare(x: LocalDateTime, y: LocalDateTime): Int =
       x compareTo y
-  }
-
-  implicit def tellUnit[HTML]: WebTell[HTML, Unit] = new WebTell[HTML, Unit] {
-    def render(in: Unit, key: String, messages: UniformMessages[HTML]): Option[HTML] = None
   }
   
 }
