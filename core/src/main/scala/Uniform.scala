@@ -16,9 +16,8 @@ trait Uniform[-R <: Needs[_, _], -T, +A] {
     * ask[Salary]("salary") when user.isEmployed
     * }}}
     */
-  def when(predicate: => Boolean): Uniform[R, T, Option[A]] = this.map{ v =>
-    if (predicate) Some(v) else None
-  }
+  def when(predicate: => Boolean): Uniform[R, T, Option[A]] = 
+    if (predicate) this.map(x => Some(x)) else Uniform.Pure[Option[A]](None: Option[A])
 
   /** Returns None unless the predicate given is true, will short
     * circuit if possible.
@@ -113,45 +112,13 @@ object Uniform {
     )
   }
 
-  // case class Tell[A](
-  //   key: String,
-  //   value: A,
-  //   customContent: IMap[String,(String,List[Any])],
-  //   tag: Tag[A]
-  // ) extends Uniform[Needs.Tell[A], A, Unit] {
-  //   def customContent(from: String, to: String, args: Any*): Tell[A] = this.copy (
-  //     customContent = customContent + ((from,(to, args.toList)))
-  //   )
-  // }
-
-  // case class Ask[A](
-  //   key: String,
-  //   default: Option[A],
-  //   validation: Rule[A],
-  //   customContent: IMap[String,(String,List[Any])],
-  //   tag: Tag[A]
-  // ) extends Uniform[Needs.Ask[A], Unit, A] {
-  //   def customContent(from: String, to: String, args: Any*): Ask[A] = this.copy (
-  //     customContent = customContent + ((from,(to, args.toList)))
-  //   )
-  // }
-
-  case class EndTell[A](
+  case class End[T](
     key: String,
-    value: A,
+    value: T,
     customContent: IMap[String,(String,List[Any])],
-    tag: Tag[A]
-  ) extends Uniform[Needs[A,Nothing], A, Nothing] {
-    def customContent(from: String, to: String, args: Any*): EndTell[A] = this.copy (
-      customContent = customContent + ((from,(to, args.toList)))
-    )
-  }
-
-  case class End[A](
-    key: String,
-    customContent: IMap[String,(String,List[Any])]
-  ) extends Uniform[Needs[Unit, Nothing], Unit, Nothing] {
-    def customContent(from: String, to: String, args: Any*): End[A] = this.copy (
+    tag: Tag[T]
+  ) extends Uniform[Needs.Interact[T,Nothing], T, Nothing] {
+    def customContent(from: String, to: String, args: Any*): End[T] = this.copy (
       customContent = customContent + ((from,(to, args.toList)))
     )
   }
@@ -171,6 +138,20 @@ object Uniform {
     customContent: IMap[String,(String,List[Any])],
     tag: Tag[A]
   ) extends Uniform[R with Needs.AskList[A], Any, List[A]]
+
+  object ListOf {
+
+    sealed trait ListAction
+    sealed trait ListActionRow extends ListAction
+    sealed trait ListActionGeneral extends ListAction
+
+    object ListAction {
+      case class Delete(index: Int) extends ListActionRow
+      case class Edit(index: Int) extends ListActionRow
+      case object Continue extends ListActionGeneral
+      case object Add extends ListActionGeneral
+    }
+  }
 
   case class Convert[F[_], A](
     key: String, 

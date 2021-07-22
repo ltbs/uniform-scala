@@ -147,7 +147,7 @@ package object uniform
     value: T,
     customContent: Map[String,(String,List[Any])]
   ): Uniform[Needs.Interact[T, Nothing], T, Nothing] =
-    Uniform.EndTell(
+    Uniform.End(
       key,
       value,
       customContent,
@@ -159,14 +159,16 @@ package object uniform
     customContent: Map[String,(String,List[Any])]
   ): Uniform[Needs.Interact[Unit, Nothing], Unit, Nothing] = Uniform.End(
     key,
-    customContent
+    (),
+    customContent,
+    implicitly[Tag[Unit]]
   )
 
   def end[A: Tag](
     key: String,
     value: A
   ): Uniform[Needs.Interact[A,Nothing], A, Nothing] =
-    Uniform.EndTell(
+    Uniform.End(
       key,
       value,
       Map.empty,
@@ -175,38 +177,12 @@ package object uniform
 
   def end(
     key: String
-  ): Uniform[Needs[Unit, Nothing], Unit, Nothing] = Uniform.End(
+  ): Uniform[Needs.Interact[Unit, Nothing], Unit, Nothing] = Uniform.End(
     key,
-    Map.empty
+    (), 
+    Map.empty,
+    implicitly[Tag[Unit]]
   )
-
-  def endIf[T: Tag](
-    pred: Boolean,
-    key: String,
-    value: T,
-    customContent: Map[String,(String,List[Any])]
-  ): Uniform[Needs.Interact[T, Nothing], T, Unit] =
-    if(pred) end(key, value, customContent) else Uniform.Pure(())
-
-  def endIf[T: Tag](
-    pred: Boolean,
-    key: String,
-    value: T
-  ): Uniform[Needs.Interact[T, Nothing], T, Unit] =
-    if(pred) end(key, value, Map.empty) else Uniform.Pure(())
-
-  def endIf(
-    pred: Boolean,
-    key: String,
-    customContent: Map[String,(String,List[Any])]
-  ): Uniform[Needs.Interact[Unit,Nothing], Unit, Unit] =
-    if(pred) end(key, customContent) else Uniform.Pure(())
-
-  def endIf(
-    pred: Boolean,
-    key: String
-  ): Uniform[Needs.Interact[Unit,Nothing], Unit, Unit] =
-    if(pred) end(key) else Uniform.Pure(())
 
   def pure[A](value: A): Uniform[Needs[_,_], Any, A] = Uniform.Pure(value)
 
