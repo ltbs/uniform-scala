@@ -14,12 +14,7 @@ package object beardtax {
   def beardProgram[F[_] : Monad : TagK](
     hod: Hod[F]
   ) = for {
-    // beardHeight <- (
-    //   ask[Int]("chin-height"),
-    //   ask[Int]("sideburn-height")
-    // ).mapN{case (a,b) => a + b}
-    //_ <- convertWithKey("rec-height")(hod.recordBeardHeight(beardHeight))
-
+    _ <- end("protestant-kickout") when ask[Boolean]("doubt-transubstantiation")
     memberOfPublic <- interact[Option[MemberOfPublic]]("is-public", 42)
     beardStyle     <- ask[BeardStyle]("beard-style", customContent = Map(
       "beard-style" -> {memberOfPublic match {
