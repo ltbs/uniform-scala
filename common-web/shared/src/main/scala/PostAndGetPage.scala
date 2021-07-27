@@ -48,7 +48,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
 
       lazy val dbObject: Option[Either[ErrorTree,A]] = {
         val fromState = dbInput map {_ >>= codec.decode >>= validation.either}
-        if (config.leapAhead) {
+        if (false && config.leapAhead) {
           fromState orElse default.map(validation.either)
         } else {
           fromState
