@@ -61,4 +61,16 @@ trait Primatives[Html] {
       )
   }
   
+  def subjourneyWM[B](
+    path: String*
+  )(
+    inner: WebMonad[Html, B]
+  ): WebMonad[Html, B] = {
+    for {
+      _      <- pushPathPrefix(path.toList)
+      result <- inner
+      _      <- popPathPrefix(path.size)
+    } yield result
+  }
+
 }

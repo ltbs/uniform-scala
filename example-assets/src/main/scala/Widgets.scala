@@ -34,10 +34,6 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
       if (errors.definedAtRoot) { className } else ""
   }
 
-  // implicit def autoTell[A] = new GenericWebTell[Tag, A] {
-  //   def render(in: A, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in.toString))
-  // }
-
   implicit val tellInt = new WebTell[Tag, Int] {
     def render(in: Int, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in.toString))
   }
@@ -59,7 +55,9 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
           span( cls := "govuk-visually-hidden")(messages("error"),":"), 
           error.prefixWith(List(key)).render(messages)
         )},
-      inner
+      inner,
+      br(), br(),
+      button(tpe:="submit", cls:="govuk-button")(messages({key :+ "save.and.continue"}.mkString(".")))
     )
 
   def subfieldSurround(key: List[String], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag*): Tag =
