@@ -1,7 +1,7 @@
 package ltbs.uniform
 package common.web
 
-import validation.Rule
+import validation._
 import concurrent._
 import cats.implicits._
 
@@ -14,7 +14,7 @@ trait WebAskList[Html, A] extends Primatives[Html] {
     deletionIndex: Int
   ): WebMonad[Html, Boolean] = true.pure[WebMonad[Html, *]]
 
-  def menuPage: WebInteraction[Html, ListingTable[A], WebAskList.ListAction] 
+  def menuPage: WebInteraction[Html, ListingTable[A], WebAskList.ListAction]
   implicit def codec: Codec[List[A]]
 
   def apply(
@@ -25,8 +25,18 @@ trait WebAskList[Html, A] extends Primatives[Html] {
     customContent: Map[String,(String, List[Any])],
   ): WebMonad[Html, List[A]] = new WebMonad[Html, List[A]] {
 
-    val branchValidation: Rule[WebAskList.ListAction] = Rule.alwaysPass // TODO
-    // val elementValidation: Rule[A] = ??? // TODO
+    val subRules = validation.subRules
+    val (min, max) = subRules.collect {
+      case Rule.MaxLength(h, _) => (0, h)
+      case Rule.MinLength(l,_) => (l,Int.MaxValue)
+      case Rule.LengthBetween(l,h) => (l,h)
+    }.foldLeft((0, Int.MaxValue)){
+      case ((al, ah),(bl, bh)) => (Math.max(al, bl), Math.min(ah, bh))
+    }
+
+    val elementValidation: Rule[A] = subRules.collect {
+      case Rule.ForEachInList(r) => r
+    }.combineAll
 
     def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html,List[A]]] = {
 
@@ -37,38 +47,58 @@ trait WebAskList[Html, A] extends Primatives[Html] {
           case _ => default.getOrElse(Nil)
         }
 
-        menuPage(key, new ListingTable(data).some, None, branchValidation, customContent) flatMap {
-          case ListAction.Continue =>
-            data.pure[WebMonad[Html, *]]
+        val branchValidation = {
+          import cats.data.Validated.Valid
+          Rule.cond[ListAction]({
+            case ListAction.Add if data.size >= max => false
+            case _ => true
+          }, "maxLength") followedBy {
+            case ListAction.Continue => validation(data).map { _ => ListAction.Continue }
+            case x => Valid(x)
+          }
+        }
 
-          case ListAction.Add =>
-            subjourneyWM(Seq(key, "add"):_*)(for {
+        if (data.isEmpty && min > 0) {
+          subjourneyWM(Seq(key, "add"):_*)(for {
               r <- askJourney(None, data)
               _ <- db(List(s"${key}-zzdata")) = data :+ r
               _ <- db.deleteRecursive(List(key))
               _ <- goto[Unit](key)
             } yield (List.empty[A]))
+        } else {
+          menuPage(key, new ListingTable(data).some, None, branchValidation, customContent) flatMap {
+            case ListAction.Continue =>
+              data.pure[WebMonad[Html, *]]
 
-          case ListAction.Delete(index) =>
-            subjourneyWM(Seq(key, "delete") :_ *)(for {
-              confirm <- deleteConfirmationJourney(data, index)
-              _ <- confirm match {
-                case true =>
-                  db(List(s"${key}-zzdata")) = data.deleteAtIndex(index)
-                case false =>
-                  ().pure[WebMonad[Html, *]]
-              }
-              _ <- db.deleteRecursive(List(key))
-              _ <- goto[Unit](key)
-            } yield (List.empty[A]))
+            case ListAction.Add =>
+              subjourneyWM(Seq(key, "add"):_*)(for {
+                r <- askJourney(None, data)
+                _ <- db(List(s"${key}-zzdata")) = data :+ r
+                _ <- db.deleteRecursive(List(key))
+                _ <- goto[Unit](key)
+              } yield (List.empty[A]))
 
-          case ListAction.Edit(index) => {
-            subjourneyWM(Seq(key, "edit", index.toString) :_ *)(for {
-              r <- askJourney(Some(index), data)
-              _ <- db(List(s"${key}-zzdata")) = data.replaceAtIndex(index, r)
-              _ <- db.deleteRecursive(List(key))
+            case ListAction.Delete(index) =>
+              subjourneyWM(Seq(key, "delete") :_ *)(for {
+                confirm <- deleteConfirmationJourney(data, index)
+                _ <- confirm match {
+                  case true =>
+                    db(List(s"${key}-zzdata")) = data.deleteAtIndex(index)
+                  case false =>
+                    ().pure[WebMonad[Html, *]]
+                }
+                _ <- db.deleteRecursive(List(key))
+                _ <- goto[Unit](key)
+              } yield (List.empty[A]))
+
+            case ListAction.Edit(index) => {
+              subjourneyWM(Seq(key, "edit", index.toString) :_ *)(for {
+                r <- askJourney(Some(index), data)
+                _ <- db(List(s"${key}-zzdata")) = data.replaceAtIndex(index, r)
+                _ <- db.deleteRecursive(List(key))
               _ <- goto[Unit](key)
-            } yield (List.empty[A]))
+              } yield (List.empty[A]))
+            }
           }
         }
       }.apply(pageIn)
@@ -83,7 +113,7 @@ object WebAskList {
   sealed trait ListActionGeneral extends ListAction
 
   /** A representation of a list used for WebTell. This will typically
-    * contain links as well as the data (for edit and delete) 
+    * contain links as well as the data (for edit and delete)
     */
   final class ListingTable[A](val value: List[A]) extends AnyVal
 
