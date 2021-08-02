@@ -38,7 +38,7 @@ package object uniform
 
   implicit class RichInput(input: Input) {
 
-    /** Generate a UTF-8 URL encoded String. */    
+    /** Generate a UTF-8 URL encoded String. */
     def toUrlEncodedString: String = {
       input
         .flatMap { case (k, vs) =>
@@ -51,11 +51,11 @@ package object uniform
 
     /** Take the string at the root of the input tree and pass it
       * through the transformation pipeline provided. This is usually
-      * done when constructing a codec for a datatype. 
-      * 
-      * For example - 
+      * done when constructing a codec for a datatype.
+      *
+      * For example -
       * {{{
-      * val someBool: Validated[ErrorTree, Boolean] = 
+      * val someBool: Validated[ErrorTree, Boolean] =
       *   someInput.toField[Boolean]{x: String =>
       *     Validated.catchOnly[IllegalArgumentException](
       *       x.toBoolean
@@ -86,7 +86,7 @@ package object uniform
         input.valueAt(key).flatMap(_.headOption.map(_.trim)).getOrElse("")
       ).leftMap(_.prefixWith(key))
 
-    /** Extract a string from a child element */    
+    /** Extract a string from a child element */
     def stringSubField(
       key: String,
       pipeline: Rule[String] = {Validated.Valid(_)}
@@ -130,7 +130,7 @@ package object uniform
   def tell[T: Tag](
     key: String,
     value: T,
-    customContent: Map[String,(String,List[Any])] = Map.empty    
+    customContent: Map[String,(String,List[Any])] = Map.empty
   ): Uniform[Needs.Interact[T,Unit], T, Unit] =
     Uniform.Interact(
       key,
@@ -139,7 +139,7 @@ package object uniform
       Rule.alwaysPass[Unit],
       customContent,
       implicitly[Tag[T]],
-      implicitly[Tag[Unit]],       
+      implicitly[Tag[Unit]]
     )
 
   def end[T: Tag](
@@ -179,7 +179,7 @@ package object uniform
     key: String
   ): Uniform[Needs.Interact[Unit, Nothing], Unit, Nothing] = Uniform.End(
     key,
-    (), 
+    (),
     Map.empty,
     implicitly[Tag[Unit]]
   )
@@ -200,9 +200,8 @@ package object uniform
 
   def askList[A](
     key: String,
-    default: Option[List[A]] = None, 
+    default: Option[List[A]] = None,
     validation: Rule[List[A]] = Rule.alwaysPass[List[A]]
   ) = new AskListBuilder[A](key, default, validation)
 
 }
-

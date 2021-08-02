@@ -11,7 +11,6 @@ object UniformLogicTest {
     a <- ask[String]("one")
     b <- ask[Boolean]("two", validation = Rule.alwaysPass)
     c <- ask[LocalDate]("three")
-    _ <- end("four", (a,b,c))
   } yield (a,b, c)
 
   implicit val stringSample = SampleData.instance("foo")
