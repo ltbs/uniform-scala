@@ -15,6 +15,8 @@ trait TellRenderer[A] {
   def apply(key: String, value: A): List[String]
 }
 
+case class SampleListQty[A](value: Int) extends AnyVal
+
 case class LTInteraction[T, A](
   tellRenderer: TellRenderer[T],
   askRenderer: SampleData[A]
@@ -25,4 +27,10 @@ object LTInteraction {
     implicit tellRenderer: TellRenderer[T],
     askRenderer: SampleData[A]
   ): LTInteraction[T,A] = LTInteraction(tellRenderer, askRenderer)
+
+  implicit def fromTellNothing[T](
+    implicit tellRenderer: TellRenderer[T],
+    askRenderer: SampleData[Nothing]
+  ): LTInteraction[T,Nothing] = LTInteraction[T, Nothing](tellRenderer, askRenderer)
+  
 }
