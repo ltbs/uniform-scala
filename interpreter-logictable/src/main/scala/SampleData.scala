@@ -28,9 +28,12 @@ object LTInteraction {
     askRenderer: SampleData[A]
   ): LTInteraction[T,A] = LTInteraction(tellRenderer, askRenderer)
 
+  val nothingRenderer: SampleData[Nothing] = new SampleData[Nothing] {
+    override def apply(key: String): List[Nothing] = List.empty[Nothing]
+  }
+
   implicit def fromTellNothing[T](
     implicit tellRenderer: TellRenderer[T],
-    askRenderer: SampleData[Nothing]
-  ): LTInteraction[T,Nothing] = LTInteraction[T, Nothing](tellRenderer, askRenderer)
+  ): LTInteraction[T,Nothing] = LTInteraction[T, Nothing](tellRenderer, nothingRenderer)
   
 }
