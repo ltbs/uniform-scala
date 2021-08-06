@@ -30,14 +30,7 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
   override def subjourneyImpl[A](
     path: List[String],
     inner: WebMonad[Html, A]
-  ): WebMonad[Html, A] = {
-    for {
-      _      <- pushPathPrefix(path)
-      result <- inner
-      _      <- popPathPrefix(path.size)
-    } yield result
-  } // why is there no << defined, even in haskell?
-  // I suspect we can't use <* here as we don't want to discard the monadic side-effect
+  ): WebMonad[Html, A] = subjourneyWM(path:_*)(inner)
 
   override def askListImpl[A](
     key: String,
