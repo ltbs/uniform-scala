@@ -2,7 +2,7 @@ package ltbs.uniform
 
 import scala.language.higherKinds
 
-sealed trait Needs[T, +A]
+sealed trait Needs[-T, +A]
 
 object Needs {
 
