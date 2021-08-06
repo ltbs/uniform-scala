@@ -8,12 +8,13 @@ object SampleFormFields extends SampleFormFields
 
 trait SampleFormFields {
 
-  implicit val twirlUnitField = new FormField[String,Unit] {
+  implicit val twirlUnitField = new WebAsk[String,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
       @silent("never used") pageKey: List[String],
-      fieldKey: List[String],      
+      fieldKey: List[String],
+      tell: Option[String],
       path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
@@ -21,11 +22,11 @@ trait SampleFormFields {
     ): Option[String] = Some("")
   }
 
-
-  implicit val stringFieldR = new FormField[String, String] {
+  implicit val stringFieldR = new WebAsk[String, String] {
     def render(
       @silent("never used") pageKey: List[String],
-      fieldKey: List[String],      
+      fieldKey: List[String],
+      tell: Option[String],
       @silent("never used") path: Breadcrumbs,
       @silent("never used") data: Input,
       @silent("never used") errors: ErrorTree,
@@ -49,7 +50,7 @@ trait SampleFormFields {
 
   }
 
-  implicit val intFieldR = new FormField[String, Int] {
+  implicit val intFieldR = new WebAsk[String, Int] {
     override def codec: Codec[Int] = stringFieldR.
       simap(x =>
         Either.catchOnly[NumberFormatException](x.toInt)
@@ -57,8 +58,9 @@ trait SampleFormFields {
       )(_.toString)
 
     def render(
-      @silent("never used") pageKey: List[String],     
+      @silent("never used") pageKey: List[String],
       fieldKey: List[String],
+      tell: Option[String],
       @silent("never used") path: Breadcrumbs,
       @silent("never used") data: Input,
       @silent("never used") errors: ErrorTree,

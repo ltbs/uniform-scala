@@ -78,7 +78,36 @@ object WebInteraction {
     }
   }
 
-  implicit def fromAsk[Html, A](
+  implicit def fromTellNothing[Html, T](
+    implicit gwt: WebTell[Html, T],
+    ff: WebAsk[Html, Nothing]    
+  ): WebInteraction[Html, T, Nothing] = new PostAndGetPage[Html, T, Nothing] {
+    def codec: Codec[Nothing] = ff.codec
+    override def getPage(
+      key: List[String],
+      tell: Option[T],
+      state: DB,
+      existing: Input,
+      breadcrumbs: Breadcrumbs,
+      messages: UniformMessages[Html]
+    )(implicit ec: ExecutionContext): Option[Html] = {
+      val tellHtml = tell.flatMap(gwt.render(_, key.last, messages))
+      ff.render(key, key, tellHtml, breadcrumbs, existing, ErrorTree.empty, messages)
+    }
+
+    override def postPage(
+      key: List[String],
+      tell: Option[T],
+      state: DB,
+      request: Input,
+      errors: ErrorTree,
+      breadcrumbs: Breadcrumbs,
+      messages: UniformMessages[Html]
+    )(implicit ec: ExecutionContext): Option[Html] =
+      getPage(key, tell, state, request, breadcrumbs, messages)
+  }
+
+  implicit def fromAskUnit[Html, A](
     implicit ff: WebAsk[Html, A]
   ): WebInteraction[Html, Unit, A] = new PostAndGetPage[Html, Unit, A] {
     def codec: Codec[A] = ff.codec

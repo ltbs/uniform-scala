@@ -5,7 +5,7 @@ import common.web._
 import concurrent._
 import org.querki.jquery._
 
-abstract class JsInterpreter[Html](selector: JQuery)(implicit ec: ExecutionContext) extends GenericWebInterpreter2[Html] {
+abstract class JsInterpreter[Html](selector: JQuery)(implicit ec: ExecutionContext) extends WebInterpreter[Html] {
 
   var key: List[String] = Nil
   var state: DB = DB.empty
@@ -15,13 +15,12 @@ abstract class JsInterpreter[Html](selector: JQuery)(implicit ec: ExecutionConte
 
   def renderFrame(
     key: List[String], 
-    tell: Option[Html],
-    ask: Option[Html],
+    html: Option[Html],
     breadcrumbs: Breadcrumbs, 
     errors: ErrorTree,
     messages: UniformMessages[Html]
   ): Future[Unit] = Future{
-    selector.html(render(tell) ++ render(ask))
+    selector.html(render(html))
     $("#errors").html(errors.toString)
     ()
   }
@@ -31,7 +30,7 @@ abstract class JsInterpreter[Html](selector: JQuery)(implicit ec: ExecutionConte
     Input.fromUrlEncodedString(dataStringEncoded)
   }
 
-  implicit class JsWebMonad[A](wm: WebMonad[A, Html]) {
+  implicit class JsWebMonad[A](wm: WebMonad[Html, A]) {
     def run(
       config: JourneyConfig = JourneyConfig()
     )(
@@ -47,8 +46,8 @@ abstract class JsInterpreter[Html](selector: JQuery)(implicit ec: ExecutionConte
           case AskResult.GotoPath(targetPath) =>
             key = targetPath            
             run(config)(request.copy(targetId = targetPath, breadcrumbs = pathOut, request = None, state = dbOut, pathPrefix = Nil))
-          case AskResult.Payload(tell, ask, errors, messagesOut) =>
-            renderFrame(key, tell, ask, crumbs, errors, messagesOut)
+          case AskResult.Payload(html, errors, messagesOut) =>
+            renderFrame(key, html, crumbs, errors, messagesOut)
           case AskResult.Success(result) =>
             Future{selector.html(result.toString); ()}
         }

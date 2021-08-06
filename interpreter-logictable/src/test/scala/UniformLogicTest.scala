@@ -9,14 +9,15 @@ object UniformLogicTest {
 
   val journey = for {
     a <- ask[String]("one")
-    b <- ask[Boolean]("two", validation = Rule.alwaysPass)
+    b <- ask[Boolean]("two", validation = Rule.cond(identity, "false not accepted"))
     c <- ask[LocalDate]("three")
-    _ <- end("four", (a,b,c))
-  } yield (a,b, c)
+    dx <- askList[LocalDate]("mylist") { case _ => ask[LocalDate]("myited") }
+  } yield (a,b, c, dx)
 
-  implicit val stringSample = SampleData.instance("foo")
 
-  implicit val booleanSample = SampleData.instance(true)
+  implicit val stringSample = SampleData.instance("foo", "bar")
+
+  implicit val booleanSample = SampleData.instance(true, false)
 
   implicit val dateSample = SampleData.instance(LocalDate.now)
 
@@ -26,14 +27,16 @@ object UniformLogicTest {
     def apply(key: String): List[Nothing] = Nil
   }
 
+  implicit val dateSamplieSize = SampleListQty[LocalDate](3)
+
   def main(args: Array[String]): Unit = {
-    val output = LogicTableInterpreter.interpret(journey)
+    val output = LogicTableInterpreter.interpret(journey).value.value
     
-    output match {
+    output.foreach {
       case Left(x) => println(s"journey left output: $x")
       case Right(y) => println(s"journey right output: $y")
     }
-
+    
   }
 
 }

@@ -9,9 +9,10 @@ import izumi.reflect.Tag
 import validation.Rule
 import com.github.ghik.silencer.silent
 
-trait MonadInterpreter[F[+_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[F, INTERACTTC, ASKLISTTC]{
+trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[F, INTERACTTC, ASKLISTTC]{
 
   implicit def monadInstance: cats.Monad[F]
+  implicit def functorInstance: cats.Functor[F] = monadInstance
 
   protected def interactImpl[T,A](
     key: String,
@@ -58,6 +59,17 @@ trait MonadInterpreter[F[+_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter
           customContent,
           interactMap((tellTag.tag, askTag.tag)).asInstanceOf[INTERACTTC[T, A]]
         )
+      case U.End(key, value, customContent, tellTag: Tag[T]) =>
+        val m = interactMap((tellTag.tag, Tag[Nothing].tag)).asInstanceOf[INTERACTTC[T, Nothing]]
+        val e = interactImpl[T, Nothing](
+          key,
+          value,
+          None,
+          Rule.alwaysFail,
+          customContent,
+          m
+        )
+        functorInstance.widen(e)
       case U.Pure(v) =>
         v.pure[F]
       case U.Subjourney(path, inner) =>
@@ -68,8 +80,8 @@ trait MonadInterpreter[F[+_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter
           action.asInstanceOf[() => E[A]],
           convertMap((tagF.tag, tagA.tag)).asInstanceOf[Converter[E, F, A]]
         )
-      case U.ListOf(key, base, default, validation, customContent, tag: Tag[A]) => 
-        askListImpl[A](
+      case U.ListOf(key, base, default, validation, customContent, tag: Tag[A]) =>
+        val x: F[List[A]] = askListImpl[A](
           key,
           (index, existing) => interpretImpl(base(index, existing), interactMap, convertMap, listAskMap),
           default,
@@ -77,6 +89,7 @@ trait MonadInterpreter[F[+_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter
           customContent, 
           listAskMap(tag.tag).asInstanceOf[ASKLISTTC[A]]
         )
+        x.map(identity)
     }
   }
 }
