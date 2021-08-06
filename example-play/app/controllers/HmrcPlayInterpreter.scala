@@ -1,6 +1,6 @@
 package controllers
 
-import ltbs.uniform._, common.web._, interpreters.playframework._, validation.Rule
+import ltbs.uniform._, common.web._, interpreters.playframework._
 import play.api.mvc.{Request, AnyContent}
 import cats.syntax.semigroup._
 import scalatags.Text.all._
