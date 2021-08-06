@@ -18,13 +18,14 @@ lazy val root = project.in(file("."))
 //    `interpreter-play`.projects(Play25), // please see README.md
     `interpreter-play`.projects(Play26),
     `interpreter-play`.projects(Play27),
-    `interpreter-play`.projects(Play28),    
+    `interpreter-play`.projects(Play28),
+    `interpreter-js`,
     exampleProgramsJS,
     exampleProgramsJVM,
     commonWebJVM,
   )
   .settings(
-    skip in compile := true, 
+    compile / skip := true,
     publishLocal := {},
     publish := {},
     test := {},
@@ -52,7 +53,7 @@ lazy val commonSettings = Seq(
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
-  scalaVersion := allCrossScala.find(_.startsWith("2.12")).get, 
+  scalaVersion := allCrossScala.find(_.startsWith("2.12")).get,
   crossScalaVersions := allCrossScala,
   scalacOptions ++= Seq(
 //    "-P:silencer:checkUnused",           // silencer plugin to fail build if supressing a non-existant warning
@@ -114,7 +115,7 @@ lazy val commonSettings = Seq(
     )
     case _ => Nil
   }},
-  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings", "-Ywarn-unused"),
+  Compile / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings", "-Ywarn-unused"),
   scmInfo := Some(
     ScmInfo(
       url("https://github.com/ltbs/uniform-scala"),
@@ -149,7 +150,7 @@ lazy val commonSettings = Seq(
   useGpg := true,
   licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
-    "org.scalameta" %% "munit-scalacheck" % "0.7.27" % Test, 
+    "org.scalameta" %% "munit-scalacheck" % "0.7.26" % Test,
     compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.0" cross CrossVersion.full),
     "com.github.ghik" % "silencer-lib" % "1.7.0" % Provided cross CrossVersion.full
   )
@@ -161,13 +162,13 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core" % "2.6.1",
+      "org.typelevel" %%% "cats-core" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "2.6.1"),
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "org.typelevel" %%% "simulacrum" % "1.0.0",
       "dev.zio" %%% "izumi-reflect" % "1.0.0-M2",
-      "org.typelevel" %%% "cats-effect" % "2.1.3" % "test"
+      "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.2.1" )  % "test"
     ) ++ macroDependencies(scalaVersion.value),
-    initialCommands in console := List(
+    console / initialCommands := List(
       "import cats.implicits._",
       "val universe: scala.reflect.runtime.universe.type = scala.reflect.runtime.universe",
       "import universe._"
@@ -185,7 +186,7 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.propensive" %%% "magnolia" % "0.16.0",
+      "com.propensive" %%% "magnolia" % (if (scalaVersion.value.startsWith("2.11")) "0.10.0" else "0.16.0" ),
       "org.portable-scala" %%% "portable-scala-reflect" % "1.0.0"
     ) ++ macroDependencies(scalaVersion.value)
   )
@@ -234,14 +235,14 @@ lazy val `interpreter-play`: sbtcrossproject.CrossProject =
     //   crossScalaVersions := allCrossScala.filter{_.startsWith("2.11")}
     // )}
     .configurePlatform(Play26) {_.settings(
-      name := "interpreter-play26",      
+      name := "interpreter-play26",
       crossScalaVersions := allCrossScala.filter{x => x.startsWith("2.11") || x.startsWith("2.12")}
     )}
     .configurePlatform(Play27) {_.settings(
-      name := "interpreter-play27",            
+      name := "interpreter-play27",
     )}
     .configurePlatform(Play28) {_.settings(
-      name := "interpreter-play28",            
+      name := "interpreter-play28",
       crossScalaVersions := allCrossScala.filterNot{x => x.startsWith("2.11")}
     )}
 
@@ -255,7 +256,8 @@ lazy val `interpreter-js` = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "2.0"
+    libraryDependencies += "org.querki" %%% "jquery-facade" % "2.0",
+    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
   )
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(commonWebJS)
@@ -299,8 +301,8 @@ lazy val `example-play` = project.settings(commonSettings)
       filters,
       guice
     ),
-    initialCommands in console := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.interpreters.playframework._",
-    initialCommands in consoleQuick := """import cats.implicits._;""",
+    console / initialCommands := "import cats.implicits._; import ltbs.uniform._; import ltbs.uniform.interpreters.playframework._",
+    consoleQuick / initialCommands := """import cats.implicits._;""",
     scalacOptions -= "-Xfatal-warnings", // twirl....
     crossScalaVersions ~= {_.filter{_.startsWith("2.12")}}
   )
@@ -309,9 +311,9 @@ lazy val `example-js` = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
-    crossScalaVersions ~= {_.filter{_.startsWith("2.12")}},    
+    crossScalaVersions ~= {_.filter{_.startsWith("2.12")}},
     libraryDependencies ++= Seq(
-      "org.querki" %%% "jquery-facade" % "2.0", 
+      "org.querki" %%% "jquery-facade" % "2.0",
       "org.scala-js" %%% "scalajs-java-time" % "1.0.0",
       "com.lihaoyi" %%% "scalatags" % "0.9.1"
     )
@@ -320,14 +322,14 @@ lazy val `example-js` = project
   .dependsOn(
     `interpreter-js`,
     exampleProgramsJS,
-    `example-assets`.js    
+    `example-assets`.js
   )
 
 lazy val docs = project
   .enablePlugins(MicrositesPlugin)
   .settings(commonSettings)
   .settings(
-    fork in Test := true,
+    Test / fork := true,
     micrositeName           := "uniform-scala",
     micrositeDescription    := "Purely functional user-interaction",
     micrositeAuthor         := "Luke Tebbs",
