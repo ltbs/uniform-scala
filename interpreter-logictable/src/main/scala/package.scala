@@ -1,14 +1,10 @@
 package ltbs.uniform
 package interpreters
 
-import cats.implicits._
 import cats.data._
-import com.github.ghik.silencer.silent
 
 package object logictable {
   type Logic[A] = EitherT[WriterT[List, List[String], ?],ErrorTree,A]
-
-  val r = implicitly[cats.Monad[Logic]]
 
   implicit val unitTell = new TellRenderer[Unit] {
     def apply(key: String, value: Unit): List[String] =
@@ -23,5 +19,5 @@ package object logictable {
     def apply(key: String, value: A): List[String] =
       List(value.toString)
   }
- 
+
 }
