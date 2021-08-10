@@ -256,8 +256,11 @@ lazy val `interpreter-js` = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "2.0",
-    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
+    libraryDependencies ++= Seq(
+      "org.querki" %%% "jquery-facade" % "2.0",
+      "io.github.cquiroz" %%% "scala-java-time" % "2.2.2",
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value
+    )
   )
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(commonWebJS)
