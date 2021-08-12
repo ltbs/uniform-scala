@@ -4,7 +4,8 @@ import AutoDocs._
 val allCrossScala = Seq(
 //  "2.11.12",
   "2.12.12",
-  "2.13.2"
+  "2.13.2",
+  "3.0.1"
 )
 
 lazy val root = project.in(file("."))
@@ -42,17 +43,19 @@ def macroDependencies(scalaVersion: String) =
     case Some((2, minor)) if minor < 13 =>
       Seq(
         compilerPlugin(("org.scalamacros" %% "paradise" % "2.1.1").cross(CrossVersion.patch)),
-        "org.scala-lang" % "scala-reflect" % scalaVersion % Provided
+        "org.scala-lang" % "scala-reflect" % scalaVersion % Provided,
+        compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
       )
-    case _ => Seq(
-      "org.scala-lang" % "scala-reflect" % scalaVersion
+    case Some((2, _)) => Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion,
+      compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
     )
+    case _ => Nil
   }
 
 lazy val commonSettings = Seq(
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
-  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   scalaVersion := allCrossScala.find(_.startsWith("2.12")).get,
   crossScalaVersions := allCrossScala,
   scalacOptions ++= Seq(
@@ -80,7 +83,8 @@ lazy val commonSettings = Seq(
     "-Xlint:type-parameter-shadow",      // A local type parameter shadows a type already in scope.
     "-Ywarn-dead-code",                  // Warn when dead code is identified.
     "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-    "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
+    "-Ywarn-value-discard",               // Warn when non-Unit expression results are unused.
+//    "-Ymacro-debug-lite"
   ) ++ {CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2,11)) => Seq(
       "-Xfuture",                          // Turn on future language features.
@@ -112,6 +116,9 @@ lazy val commonSettings = Seq(
     )
     case Some((2,13)) => Seq(
       "-Ymacro-annotations"
+    )
+    case Some((3,_)) => Seq(
+      "-rewrite", "-source", "3.0-migration"
     )
     case _ => Nil
   }},
@@ -150,9 +157,7 @@ lazy val commonSettings = Seq(
   useGpg := true,
   licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
-    "org.scalameta" %% "munit-scalacheck" % "0.7.26" % Test,
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.0" cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % "1.7.0" % Provided cross CrossVersion.full
+    "org.scalameta" %% "munit-scalacheck" % "0.7.26" % Test
   )
 )
 
@@ -163,16 +168,16 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "2.6.1"),
-      "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
-      "org.typelevel" %%% "simulacrum" % "1.0.0",
-      "dev.zio" %%% "izumi-reflect" % "1.0.0-M2",
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.0.0",
+//      "org.typelevel" %%% "simulacrum" % "1.0.0",
+      "dev.zio" %%% "izumi-reflect" % "1.1.3",
       "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.2.1" )  % "test"
     ) ++ macroDependencies(scalaVersion.value),
     console / initialCommands := List(
       "import cats.implicits._",
       "val universe: scala.reflect.runtime.universe.type = scala.reflect.runtime.universe",
       "import universe._"
-    ).mkString("; ")
+    ).mkString("; "),    
   )
 
 lazy val coreJS = core.js

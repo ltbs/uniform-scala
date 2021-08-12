@@ -9,7 +9,7 @@ import collection.immutable.ListMap
 /** Can be navigated like a tree. Has a `Value` at branches and
   * leaves, and edges are labelled with `Key`.
   */
-@typeclass trait TreeLike[T] {
+trait TreeLike[T] {
 
   type Key
   type Value
@@ -82,8 +82,79 @@ import collection.immutable.ListMap
     }
     inner(a, path)
   }
-
 }
+
+object TreeLike extends scala.AnyRef {
+    @scala.inline() def apply[T](implicit instance: TreeLike[T]): TreeLike[T] {
+      type Key = instance.Key;
+      type Value = instance.Value
+    } = instance;
+    abstract trait Ops[T] extends scala.AnyRef {
+      type TypeClassType <: TreeLike[T]; 
+      val typeClassInstance: TypeClassType;
+      import typeClassInstance._;
+      def self: T;
+      def listSubtrees: List[Key] = typeClassInstance.listSubtrees(self);
+      def appendWith(key: Key): T = typeClassInstance.appendWith(self, key);
+      def prefixWith(key: Key): T = typeClassInstance.prefixWith(self, key);
+      def prefixWithMany(key: List[Key]): T = typeClassInstance.prefixWithMany(self, key);
+      def subTree(key: Key): T = typeClassInstance.subTree(self, key);
+      def subTreeOpt(key: Key): Option[T] = typeClassInstance.subTreeOpt(self, key);
+      def $div(key: Key): T = typeClassInstance.$div(self, key);
+      def $div$qmark(key: Key): Option[T] = typeClassInstance.$div$qmark(self, key);
+      def valueAt(key: Key): Option[Value] = typeClassInstance.valueAt(self, key);
+      def valueAtPath(key: List[Key]): Option[Value] = typeClassInstance.valueAtPath(self, key);
+      def valueAtRoot: Option[Value] = typeClassInstance.valueAtRoot(self);
+      def definedAt(key: Key): Boolean = typeClassInstance.definedAt(self, key);
+      def definedAtPath(key: List[Key]): Boolean = typeClassInstance.definedAtPath(self, key);
+      def definedAtRoot: Boolean = typeClassInstance.definedAtRoot(self);
+      def isEmpty: Boolean = typeClassInstance.isEmpty(self);
+      def isNonEmpty: Boolean = typeClassInstance.isNonEmpty(self);
+      def atPath(path: List[Key]): T = typeClassInstance.atPath(self, path)
+    };
+    abstract trait ToTreeLikeOps extends scala.AnyRef {
+      @java.lang.SuppressWarnings(scala.Array("org.wartremover.warts.ExplicitImplicitTypes", "org.wartremover.warts.ImplicitConversion")) implicit def toTreeLikeOps[T](target: T)(implicit tc: TreeLike[T]): Ops[T] {
+        type TypeClassType = TreeLike[T] {
+          type Key = tc.Key;
+          type Value = tc.Value
+        }
+      } = {
+        final class $anon extends Ops[T] {
+          type TypeClassType = TreeLike[T] {
+            type Key = tc.Key;
+            type Value = tc.Value
+          };
+          val self = target;
+          val typeClassInstance: TypeClassType = tc
+        };
+        new $anon()
+      }
+    };
+    object nonInheritedOps extends ToTreeLikeOps {
+    };
+    abstract trait AllOps[T] extends Ops[T] {
+      type TypeClassType <: TreeLike[T];
+      val typeClassInstance: TypeClassType
+    };
+    object ops extends scala.AnyRef {
+      @java.lang.SuppressWarnings(scala.Array("org.wartremover.warts.ExplicitImplicitTypes", "org.wartremover.warts.ImplicitConversion")) implicit def toAllTreeLikeOps[T](target: T)(implicit tc: TreeLike[T]): AllOps[T] {
+        type TypeClassType = TreeLike[T] {
+          type Key = tc.Key;
+          type Value = tc.Value
+        }
+      } = {
+        final class $anon extends AllOps[T] {
+          type TypeClassType = TreeLike[T] {
+            type Key = tc.Key;
+            type Value = tc.Value
+          };
+          val self = target;
+          val typeClassInstance: TypeClassType = tc
+        };
+        new $anon()
+      }
+    }
+  }; 
 
 trait TreeLikeInstances {
 
@@ -114,8 +185,7 @@ trait TreeLikeInstances {
 
     def prefixWith(a: T, key: Key): T = a.map{ case (k,v) =>
       (key :: k) -> v
-    }
-    
+    }    
   }
 
   implicit object ErrorTree extends TreeLike[ErrorTree] {
@@ -139,7 +209,7 @@ trait TreeLikeInstances {
     }
 
     def subTreeOpt(a: ErrorTree, keyPath: String): Option[ErrorTree] = 
-      if (a.definedAt(keyPath)) Some(subTree(a, keyPath)) else None
+      if (a.definedAt(keyPath)) Some(subTree(a, keyPath)) else None 
 
     val empty: ErrorTree = ListMap.empty
     def one(in: NEL[ErrorMsg]): ErrorTree = ListMap (

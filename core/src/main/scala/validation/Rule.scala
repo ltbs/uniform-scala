@@ -11,9 +11,8 @@ object Rule extends Quantifiable.ToQuantifiableOps {
     ErrorTree.oneErr(ErrorMsg(errorMsg, args:_*))
 
   /** A custom rule from a predicate and an error tree */  
-  def condError[A](predicate: A => Boolean, errorTree: ErrorTree): Rule[A] = {
-    a: A => Validated.cond(predicate(a), a, errorTree)
-  }
+  def condError[A](predicate: A => Boolean, errorTree: ErrorTree): Rule[A] =
+    { (a: A) => Validated.cond(predicate(a), a, errorTree) }
 
   /** A custom rule from a predicate and an error message */
   def cond[A](predicate: A => Boolean, errorMsg: String, args: Any*): Rule[A] =

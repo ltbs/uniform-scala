@@ -15,8 +15,4 @@ object WebTell {
   }
 
   implicit def htmlTell[Html]: WebTell[Html, Html] = fromFunction(identity)
-
-  implicit def tellUnit[Html]: WebTell[Html, Unit] = new WebTell[Html, Unit] {
-    def render(unit: Unit, key: String, messages: UniformMessages[Html]): Option[Html] = None
-  }
 }

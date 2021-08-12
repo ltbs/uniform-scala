@@ -1,17 +1,15 @@
 package ltbs.uniform
 
-import com.github.ghik.silencer.silent
 import scala.language.higherKinds
-import scala.reflect.macros.blackbox
+import scala.reflect.macros.blackbox.Context
 import scala.annotation.tailrec
 
-class InterpreterMacros(val c: blackbox.Context) {
+class InterpreterMacros(val c: Context) {
   import c.universe._
 
   /**
     * Turn a Needs[_] type into a (List[InteractTypes], List[(ConvFrom, ConvTo)], List[AskListType]) 
     */ 
-  @silent("never used") // quasiquoting seems to produce lots of false warnings  
   def getNeeds[H <: Needs[_, _], INTERACTTC[_,_], ASKLISTTC[_]](
     implicit ttn: c.WeakTypeTag[H], 
     ttInteractTc: WeakTypeTag[INTERACTTC[_,_]],
@@ -49,14 +47,24 @@ class InterpreterMacros(val c: blackbox.Context) {
 
     @tailrec
     def inner(types: List[Type], acc: Tree): Tree = types match {
-      case v::x =>
-        val resultingType = injectType(fType, v)
-        inner(x, q"(implicitly[izumi.reflect.Tag[$v]].tag, implicitly[$resultingType]) :: $acc")
+      case (v: Type)::x =>
+        val resultingType: Type = injectType(fType, v)
+
+        // val ast = inner(x, q"(implicitly[izumi.reflect.Tag[$v]].tag, implicitly[$resultingType]) :: $acc")
+        val ast = Apply(Select(acc, TermName("$colon$colon")), List(Apply(
+          Select(Ident(TermName("scala")), TermName("Tuple2")),
+          List(
+            Select(TypeApply(Ident(TermName("implicitly")), List(AppliedTypeTree(Select(Select(Ident(TermName("izumi")), TermName("reflect")), TypeName("Tag")), List(TypeTree(v))))), TermName("tag")),
+            TypeApply(Ident(TermName("implicitly")), List(TypeTree(resultingType))))
+        )))
+        inner(x, ast)
+
       case Nil => acc
     }
 
-    val s = inner(types, q"Nil")
-    q"Map($s :_*)"
+    val s = inner(types, Ident(TermName("Nil")))
+    //    q"Map($s :_*)"
+    Apply(Ident(TermName("Map")), List(Typed(s, Ident(typeNames.WILDCARD_STAR))))
   }
 
   /** Given a unary type constructor and a proper type will apply that
@@ -78,7 +86,8 @@ class InterpreterMacros(val c: blackbox.Context) {
       case bad =>
         c.abort(c.enclosingPosition, s"$bad is not of kind * -> *")
     }
-    tq"${name}[..$newTypeParams]".toType
+    //tq"${name}[..$newTypeParams]".toType
+    AppliedTypeTree(Ident(name), newTypeParams.map{TypeTree}).toType
   }
 
   def injectType2(
@@ -100,12 +109,14 @@ class InterpreterMacros(val c: blackbox.Context) {
       case bad =>
         c.abort(c.enclosingPosition, s"$bad is not of kind * -> * -> *")
     }
-    tq"${name}[..$newTypeParams]".toType
+    // tq"${name}[..$newTypeParams]".toType
+    AppliedTypeTree(Ident(name), newTypeParams.map{TypeTree}).toType    
   }
 
   implicit class RichTree(t: Tree) {
     def toType: Type =
-      c.typecheck(q"??? : $t").tpe    
+//      c.typecheck(q"??? : $t").tpe          
+      c.typecheck(Typed(Ident(TermName("$qmark$qmark$qmark")), t)).tpe    
   }
 
   // exists only for testing injectType
@@ -128,24 +139,58 @@ class InterpreterMacros(val c: blackbox.Context) {
   def getConvMap(fType : Type, eTypes: List[(Type, Type)]): Tree = {
     val mapElems = eTypes.map{
       case (e: Type, a: Type) =>
-        q"(implicitly[izumi.reflect.TagK[${e}]].tag, implicitly[izumi.reflect.Tag[${a}]].tag) -> ((implicitly[ltbs.uniform.Converter[$e, $fType, $a]]): Any)"
+        val key = Apply(
+          Select(Ident(TermName("scala")), TermName("Tuple2")),
+          List(tagTreeK(e), tagTree(a))
+        )
+
+        //((implicitly[ltbs.uniform.Converter[$e, $fType, $a]]): Any)
+        val value = Typed(
+          TypeApply(
+            Ident(TermName("implicitly")),
+            List(AppliedTypeTree(Select(Select(Ident(TermName("ltbs")), TermName("uniform")), TypeName("Converter")), List(TypeTree(e), TypeTree(fType), TypeTree(a))))
+          ),
+          Ident(TypeName("Any"))
+        )
+
+        Apply(Select(key, TermName("$minus$greater")), List(value))
       case (bad, _) =>
         c.abort(c.enclosingPosition, s"$bad is not of kind * -> * (${showRaw(bad)})")
     }
-    q"Map( ..$mapElems )"
+    //q"Map( ..$mapElems )"
+    Apply(Ident(TermName("Map")), mapElems)
   }
 
+  def tagTree(in: Type, tpe: String = "Tag"): Tree = Select(
+    TypeApply(
+      Ident(TermName("implicitly")),
+      List(AppliedTypeTree(Select(Select(Ident(TermName("izumi")), TermName("reflect")), TypeName(tpe)), List(TypeTree(in))))
+    ),
+    TermName("tag")
+  )
+
+  def tagTreeK(in: Type): Tree = tagTree(in, "TagK")
+
   def getInteractMap(fType : Type, eTypes: List[(Type, Type)]): Tree = {
-    val mapElems = eTypes.map{
+    val mapElems: List[Apply] = eTypes.map{
       case (t: Type, a: Type) =>
-        val key = q"(implicitly[izumi.reflect.Tag[${t}]].tag, implicitly[izumi.reflect.Tag[${a}]].tag)"
-        val faType = injectType2(fType, t, a)
-        val value = q"((implicitly[$faType]))"
-        q"$key -> $value"
+//        val key = q"(implicitly[izumi.reflect.Tag[${t}]].tag, implicitly[izumi.reflect.Tag[${a}]].tag)"
+
+        val key = Apply(
+          Select(Ident(TermName("scala")), TermName("Tuple2")),
+          List(t,a).map(tagTree(_))
+        )
+
+        val faType: Type = injectType2(fType, t, a)
+        //val value = q"((implicitly[$faType]))"
+        val value = TypeApply(Ident(TermName("implicitly")), List(TypeTree(faType)))
+        //q"$key -> $value"
+        Apply(Select(key, TermName("$minus$greater")), List(value))
       case (bad, _) =>
         c.abort(c.enclosingPosition, s"$bad is not of kind * -> * (${showRaw(bad)})")
     }
-    q"Map( ..$mapElems )"
+    //q"Map( ..$mapElems )"
+    Apply(Ident(TermName("Map")), mapElems)
   }
 
   def interpreter_impl[H <: Needs[_, _], A, INTERACTTC[_,_], ASKLISTTC[_], F[_], T](
@@ -160,7 +205,9 @@ class InterpreterMacros(val c: blackbox.Context) {
     val interactMap = getInteractMap(ttInteractTc.tpe, interactTypes)
     val listMap = implicitMaps(ttAskListTc.tpe, listTypes)    
     val convMap = getConvMap(fTypeTag.tpe, convTypes)
-    val r = q"${c.prefix}.interpretImpl($program, $interactMap, $convMap, $listMap)"
+    //val r = q"${c.prefix}.interpretImpl($program, $interactMap, $convMap, $listMap)"
+    val r = Apply(Select(c.prefix.tree, TermName("interpretImpl")), List(program.tree, interactMap, convMap, listMap))
+    println(r);
     c.Expr[F[A]](r)
   }
 

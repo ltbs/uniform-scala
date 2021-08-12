@@ -15,6 +15,41 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
   
   import bundle.all._
 
+  def renderAnd(
+    pageKey: List[String],
+    fieldKey: List[String],
+    tell: Option[Tag],
+    breadcrumbs: Breadcrumbs,
+    data: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    members: Seq[(String, Tag)]
+  ): Tag = members.toList match {
+    case (_, sole) :: Nil => sole
+    case many =>
+      fieldSurround(fieldKey, tell, errors, messages) (many.map(_._2) :_*)
+  }
+
+  def renderOr(
+    pageKey: List[String],
+    fieldKey: List[String],
+    tell: Option[Tag],
+    breadcrumbs: Breadcrumbs,
+    data: Input,
+    errors: ErrorTree,
+    messages: UniformMessages[Tag],
+    alternatives: Seq[(String, Option[Tag])],
+    selected: Option[String]
+  ): Tag = radios(
+    fieldKey,
+    tell,
+    alternatives.map(_._1),
+    selected,
+    errors,
+    messages,
+    alternatives.collect{case (k, Some(v)) => (k,v)}.toMap
+  )
+
   implicit val unitField = new WebAsk[Tag,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
@@ -29,7 +64,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     ): Option[Tag] = tell
   }
 
-  implicit val nothingField = new WebAsk[Tag,Nothing] {
+  implicit val nothingField: WebAsk[Tag,Nothing] = new WebAsk[Tag,Nothing] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Nothing] =
       Left(ErrorMsg("tried to decode to nothing").toTree)
 

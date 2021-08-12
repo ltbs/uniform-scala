@@ -108,7 +108,7 @@ package object uniform
 
   }
 
-  implicit def monListMap[K,V: Semigroup] = new Monoid[ListMap[K,V]] {
+  implicit def monListMap[K,V: Semigroup]: Monoid[ListMap[K,V]]{def empty: ListMap[K,Nothing]} = new Monoid[ListMap[K,V]] {
     def empty = ListMap.empty
 
     def combine(xs: ListMap[K, V], ys: ListMap[K, V]): ListMap[K, V] =

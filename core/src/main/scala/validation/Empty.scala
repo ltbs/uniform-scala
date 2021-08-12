@@ -7,8 +7,38 @@ import scala.language.implicitConversions
   * of a Monoid being empty). Note that unlike with Monoid it does not
   * require a definition for empty, only the ability to check if an
   * element is empty */
-@simulacrum.typeclass trait Empty[A] {
+trait Empty[A] {
   def isEmpty(in: A): Boolean
+}
+
+object Empty {
+ def apply[A](implicit instance: Empty[A]): Empty[A] = instance
+
+  trait Ops[A] {
+    def typeClassInstance: Empty[A]
+    def self: A
+    def isEmpty: Boolean = typeClassInstance.isEmpty(self)
+  }
+
+  trait ToEmptyOps {
+    implicit def toEmptyOps[A](target: A)(implicit tc: Empty[A]): Ops[A] = new Ops[A] {
+      val self = target
+      val typeClassInstance = tc
+    }
+  }
+
+  object nonInheritedOps extends ToEmptyOps
+
+  trait AllOps[A] extends Ops[A] {
+    def typeClassInstance: Empty[A]
+  }
+
+  object ops {
+    implicit def toAllEmptyOps[A](target: A)(implicit tc: Empty[A]): AllOps[A] = new AllOps[A] {
+      val self = target
+      val typeClassInstance = tc
+    }
+  }
 }
 
 trait EmptyInstances {

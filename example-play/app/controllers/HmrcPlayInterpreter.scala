@@ -14,41 +14,6 @@ trait HmrcPlayInterpreter
     with Widgets
 {
 
-  def renderAnd(
-    pageKey: List[String],
-    fieldKey: List[String],
-    tell: Option[Tag],
-    breadcrumbs: Breadcrumbs,
-    data: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Tag],
-    members: Seq[(String, Tag)]
-  ): Tag = members.toList match {
-    case (_, sole) :: Nil => sole
-    case many =>
-      Widgets.fieldSurround(fieldKey, tell, errors, messages) (many.map(_._2) :_*)
-  }
-
-  def renderOr(
-    pageKey: List[String],
-    fieldKey: List[String],
-    tell: Option[Tag],
-    breadcrumbs: Breadcrumbs,
-    data: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Tag],
-    alternatives: Seq[(String, Option[Tag])],
-    selected: Option[String]
-  ): Tag = Widgets.radios(
-    fieldKey,
-    tell,
-    alternatives.map(_._1),
-    selected,
-    errors,
-    messages,
-    alternatives.collect{case (k, Some(v)) => (k,v)}.toMap
-  )
-
   def messagesApi: play.api.i18n.MessagesApi
   def messagesForRequest[C <: AnyContent](request: Request[C]): UniformMessages[Tag] =
     {messagesApi.preferred(request).convertMessages() |+| UniformMessages.bestGuess }.map{span(_)}
