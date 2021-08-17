@@ -30,7 +30,7 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
   override def subjourneyImpl[A](
     path: List[String],
     inner: WebMonad[Html, A]
-  ): WebMonad[Html, A] = subjourneyWM(path:_*)(inner)
+  ): WebMonad[Html, A] = subjourneyWM(identity, path:_*)(inner)
 
   override def askListImpl[A](
     key: String,
