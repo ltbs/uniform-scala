@@ -61,6 +61,15 @@ trait Primatives[Html] {
       )
   }
 
+  def pushBreadcrumb(bc: List[String]) = new WebMonad[Html, Unit] {
+    override def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, Unit]] =
+      Future.successful(
+        pageIn.toPageOut(AskResult.Success[Html, Unit](())) copy (
+            breadcrumbs = bc :: pageIn.breadcrumbs
+          )
+      )
+  }
+
   def putConfig(in: JourneyConfig) = new WebMonad[Html, Unit] {
     override def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, Unit]] =
       Future.successful(

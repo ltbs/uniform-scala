@@ -80,6 +80,7 @@ trait WebAskList[Html, A] extends Primatives[Html] {
 
             case ListAction.Delete(index) =>
               subjourneyWM(_.copy(leapAhead = false), Seq(key, "delete") :_ *)(for {
+                _ <- pushBreadcrumb(key.split("/").toList)
                 confirm <- deleteConfirmationJourney(data, index)
                 _ <- confirm match {
                   case true =>
@@ -93,10 +94,11 @@ trait WebAskList[Html, A] extends Primatives[Html] {
 
             case ListAction.Edit(index) => {
               subjourneyWM(_.copy(leapAhead = false), Seq(key, "edit", index.toString) :_ *)(for {
+                _ <- pushBreadcrumb(key.split("/").toList)
                 r <- askJourney(Some(index), data)
                 _ <- db(List(s"${key}-zzdata")) = data.replaceAtIndex(index, r)
                 _ <- db.deleteRecursive(List(key))
-              _ <- goto[Unit](key)
+                _ <- goto[Unit](key)
               } yield (List.empty[A]))
             }
           }
