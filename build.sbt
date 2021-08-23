@@ -3,8 +3,9 @@ import AutoDocs._
 
 val allCrossScala = Seq(
 //  "2.11.12",
-  "2.12.12",
-  "2.13.2"
+  "2.12.14",
+  "2.13.6", 
+  "3.0.1"
 )
 
 lazy val root = project.in(file("."))
@@ -42,79 +43,87 @@ def macroDependencies(scalaVersion: String) =
     case Some((2, minor)) if minor < 13 =>
       Seq(
         compilerPlugin(("org.scalamacros" %% "paradise" % "2.1.1").cross(CrossVersion.patch)),
-        "org.scala-lang" % "scala-reflect" % scalaVersion % Provided
+        "org.scala-lang" % "scala-reflect" % scalaVersion % Provided,
+        compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
       )
-    case _ => Seq(
-      "org.scala-lang" % "scala-reflect" % scalaVersion
+    case Some((2, _)) => Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion,
+      compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
     )
+    case _ => Nil
   }
 
 lazy val commonSettings = Seq(
   homepage := Some(url("https://ltbs.github.io/uniform-scala/")),
   organization := "com.luketebbs.uniform",
-  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   scalaVersion := allCrossScala.find(_.startsWith("2.12")).get,
-  crossScalaVersions := allCrossScala,
-  scalacOptions ++= Seq(
-//    "-P:silencer:checkUnused",           // silencer plugin to fail build if supressing a non-existant warning
-//    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
-    "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
-    "-encoding", "utf-8",                // Specify character encoding used by source files.
-    "-explaintypes",                     // Explain type errors in more detail.
-    "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
-    "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
-    "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
-    "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
-    "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
-    "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
-    "-Xlint:inaccessible",               // Warn about inacces(sible types in method signatures.
-    "-Xlint:infer-any",                  // Warn when a type argument is inferred to be `Any`.
-    "-Xlint:missing-interpolator",       // A string literal appears to be missing an interpolator id.
-    "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-    "-Xlint:nullary-unit",               // Warn when nullary methods return Unit.
-    "-Xlint:option-implicit",            // Option.apply used implicit view.
-    "-Xlint:package-object-classes",     // Class or object defined in package object.
-    "-Xlint:poly-implicit-overload",     // Parameterized overloaded implicit methods are not visible as view bounds.
-    "-Xlint:private-shadow",             // A private field (or class parameter) shadows a superclass field.
-    "-Xlint:stars-align",                // Pattern sequence wildcard must align with sequence component.
-    "-Xlint:type-parameter-shadow",      // A local type parameter shadows a type already in scope.
-    "-Ywarn-dead-code",                  // Warn when dead code is identified.
-    "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-    "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
-  ) ++ {CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2,11)) => Seq(
-      "-Xfuture",                          // Turn on future language features.
-      "-Ywarn-unused",
-      "-Ypartial-unification",             // Enable partial unification in type constructor inference
-      "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
-      "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-      "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-      "-Ywarn-inaccessible"               // Warn about inaccessible types in method signatures.
+  crossScalaVersions := allCrossScala.filterNot(_.startsWith("3")),
+  scalacOptions ++= {
+
+    val commonScala2Options = Seq(
+      //    "-P:silencer:checkUnused",           // silencer plugin to fail build if supressing a non-existant warning
+      //    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
+      "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
+      "-encoding", "utf-8",                // Specify character encoding used by source files.
+      "-explaintypes",                     // Explain type errors in more detail.
+      "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
+      "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
+      "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
+      "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
+      "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
+      "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
+      "-Xlint:inaccessible",               // Warn about inacces(sible types in method signatures.
+      "-Xlint:infer-any",                  // Warn when a type argument is inferred to be `Any`.
+      "-Xlint:missing-interpolator",       // A string literal appears to be missing an interpolator id.
+      "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+      "-Xlint:nullary-unit",               // Warn when nullary methods return Unit.
+      "-Xlint:option-implicit",            // Option.apply used implicit view.
+      "-Xlint:package-object-classes",     // Class or object defined in package object.
+      "-Xlint:poly-implicit-overload",     // Parameterized overloaded implicit methods are not visible as view bounds.
+      "-Xlint:private-shadow",             // A private field (or class parameter) shadows a superclass field.
+      "-Xlint:stars-align",                // Pattern sequence wildcard must align with sequence component.
+      "-Xlint:type-parameter-shadow",      // A local type parameter shadows a type already in scope.
+      "-Ywarn-dead-code",                  // Warn when dead code is identified.
+      "-Ywarn-numeric-widen",              // Warn when numerics are widened.
+      "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
     )
-    case Some((2,12)) => Seq(
-      "-Xfuture",                          // Turn on future language features.
-      "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
-      "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
-      "-Xlint:unsound-match",              // Pattern match may not be typesafe.
-      "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-      "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
-      "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
-      "-Ywarn-unused:locals",              // Warn if a local definition is unused.
-      "-Ywarn-unused:params",              // Warn if a value parameter is unused.
-      "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
-      "-Ywarn-unused:privates",            // Warn if a private member is unused.
-      "-Ywarn-extra-implicit",              // Warn when more than one implicit parameter section is defined.
-      "-Ypartial-unification",             // Enable partial unification in type constructor inference
-      "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
-      "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-      "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-      "-Ywarn-inaccessible"               // Warn about inaccessible types in method signatures.
-    )
-    case Some((2,13)) => Seq(
-      "-Ymacro-annotations"
-    )
-    case _ => Nil
-  }},
+
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2,11)) => commonScala2Options ++ Seq(
+        "-Xfuture",                          // Turn on future language features.
+        "-Ywarn-unused",
+        "-Ypartial-unification",             // Enable partial unification in type constructor inference
+        "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
+        "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+        "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
+        "-Ywarn-inaccessible"               // Warn about inaccessible types in method signatures.
+      )
+      case Some((2,12)) => commonScala2Options ++ Seq(
+        "-Xfuture",                          // Turn on future language features.
+        "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
+        "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
+        "-Xlint:unsound-match",              // Pattern match may not be typesafe.
+        "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
+        "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
+        "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
+        "-Ywarn-unused:locals",              // Warn if a local definition is unused.
+        "-Ywarn-unused:params",              // Warn if a value parameter is unused.
+        "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
+        "-Ywarn-unused:privates",            // Warn if a private member is unused.
+        "-Ywarn-extra-implicit",              // Warn when more than one implicit parameter section is defined.
+        "-Ypartial-unification",             // Enable partial unification in type constructor inference
+        "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
+        "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+        "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
+        "-Ywarn-inaccessible"               // Warn about inaccessible types in method signatures.
+      )
+      case Some((2,13)) => commonScala2Options ++ Seq(
+        "-Ymacro-annotations"
+      )
+      case Some((3,_)) => Nil
+      case _ => Nil
+    }
+  },
   Compile / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings", "-Ywarn-unused"),
   scmInfo := Some(
     ScmInfo(
@@ -150,9 +159,7 @@ lazy val commonSettings = Seq(
   useGpg := true,
   licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
-    "org.scalameta" %% "munit-scalacheck" % "0.7.26" % Test,
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.0" cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % "1.7.0" % Provided cross CrossVersion.full
+    "org.scalameta" %% "munit-scalacheck" % "0.7.26" % Test
   )
 )
 
@@ -161,13 +168,20 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(commonSettings)
   .settings(
+    scalaVersion := allCrossScala.find(_.startsWith("3")).get, 
+    crossScalaVersions := allCrossScala,
+    Compile / unmanagedSourceDirectories ++= {if (scalaVersion.value.startsWith("2")) {(baseDirectory.value.getParentFile() / "src" / "main" / "scala-2") :: Nil} else Nil},
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.5.0", 
       "org.typelevel" %%% "cats-core" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "2.6.1"),
-      "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
-      "org.typelevel" %%% "simulacrum" % "1.0.0",
-      "dev.zio" %%% "izumi-reflect" % "1.0.0-M2",
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.0.0",
+      "dev.zio" %%% "izumi-reflect" % "1.1.3",
       "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.2.1" )  % "test"
-    ) ++ macroDependencies(scalaVersion.value),
+    ) ++ macroDependencies(scalaVersion.value) ++
+      (if (scalaVersion.value.startsWith("2"))
+        List("org.typelevel" %%% "simulacrum" % "1.0.0")
+      else
+        Nil),
     console / initialCommands := List(
       "import cats.implicits._",
       "val universe: scala.reflect.runtime.universe.type = scala.reflect.runtime.universe",

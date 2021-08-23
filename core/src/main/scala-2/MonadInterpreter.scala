@@ -1,13 +1,14 @@
 package ltbs.uniform
 
 import scala.language.higherKinds
+import scala.collection.compat._
 
 import cats.implicits._
 import ltbs.uniform.{Uniform => U}
 import izumi.reflect.macrortti.LightTypeTag
 import izumi.reflect.Tag
 import validation.Rule
-import com.github.ghik.silencer.silent
+import annotation.nowarn
 
 trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[F, INTERACTTC, ASKLISTTC]{
 
@@ -23,7 +24,7 @@ trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[
     interaction: INTERACTTC[T,A]
   ): F[A]
 
-  @silent("never used")
+  @nowarn("msg=never used")
   protected def subjourneyImpl[A](
     path: List[String],
     inner: F[A]
@@ -38,7 +39,7 @@ trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[
     asker: ASKLISTTC[A]
   ): F[List[A]]
 
-  @silent("erasure") override def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
+  @nowarn("msg=erasure") override def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
     program: Uniform[H, T, A], 
     interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[_,_]],
     convertMap: Map[(LightTypeTag, LightTypeTag), Any],

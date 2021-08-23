@@ -1,11 +1,14 @@
 package ltbs.uniform
 
+import scala.collection.compat._
+
 import scala.language.higherKinds
 import scala.language.experimental.macros
 import izumi.reflect.macrortti.LightTypeTag
 import izumi.reflect.Tag
-import com.github.ghik.silencer.silent
 import cats.~>
+import annotation.nowarn
+
 
 /** Maps a journey from its abstract form into a concrete one. 
   * 
@@ -44,7 +47,7 @@ trait Interpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] {
     * @param program - the uniform journey to be interpreted 
     * @return the journey in it's new interpreted representation
     */
-  @silent("dead code")
+  @nowarn("msg=dead code")
   def interpret[H <: Needs[_,_],T, A](
     program: Uniform[H, T, A]
   ): F[A] = macro InterpreterMacros.interpreter_impl[H, A, INTERACTTC, ASKLISTTC, F, T]

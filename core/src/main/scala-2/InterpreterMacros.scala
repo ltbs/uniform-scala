@@ -1,6 +1,5 @@
 package ltbs.uniform
 
-import com.github.ghik.silencer.silent
 import scala.language.higherKinds
 import scala.reflect.macros.blackbox
 import scala.annotation.tailrec
@@ -11,7 +10,6 @@ class InterpreterMacros(val c: blackbox.Context) {
   /**
     * Turn a Needs[_] type into a (List[InteractTypes], List[(ConvFrom, ConvTo)], List[AskListType]) 
     */ 
-  @silent("never used") // quasiquoting seems to produce lots of false warnings  
   def getNeeds[H <: Needs[_, _], INTERACTTC[_,_], ASKLISTTC[_]](
     implicit ttn: c.WeakTypeTag[H], 
     ttInteractTc: WeakTypeTag[INTERACTTC[_,_]],
