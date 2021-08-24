@@ -17,9 +17,9 @@ import scala.language.implicitConversions
 }
 
 trait QuantifiableInstances {
-  def instance[A](f: A => Int) = new Quantifiable[A] {
+  def instance[A](f: A => Int): Quantifiable[A] = new Quantifiable[A] {
     def qty(in: A): Int = f(in)
   }
 
-  implicit val quantString = instance[String](x => x.length)  
+  implicit val quantString: Quantifiable[String] = instance[String](x => x.length)
 }

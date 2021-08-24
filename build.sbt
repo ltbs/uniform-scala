@@ -75,7 +75,7 @@ lazy val commonSettings = Seq(
       "-Xlint:inaccessible",               // Warn about inacces(sible types in method signatures.
       "-Xlint:infer-any",                  // Warn when a type argument is inferred to be `Any`.
       "-Xlint:missing-interpolator",       // A string literal appears to be missing an interpolator id.
-      "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+      //  "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
       "-Xlint:nullary-unit",               // Warn when nullary methods return Unit.
       "-Xlint:option-implicit",            // Option.apply used implicit view.
       "-Xlint:package-object-classes",     // Class or object defined in package object.
@@ -120,7 +120,7 @@ lazy val commonSettings = Seq(
       case Some((2,13)) => commonScala2Options ++ Seq(
         "-Ymacro-annotations"
       )
-      case Some((3,_)) => Nil
+      case Some((3,_)) => Seq("-Ykind-projector")
       case _ => Nil
     }
   },
