@@ -39,11 +39,11 @@ trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[
     asker: ASKLISTTC[A]
   ): F[List[A]]
 
-  @nowarn("msg=erasure") override def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
+  @nowarn("msg=erasure") override inline def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
     program: Uniform[H, T, A], 
-    interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[_,_]],
+    interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[Any,Any]],
     convertMap: Map[(LightTypeTag, LightTypeTag), Any],
-    listAskMap: Map[LightTypeTag, ASKLISTTC[_]] 
+    listAskMap: Map[LightTypeTag, ASKLISTTC[Any]] 
   ): F[A] = {
     program match {
       case U.Map(base, f) =>
@@ -51,7 +51,7 @@ trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[
       case U.FlatMap(base, f) =>
         val g = f.map(interpretImpl(_, interactMap, convertMap, listAskMap))
         interpretImpl(base, interactMap, convertMap, listAskMap).flatMap(g)
-      case U.Interact(key, value, default, validation, customContent, tellTag: Tag[T], askTag) =>
+      case U.Interact(key, value, default, validation: Rule[A], customContent, tellTag: Tag[T], askTag) =>
         interactImpl[T, A](
           key,
           value,

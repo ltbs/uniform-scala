@@ -20,27 +20,27 @@ import annotation.nowarn
   */
 trait Interpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] {
 
-  protected def convertImpl[E[_], A](key: String, in: () => E[A], transformation: Converter[E, F, A]): F[A] = 
+  protected inline def convertImpl[E[_], A](key: String, in: () => E[A], transformation: Converter[E, F, A]): F[A] = 
     transformation(key, in)
 
-  def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
+  inline def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
     program: Uniform[H, T, A], 
-    interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[_,_]],    
+    interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[Any,Any]],    
     convertMap: Map[(LightTypeTag, LightTypeTag), Any], // effectively Map[(TagE, TagA), Converter[E,A,_]]. I hope to remove this field and have it handled directly in the macros
-    listAskMap: Map[LightTypeTag, ASKLISTTC[_]]    
+    listAskMap: Map[LightTypeTag, ASKLISTTC[Any]]    
   ): F[A]
 
-  def transform[G[_]](f: F ~> G) = {
-    val that = this
-    new Interpreter[G, INTERACTTC, ASKLISTTC] {
-      def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
-        program: Uniform[H, T, A],
-        interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[_,_]],
-        convertMap: Map[(LightTypeTag, LightTypeTag), Any],
-        listAskMap: Map[LightTypeTag, ASKLISTTC[_]]
-      ): G[A] = f(that.interpretImpl[H, T, A, E](program, interactMap, convertMap, listAskMap))
-    }
-  }
+  // def transform[G[_]](f: F ~> G) = {
+  //   val that = this
+  //   new Interpreter[G, INTERACTTC, ASKLISTTC] {
+  //     def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
+  //       program: Uniform[H, T, A],
+  //       interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[Any,Any]],
+  //       convertMap: Map[(LightTypeTag, LightTypeTag), Any],
+  //       listAskMap: Map[LightTypeTag, ASKLISTTC[Any]]
+  //     ): G[A] = f(that.interpretImpl[H, T, A, E](program, interactMap, convertMap, listAskMap))
+  //   }
+  // }
 
   /** Convert the supplied abstract journey into the target type
     *
@@ -48,7 +48,7 @@ trait Interpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] {
     * @return the journey in it's new interpreted representation
     */
   @nowarn("msg=dead code")
-  def interpret[H <: Needs[_,_],T, A](
+  inline def interpret[H <: Needs[_,_],T, A](
     program: Uniform[H, T, A]
   ): F[A] = ??? //macro InterpreterMacros.interpreter_impl[H, A, INTERACTTC, ASKLISTTC, F, T]
 }

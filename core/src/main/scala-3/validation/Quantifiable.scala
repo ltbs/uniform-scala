@@ -36,5 +36,5 @@ trait QuantifiableInstances {
     }
   }
 
-  inline val quantString: Quantifiable[String] = instance[String](x => x.length)
+  val quantString: Quantifiable[String] = instance[String](x => x.length)
 }
