@@ -48,7 +48,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
 
       lazy val dbObject: Option[Either[ErrorTree,A]] = {
         val fromState = dbInput map {_ >>= codec.decode >>= validation.either}
-        if (false && config.leapAhead) {
+        if (config.leapAhead) {
           fromState orElse default.map(validation.either)
         } else {
           fromState
@@ -109,7 +109,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
       } else {
         Future.successful{
           dbObject match {
-            case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && !breadcrumbs.contains(targetId) =>
+            case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && (config.leapAhead || !breadcrumbs.contains(targetId)) =>
               // they're replaying the journey
               pageIn.toPageOut(AskResult.Success[Html,A](data)).copy(
                 breadcrumbs = currentId :: pageIn.breadcrumbs
