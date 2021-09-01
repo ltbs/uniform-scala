@@ -206,6 +206,7 @@ trait HmrcPlayInterpreter
             )
           )
         ),
+        div(breadcrumbs.toString),
         hmrcFooter(Nil,Nil,messages)
       )
     )

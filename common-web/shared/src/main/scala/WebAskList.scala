@@ -59,7 +59,7 @@ trait WebAskList[Html, A] extends Primatives[Html] {
         }
 
         if (data.isEmpty && min > 0) {
-          subjourneyWM(Seq(key, "add"):_*)(for {
+          subjourneyWM(_.copy(leapAhead = false), Seq(key, "add"):_*)(for {
               r <- askJourney(None, data)
               _ <- db(List(s"${key}-zzdata")) = data :+ r
               _ <- db.deleteRecursive(List(key))
@@ -71,7 +71,7 @@ trait WebAskList[Html, A] extends Primatives[Html] {
               data.pure[WebMonad[Html, *]]
 
             case ListAction.Add =>
-              subjourneyWM(Seq(key, "add"):_*)(for {
+              subjourneyWM(_.copy(leapAhead = false), Seq(key, "add"):_*)(for {
                 r <- askJourney(None, data)
                 _ <- db(List(s"${key}-zzdata")) = data :+ r
                 _ <- db.deleteRecursive(List(key))
@@ -79,7 +79,8 @@ trait WebAskList[Html, A] extends Primatives[Html] {
               } yield (List.empty[A]))
 
             case ListAction.Delete(index) =>
-              subjourneyWM(Seq(key, "delete") :_ *)(for {
+              subjourneyWM(_.copy(leapAhead = false), Seq(key, "delete") :_ *)(for {
+                _ <- pushBreadcrumb(key.split("/").toList)
                 confirm <- deleteConfirmationJourney(data, index)
                 _ <- confirm match {
                   case true =>
@@ -92,11 +93,12 @@ trait WebAskList[Html, A] extends Primatives[Html] {
               } yield (List.empty[A]))
 
             case ListAction.Edit(index) => {
-              subjourneyWM(Seq(key, "edit", index.toString) :_ *)(for {
+              subjourneyWM(_.copy(leapAhead = false), Seq(key, "edit", index.toString) :_ *)(for {
+                _ <- pushBreadcrumb(key.split("/").toList)
                 r <- askJourney(Some(index), data)
                 _ <- db(List(s"${key}-zzdata")) = data.replaceAtIndex(index, r)
                 _ <- db.deleteRecursive(List(key))
-              _ <- goto[Unit](key)
+                _ <- goto[Unit](key)
               } yield (List.empty[A]))
             }
           }

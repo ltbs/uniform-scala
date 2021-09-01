@@ -1,10 +1,15 @@
 package controllers
 
 import javax.inject._
-import ltbs.uniform._, interpreters.playframework._, examples.beardtax._
+import ltbs.uniform._
+import interpreters.playframework._
+import examples.beardtax._
+import ltbs.uniform.common.web.JourneyConfig
 import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
-import scala.concurrent._, duration._
+
+import scala.concurrent._
+import duration._
 import scalatags.Text.all._
 
 @Singleton
@@ -20,7 +25,7 @@ class BeardController @Inject()(
     val adaptor = FutureAdaptor.rerunOnStateChange[Tag](1.minute)
     import adaptor._
 
-    interpret(beardProgram(new HodConnector)).runSync(targetId){ 
+    interpret(beardProgram(new HodConnector)).runSync(targetId, config = JourneyConfig(leapAhead = true)){
       i: Int => Ok(s"$i")
     }
   }
