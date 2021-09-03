@@ -60,16 +60,46 @@ trait Primatives[Html] {
         )
       )
   }
+
+  def pushBreadcrumb(bc: List[String]) = new WebMonad[Html, Unit] {
+    override def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, Unit]] =
+      Future.successful(
+        pageIn.toPageOut(AskResult.Success[Html, Unit](())) copy (
+            breadcrumbs = bc :: pageIn.breadcrumbs
+          )
+      )
+  }
+
+  def putConfig(in: JourneyConfig) = new WebMonad[Html, Unit] {
+    override def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, Unit]] =
+      Future.successful(
+        pageIn.toPageOut(AskResult.Success[Html, Unit](())) copy (
+           config = in
+        )
+      )
+  }
+
+  def getConfig = new WebMonad[Html, JourneyConfig] {
+    override def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, JourneyConfig]] =
+      Future.successful(
+        pageIn.toPageOut(AskResult.Success[Html, JourneyConfig](pageIn.config))
+      )
+  }
+
   
   def subjourneyWM[B](
+    configModifier: JourneyConfig => JourneyConfig,
     path: String*
   )(
     inner: WebMonad[Html, B]
   ): WebMonad[Html, B] = {
     for {
-      _      <- pushPathPrefix(path.toList)
-      result <- inner
-      _      <- popPathPrefix(path.size)
+      origConf <- getConfig
+      _        <- putConfig(configModifier(origConf))
+      _        <- pushPathPrefix(path.toList)
+      result   <- inner
+      _        <- popPathPrefix(path.size)
+      _        <- putConfig(origConf)
     } yield result
   }
 

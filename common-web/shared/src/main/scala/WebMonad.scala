@@ -13,8 +13,8 @@ abstract class WebMonad[Html, +A] {
     new WebMonad[Html,B] {
       def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html,B]] = {
         fa.apply(pageIn).flatMap[PageOut[Html,B]] { _ match {
-          case PageOut(p,db,AskResult.Success(a), pp, _) =>
-            f(a).apply(pageIn.copy(state = db, breadcrumbs = p, pathPrefix = pp))
+          case PageOut(p,db,AskResult.Success(a), pp, conf) =>
+            f(a).apply(pageIn.copy(state = db, breadcrumbs = p, pathPrefix = pp, config = conf))
           case PageOut(p,db,gp: AskResult.GotoPath[Html, A], pp, conf) =>
             PageOut(p,db,gp.map[B], pathPrefix = pp, config = conf).pure[Future]
           case PageOut(p,db,pl: AskResult.Payload[Html, A], pp, conf) =>
