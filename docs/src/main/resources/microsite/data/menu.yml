@@ -13,27 +13,46 @@ options:
        url: core/tells.html
      - title: Asking
        url: core/asks.html
+     - title: Composition
+       url: core/composition.html
      - title: Interacting
        url: core/interacts.html
      - title: Validation
        url: core/validation.html
      - title: Branching
        url: core/branching.html
+     - title: Subjourneys
+       url: core/subjourney.html
      - title: Remote Calls
        url: core/remote-calls.html
+
   - title: Play Framework Interpreter
     url: interpreter-play27/index.html
     nested_options:
      - title: Controllers
        url: interpreter-play27/controllers.html
      - title: WebMonad
-       url: interpreter-play27/web-monad.html
+       url: common-web/web-monad.html
      - title: Internationalisation
-       url: interpreter-play27/internationalisation.html
+       url: common-web/internationalisation.html
      - title: Listing Pages
-       url: interpreter-play27/listing-pages.html
+       url: common-web/listing-pages.html
      - title: Memoisation
-       url: interpreter-play27/remote-calls.html
+       url: common-web/remote-calls.html
+
+  - title: Generic Web Interpreters
+    url: common-web/index.html
+    nested_options:
+     - title: WebMonad
+       url: common-web/web-monad.html
+     - title: Internationalisation
+       url: common-web/internationalisation.html
+     - title: Listing Pages
+       url: common-web/listing-pages.html
+     - title: Memoisation
+       url: common-web/remote-calls.html
+
+
   - title: Other Interpreters
     url: interpreters.html
     nested_options:

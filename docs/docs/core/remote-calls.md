@@ -13,7 +13,7 @@ value based upon that code.
 To illustrate this with an example let us take the journey to
 calculate the number of days a person has been alive from earlier - 
 
-```scala mdoc:silent
+```scala
 
 import ltbs.uniform._
 
@@ -31,7 +31,7 @@ def dateOfBirth = for {
 If we wanted to modify this such that the calculation for `daysAlive` is
 done via some remote process we can instead define a 'server' like so - 
 
-```scala mdoc:silent
+```scala
 import scala.concurrent.Future
 
 trait Server {
@@ -43,7 +43,7 @@ We can now pass the server as a parameter into the function.
 In order to adapt the `Future` to whatever type we end up
 interpreting to we can use the `convert` method - 
 
-```scala mdoc:silent
+```scala
 def dateOfBirthRemote(server: Server) = for {
   dateOfBirth <- ask[LocalDate]("date-of-birth")
   daysAlive   <- convert(server.calculate(dateOfBirth))
@@ -82,7 +82,7 @@ In this instance the same logic will be applied for converting a
 `Future[LocalDate]` to a `Option[LocalDate]` as would be used to convert a
 `Future[Customer]` to a `Option[Customer]`
 
-```scala mdoc:silent
+```scala
 import cats.~>
 implicit val converterOne = new (Future ~> Option) { 
 	def apply[A](in: Future[A]): Option[A] = ???
@@ -102,7 +102,7 @@ converting a `LocalDate` as for a `Customer`.
 For this situation we instead define an implicit function from one
 type to the other.
 
-```scala mdoc:silent
+```scala
 
 case class Customer(name: String, age: Int)
 
@@ -119,7 +119,7 @@ not only based upon types but also based upon the step ID.
 In order to get a step ID we need to provide one in our journey using
 the `convertWithKey` function - 
 
-```scala mdoc:silent
+```scala
 def dateOfBirthRemoteStepped(server: Server) = for {
   dateOfBirth <- ask[LocalDate]("date-of-birth")
   daysAlive   <- convertWithKey("remote-call-dob")(
@@ -134,7 +134,7 @@ def dateOfBirthRemoteStepped(server: Server) = for {
 We can now implement a `Converter`, and use the step ID to discern
 between "remote-call-dob" and any other similar call.
 
-```scala mdoc:silent
+```scala
 implicit val converter = new Converter[Future, Option, LocalDate] {
   def apply(
     key: String, 

@@ -16,7 +16,7 @@ alive and finally it will return their date of birth as a string.
 You will need to import the core uniform library, and you will need
 cats. You do not need to import any interpreters when merely defining the journey.
 
-```scala mdoc:silent
+```scala
 import ltbs.uniform._
 ```
 
@@ -24,7 +24,7 @@ We're going to use the old `java.time.LocalDate` in our program
 too along with some code for formatting. This is specific to our
 example here and not likely needed for your project.
 
-```scala mdoc:silent
+```scala
 import java.time._, format._
 ```
 
@@ -32,7 +32,7 @@ import java.time._, format._
 
 Now we can create our main journey body.
 
-```scala mdoc
+```scala
 def dateOfBirth = for {
   dateOfBirth <- ask[LocalDate]("date-of-birth")
   daysAlive   = LocalDate.now.toEpochDay - dateOfBirth.toEpochDay

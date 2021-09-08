@@ -43,16 +43,47 @@ the user.
 We will actually see this when we look at the type signatures of `ask`
 and `tell` -
 
-```scala mdoc
+```scala
 import ltbs.uniform._
 
 val aTell = tell("tell", 123)
+// aTell: Uniform[Needs.Interact[Int, Unit], Int, Unit] = Interact(
+//   "tell",
+//   123,
+//   None,
+//   <function1>,
+//   Map(),
+//   Tag[Int],
+//   Tag[Unit]
+// )
 val anAsk = ask[String]("ask")
+// anAsk: Uniform[Needs.Interact[Unit, String], Unit, String] = Interact(
+//   "ask",
+//   (),
+//   None,
+//   <function1>,
+//   Map(),
+//   Tag[Unit],
+//   Tag[String]
+// )
 val anInteract = interact[Boolean]("interact", Option(0L))
+// anInteract: Uniform[Needs.Interact[Option[Long], Boolean], Option[Long], Boolean] = Interact(
+//   "interact",
+//   Some(0L),
+//   None,
+//   <function1>,
+//   Map(),
+//   Tag[Option[+Long]],
+//   Tag[Boolean]
+// )
 
 val composition = for {
   _  <- aTell
   as <- anAsk
   in <- anInteract
 } yield (as, in)
+// composition: Uniform[Needs.Interact[Int, Unit] with Needs.Interact[Unit, String] with Needs.Interact[Option[Long], Boolean], Int with Unit with Option[Long], (String, Boolean)] = FlatMap(
+//   Interact("tell", 123, None, <function1>, Map(), Tag[Int], Tag[Unit]),
+//   <function1>
+// )
 ```

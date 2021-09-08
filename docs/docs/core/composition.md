@@ -13,7 +13,7 @@ Lets start with a simple example that collects two `Person` records
 from a user. We can simply put the two `ask` calls together in a for 
 comprehension. 
 
-```scala mdoc:silent
+```scala
 import ltbs.uniform._
 
 case class Person(name: String, age: Int)
@@ -27,7 +27,7 @@ def senderAndReceiver1 = for {
 This is fine, but if we wanted to ask the user for the name and age
 separately we would have some duplication in our code. 
 
-```scala mdoc:silent
+```scala
 def senderAndReceiver2 = for {
   senderName   <- ask[String]("sender-name")
   senderAge    <- ask[Int]("sender-age")
@@ -45,7 +45,7 @@ a larger journey.
 We can separate out the collection of the person record into a local
 function -
 
-```scala mdoc:silent
+```scala
 def askPerson(id: String) = for {
   name <- ask[String](s"$id-name")
   age  <- ask[Int](s"$id-age")

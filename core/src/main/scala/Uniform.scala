@@ -98,6 +98,7 @@ object Uniform {
   case class Map[-R <: Needs[_, _], T, A, +B](base: Uniform[R, T, A], f: A => B) extends Uniform[R, T, B]
 
   case class FlatMap[R <: Needs[_, _], -R2 <: R, T, A, +B](base: Uniform[R, T, A], f: A => Uniform[R2, T, B]) extends Uniform[R2, T, B]
+  
   case class Interact[T, A](
     key: String,
     value: T,
@@ -110,6 +111,8 @@ object Uniform {
     def customContent(from: String, to: String, args: Any*): Interact[T, A] = this.copy (
       customContent = customContent + ((from,(to, args.toList)))
     )
+
+    override def toString = s"Uniform[..., ${tellTag.tag}, ${askTag.tag}]"
   }
 
   case class End[T](
@@ -121,6 +124,9 @@ object Uniform {
     def customContent(from: String, to: String, args: Any*): End[T] = this.copy (
       customContent = customContent + ((from,(to, args.toList)))
     )
+
+    override def toString = s"Uniform[..., ${tag.tag}, Nothing]"    
+
   }
 
   case class Pure[A](value: A) extends Uniform[Needs[_, _], Any, A]

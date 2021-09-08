@@ -14,6 +14,3 @@ Whereas a `tell` represents sending typed information to the user an
 data. 
 
 
-# default values 
-
-# 

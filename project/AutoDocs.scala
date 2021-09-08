@@ -3,6 +3,7 @@ import mdoc._, MdocPlugin.autoImport._
 
 object AutoDocs { 
   def docProject(mainProject: Project, docs: Project): Project = {
+
     val isCrossBuild = mainProject
       .base
       .getAbsolutePath.split("/")
@@ -20,9 +21,9 @@ object AutoDocs {
     val d = Project(mainProject.id + "Documentation", mainProject.base / "docs")
       .enablePlugins(MdocPlugin)
       .settings(
-        scalacOptions in Compile --= Seq("-Xfatal-warnings"),
+        scalacOptions := (mainProject / scalacOptions).value,
         mdocIn := baseDir / "docs",
-        mdocOut := (docs/baseDirectory).value / "src" / "main" / "tut" / mainProject.id
+        mdocOut := (docs/baseDirectory).value / "docs" / mainProject.id
       )
       .dependsOn(mainProject)
     d

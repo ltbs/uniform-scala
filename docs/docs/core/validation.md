@@ -23,7 +23,7 @@ ensure the address actually exists or can be delivered to.
 
 Lets start with an example with no validation at all -
 
-```scala mdoc
+```scala
 import ltbs.uniform._, validation._
 
 case class Address(
@@ -42,7 +42,7 @@ def askAddress1 = ask[Address]("post-to")
 
 We can start with a single rule, a simple regex check against a postcode -
 
-```scala mdoc:silent
+```scala
 import cats.data.NonEmptyList
 
 val regex = "^[A-Z]{1,2}\\d[A-Z\\d]? ?\\d[A-Z]{2}$"
@@ -63,7 +63,7 @@ fields.
 
 We can now test our rule on the REPL or in a unit test -
 
-```scala mdoc
+```scala
 val testAddress: Address = Address(
   "12 The Street",
   "Genericford",
@@ -71,14 +71,26 @@ val testAddress: Address = Address(
   "",
   "BAD POSTCODE"
 )
+// testAddress: Address = Address(
+//   "12 The Street",
+//   "Genericford",
+//   "Madeupshire",
+//   "",
+//   "BAD POSTCODE"
+// )
 
 postcodeCheck.apply(testAddress)
+// res0: cats.data.Validated[collection.immutable.ListMap[NonEmptyList[List[String]], NonEmptyList[ErrorMsg]], Address] = Invalid(
+//   ListMap(
+//     NonEmptyList(List(), List()) -> NonEmptyList(ErrorMsg("bad-postcode", WrappedArray()), List())
+//   )
+// )
 ```
 
 If we want to apply our validation rule to a step in a journey we
 simply supply it as a parameter.
 
-```scala mdoc
+```scala
 def askAddress2 =
   ask[Address]("post-to", validation = postcodeCheck)
 ```
@@ -90,7 +102,7 @@ If we wanted to check both a postcode against a Regex and that the 1st
 line starts with a number we can either do this sequentially using
 `followedBy` - 
 
-```scala mdoc:silent
+```scala
 val sequentialChecks: Rule[Address] = 
   postcodeCheck followedBy 
     Rule.cond[Address](_.line1.head.isDigit, "line-must-start-with-number")   

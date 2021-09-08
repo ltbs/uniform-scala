@@ -74,7 +74,7 @@ to bind them into each other.
 When taking this approach you only need to specify how to map
 interact, etc onto your chosen type. 
 
-```scala mdoc:silent
+```scala
 
 import ltbs.uniform._
 import ltbs.uniform.validation.Rule
@@ -117,7 +117,7 @@ object ZeroInterpreter extends MonadInterpreter[Id, Zero, Noop] {
 
 Lets create a simple journey in order to test our interpreter -
 
-```scala mdoc:silent
+```scala
 val journey = for {
   a <- ask[String]("a")
   c <- ask[Int]("c")
@@ -126,10 +126,11 @@ val journey = for {
 
 We can now process the journey through the interpreter - 
 
-```scala mdoc
+```scala
 // we want an implicit instance of Monoid for String and Int
-import cats.implicits._ 
+import cats.implicits._  
 
 // run the journey using the interpreter
 ZeroInterpreter.interpret(journey)
+// res0: (String, Int) = ("", 0)
 ```
