@@ -8,7 +8,7 @@ title: Memoisation
 Care must be taken when hooking remote calls into a journey to avoid
 repeatedly hitting a server. For example consider this journey - 
 
-```scala mdoc:silent
+```scala 
 import ltbs.uniform._
 import cats.implicits._
 import scala.language.higherKinds
@@ -56,7 +56,7 @@ and returns a response.
 We now need to implement a `Server[WebMonad]` so we can interleave
 these calls into our journey. We might do this as follows - 
 
-```scala mdoc:silent
+```scala 
 import ltbs.uniform.common.web._
 import ltbs.uniform.interpreters.playframework._
 import play.twirl.api.Html

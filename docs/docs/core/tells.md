@@ -5,16 +5,13 @@ title: Telling
 
 # tell
 
-```scala mdoc:invisible
-import ltbs.uniform._
-```
 
 A call to `tell` represents passing some typed data to the user. The
 specifics of exactly how this should be done depends upon the
 interpreter that is running the program and in particular how it
 chooses to handle that datatype. 
 
-```scala mdoc:silent
+```scala
 // create some data
 case class Story(title: String, author: String)
 val davidCopperfield = Story("David Copperfield","Charles Dickens")
@@ -36,7 +33,7 @@ journey.
 We can gain a bit more insight into the `tell` operation by examining
 the type signature - 
 
-```scala mdoc:silent
+```scala
 Story("An Inspector Calls","J B Priestly")
 val tellAnotherStory: Uniform[Needs.Interact[Story, Unit], Story, Unit] = 
   tell("an-inspector-calls", davidCopperfield)
