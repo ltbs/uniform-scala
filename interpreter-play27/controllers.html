@@ -1,0 +1,328 @@
+<!DOCTYPE html><html><head><title>uniform-scala: Controllers</title><meta charset="utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Luke Tebbs" /><meta name="description" content="Purely functional user-interaction" /><meta name="og:image" content="/uniform-scala/img/poster.png" /><meta name="image" property="og:image" content="/uniform-scala/img/poster.png" /><meta name="og:title" content="uniform-scala: Controllers" /><meta name="title" property="og:title" content="uniform-scala: Controllers" /><meta name="og:site_name" content="uniform-scala" /><meta name="og:url" content="https://ltbs.github.io/uniform-scala/" /><meta name="og:type" content="website" /><meta name="og:description" content="Purely functional user-interaction" /><link rel="icon" type="image/png" href="/uniform-scala/img/favicon.png" /><meta name="twitter:title" content="uniform-scala: Controllers" /><meta name="twitter:image" content="/uniform-scala/img/poster.png" /><meta name="twitter:description" content="Purely functional user-interaction" /><meta name="twitter:card" content="summary_large_image" /><link rel="icon" type="image/png" sizes="16x16" href="/uniform-scala/img/favicon16x16.png" /><link rel="icon" type="image/png" sizes="24x24" href="/uniform-scala/img/favicon24x24.png" /><link rel="icon" type="image/png" sizes="32x32" href="/uniform-scala/img/favicon32x32.png" /><link rel="icon" type="image/png" sizes="48x48" href="/uniform-scala/img/favicon48x48.png" /><link rel="icon" type="image/png" sizes="57x57" href="/uniform-scala/img/favicon57x57.png" /><link rel="icon" type="image/png" sizes="60x60" href="/uniform-scala/img/favicon60x60.png" /><link rel="icon" type="image/png" sizes="64x64" href="/uniform-scala/img/favicon64x64.png" /><link rel="icon" type="image/png" sizes="70x70" href="/uniform-scala/img/favicon70x70.png" /><link rel="icon" type="image/png" sizes="72x72" href="/uniform-scala/img/favicon72x72.png" /><link rel="icon" type="image/png" sizes="76x76" href="/uniform-scala/img/favicon76x76.png" /><link rel="icon" type="image/png" sizes="96x96" href="/uniform-scala/img/favicon96x96.png" /><link rel="icon" type="image/png" sizes="114x114" href="/uniform-scala/img/favicon114x114.png" /><link rel="icon" type="image/png" sizes="120x120" href="/uniform-scala/img/favicon120x120.png" /><link rel="icon" type="image/png" sizes="128x128" href="/uniform-scala/img/favicon128x128.png" /><link rel="icon" type="image/png" sizes="144x144" href="/uniform-scala/img/favicon144x144.png" /><link rel="icon" type="image/png" sizes="150x150" href="/uniform-scala/img/favicon150x150.png" /><link rel="icon" type="image/png" sizes="152x152" href="/uniform-scala/img/favicon152x152.png" /><link rel="icon" type="image/png" sizes="196x196" href="/uniform-scala/img/favicon196x196.png" /><link rel="icon" type="image/png" sizes="310x310" href="/uniform-scala/img/favicon310x310.png" /><link rel="icon" type="image/png" sizes="310x150" href="/uniform-scala/img/favicon310x150.png" /><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" /><link rel="stylesheet" href="/uniform-scala/highlight/styles/color-brewer.css" /><link rel="stylesheet" href="/uniform-scala/css/light-style.css" /></head><body class="docs"><div id="wrapper"><div id="sidebar-wrapper"><div id="sidebar-brand"><a href="/uniform-scala/" class="brand"><div class="brand-wrapper"></div><span>uniform-scala</span></a><button id="main-toggle" class="sidebar-toggle"><span class="close"></span></button></div><div class="sidebar-nav"> <div class="sidebar-nav-item  "><a href="/uniform-scala/index.html" title="Home" class="">Home</a></div> <div class="sidebar-nav-item  "><a href="/uniform-scala/setup.html" title="Setup" class="">Setup</a></div> <div class="sidebar-nav-item  "><a href="/uniform-scala/core/basic-program.html" title="Writing a journey" class="drop-nested">Writing a journey</a><i class="fa fa-angle-right"></i><div class="sub-section"> <a href="/uniform-scala/core/tells.html" title="Telling" class="">Telling</a> <a href="/uniform-scala/core/asks.html" title="Asking" class="">Asking</a> <a href="/uniform-scala/core/composition.html" title="Composition" class="">Composition</a> <a href="/uniform-scala/core/interacts.html" title="Interacting" class="">Interacting</a> <a href="/uniform-scala/core/branching.html" title="Branching" class="">Branching</a> <a href="/uniform-scala/core/subjourney.html" title="Subjourneys" class="">Subjourneys</a> <a href="/uniform-scala/core/remote-calls.html" title="Remote Calls" class="">Remote Calls</a></div></div> <div class="sidebar-nav-item  open"><a href="/uniform-scala/interpreter-play27/index.html" title="Play Framework Interpreter" class="drop-nested">Play Framework Interpreter</a><i class="fa fa-angle-right"></i><div class="sub-section"> <a href="/uniform-scala/interpreter-play27/controllers.html" title="Controllers" class="active">Controllers</a> <a href="/uniform-scala/interpreter-play27/remote-calls.html" title="Memoisation & remote calls" class="">Memoisation & remote calls</a> <a href="/uniform-scala/interpreter-play27/alternative-templating.html" title="Alternative templating technologies" class="">Alternative templating technologies</a></div></div> <div class="sidebar-nav-item  "><a href="/uniform-scala/common-web/index.html" title="Generic Web Interpreters" class="drop-nested">Generic Web Interpreters</a><i class="fa fa-angle-right"></i><div class="sub-section"> <a href="/uniform-scala/common-web/web-monad.html" title="WebMonad" class="">WebMonad</a> <a href="/uniform-scala/common-web/internationalisation.html" title="Internationalisation" class="">Internationalisation</a> <a href="/uniform-scala/common-web/listing-pages.html" title="Listing Pages" class="">Listing Pages</a> <a href="/uniform-scala/common-web/remote-calls.html" title="Memoisation" class="">Memoisation</a> <a href="/uniform-scala/common-web/derivation-of-views.html" title="Derivation of views" class="">Derivation of views</a></div></div> <div class="sidebar-nav-item  "><a href="/uniform-scala/interpreters.html" title="Other Interpreters" class="drop-nested">Other Interpreters</a><i class="fa fa-angle-right"></i><div class="sub-section"> <a href="/uniform-scala/interpreter-cli.html" title="CLI Interpreter" class="">CLI Interpreter</a> <a href="/uniform-scala/interpreter-logic-table.html" title="Logic Table Interpreter" class="">Logic Table Interpreter</a> <a href="/uniform-scala/interpreter-static-site.html" title="Static Site interpreter" class="">Static Site interpreter</a> <a href="/uniform-scala/interpreter-selenium.html" title="Selenium Interpreter" class="">Selenium Interpreter</a></div></div> <div class="sidebar-nav-item  "><a href="/uniform-scala/core/internationalisation.html" title="Internationalisation" class="">Internationalisation</a></div> <div class="sidebar-nav-item  "><a href="/uniform-scala/core/advanced.html" title="Advanced Options" class="drop-nested">Advanced Options</a><i class="fa fa-angle-right"></i><div class="sub-section"> <a href="/uniform-scala/core/writing-interpreters.html" title="Writing Interpreters" class="">Writing Interpreters</a></div></div></div></div><div id="page-content-wrapper"><div class="nav"><div class="container-fluid"><div class="row"><div class="col-lg-12"><div class="action-menu pull-left clearfix"><a href="#menu-toggle" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a></div><ul class="pull-right"><li class="search-nav"><div id="search-dropdown"><label><i class="fa fa-search"></i>Search</label><input id="search-bar" type="text" placeholder="Enter keywords here..." onclick="displayToggleSearch(event)" /><ul id="search-dropdown-content" class="dropdown dropdown-content"></ul></div></li><li id="gh-eyes-item" class="hidden-xs to-uppercase"><a href="https://github.com/ltbs/uniform-scala" target="_blank" rel="noopener noreferrer"><i class="fa fa-eye"></i><span>Watchers<span id="eyes" class="label label-default">--</span></span></a></li><li id="gh-stars-item" class="hidden-xs to-uppercase"><a href="https://github.com/ltbs/uniform-scala" target="_blank" rel="noopener noreferrer"><i class="fa fa-star-o"></i><span>Stars<span id="stars" class="label label-default">--</span></span></a></li></ul></div></div></div></div><div id="content" data-github-owner="ltbs" data-github-repo="uniform-scala"><div class="content-wrapper"><section><h1 id="controllers">Controllers</h1>
+
+<p>If you have a controller you wish to use uniform with, you must first
+extend the <code class="language-plaintext highlighter-rouge">PlayInterpreter[Html]</code> where <code class="language-plaintext highlighter-rouge">Html</code> is some play writeable type
+(for our example we’ll use <code class="language-plaintext highlighter-rouge">play.twirl.api.Html</code>, but you could use
+<a href="http://www.lihaoyi.com/scalatags/">ScalaTags</a> or any other representation you wish)</p>
+
+<p>There are a few things we will need to configure before we can use our
+controller.</p>
+
+<p>Lets start with a simple journey like so -</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">ltbs.uniform._</span>
+
+<span class="k">val</span> <span class="n">journey</span> <span class="k">=</span> <span class="k">for</span> <span class="o">{</span>
+  <span class="n">a</span> <span class="k">&lt;-</span> <span class="n">ask</span><span class="o">[</span><span class="kt">Int</span><span class="o">](</span><span class="s">"a"</span><span class="o">)</span>
+  <span class="n">b</span> <span class="k">&lt;-</span> <span class="n">interact</span><span class="o">[</span><span class="kt">String</span><span class="o">](</span><span class="s">"b"</span><span class="o">,</span> <span class="n">a</span><span class="o">)</span>
+<span class="o">}</span> <span class="k">yield</span> <span class="o">(</span><span class="n">b</span><span class="o">)</span>
+</code></pre></div></div>
+
+<h2 id="routes-file">Routes file</h2>
+
+<p>In order to hook this into a controller we first need to set up our routes file -</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET         /journey/           controllers.SimpleController.simpleAction(id = "")
+GET         /journey/*id        controllers.SimpleController.simpleAction(id: String)
+POST        /journey/           controllers.SimpleController.simpleAction(id = "")
+POST        /journey/*id        controllers.SimpleController.simpleAction(id: String)
+</code></pre></div></div>
+
+<p>We need to capture all the GETS and the POST’s, and direct them
+through to the same controller action. The routing between pages
+within the journey is handled by uniform itself.</p>
+
+<h2 id="simple-controller">Simple controller</h2>
+
+<p>In order for a controller to interpret a uniform journey it mush mix
+in the <code class="language-plaintext highlighter-rouge">PlayInterpreter[A]</code> where <code class="language-plaintext highlighter-rouge">A</code> is the type you want to use for
+HTML rendering (such as <code class="language-plaintext highlighter-rouge">play.twirl.api.Html</code> or
+<code class="language-plaintext highlighter-rouge">scalatags.Text.all.Tag</code> if you’d prefer to use scalatags).</p>
+
+<p>A simple example using twirl could look something like this -</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">cats.implicits._</span>
+<span class="k">import</span> <span class="nn">ltbs.uniform._</span><span class="o">,</span> <span class="n">common</span><span class="o">.</span><span class="n">web</span><span class="o">.</span><span class="k">_</span><span class="o">,</span> <span class="n">interpreters</span><span class="o">.</span><span class="n">playframework</span><span class="o">.</span><span class="k">_</span><span class="o">,</span> <span class="n">validation</span><span class="o">.</span><span class="k">_</span>
+<span class="k">import</span> <span class="nn">play.api.mvc._</span>
+<span class="k">import</span> <span class="nn">play.twirl.api.Html</span>
+
+<span class="c1">// in order to interpret our journey we need to be able to 
+// ask the user for an Int (step a), and present the user 
+// with an Int while asking them for a String (step b)
+</span><span class="k">implicit</span> <span class="k">def</span> <span class="n">askInt</span><span class="k">:</span> <span class="kt">WebInteraction</span><span class="o">[</span><span class="kt">Html</span>,<span class="kt">Unit</span>,<span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span>
+<span class="k">implicit</span> <span class="k">def</span> <span class="n">interactIntString</span><span class="k">:</span> <span class="kt">WebInteraction</span><span class="o">[</span><span class="kt">Html</span>,<span class="kt">Int</span>,<span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span>
+
+<span class="k">class</span> <span class="nc">SimpleController</span><span class="o">(</span>
+  <span class="k">implicit</span> <span class="n">ec</span><span class="k">:</span> <span class="kt">scala.concurrent.ExecutionContext</span><span class="o">,</span>
+  <span class="k">val</span> <span class="n">controllerComponents</span><span class="k">:</span> <span class="kt">ControllerComponents</span>
+<span class="o">)</span> <span class="k">extends</span> <span class="nc">BaseController</span> <span class="k">with</span> <span class="nc">PlayInterpreter</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span> <span class="o">{</span>
+
+  <span class="c1">// i18n - we can get messages from several sources and combine them
+</span>  <span class="c1">// together. 
+</span>  <span class="c1">// In this example we first use the messages provided by the play 
+</span>  <span class="c1">// framework then fall back to using the 'best guess' algorithm
+</span>  <span class="k">implicit</span> <span class="k">def</span> <span class="n">messages</span><span class="o">(</span>
+    <span class="k">implicit</span> <span class="n">request</span><span class="k">:</span> <span class="kt">Request</span><span class="o">[</span><span class="kt">AnyContent</span><span class="o">]</span>
+  <span class="o">)</span><span class="k">:</span> <span class="kt">UniformMessages</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span> <span class="k">=</span>
+    <span class="o">{</span> <span class="n">messagesApi</span><span class="o">.</span><span class="n">preferred</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="n">convertMessages</span><span class="o">()</span> <span class="o">|+|</span>
+      <span class="nc">UniformMessages</span><span class="o">.</span><span class="n">bestGuess</span> <span class="o">}.</span><span class="n">map</span><span class="o">(</span><span class="nc">Html</span><span class="o">.</span><span class="n">apply</span><span class="o">)</span>
+
+  <span class="c1">// How should we 'wrap' the generated form? 
+</span>  <span class="c1">// If we're using twirl we would likely pass these values into 
+</span>  <span class="c1">// a regular page template that contains our branding, JS, etc.
+</span>  <span class="k">def</span> <span class="n">pageChrome</span><span class="o">(</span>
+    <span class="n">key</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">],</span> 
+    <span class="n">errors</span><span class="k">:</span> <span class="kt">ErrorTree</span><span class="o">,</span>
+    <span class="n">formHtml</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Html</span><span class="o">],</span> 
+    <span class="n">breadcrumbs</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">],</span>
+    <span class="n">request</span><span class="k">:</span> <span class="kt">Request</span><span class="o">[</span><span class="kt">AnyContent</span><span class="o">],</span> 
+    <span class="n">messages</span><span class="k">:</span> <span class="kt">UniformMessages</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span>
+  <span class="o">)</span><span class="k">:</span> <span class="kt">Html</span> <span class="o">=</span> <span class="o">???</span>
+
+  <span class="c1">// our main controller method
+</span>  <span class="k">def</span> <span class="n">simpleAction</span><span class="o">(</span><span class="n">stepId</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nc">Action</span><span class="o">.</span><span class="n">async</span> <span class="o">{</span>
+    <span class="k">implicit</span> <span class="n">request</span><span class="k">:</span> <span class="kt">Request</span><span class="o">[</span><span class="kt">AnyContent</span><span class="o">]</span> <span class="k">=&gt;</span>
+
+    <span class="c1">// how should we store the data between pages? 
+</span>    <span class="c1">// In this example we retain the data in the users session.
+</span>    <span class="k">implicit</span> <span class="k">val</span> <span class="n">persistence</span><span class="k">:</span> <span class="kt">PersistenceEngine</span><span class="o">[</span><span class="kt">Request</span><span class="o">[</span><span class="kt">AnyContent</span><span class="o">]]</span> <span class="k">=</span>
+      <span class="nc">SessionPersistence</span><span class="o">(</span><span class="s">"simple"</span><span class="o">)</span>
+
+    <span class="c1">// interpret the journey into a WebMonad
+</span>    <span class="k">val</span> <span class="n">wm</span><span class="k">:</span> <span class="kt">WebMonad</span><span class="o">[</span><span class="kt">Html</span>,<span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="n">interpret</span><span class="o">(</span><span class="n">journey</span><span class="o">)</span>
+    
+    <span class="c1">// run the WebMonad using the stepId and implicit request
+</span>    <span class="n">wm</span><span class="o">.</span><span class="n">runSync</span><span class="o">(</span><span class="n">stepId</span><span class="o">){</span> <span class="n">onCompletion</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span>
+      <span class="c1">// what should we do upon completion of the journey? 
+</span>      <span class="nc">Ok</span><span class="o">(</span><span class="n">s</span><span class="s">"Done: ${onCompletion}"</span><span class="o">)</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">PlayInterpreter</code> trait provides the <code class="language-plaintext highlighter-rouge">interpret</code> method that will
+return a <code class="language-plaintext highlighter-rouge">WebMonad</code>.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">WebMonad</code> can then be run, and will return the <code class="language-plaintext highlighter-rouge">Future[Action]</code>. 
+There are two methods you can use here - <code class="language-plaintext highlighter-rouge">run</code> or <code class="language-plaintext highlighter-rouge">runSync</code> (which
+allows you to instead return a <code class="language-plaintext highlighter-rouge">Future[Action]</code> in the block of code
+to execute on completion.</p>
+
+<h2 id="internationalisation">Internationalisation</h2>
+
+<p>We need to tell Uniform where to get messages (i18n messages)
+from. Because Uniform is interpreter-agnostic it does not use Play
+messages automatically as you may wish to share messages between
+different interpreters.</p>
+
+<p>You can however access the Play Framework messages file as shown
+above. If you do not use a fallback as shown you will get an exception
+thrown when attempting to access content that is not defined - this
+may be desirable (for example when testing all content is translated
+to the target language).</p>
+
+<p>Apart from the ability to convert the play messages file
+<code class="language-plaintext highlighter-rouge">UniformMessages</code> behaves the same in the Play Interpreter as
+described in the core.</p>
+
+<h2 id="webinteraction">WebInteraction</h2>
+
+<p>In order for our example to work we will also have to tell our
+interpreter how to render forms and encode values.</p>
+
+<p>Although you can construct a <code class="language-plaintext highlighter-rouge">WebInteraction</code> directly, typically we
+would define a <code class="language-plaintext highlighter-rouge">WebAsk</code> instance for the basic types (<code class="language-plaintext highlighter-rouge">String</code>s,
+<code class="language-plaintext highlighter-rouge">Int</code>s, <code class="language-plaintext highlighter-rouge">Boolean</code>s, etc).</p>
+
+<p>This is covered in more detail in the common code section, but a basic
+example for a string datatype is as follows -</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">implicit</span> <span class="k">val</span> <span class="n">stringField</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">WebAsk</span><span class="o">[</span><span class="kt">Html</span>,<span class="kt">String</span><span class="o">]</span> <span class="o">{</span>
+
+  <span class="c1">// we need to turn serialized Input (a representation 
+</span>  <span class="c1">// of our POST request) into our desired data type
+</span>  <span class="k">def</span> <span class="n">decode</span><span class="o">(</span><span class="n">out</span><span class="k">:</span> <span class="kt">Input</span><span class="o">)</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">ErrorTree</span>,<span class="kt">String</span><span class="o">]</span> <span class="k">=</span> 
+    <span class="n">out</span><span class="o">.</span><span class="n">toStringField</span><span class="o">().</span><span class="n">toEither</span>
+    
+  <span class="c1">// we need to turn our data type back into its serialized
+</span>  <span class="c1">// format
+</span>  <span class="k">def</span> <span class="n">encode</span><span class="o">(</span><span class="n">in</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Input</span> <span class="o">=</span> 
+    <span class="nc">Input</span><span class="o">.</span><span class="n">one</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="n">in</span><span class="o">))</span>
+
+  <span class="c1">// how to render a Html form
+</span>  <span class="k">def</span> <span class="n">render</span><span class="o">(</span>
+    <span class="n">pageKey</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">],</span>
+    <span class="n">fieldKey</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">],</span>
+    <span class="n">tell</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Html</span><span class="o">],</span> 
+    <span class="n">path</span><span class="k">:</span> <span class="kt">Breadcrumbs</span><span class="o">,</span>
+    <span class="n">data</span><span class="k">:</span> <span class="kt">Input</span><span class="o">,</span>
+    <span class="n">errors</span><span class="k">:</span> <span class="kt">ErrorTree</span><span class="o">,</span>
+    <span class="n">messages</span><span class="k">:</span> <span class="kt">UniformMessages</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span>
+  <span class="o">)</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Some</span><span class="o">{</span>
+
+    <span class="k">val</span> <span class="n">existingValue</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="n">decode</span><span class="o">(</span><span class="n">data</span><span class="o">).</span><span class="n">toOption</span><span class="o">.</span><span class="n">getOrElse</span><span class="o">(</span><span class="s">""</span><span class="o">)</span>
+    
+    <span class="o">???</span> <span class="c1">// we might want to use a twirl view to produce the resulting Html  
+</span>  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Often we will want to have uniform create <code class="language-plaintext highlighter-rouge">WebAsk</code> instances for us
+automatically. For this purpose we can use <code class="language-plaintext highlighter-rouge">InferWebAsk</code> to generate
+forms and codecs for more complex datatypes via typeclass derivation.</p>
+
+<p>In addition to the <code class="language-plaintext highlighter-rouge">WebAsk</code> instances there are also <code class="language-plaintext highlighter-rouge">WebTell</code>s. These 
+are comparatively simple (as no codec is needed) -</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">implicit</span> <span class="k">val</span> <span class="n">tellInt</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">WebTell</span><span class="o">[</span><span class="kt">Html</span>, <span class="kt">Int</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">render</span><span class="o">(</span>
+	<span class="n">in</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> 
+	<span class="n">key</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> 
+	<span class="n">messages</span><span class="k">:</span> <span class="kt">UniformMessages</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span>
+  <span class="o">)</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>An implicit <code class="language-plaintext highlighter-rouge">WebTell[Html,T]</code> and an implicit <code class="language-plaintext highlighter-rouge">WebAsk[Html,A]</code> can combine to
+produce an implicit <code class="language-plaintext highlighter-rouge">WebInteraction[Html,T,A]</code> for consumption by the
+interpreter.</p>
+
+<h1 id="old">old!!!</h1>
+<h1 id="old-1">old!!!</h1>
+<h1 id="old-2">old!!!</h1>
+
+<h2 id="selection-of-fields">Selection of fields</h2>
+
+<p>Sometimes we may want to offer the user a choice between several
+fields or sets of fields. For example an <code class="language-plaintext highlighter-rouge">Either[String,Int]</code> or a
+sealed trait hierarchy. In this situation you may want to use
+Javacript to control hiding and revealing form elements, perhaps
+toggled by radio buttons.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">selectionOfFields</code> method takes a list of options and a function
+to control the Html that should be presented when that option is
+active.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">def</span> <span class="n">selectionOfFields</span><span class="o">(</span>
+    <span class="n">inner</span><span class="k">:</span> <span class="kt">List</span><span class="o">[(</span>
+      <span class="kt">String</span>,
+      <span class="o">(</span><span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>, <span class="kt">Path</span>, <span class="kt">Input</span>, <span class="kt">ErrorTree</span>, <span class="kt">UniformMessages</span><span class="o">[</span><span class="kt">Html</span><span class="o">])</span> <span class="k">=&gt;</span> <span class="kt">Html</span>
+    <span class="o">)]</span>
+  <span class="o">)(</span>
+    <span class="n">key</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">],</span>
+    <span class="n">path</span><span class="k">:</span> <span class="kt">Path</span><span class="o">,</span>
+    <span class="n">values</span><span class="k">:</span> <span class="kt">Input</span><span class="o">,</span>
+    <span class="n">errors</span><span class="k">:</span> <span class="kt">ErrorTree</span><span class="o">,</span>
+    <span class="n">messages</span><span class="k">:</span> <span class="kt">UniformMessages</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span>
+  <span class="o">)</span><span class="k">:</span> <span class="kt">Html</span> <span class="o">=</span> <span class="o">???</span>
+</code></pre></div></div>
+
+<h2 id="invoking-a-journey">Invoking a journey</h2>
+
+<p>We also need an actual action that will invoke the journey.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="n">myjourney</span><span class="o">(</span><span class="n">targetId</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span>
+  <span class="nc">Action</span><span class="o">.</span><span class="n">async</span> <span class="o">{</span> <span class="k">implicit</span> <span class="n">request</span><span class="k">:</span> <span class="kt">Request</span><span class="o">[</span><span class="kt">AnyContent</span><span class="o">]</span> <span class="k">=&gt;</span>
+
+    <span class="c1">// interpret our journey using the play interpreter
+</span>    <span class="k">val</span> <span class="n">playJourney</span> <span class="k">=</span> <span class="n">myJourney</span><span class="o">(</span>
+      <span class="k">new</span> <span class="nc">FuturePlayInterpreter</span><span class="o">[</span><span class="kt">TellTypes</span>, <span class="kt">AskTypes</span><span class="o">],</span>
+    <span class="o">)</span>
+
+    <span class="c1">// Run the journey using the request and the targetId
+</span>    <span class="n">run</span><span class="o">(</span><span class="n">playJourney</span><span class="o">,</span> <span class="n">targetId</span><span class="o">){</span> <span class="n">output</span> <span class="k">=&gt;</span>
+        <span class="c1">// final code to be run upon successful completion
+</span>        <span class="c1">// of the journey
+</span>        <span class="n">println</span><span class="o">(</span><span class="n">output</span><span class="o">)</span>
+      <span class="nc">Future</span><span class="o">.</span><span class="n">successful</span><span class="o">(</span><span class="nc">Ok</span><span class="o">(</span><span class="s">"Completed"</span><span class="o">))</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</code></pre></div></div>
+
+<p>In our routes file we would write something like this -</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET         /myjourney/           controllers.ExampleController.myjourney(id = "")
+GET         /myjourney/*id        controllers.ExampleController.myjourney(id: String)
+POST        /myjourney/           controllers.ExampleController.myjourney(id = "")
+POST        /myjourney/*id        controllers.ExampleController.myjourney(id: String)
+</code></pre></div></div>
+
+<h2 id="putting-it-all-together">Putting it all together</h2>
+
+<p>Combining these elements we get an outline of our interpreter setup</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">ltbs.uniform._</span><span class="o">,</span> <span class="n">interpreters</span><span class="o">.</span><span class="n">playframework</span><span class="o">.</span><span class="k">_</span>
+
+<span class="k">import</span> <span class="nn">play.api.i18n.</span><span class="o">{</span><span class="nc">Messages</span> <span class="k">=&gt;</span> <span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">}</span>
+<span class="k">import</span> <span class="nn">play.api.mvc._</span>
+<span class="k">import</span> <span class="nn">play.twirl.api.</span><span class="o">{</span><span class="nc">Html</span><span class="o">,</span> <span class="nc">HtmlFormat</span><span class="o">}</span>
+
+<span class="k">class</span> <span class="nc">ExampleController</span> <span class="o">(</span>
+  <span class="k">implicit</span> <span class="k">val</span> <span class="n">messagesApi</span><span class="k">:</span> <span class="kt">MessagesApi</span><span class="o">,</span>
+  <span class="n">ec</span><span class="k">:</span> <span class="kt">concurrent.ExecutionContext</span>
+<span class="o">)</span> <span class="k">extends</span> <span class="nc">PlayInterpreter</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span> <span class="k">with</span> <span class="n">I18nSupport</span> <span class="o">{</span>
+
+  <span class="k">def</span> <span class="n">messages</span><span class="o">(</span>
+    <span class="n">request</span><span class="k">:</span> <span class="kt">Request</span><span class="o">[</span><span class="kt">AnyContent</span><span class="o">]</span>
+  <span class="o">)</span><span class="k">:</span> <span class="kt">UniformMessages</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span> <span class="k">=</span>
+    <span class="nc">UniformMessages</span><span class="o">.</span><span class="n">bestGuess</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="nc">HtmlFormat</span><span class="o">.</span><span class="n">escape</span><span class="o">)</span>
+
+  <span class="k">def</span> <span class="n">pageChrome</span><span class="o">(</span>
+    <span class="n">key</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">],</span>
+    <span class="n">errors</span><span class="k">:</span> <span class="kt">ErrorTree</span><span class="o">,</span>
+    <span class="n">tell</span><span class="k">:</span> <span class="kt">Html</span><span class="o">,</span>
+    <span class="n">ask</span><span class="k">:</span> <span class="kt">Html</span><span class="o">,</span>
+    <span class="n">breadcrumbs</span><span class="k">:</span> <span class="kt">Path</span><span class="o">,</span>
+    <span class="n">request</span><span class="k">:</span> <span class="kt">Request</span><span class="o">[</span><span class="kt">AnyContent</span><span class="o">],</span>
+    <span class="n">messages</span><span class="k">:</span> <span class="kt">UniformMessages</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span>
+  <span class="o">)</span><span class="k">:</span> <span class="kt">Html</span> <span class="o">=</span> <span class="o">???</span>
+
+  <span class="k">def</span> <span class="n">selectionOfFields</span><span class="o">(</span>
+    <span class="n">inner</span><span class="k">:</span> <span class="kt">List</span><span class="o">[(</span>
+      <span class="kt">String</span>,
+      <span class="o">(</span><span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>, <span class="kt">Path</span>, <span class="kt">Input</span>, <span class="kt">ErrorTree</span>, <span class="kt">UniformMessages</span><span class="o">[</span><span class="kt">Html</span><span class="o">])</span> <span class="k">=&gt;</span> <span class="kt">Html</span>
+    <span class="o">)]</span>
+  <span class="o">)(</span>
+    <span class="n">key</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">],</span>
+    <span class="n">path</span><span class="k">:</span> <span class="kt">Path</span><span class="o">,</span>
+    <span class="n">values</span><span class="k">:</span> <span class="kt">Input</span><span class="o">,</span>
+    <span class="n">errors</span><span class="k">:</span> <span class="kt">ErrorTree</span><span class="o">,</span>
+    <span class="n">messages</span><span class="k">:</span> <span class="kt">UniformMessages</span><span class="o">[</span><span class="kt">Html</span><span class="o">]</span>
+  <span class="o">)</span><span class="k">:</span> <span class="kt">Html</span> <span class="o">=</span> <span class="o">???</span>
+
+  <span class="k">def</span> <span class="n">myjourney</span><span class="o">(</span><span class="n">targetId</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span>
+    <span class="nc">Action</span><span class="o">.</span><span class="n">async</span> <span class="o">{</span> <span class="k">implicit</span> <span class="n">request</span><span class="k">:</span> <span class="kt">Request</span><span class="o">[</span><span class="kt">AnyContent</span><span class="o">]</span> <span class="k">=&gt;</span>
+
+      <span class="c1">// interpret our journey using the play interpreter
+</span>      <span class="k">val</span> <span class="n">playJourney</span> <span class="k">=</span> <span class="n">myJourney</span><span class="o">(</span>
+        <span class="k">new</span> <span class="nc">FuturePlayInterpreter</span><span class="o">[</span><span class="kt">TellTypes</span>, <span class="kt">AskTypes</span><span class="o">],</span>
+      <span class="o">)</span>
+
+      <span class="c1">// Run the journey using the request and the targetId
+</span>      <span class="n">run</span><span class="o">(</span><span class="n">playJourney</span><span class="o">,</span> <span class="n">targetId</span><span class="o">){</span> <span class="n">output</span> <span class="k">=&gt;</span>
+        <span class="c1">// final code to be run upon successful completion
+</span>        <span class="c1">// of the journey
+</span>        <span class="n">println</span><span class="o">(</span><span class="n">output</span><span class="o">)</span>
+        <span class="nc">Future</span><span class="o">.</span><span class="n">successful</span><span class="o">(</span><span class="nc">Ok</span><span class="o">(</span><span class="s">"Completed"</span><span class="o">))</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+</section></div></div></div></div><script src="/uniform-scala/highlight/highlight.pack.js"></script><script src="/uniform-scala/lunr/lunr.js"></script><script>
+// For all code blocks, copy the language from the containing div
+// to the inner code tag (where hljs expects it to be)
+const langPrefix = 'language-';
+document.querySelectorAll(`div[class^='${langPrefix}']`).forEach(function(div) {
+  div.classList.forEach(function(cssClass) {
+    if (cssClass.startsWith(langPrefix)) {
+      const lang = cssClass.substring(langPrefix.length);
+      div.querySelectorAll('pre code').forEach(function(code) {
+        code.classList.add(lang);
+      });
+    }
+  });
+});
+
+hljs.configure({languages:['scala','java','bash']});
+hljs.initHighlightingOnLoad();
+      </script><script>console.info('\x57\x65\x62\x73\x69\x74\x65\x20\x62\x75\x69\x6c\x74\x20\x77\x69\x74\x68\x3a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x5f\x5f\x0a\x20\x20\x20\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x5f\x20\x20\x2f\x20\x2f\x5f\x20\x20\x20\x20\x20\x20\x5f\x5f\x5f\x5f\x20\x5f\x5f\x5f\x20\x20\x28\x5f\x29\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x28\x5f\x29\x20\x2f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x0a\x20\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x60\x5f\x5f\x20\x5c\x2f\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x20\x2f\x20\x5f\x5f\x2f\x20\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x0a\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x5f\x2f\x20\x2f\x20\x2f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x5f\x5f\x2f\x20\x2f\x20\x20\x2f\x20\x2f\x5f\x2f\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x20\x2f\x5f\x2f\x20\x20\x5f\x5f\x28\x5f\x5f\x20\x20\x29\x0a\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2e\x5f\x5f\x5f\x2f\x5c\x5f\x5f\x2f\x20\x20\x20\x20\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x2f\x20\x20\x20\x5c\x5f\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x0a\x0a\x68\x74\x74\x70\x73\x3a\x2f\x2f\x34\x37\x64\x65\x67\x2e\x67\x69\x74\x68\x75\x62\x2e\x69\x6f\x2f\x73\x62\x74\x2d\x6d\x69\x63\x72\x6f\x73\x69\x74\x65\x73')</script><script src="/uniform-scala/js/search.js"></script><script src="/uniform-scala/js/docs.js"></script></body></html>
