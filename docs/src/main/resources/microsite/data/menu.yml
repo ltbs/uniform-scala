@@ -17,8 +17,6 @@ options:
        url: core/composition.html
      - title: Interacting
        url: core/interacts.html
-     - title: Validation
-       url: core/validation.html
      - title: Branching
        url: core/branching.html
      - title: Subjourneys
@@ -31,14 +29,8 @@ options:
     nested_options:
      - title: Controllers
        url: interpreter-play27/controllers.html
-     - title: WebMonad
-       url: common-web/web-monad.html
-     - title: Internationalisation
-       url: common-web/internationalisation.html
-     - title: Listing Pages
-       url: common-web/listing-pages.html
-     - title: Memoisation
-       url: common-web/remote-calls.html
+     - title: Alternative templating technologies
+       url: interpreter-play27/alternative-templating.html
 
   - title: Generic Web Interpreters
     url: common-web/index.html
@@ -47,25 +39,19 @@ options:
        url: common-web/web-monad.html
      - title: Internationalisation
        url: common-web/internationalisation.html
-     - title: Listing Pages
-       url: common-web/listing-pages.html
      - title: Memoisation
        url: common-web/remote-calls.html
-
+     - title: Derivation of views
+       url: common-web/derivation-of-views.html
 
   - title: Other Interpreters
     url: interpreters.html
     nested_options:
-     - title: CLI Interpreter
-       url: interpreter-cli.html
-     - title: Logic Table Interpreter
-       url: interpreter-logic-table.html
      - title: Static Site interpreter
        url: interpreter-static-site.html
-     - title: Selenium Interpreter
-       url: interpreter-selenium.html
-  - title: Advanced Options
-    url: core/advanced.html
-    nested_options:
-     - title: Writing Interpreters
-       url: core/writing-interpreters.html
+
+  - title: Internationalisation
+    url: core/internationalisation.html
+
+  - title: Writing Interpreters
+    url: core/writing-interpreters.html

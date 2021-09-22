@@ -5,6 +5,8 @@ title: Remote Calls
 
 # Remote Calls 
 
+> **`convert` and `convertWithKey` allow other higher-kinded types to be interleaved into a journey.**
+
 Sometimes it is necessary to perform some sort of out-of-band
 interaction during a journey, for example it might be that you need
 the user to input a code and you need to call an API to look up a
@@ -96,11 +98,11 @@ targeting `Option`.
 ## Using a function
 
 This method provides a more fine-grained control than using natural
-transformations. For example if we wanted to use different logic for
-converting a `LocalDate` as for a `Customer`.
+transformations. 
 
-For this situation we instead define an implicit function from one
-type to the other.
+For example if we wanted to use different logic for
+converting a `LocalDate` as for a `Customer` we could instead define 
+an implicit function from one type to the other.
 
 ```scala mdoc:silent
 
@@ -138,7 +140,7 @@ between "remote-call-dob" and any other similar call.
 implicit val converter = new Converter[Future, Option, LocalDate] {
   def apply(
     key: String, 
-	in: () => Future[LocalDate]
+    in: () => Future[LocalDate]
   ): Option[LocalDate] = key match { 
     case "remote-call-dob" => ???
     case _                 => ???
@@ -148,14 +150,3 @@ implicit val converter = new Converter[Future, Option, LocalDate] {
 
 We often use this third approach when we need to encode and cache 
 the result (for example with web interpreters).
-
-For many interpreters this may be sufficient for production. However
-care must be taken when using web-based interpreters as they may need
-to memoise the result to avoid hammering the server. For example the
-Play Framework Interpreter will replay the logic on every page load -
-generally this is desirable but a `Server[WebMonad]` that makes a
-remote call and wraps and returns the result would hit the server on every step after that point in the program unless memoisation is used.
-
-In the example of the Play Interpreter Uniform provides special
-methods to support memoising the result within the play interpreters
-internal data structure. 

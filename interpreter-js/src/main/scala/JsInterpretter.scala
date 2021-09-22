@@ -13,6 +13,8 @@ abstract class JsInterpreter[Html](selector: JQuery)(implicit ec: ExecutionConte
 
   def render(in: Option[Html]): String
 
+  def submit(): Boolean
+
   def renderFrame(
     key: List[String], 
     html: Option[Html],
@@ -22,6 +24,7 @@ abstract class JsInterpreter[Html](selector: JQuery)(implicit ec: ExecutionConte
   ): Future[Unit] = Future{
     selector.html(render(html))
     $("#errors").html(errors.toString)
+    $(".govuk-button").click(() => submit())
     ()
   }
 

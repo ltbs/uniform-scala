@@ -13,8 +13,10 @@ Under this configuration an exception will be thrown if a non-existant
 key is asked for. `UniformMessage` is a `Monoid`, and as such can be
 combined messages easily - the left-hand source will be consulted
 first and if a message is not found the right-hand instance will be
-asked. If we the key itself to be returned if there is no message defined we can use the
-`UniformMessages.echo` provider as a fallback - 
+asked. 
+
+If we want the key itself to be returned when there is no message defined 
+the `UniformMessages.echo` provider can be used as a fallback - 
 
 ```scala
   def messages2(request: Request[AnyContent]): UniformMessages[Html] = {

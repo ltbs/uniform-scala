@@ -5,8 +5,8 @@ title: WebMonad
 
 # How it works - the Web Monad
 
-The uniform play interpreter is based off the observation that
-interaction with a play-based web journey can be thought of as an
+The uniform web interpreter is based off the observation that
+interaction with a web journey can be thought of as an
 `Either[Result, A]` for a given `ask[A]` as long as `Either` is
 right-associative monad.
 
@@ -30,7 +30,7 @@ When running a single `ask[A]` we get either a new page to be rendered (a
 `Either` is a `cats.Monad` that captures the error context we can compose
 all our steps into one big `Either[Result, B]`.
 
-Inside our controller we invoke our program with the play
+Inside our controller we invoke our program with the web
 interpreter. Along with the program we supply a _terminating fold_ of the
 form `B => Future[Result]` which allows us to specify what should happen when
 we get to the end of the journey along with what should be sent to the
