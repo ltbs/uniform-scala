@@ -3,13 +3,17 @@ layout: docs
 title: Branching
 ---
 
+> **Any logic you can use in Scala to branch can also be applied to Uniform journeys.**
+
+> **`when`, `unless` and their monoid variants provide convenient shorthand for some common interactions.**
+
 # Branching
 
 If no steps in a journey are dependent upon the result of a previous
 one then using a for comprehension may be overkill and you may prefer
 using `cats.Applicative` instead -
 
-```scala mdoc
+```scala mdoc:silent
 
 import ltbs.uniform._
 import cats.implicits._
@@ -27,7 +31,7 @@ def askPerson(id: String) = (
 But lets suppose we want an optional third `Person` in our tuple, 
 and we want to use branching -
 
-```scala mdoc
+```scala mdoc:silent
 (
   askPerson("sender"),
   askPerson("receiver"),
@@ -38,7 +42,7 @@ and we want to use branching -
 ).tupled
 ```
 
-In this case the` journey would ask the user the same 4 questions
+In this case the journey would ask the user the same 4 questions
 initially as `senderAndReceiverApplicative`, however it would then ask the user
 for a `Boolean`. If they answer no then the journey would end with
 `_3` being `None`. If the user picked yes however then they would be
@@ -82,7 +86,7 @@ predicate is `true`, and a `None` when the predicate is `false`.
 `when` will short-circuit the journey and not execute the `ask[A]` 
 in the event that the predicate returns `false`. 
 
-```scala mdoc
+```scala mdoc:silent
 for {
   add    <- ask[Boolean]("add-person")
   person <- ask[Person]("person") when add 
@@ -92,7 +96,7 @@ for {
 When taking a journey that returns a boolean the approach is the same 
 but essentially it does not need an intermediary variable - 
 
-```scala mdoc
+```scala mdoc:silent
 ask[Person]("person") when ask[Boolean]("add-person")
 ```
 
@@ -100,7 +104,7 @@ ask[Person]("person") when ask[Boolean]("add-person")
 
 `unless` is just `when` but with the predicate inverted. 
 
-```scala mdoc
+```scala mdoc:silent
 sealed trait Booze
 case object Beer extends Booze
 case class Martini(olive: Boolean) extends Booze
@@ -118,7 +122,7 @@ ask[Booze]("choose-drink") unless ask[Int]("age").map(_ < 18)
 
 For example -
 
-```scala mdoc
+```scala mdoc:silent
 ask[Int]("hoursWorked") emptyWhen ask[Boolean]("retired")
 ```
 

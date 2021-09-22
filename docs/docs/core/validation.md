@@ -105,5 +105,5 @@ line starts with a number we can either do this sequentially using
 ```scala
 val sequentialChecks: Rule[Address] = 
   postcodeCheck followedBy 
-    Rule.cond[Address](_.line1.head.isDigit, "line-must-start-with-number")   
+    Rule.cond[Address](_.line1.head.isDigit, "line-must-start-with-number")
 ```

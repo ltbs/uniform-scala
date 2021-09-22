@@ -29,7 +29,7 @@ class SimpleController @Inject()(
       case Maybe.Yes => true
       case Maybe.No => false
     }
-    x2 <- interact[String]("x-back", x)
+    _ <- interact[String]("x-back", x)
     _ <- tell("tell-int", 12)
     _ <- tell("tell-string", "12")        
     y <- if (x) ask[Int]("y", validation = Rule.min(0)) else end("z")
@@ -41,7 +41,7 @@ class SimpleController @Inject()(
     implicit val persistence: PersistenceEngine[Request[AnyContent]] =
       SessionPersistence("simple")
 
-    interpret(journey).runSync(targetId){ onCompletion =>
+    interpret(journey).runSync(targetId){ _ =>
       Ok("Done")
     }
   }

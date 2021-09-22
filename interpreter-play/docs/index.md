@@ -3,6 +3,10 @@ layout: docs
 title: Play Framework Interpreter
 ---
 
+> **The play framework interpreter is a specialised form of the generic web**
+> **interpreter.**
+
+
 # Play framework interpreter
 
 The play framework interpreter takes a uniform journey and converts it

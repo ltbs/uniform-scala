@@ -60,9 +60,6 @@ package web {
       case a => a
     }
 
-    implicit def tellUnit[HTML]: WebTell[HTML, Unit] = new WebTell[HTML, Unit] {
-      def render(in: Unit, key: String, messages: UniformMessages[HTML]): Option[HTML] = None
-    }
   }
 
 }
@@ -87,5 +84,5 @@ package object web extends webcommon {
     def compare(x: LocalDateTime, y: LocalDateTime): Int =
       x compareTo y
   }
-  
+
 }

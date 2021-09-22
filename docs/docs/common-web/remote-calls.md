@@ -8,10 +8,11 @@ title: Memoisation
 Care must be taken when hooking remote calls into a journey to avoid
 repeatedly hitting a server. For example consider this journey - 
 
-```scala 
+```scala
 import ltbs.uniform._
 import cats.implicits._
 import scala.language.higherKinds
+import scala.concurrent.Future 
 
 case class User (
 	forename: String, 
@@ -19,9 +20,9 @@ case class User (
 	age: Int
 )
 
-trait Server[F[_]] {
-    def userLookup(userName: String): F[User]
-	def isAllowed(user: User): F[Boolean]
+trait Server {
+    def userLookup(userName: String): Future[User]
+	def isAllowed(user: User): Future[Boolean]
 }
 
 case class SensitiveData(value: String)
@@ -29,22 +30,16 @@ case class SensitiveData(value: String)
 type TellTypes = SensitiveData :: NilTypes
 type AskTypes = String :: NilTypes
 
-def exampleJourney[F[_] : cats.Monad](
-  interpreter: Language[F, TellTypes, AskTypes], 
-  server: Server[F]
-): F[String] = {
-  import interpreter._
-
-  for {
-    user <- ask[String]("username") >>= server.userLookup
-	_ <- (
-	  tell[SensitiveData]("s1", SensitiveData("s1")), 
-	  tell[SensitiveData]("s2", SensitiveData("s2")), 
-	  tell[SensitiveData]("s3", SensitiveData("s3")), 
-	  tell[SensitiveData]("s4", SensitiveData("s4"))
-    ).tupled when server.isAllowed(user)
-  } yield (user.surname)
-}
+def exampleJourney = for {
+  userName <- ask[String]("username")
+  user     <- convert("user-lookup",server.userLookup)
+  _ <- (
+    tell[SensitiveData]("s1", SensitiveData("s1")), 
+	tell[SensitiveData]("s2", SensitiveData("s2")), 
+	tell[SensitiveData]("s3", SensitiveData("s3")), 
+	tell[SensitiveData]("s4", SensitiveData("s4"))
+  ).tupled when server.isAllowed(user)
+} yield (user.surname)
 ```
 
 This journey will ask the user for their username, look up their

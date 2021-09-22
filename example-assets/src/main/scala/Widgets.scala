@@ -15,38 +15,6 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
   
   import bundle.all._
 
-  implicit val unitField = new WebAsk[Tag,Unit] {
-    def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
-    def encode(in: Unit): Input = Input.empty
-    def render(
-      pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[Tag],
-      path: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Tag]
-    ): Option[Tag] = tell
-  }
-
-  implicit val nothingField = new WebAsk[Tag,Nothing] {
-    def decode(out: Input): Either[ltbs.uniform.ErrorTree,Nothing] =
-      Left(ErrorMsg("tried to decode to nothing").toTree)
-
-    def encode(in: Nothing): Input =
-      sys.error("encoding nothing is not possible!")
-
-    def render(
-      pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[Tag],
-      path: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Tag]
-    ): Option[Tag] = tell
-  }
-
   implicit class RichError(errors: ErrorTree) {
     def cls(className: String): String =
       if (errors.definedAtRoot) { className } else ""
@@ -75,7 +43,7 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
         )},
       inner,
       br(), br(),
-      button(tpe:="submit", cls:="govuk-button")(messages({key :+ "save.and.continue"}.mkString(".")))
+      button(tpe:="submit", cls:="govuk-button")(messages({key ++ ".save-and-continue"}))
     )
 
   def subfieldSurround(key: List[String], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag*): Tag =

@@ -78,7 +78,7 @@ postcodeCheck.apply(testAddress)
 If we want to apply our validation rule to a step in a journey we
 simply supply it as a parameter.
 
-```scala mdoc
+```scala mdoc:silent
 def askAddress2 =
   ask[Address]("post-to", validation = postcodeCheck)
 ```
@@ -93,5 +93,5 @@ line starts with a number we can either do this sequentially using
 ```scala mdoc:silent
 val sequentialChecks: Rule[Address] = 
   postcodeCheck followedBy 
-    Rule.cond[Address](_.line1.head.isDigit, "line-must-start-with-number")   
+    Rule.cond[Address](_.line1.head.isDigit, "line-must-start-with-number")
 ```

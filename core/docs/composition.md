@@ -3,6 +3,8 @@ layout: docs
 title: Composing journeys
 ---
 
+> **Steps in a uniform journey can be mapped over and flatMapped together.**
+
 # Composing journeys together
 
 A journey is simply a composition of steps (such `ask`, `tell`, `interact` or `end`) 

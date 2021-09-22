@@ -5,4 +5,4 @@ title: Listing Pages
 
 # Listing pages
 
-TODO!!!
+{% include_relative web-monad.md %}

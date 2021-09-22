@@ -3,6 +3,8 @@ layout: docs
 title: Interacting
 ---
 
+> **An `interact` is a single step in a Uniform journey that both presents information to and requests information from the user simultaneously.**
+
 # Interacting
 
 `interact` is simply the combination of an `ask` and a `tell`
@@ -10,9 +12,11 @@ together into a single step. In fact we can consider both `ask` and `tell`
 to be specialised forms of `interact`. 
 
 It has a type parameter for both the datatype being presented to the
-user (`Tell`) and being asked of the user (`Ask`). A confirmation page
-presenting a user with an address and asking them for a Yes/No answer
-could be modeled as `interact[Address, Boolean]("confirm-address", addr)`. 
+user (`Tell`) and being asked of the user (`Ask`). 
+
+A confirmation page presenting a user with an address and asking them
+for a Yes/No answer could be modeled as
+`interact[Boolean]("confirm-address", addr)`.
 
 # Relationship with `ask` and `tell`
 
@@ -43,16 +47,41 @@ the user.
 We will actually see this when we look at the type signatures of `ask`
 and `tell` -
 
-```scala mdoc
+```scala mdoc:silent
 import ltbs.uniform._
 
-val aTell = tell("tell", 123)
-val anAsk = ask[String]("ask")
-val anInteract = interact[Boolean]("interact", Option(0L))
 
-val composition = for {
-  _  <- aTell
-  as <- anAsk
-  in <- anInteract
-} yield (as, in)
+// a tell is an Interact[A, Unit]
+val aTell: Uniform[
+             Needs.Interact[Int, Unit], 
+             Int, // 'input' type
+             Unit // 'output' type
+           ] = tell("tell", 123)
+
+// an ask is an Interact[Unit, A]
+val anAsk: Uniform[
+             Needs.Interact[Unit, String], 
+             Unit, 
+             String
+           ] = ask[String]("ask")
+  
+// unlike in the above pseudocode we only need to specify
+// the type being requested from the user.
+val anInteract: Uniform[
+                  Needs.Interact[Option[Long], Boolean], 
+                  Option[Long], 
+                  Boolean
+                ] = interact[Boolean]("interact", Option(0L))
+
+val composition: Uniform[
+                   Needs.Interact[Int, Unit] with 
+                     Needs.Interact[Unit, String] with 
+                     Needs.Interact[Option[Long], Boolean], 
+                   Int with Unit with Option[Long], 
+                   (String, Boolean)
+                 ] = for {
+                   _  <- aTell
+                   as <- anAsk
+                   in <- anInteract
+                 } yield (as, in)
 ```
