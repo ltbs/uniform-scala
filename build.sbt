@@ -207,6 +207,17 @@ lazy val `interpreter-gui` = project
   .settings(commonSettings)
   .dependsOn(coreJVM)
 
+lazy val `interpreter-asterisk` = project
+  .settings(commonSettings)
+  .dependsOn(coreJVM)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.asteriskjava" % "asterisk-java" % "2.0.2",
+      "org.typelevel" %% "cats-effect" % "2.0.0",
+      "org.slf4j" % "slf4j-simple" % "1.7.32" % Test
+    ) ++ macroDependencies(scalaVersion.value)
+  )
+
 lazy val `interpreter-logictable` = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
