@@ -46,9 +46,18 @@ object InteractAsterisk {
     implicit tell: TellAsterisk[T],
     ask: AskAsterisk[A]
   ): InteractAsterisk[T,A] = InteractAsterisk(tell, ask)
+
+  def asteriskOp[A](f: AgiOperations => A): ReaderT[IO, AgiOperations, A] = for {
+    ops <- ReaderT.ask[IO, AgiOperations]
+    r   <- ReaderT.liftF(IO { f(ops) } )
+  } yield r
 }
 
-trait AsteriskInterpreter extends MonadInterpreter[ReaderT[IO, AgiOperations, *], InteractAsterisk, Noop /* TODO Listings */] {
+trait AsteriskInterpreter extends RecoverableMonadInterpreter[
+  ReaderT[IO, AgiOperations, *],
+  InteractAsterisk,
+  Noop /* TODO Listings */
+] {
 
   def askListImpl[A](
     key: String,
@@ -59,15 +68,25 @@ trait AsteriskInterpreter extends MonadInterpreter[ReaderT[IO, AgiOperations, *]
     asker: Noop[A]
   ): ReaderT[IO, AgiOperations, List[A]] = ???
 
-  def interactImpl[T, A](
+  def errorNotification(error: ErrorTree): ReaderT[IO, AgiOperations, Unit] =
+    error match {
+      case ErrorTree.empty => ().pure[ReaderT[IO, AgiOperations, *]]
+      case _ => InteractAsterisk.asteriskOp(_.exec("Flite", "invalid input"))
+    }
+
+  def interactRecoverable[T, A](
     key: String,
     tellValue: T,
     default: Option[A],
     validation: Rule[A],
     customContent: Map[String,(String, List[Any])],
-    interaction: InteractAsterisk[T,A]
+    interaction: InteractAsterisk[T,A],
+    error: ErrorTree
   ): ReaderT[IO, AgiOperations, A] = 
-    interaction.tell(key, tellValue) >> interaction.ask(key, validation)
+    errorNotification(error) >> 
+    interaction.tell(key, tellValue) >>
+    interaction.ask(key, validation)
+
 
   def monadInstance: cats.Monad[ReaderT[IO, AgiOperations, *]] = implicitly
 
