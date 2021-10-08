@@ -1,11 +1,11 @@
 package ltbs.uniform
 package common.web
 
-import cats.syntax.eq._, cats.syntax.flatMap._, cats.syntax.applicative._
-import cats.instances.future.catsStdInstancesForFuture
+import cats.implicits._
 import concurrent.Future
 import scala.concurrent.ExecutionContext
 import validation._
+
 
 trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
 
@@ -24,7 +24,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
 
   def postPage(
     key: List[String],
-    tell: Option[T], 
+    tell: Option[T],
     state: DB,
     request: Input,
     errors: ErrorTree,
@@ -37,25 +37,52 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
     tell: Option[T],
     default: Option[A],
     validation: Rule[A],
-    customContent: Map[String,(String,List[Any])] = Map.empty    
+    customContent: Map[String,(String,List[Any])] = Map.empty
   ): WebMonad[Html, A] = new WebMonad[Html, A] {
     def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, A]] = {
-      import pageIn.{messages => _, _}
+      import pageIn.{messages => _, state => statePreLeap, _}
+
       val messages = pageIn.messages.withCustomContent(customContent)
       val currentId = pageIn.pathPrefix :+ id
+
+      // should we try to leap ahead?
+      val (state, leapAhead): (DB, Boolean) = {
+        (
+          statePreLeap.get("_leap-to"::Nil).map(_.split("/").toList),
+          statePreLeap.get("_leap-from"::Nil).map(_.split("/").toList)
+        ).mapN {
+          case (to, from) =>
+
+            println(s"breadcrumbs:${breadcrumbs}")
+            println(s"from:${from.toList}")
+            println(s"to:${to.toList}")
+            println(s"currentId:$currentId")
+            println(s"one:${breadcrumbs.contains(from)}")
+            println(s"two:${!currentId.startsWith(from)}")
+            println(s"three:${!breadcrumbs.contains(to)}")
+            // the first page after the from page that is not a subpage of the from page allows the journey to leap ahead to the 'to' page
+            val ret = breadcrumbs.contains(from) && !currentId.startsWith(from) && !breadcrumbs.contains(to)
+            println(s"leapAhead:$ret")
+            val newState = if (currentId == to) {
+              (statePreLeap - ("_leap-to"::Nil) ) - ("_leap-from"::Nil)
+            } else statePreLeap
+            (newState, ret)
+        }.getOrElse((statePreLeap, false))
+      }
+
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}
 
       lazy val dbObject: Option[Either[ErrorTree,A]] = {
         val fromState = dbInput map {_ >>= codec.decode >>= validation.either}
-        if (config.leapAhead) {
+        if (leapAhead) {
           fromState orElse default.map(validation.either)
         } else {
           fromState
         }
       }
 
-      // we need to ignore cases with a trailing slash 
+      // we need to ignore cases with a trailing slash
       val targetIdP = targetId.reverse.dropWhile(_ == "").reverse
 
       lazy val residual = targetIdP.drop(currentId.size)
@@ -73,7 +100,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
                 ).pure[Future]
               case Left(error) =>
                 val html = AskResult.Payload[Html, A](
-                  postPage(id :: Nil, tell, state, localData, error, breadcrumbs, messages), 
+                  postPage(id :: Nil, tell, state, localData, error, breadcrumbs, messages),
                   error,
                   messages
                 )
@@ -109,7 +136,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
       } else {
         Future.successful{
           dbObject match {
-            case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && (config.leapAhead || !breadcrumbs.contains(targetId)) =>
+            case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && (leapAhead || !breadcrumbs.contains(targetId)) =>
               // they're replaying the journey
               pageIn.toPageOut(AskResult.Success[Html,A](data)).copy(
                 breadcrumbs = currentId :: pageIn.breadcrumbs
