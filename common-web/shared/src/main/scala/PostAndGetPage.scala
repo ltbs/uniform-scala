@@ -48,8 +48,8 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
       // should we try to leap ahead?
       val (state, leapAhead): (DB, Boolean) = {
         (
-          statePreLeap.get("_leap-to"::Nil).map(_.split("/").toList),
-          statePreLeap.get("_leap-from"::Nil).map(_.split("/").toList)
+          pageIn.trackLeapPoint(statePreLeap).get("_leap-to"::Nil).map(_.split("/").toList),
+          pageIn.trackLeapPoint(statePreLeap).get("_leap-from"::Nil).map(_.split("/").toList)
         ).mapN {
           case (to, from) =>
 
@@ -57,18 +57,21 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
             println(s"from:${from.toList}")
             println(s"to:${to.toList}")
             println(s"currentId:$currentId")
-            println(s"one:${breadcrumbs.contains(from)}")
+            println(s"one:${breadcrumbs.exists(_.startsWith(from))}")
             println(s"two:${!currentId.startsWith(from)}")
-            println(s"three:${!breadcrumbs.contains(to)}")
+            println(s"three:${currentId =!= to}")
             // the first page after the from page that is not a subpage of the from page allows the journey to leap ahead to the 'to' page
-            val ret = breadcrumbs.contains(from) && !currentId.startsWith(from) && !breadcrumbs.contains(to)
+            val ret = breadcrumbs.exists(_.startsWith(from)) && !currentId.startsWith(from) && currentId =!= to && !breadcrumbs.contains(to)
             println(s"leapAhead:$ret")
-            val newState = if (currentId == to) {
+            val newState = if (currentId === to || breadcrumbs.contains(to)) {
+              println("UNSET LEAP AHEAD!")
               (statePreLeap - ("_leap-to"::Nil) ) - ("_leap-from"::Nil)
             } else statePreLeap
-            (newState, ret)
-        }.getOrElse((statePreLeap, false))
+            (pageIn.trackLeapPoint(newState), ret)
+        }.getOrElse((pageIn.trackLeapPoint(statePreLeap), false))
       }
+
+      println(currentId + ": " + state.toString)
 
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}
@@ -96,7 +99,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
               case Right(valid) =>
                 pageIn.toPageOut(AskResult.Success[Html, A](valid)).copy (
                   breadcrumbs = currentId :: pageIn.breadcrumbs,
-                  db = pageIn.state + (currentId -> localData.toUrlEncodedString)
+                  db = state + (currentId -> localData.toUrlEncodedString)
                 ).pure[Future]
               case Left(error) =>
                 val html = AskResult.Payload[Html, A](
@@ -105,7 +108,8 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
                   messages
                 )
                 pageIn.toPageOut(html).copy(
-                  breadcrumbs = currentId :: pageIn.breadcrumbs
+                  breadcrumbs = currentId :: pageIn.breadcrumbs,
+                  db = state
                 ).pure[Future]
             }
 
@@ -125,6 +129,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
               messages
             )
             pageIn.toPageOut(html).copy(
+              db = state,
               breadcrumbs =  currentId :: pageIn.breadcrumbs
             ).pure[Future]
         }
@@ -133,16 +138,22 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
         pageIn.toPageOut(AskResult.Success[Html, A](residualData)).copy(
           db = state + (currentId -> codec.encode(residualData).toUrlEncodedString)
         ).pure[Future]
+      } else if (currentId.startsWith(targetIdP)) {
+        println("HELL YEAH")
+        Future.successful(pageIn.toPageOut(AskResult.GotoPath[Html,A](currentId)).copy(
+          db = pageIn.trackLeapPoint(state)
+        ))
       } else {
         Future.successful{
           dbObject match {
             case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && (leapAhead || !breadcrumbs.contains(targetId)) =>
               // they're replaying the journey
               pageIn.toPageOut(AskResult.Success[Html,A](data)).copy(
+                db = state,
                 breadcrumbs = currentId :: pageIn.breadcrumbs
               )
             case _ =>
-              pageIn.toPageOut(AskResult.GotoPath[Html,A](currentId))
+              pageIn.toPageOut(AskResult.GotoPath[Html,A](currentId)).copy(db = state)
           }
         }
       }

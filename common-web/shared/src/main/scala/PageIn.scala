@@ -15,12 +15,12 @@ case class PageIn[Html](
   def trackLeapPoint(state: DB): DB = {
     queryParams.get("leap-to") match {
       case Some(x :: Nil) =>
-        println(state)
+//        println(state)
         val newState = state + (
           ("_leap-to"   :: Nil) -> x,
           ("_leap-from" :: Nil) -> targetId.mkString("/")
         )
-        println(newState)
+//        println(newState)
         newState
       case _       => state
     }
