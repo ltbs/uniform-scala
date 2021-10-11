@@ -12,26 +12,12 @@ case class PageIn[Html](
   queryParams: Map[String, Seq[String]]
 ) {
 
-  def trackLeapPoint(state: DB): DB = {
-    queryParams.get("leap-to") match {
-      case Some(x :: Nil) =>
-//        println(state)
-        val newState = state + (
-          ("_leap-to"   :: Nil) -> x,
-          ("_leap-from" :: Nil) -> targetId.mkString("/")
-        )
-//        println(newState)
-        newState
-      case _       => state
-    }
-  }
-
   def toPageOut[A](
     output: AskResult[Html, A],
     stateManipulation: DB => DB = identity
   ): PageOut[Html,A] = PageOut[Html, A](
     breadcrumbs,
-    trackLeapPoint(stateManipulation(state)),
+    stateManipulation(state),
     output,
     pathPrefix,
     config

@@ -32,6 +32,37 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
     messages: UniformMessages[Html]
   )(implicit ec: ExecutionContext): Option[Html]
 
+
+  def trackLeapPoint(pageIn: PageIn[Html], id: String): (PageIn[Html], Boolean) = {
+    import pageIn._
+
+    (
+      queryParams.get("leap-to"),
+      state.get("_leap-from"::Nil).map(_.split("/").toList),
+      state.get("_leap-to"::Nil).map(_.split("/").toList)
+    ) match {
+
+      case (_, Some(from), Some(to)) if from =!= to => // applying leap ahead
+        // the first page after the from page that is not a subpage of the from page allows the journey to leap ahead to the 'to' page
+        val currentId = pathPrefix :+ id
+        val ret = breadcrumbs.exists(_.startsWith(from)) && !currentId.startsWith(from) && currentId =!= to && !breadcrumbs.contains(to)
+        val newStateTwo = if (currentId === to || breadcrumbs.contains(to)) {
+          (state - ("_leap-to"::Nil) ) - ("_leap-from"::Nil)
+        } else state
+        (pageIn.copy(state = newStateTwo), ret)
+
+      case (Some(x :: Nil), _, _) if config.leapAhead =>  // setting leap ahead
+        val newState = state + (
+          ("_leap-to"   :: Nil) -> x,
+          ("_leap-from" :: Nil) -> targetId.mkString("/")
+        )
+        (pageIn.copy(state = newState), false)
+
+      case _ =>
+        (pageIn, false)
+    }
+  }
+
   override def apply(
     id: String,
     tell: Option[T],
@@ -39,39 +70,12 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
     validation: Rule[A],
     customContent: Map[String,(String,List[Any])] = Map.empty
   ): WebMonad[Html, A] = new WebMonad[Html, A] {
-    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, A]] = {
-      import pageIn.{messages => _, state => statePreLeap, _}
+    def apply(pageInPreLeapPoint: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, A]] = {
+      val (pageIn, leapAhead) = trackLeapPoint(pageInPreLeapPoint, id)
+      import pageIn.{messages => _, _}
 
       val messages = pageIn.messages.withCustomContent(customContent)
       val currentId = pageIn.pathPrefix :+ id
-
-      // should we try to leap ahead?
-      val (state, leapAhead): (DB, Boolean) = {
-        (
-          pageIn.trackLeapPoint(statePreLeap).get("_leap-to"::Nil).map(_.split("/").toList),
-          pageIn.trackLeapPoint(statePreLeap).get("_leap-from"::Nil).map(_.split("/").toList)
-        ).mapN {
-          case (to, from) =>
-
-            println(s"breadcrumbs:${breadcrumbs}")
-            println(s"from:${from.toList}")
-            println(s"to:${to.toList}")
-            println(s"currentId:$currentId")
-            println(s"one:${breadcrumbs.exists(_.startsWith(from))}")
-            println(s"two:${!currentId.startsWith(from)}")
-            println(s"three:${currentId =!= to}")
-            // the first page after the from page that is not a subpage of the from page allows the journey to leap ahead to the 'to' page
-            val ret = breadcrumbs.exists(_.startsWith(from)) && !currentId.startsWith(from) && currentId =!= to && !breadcrumbs.contains(to)
-            println(s"leapAhead:$ret")
-            val newState = if (currentId === to || breadcrumbs.contains(to)) {
-              println("UNSET LEAP AHEAD!")
-              (statePreLeap - ("_leap-to"::Nil) ) - ("_leap-from"::Nil)
-            } else statePreLeap
-            (pageIn.trackLeapPoint(newState), ret)
-        }.getOrElse((pageIn.trackLeapPoint(statePreLeap), false))
-      }
-
-      println(currentId + ": " + state.toString)
 
       lazy val dbInput: Option[Either[ErrorTree, Input]] =
         state.get(currentId).map{Input.fromUrlEncodedString}
@@ -108,8 +112,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
                   messages
                 )
                 pageIn.toPageOut(html).copy(
-                  breadcrumbs = currentId :: pageIn.breadcrumbs,
-                  db = state
+                  breadcrumbs = currentId :: pageIn.breadcrumbs
                 ).pure[Future]
             }
 
@@ -129,7 +132,6 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
               messages
             )
             pageIn.toPageOut(html).copy(
-              db = state,
               breadcrumbs =  currentId :: pageIn.breadcrumbs
             ).pure[Future]
         }
@@ -139,21 +141,17 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
           db = state + (currentId -> codec.encode(residualData).toUrlEncodedString)
         ).pure[Future]
       } else if (currentId.startsWith(targetIdP)) {
-        println("HELL YEAH")
-        Future.successful(pageIn.toPageOut(AskResult.GotoPath[Html,A](currentId)).copy(
-          db = pageIn.trackLeapPoint(state)
-        ))
+        Future.successful(pageIn.toPageOut(AskResult.GotoPath[Html,A](currentId)))
       } else {
         Future.successful{
           dbObject match {
             case Some(Right(data)) if targetId =!= Nil && targetId.lastOption =!= Some("") && (leapAhead || !breadcrumbs.contains(targetId)) =>
               // they're replaying the journey
               pageIn.toPageOut(AskResult.Success[Html,A](data)).copy(
-                db = state,
                 breadcrumbs = currentId :: pageIn.breadcrumbs
               )
             case _ =>
-              pageIn.toPageOut(AskResult.GotoPath[Html,A](currentId)).copy(db = state)
+              pageIn.toPageOut(AskResult.GotoPath[Html,A](currentId))
           }
         }
       }
