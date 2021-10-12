@@ -33,11 +33,11 @@ trait MessagesProvider {
   }
 
   def parse(in: String): Unit = {
-    val newData = in.toString.lines.collect{
+    val newData = in.split(System.lineSeparator).toList.collect(
       _.split("=").toList match {
         case (key::value::_) => (key,value)
       }
-    }.toMap
+    ).toMap
 
     if (data != newData) {
       println("applying changes")
