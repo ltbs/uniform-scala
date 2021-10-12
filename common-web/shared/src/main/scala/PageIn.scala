@@ -8,8 +8,10 @@ case class PageIn[Html](
   state: DB,
   pathPrefix: List[String],
   config: JourneyConfig,
-  messages: UniformMessages[Html]
+  messages: UniformMessages[Html],
+  queryParams: Map[String, Seq[String]]
 ) {
+
   def toPageOut[A](
     output: AskResult[Html, A],
     stateManipulation: DB => DB = identity

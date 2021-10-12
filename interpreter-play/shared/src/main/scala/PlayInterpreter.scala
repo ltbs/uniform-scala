@@ -21,9 +21,10 @@ trait PlayInterpreter[Html] extends Results with WebInterpreter[Html] {
   implicit class PlayWebMonad[A, Req <: Request[AnyContent]](wm: WebMonad[Html, A]) {
     import cats.implicits._
     def runSync(
-      path: String,     purgeStateUponCompletion: Boolean = false,
+      path: String,
+      purgeStateUponCompletion: Boolean = false,
       config: JourneyConfig = JourneyConfig()
-               )(
+    )(
       f: A => Result
     )(implicit
       request: Req,
@@ -50,7 +51,7 @@ trait PlayInterpreter[Html] extends Results with WebInterpreter[Html] {
       }
 
       persistence(request) { db =>
-        wm(PageIn(id, Nil, data, db, Nil, config, messages)) flatMap {
+        wm(PageIn(id, Nil, data, db, Nil, config, messages, request.queryString)) flatMap {
           case common.web.PageOut(breadcrumbs, dbOut, pageOut, _, _) =>
             pageOut match {
               case AskResult.GotoPath(targetPath) =>
