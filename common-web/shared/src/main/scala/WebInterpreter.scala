@@ -46,13 +46,12 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
+      pageIn: PageIn[Html],
       pageKey: List[String],
       fieldKey: List[String],
       tell: Option[Html],
-      path: Breadcrumbs,
       data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Html]
+      errors: ErrorTree
     ): Option[Html] = tell
   }
 
@@ -64,13 +63,12 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
       sys.error("encoding nothing is not possible!")
 
     def render(
+      pageIn: PageIn[Html],      
       pageKey: List[String],
       fieldKey: List[String],
       tell: Option[Html],
-      path: Breadcrumbs,
       data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Html]
+      errors: ErrorTree
     ): Option[Html] = tell
   }
 

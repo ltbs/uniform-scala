@@ -82,17 +82,16 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     def encode(in: String): Input = Input.one(List(in))
 
     def render(
+      pageIn: PageIn[Tag],
       pageKey: List[String],
       fieldKey: List[String],
       tell: Option[Tag], 
-      path: Breadcrumbs,
       data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Tag]
+      errors: ErrorTree
     ): Option[Tag] = Some{
 
       val existingValue: String = data.valueAtRoot.flatMap{_.headOption}.getOrElse("")
-      fieldSurround(fieldKey, tell, errors, messages) {
+      fieldSurround(fieldKey, tell, errors, pageIn.messages) {
         input(
           cls   := s"govuk-input ${errors.cls("govuk-input--error")}",
           id    := fieldKey.mkString("_"),
@@ -121,16 +120,15 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     def encode(in: Boolean): Input = Input.one(List(in.toString))
 
     def render(
+      pageIn: PageIn[Tag],
       pageKey: List[String],      
       fieldKey: List[String],
       tell: Option[Tag],
-      path: Breadcrumbs,
       data: Input,
       errors: ErrorTree,
-      messages: UniformMessages[Tag]
     ): Option[Tag] = Some{
       val existingValue: Option[String] = data.valueAtRoot.flatMap{_.headOption}
-      radios(fieldKey, tell, List(true.toString,false.toString), existingValue, errors, messages)
+      radios(fieldKey, tell, List(true.toString,false.toString), existingValue, errors, pageIn.messages)
     }
   }
 
@@ -197,20 +195,20 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     }
 
     def encode(in: LocalDate): Input = Map(
-        List("year") -> in.getYear(),
-        List("month") -> in.getMonthValue(),
-        List("day") -> in.getDayOfMonth()
-      ).mapValues(_.toString.pure[List])
+      List("year") -> in.getYear(),
+      List("month") -> in.getMonthValue(),
+      List("day") -> in.getDayOfMonth()
+    ).mapValues(_.toString.pure[List])
 
     def render(
+      pageIn: PageIn[Tag],
       pageKey: List[String],      
       fieldKey: List[String],
       tell: Option[Tag],
-      path: Breadcrumbs,
       data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Tag]
+      errors: ErrorTree
     ): Option[Tag] = Some{
+      import pageIn.messages
       fieldSurround(fieldKey, tell, errors, messages)(
         Seq("day","month","year") flatMap { field => 
           Seq(

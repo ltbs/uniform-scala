@@ -51,13 +51,12 @@ trait InferWebAsk[Html] {
     }
 
     def render(
+      pageIn: PageIn[Html],
       pageKey: List[String],
       fieldKey: List[String],
       tell: Option[Html], 
-      breadcrumbs: Breadcrumbs,
       data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Html]
+      errors: ErrorTree
     ): Option[Html] =
 
     if (caseClass.isObject) None else 
@@ -65,19 +64,18 @@ trait InferWebAsk[Html] {
       pageKey,
       fieldKey,
       tell, 
-      breadcrumbs,
+      pageIn.breadcrumbs,
       data,
       errors,
-      messages,
+      pageIn.messages,
       caseClass.parameters.map {
         p => p.label -> p.typeclass.render(
+          pageIn,
           pageKey,
           fieldKey :+ p.label,
           tell, 
-          breadcrumbs,
           data / p.label,
-          errors / p.label,
-          messages
+          errors / p.label
         )
       }.collect{ case (k, Some(v)) => (k,v)}
     ).some
@@ -99,35 +97,33 @@ trait InferWebAsk[Html] {
     }
 
     def render(
+      pageIn: PageIn[Html],
       pageKey: List[String],
       fieldKey: List[String],
       tell: Option[Html], 
-      breadcrumbs: Breadcrumbs,
       data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Html]
+      errors: ErrorTree
     ): Option[Html] = {
       renderOr(
         pageKey,
         fieldKey,
         tell,
-        breadcrumbs,
+        pageIn.breadcrumbs,
         data,
         errors,
-        messages,
+        pageIn.messages,
         sealedTrait.subtypes.map{ subtype =>
           (
             subtype.typeName.short,
             {
-            subtype.typeclass.render(
-              pageKey,
-              fieldKey :+ subtype.typeName.short,
-              tell, 
-              breadcrumbs,
-              data / subtype.typeName.short,
-              errors / subtype.typeName.short,
-              messages
-            )
+              subtype.typeclass.render(
+                pageIn, 
+                pageKey,
+                fieldKey :+ subtype.typeName.short,
+                tell,
+                data / subtype.typeName.short,
+                errors / subtype.typeName.short
+              )
             }
           )
         },

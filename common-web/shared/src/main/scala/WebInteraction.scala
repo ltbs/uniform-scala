@@ -15,66 +15,32 @@ trait WebInteraction[Html, T, A] {
 
 object WebInteraction {
 
-  class StandardTellAndAskForm[Html, T, A](
-    gwt: WebTell[Html, T],
-    ff: WebAsk[Html, A]
-  ) extends PostAndGetPage[Html, T, A] {
-
-    def codec: Codec[A] = ff.codec
-    override def getPage(
-      key: List[String],
-      tell: Option[T],
-      state: DB,
-      existing: Input,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
-    )(implicit ec: ExecutionContext): Option[Html] = {
-      val tellHtml = tell.flatMap(gwt.render(_, key.last, messages))
-      ff.render(key, key, tellHtml, breadcrumbs, existing, ErrorTree.empty, messages)
-    }
-
-    override def postPage(
-      key: List[String],
-      tell: Option[T],
-      state: DB,
-      request: Input,
-      errors: ErrorTree,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
-    )(implicit ec: ExecutionContext): Option[Html] = {
-      val tellHtml = tell.flatMap(gwt.render(_, key.last, messages))
-      ff.render(key, key, tellHtml, breadcrumbs, request, errors, messages)
-    }
-  }
-
   implicit def fromTellAndAsk[Html, T, A](
     implicit gwt: WebTell[Html, T],
     ff: WebAsk[Html, A]
   ): WebInteraction[Html, T, A] = new PostAndGetPage[Html, T, A] {
     def codec: Codec[A] = ff.codec
     override def getPage(
+      pageIn: PageIn[Html],      
       key: List[String],
       tell: Option[T],
-      state: DB,
       existing: Input,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
+      rule: Rule[A]
     )(implicit ec: ExecutionContext): Option[Html] = {
-      val tellHtml = tell.flatMap(gwt.render(_, key.last, messages))
-      ff.render(key, key, tellHtml, breadcrumbs, existing, ErrorTree.empty, messages)
+      val tellHtml = tell.flatMap(gwt.render(_, key.last, pageIn.messages))
+      ff.render(pageIn, key, key, tellHtml, existing, ErrorTree.empty)
     }
 
     override def postPage(
+      pageIn: PageIn[Html],      
       key: List[String],
       tell: Option[T],
-      state: DB,
       request: Input,
-      errors: ErrorTree,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
+      rule: Rule[A],      
+      errors: ErrorTree
     )(implicit ec: ExecutionContext): Option[Html] = {
-      val tellHtml = tell.flatMap(gwt.render(_, key.last, messages))
-      ff.render(key, key, tellHtml, breadcrumbs, request, errors, messages)
+      val tellHtml = tell.flatMap(gwt.render(_, key.last, pageIn.messages))
+      ff.render(pageIn, key, key, tellHtml, request, errors)
     }
   }
 
@@ -84,27 +50,25 @@ object WebInteraction {
   ): WebInteraction[Html, T, Nothing] = new PostAndGetPage[Html, T, Nothing] {
     def codec: Codec[Nothing] = ff.codec
     override def getPage(
+      pageIn: PageIn[Html],      
       key: List[String],
       tell: Option[T],
-      state: DB,
       existing: Input,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
+      rule: Rule[Nothing]
     )(implicit ec: ExecutionContext): Option[Html] = {
-      val tellHtml = tell.flatMap(gwt.render(_, key.last, messages))
-      ff.render(key, key, tellHtml, breadcrumbs, existing, ErrorTree.empty, messages)
+      val tellHtml = tell.flatMap(gwt.render(_, key.last, pageIn.messages))
+      ff.render(pageIn, key, key, tellHtml, existing, ErrorTree.empty)
     }
 
     override def postPage(
+      pageIn: PageIn[Html],      
       key: List[String],
       tell: Option[T],
-      state: DB,
       request: Input,
-      errors: ErrorTree,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
+      rule: Rule[Nothing],      
+      errors: ErrorTree
     )(implicit ec: ExecutionContext): Option[Html] =
-      getPage(key, tell, state, request, breadcrumbs, messages)
+      getPage(pageIn, key, tell, request, rule)
   }
 
   implicit def fromAskUnit[Html, A](
@@ -112,26 +76,24 @@ object WebInteraction {
   ): WebInteraction[Html, Unit, A] = new PostAndGetPage[Html, Unit, A] {
     def codec: Codec[A] = ff.codec
     override def getPage(
+      pageIn: PageIn[Html],      
       key: List[String],
       tell: Option[Unit],
-      state: DB,
       existing: Input,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
+      rule: Rule[A]
     )(implicit ec: ExecutionContext): Option[Html] = {
-      ff.render(key, key, None, breadcrumbs, existing, ErrorTree.empty, messages)
+      ff.render(pageIn, key, key, None, existing, ErrorTree.empty)
     }
 
     override def postPage(
+      pageIn: PageIn[Html],      
       key: List[String],
       tell: Option[Unit],
-      state: DB,
       request: Input,
-      errors: ErrorTree,
-      breadcrumbs: Breadcrumbs,
-      messages: UniformMessages[Html]
+      rule: Rule[A],
+      errors: ErrorTree
     )(implicit ec: ExecutionContext): Option[Html] = {
-      ff.render(key, key, None, breadcrumbs, request, errors, messages)
+      ff.render(pageIn, key, key, None, request, errors)
     }
   }
 
