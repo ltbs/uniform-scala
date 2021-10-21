@@ -3,6 +3,10 @@ layout: docs
 title: Telling
 ---
 
+> **A `tell` is a step in a Uniform journey that passes information to the user.**
+
+> **An `end` is a step that passes information to the user, but which they cannot continue beyond.**
+
 # tell
 
 ```scala mdoc:invisible
@@ -37,16 +41,16 @@ We can gain a bit more insight into the `tell` operation by examining
 the type signature - 
 
 ```scala mdoc:silent
-Story("An Inspector Calls","J B Priestly")
+val anInspectorCalls = Story("An Inspector Calls","J B Priestly")
 val tellAnotherStory: Uniform[Needs.Interact[Story, Unit], Story, Unit] = 
-  tell("an-inspector-calls", davidCopperfield)
+  tell("an-inspector-calls", anInspectorCalls)
 ```
 
 The first type parameter `Needs.Interact[Story, Unit]` is used for
 tracking which types the interpreter needs to support, is
 discussed later on and can be ignored for the moment. 
 
-The second type parameter `Story` is the /input/ parameter - that is
+The second type parameter `Story` is the _input_ parameter - that is
 being expressed to the user. 
 
 The third and final type parameter `Unit` is the type we are asking

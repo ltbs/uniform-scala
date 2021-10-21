@@ -3,8 +3,8 @@ import AutoDocs._
 
 val allCrossScala = Seq(
 //  "2.11.12",
-  "2.12.12",
-  "2.13.2"
+  "2.12.14",
+  "2.13.6"
 )
 
 lazy val root = project.in(file("."))
@@ -70,7 +70,7 @@ lazy val commonSettings = Seq(
     "-Xlint:inaccessible",               // Warn about inacces(sible types in method signatures.
     "-Xlint:infer-any",                  // Warn when a type argument is inferred to be `Any`.
     "-Xlint:missing-interpolator",       // A string literal appears to be missing an interpolator id.
-    "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+//    "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
     "-Xlint:nullary-unit",               // Warn when nullary methods return Unit.
     "-Xlint:option-implicit",            // Option.apply used implicit view.
     "-Xlint:package-object-classes",     // Class or object defined in package object.
@@ -151,8 +151,8 @@ lazy val commonSettings = Seq(
   licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
     "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test,
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.0" cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % "1.7.0" % Provided cross CrossVersion.full
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.6" cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % "1.7.6" % Provided cross CrossVersion.full
   )
 )
 
@@ -165,8 +165,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.typelevel" %%% "cats-core" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "2.6.1"),
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "org.typelevel" %%% "simulacrum" % "1.0.1",
-      "dev.zio" %%% "izumi-reflect" % "2.0.1",
-      "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.2.8" )  % "test"
+      "dev.zio" %%% "izumi-reflect" % "1.1.3",
+      "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.2.9" )  % "test"
     ) ++ macroDependencies(scalaVersion.value),
     console / initialCommands := List(
       "import cats.implicits._",
@@ -177,7 +177,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
-
 lazy val coreDocs = docProject(coreJVM, docs)
 
 lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
@@ -344,10 +343,10 @@ lazy val docs = project
       "last-stable-version" -> com.typesafe.sbt.SbtGit.GitKeys.gitDescribedVersion.value.fold("")(_.takeWhile(_ != '-'))
     )),
     micrositePalette := Map(
-      "brand-primary"   -> "#5236E0",
-      "brand-secondary" -> "#32423F",
-      "brand-tertiary"  -> "#232F2D",
-      "gray-dark"       -> "#3E4645",
+      "brand-primary"   -> "#00381E",
+      "brand-secondary" -> "#66A98A",
+      "brand-tertiary"  -> "#00703C",
+      "gray-dark"       -> "#00381E",
       "gray"            -> "#7F8483",
       "gray-light"      -> "#E2E3E3",
       "gray-lighter"    -> "#F3F4F4",
