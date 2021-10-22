@@ -18,3 +18,9 @@ docs/src/main/tut/other
 docs/src/main/tut/interpreter-*
 project/metals.sbt
 docs/docs/*/*.md
+
+# Temporary vim files
+*~
+# Vim swap files
+*.swp
+*.swo
