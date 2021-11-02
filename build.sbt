@@ -15,7 +15,6 @@ lazy val root = project.in(file("."))
     `interpreter-gui`,
     interpreterLogictableJS,
     interpreterLogictableJVM,
-//    `interpreter-play`.projects(Play25), // please see README.md
     `interpreter-play`.projects(Play26),
     `interpreter-play`.projects(Play27),
     `interpreter-play`.projects(Play28),
@@ -224,15 +223,10 @@ lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
 lazy val interpreterLogictableDocs = docProject(interpreterLogictableJVM, docs)
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
-  crossProject(Play25, Play26, Play27, Play28)
+  crossProject(Play26, Play27, Play28)
     .crossType(CrossType.Full)
     .settings(commonSettings)
     .configure(_.dependsOn(core.jvm, `common-web`.jvm))
-    // .configurePlatform(Play25) {_.settings(
-    //   name := "interpreter-play25",
-    //   scalaVersion := allCrossScala.find(_.startsWith("2.11")).get,
-    //   crossScalaVersions := allCrossScala.filter{_.startsWith("2.11")}
-    // )}
     .configurePlatform(Play26) {_.settings(
       name := "interpreter-play26",
       crossScalaVersions := allCrossScala.filter{x => x.startsWith("2.11") || x.startsWith("2.12")}
