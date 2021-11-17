@@ -42,6 +42,15 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
   ): WebMonad[Html, List[A]] =
     asker(key, askJourney, default, validation, customContent)
 
+  override def nonReturnImpl(
+    nonReturn: Uniform.NonReturn
+  ): WebMonad[Html, Unit] = for {
+    pp <- getPathPrefix
+    fullKey = pp :+ nonReturn.key
+    _  <- db.updateF{db => db + (("_non-return" :: Nil) -> fullKey.mkString("/"))}
+    _  <- pushBreadcrumb(fullKey.toList)
+  } yield ()
+
   implicit def unitField = new WebAsk[Html,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty

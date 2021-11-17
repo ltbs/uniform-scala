@@ -88,8 +88,10 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
       // we need to ignore cases with a trailing slash
       val targetIdP = pageIn.targetId.reverse.dropWhile(_ == "").reverse
 
+      import pageIn.forceContinuation
+
       lazy val residual = targetIdP.drop(currentId.size)
-      if (targetIdP === currentId) {
+      if (targetIdP === currentId && !forceContinuation) {
         pageIn.request match {
           case Some(post) =>
             val localData = post.atPath(id :: Nil)
@@ -130,12 +132,12 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
               breadcrumbs =  currentId :: pageIn.breadcrumbs
             ).pure[Future]
         }
-      } else if (targetIdP.startsWith(currentId) && customRouting.isDefinedAt(residual)) {
+      } else if (targetIdP.startsWith(currentId) && customRouting.isDefinedAt(residual) && !forceContinuation) {
         val residualData = customRouting(residual)
         pageIn.toPageOut(AskResult.Success[Html, A](residualData)).copy(
           db = pageIn.state + (currentId -> codec.encode(residualData).toUrlEncodedString)
         ).pure[Future]
-      } else if (currentId.startsWith(targetIdP)) {
+      } else if (currentId.startsWith(targetIdP) && !forceContinuation) {
         Future.successful(pageIn.toPageOut(AskResult.GotoPath[Html,A](currentId)))
       } else {
         Future.successful{

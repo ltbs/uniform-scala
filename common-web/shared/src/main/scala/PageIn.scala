@@ -30,4 +30,15 @@ case class PageIn[Html](
     state.get("_leap-to"::Nil).map(_.split("/").toList)
   ).tupled
 
+  val nonReturnPoint : Option[List[String]] =
+    state.get("_non-return" :: Nil).map{_.split("/").toList}
+
+  val nonReturnPointPassed: Option[Boolean] = {
+    nonReturnPoint.map(breadcrumbs.contains)
+  }
+
+  val lastStepIsNonReturn = breadcrumbs.headOption.contains(nonReturnPoint)
+
+  val forceContinuation = nonReturnPointPassed.contains(false)
+  
 }
