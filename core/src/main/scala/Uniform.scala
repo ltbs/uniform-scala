@@ -176,4 +176,5 @@ object Uniform {
         Uniform.FlatMap(fa, f)
     }
 
+  case class NonReturn(key: String, hard: Boolean) extends Uniform[Needs[_, _], Any, Unit]
 }

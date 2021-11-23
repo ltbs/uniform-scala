@@ -7,7 +7,7 @@ import cats.data.Validated
 import cats.implicits._
 import java.time.LocalDate
 import scalatags._, generic.Bundle
-import validation.{Rule, Transformation}
+import validation._
 
 private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
 
@@ -68,7 +68,6 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
       case _ => subfieldSurround(key, errors, messages)(inner:_*)        
     }
 
-
   def optLabel(key: List[String], tell: Option[Tag], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag): Tag = {
     println(key)
     key match {
@@ -82,27 +81,30 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     def encode(in: String): Input = Input.one(List(in))
 
     def render(
-      pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[Tag], 
-      path: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Tag]
+      pageIn: PageIn[Tag],
+      stepDetails: StepDetails[Tag, String]
     ): Option[Tag] = Some{
+      import stepDetails._
+      val existingValue: Option[String] = data.valueAtRoot.flatMap{_.headOption}
 
-      val existingValue: String = data.valueAtRoot.flatMap{_.headOption}.getOrElse("")
-      fieldSurround(fieldKey, tell, errors, messages) {
-        input(
-          cls   := s"govuk-input ${errors.cls("govuk-input--error")}",
-          id    := fieldKey.mkString("_"),
-          name  := fieldKey.mkString("."),
-          value := existingValue
-        )
+      val restrictedOptions: Option[Seq[String]] = stepDetails.validation.subRules.collectFirst{
+        case Rule.In(options, _) => options
+      }.filter(_.size < 20)
+
+        restrictedOptions match {
+          case Some(options) => radios(stepDetails.fieldKey, stepDetails.tell, options, existingValue, stepDetails.errors, pageIn.messages)
+          case None =>
+            fieldSurround(fieldKey, tell, errors, pageIn.messages) {
+              input(
+                cls   := s"govuk-input ${errors.cls("govuk-input--error")}",
+                id    := fieldKey.mkString("_"),
+                name  := fieldKey.mkString("."),
+                value := existingValue.getOrElse("")
+              )
+            }
       }
     }
   }
-  
 
   implicit val intField: WebAsk[Tag,Int] =
     stringField.simap(x => 
@@ -121,16 +123,12 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     def encode(in: Boolean): Input = Input.one(List(in.toString))
 
     def render(
-      pageKey: List[String],      
-      fieldKey: List[String],
-      tell: Option[Tag],
-      path: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Tag]
+      pageIn: PageIn[Tag],
+      stepDetails: StepDetails[Tag, Boolean]
     ): Option[Tag] = Some{
+      import stepDetails._
       val existingValue: Option[String] = data.valueAtRoot.flatMap{_.headOption}
-      radios(fieldKey, tell, List(true.toString,false.toString), existingValue, errors, messages)
+      radios(fieldKey, tell, List(true.toString,false.toString), existingValue, errors, pageIn.messages)
     }
   }
 
@@ -197,20 +195,17 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
     }
 
     def encode(in: LocalDate): Input = Map(
-        List("year") -> in.getYear(),
-        List("month") -> in.getMonthValue(),
-        List("day") -> in.getDayOfMonth()
-      ).mapValues(_.toString.pure[List])
+      List("year") -> in.getYear(),
+      List("month") -> in.getMonthValue(),
+      List("day") -> in.getDayOfMonth()
+    ).mapValues(_.toString.pure[List])
 
     def render(
-      pageKey: List[String],      
-      fieldKey: List[String],
-      tell: Option[Tag],
-      path: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Tag]
+      pageIn: PageIn[Tag],
+      stepDetails: StepDetails[Tag, LocalDate]
     ): Option[Tag] = Some{
+      import pageIn.messages
+      import stepDetails._
       fieldSurround(fieldKey, tell, errors, messages)(
         Seq("day","month","year") flatMap { field => 
           Seq(

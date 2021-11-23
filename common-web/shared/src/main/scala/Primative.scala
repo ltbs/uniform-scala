@@ -44,6 +44,13 @@ trait Primatives[Html] {
       Future.successful(pageIn.toPageOut(AskResult.GotoPath[Html,A](List(target))))
   }
 
+  protected val getPathPrefix = new WebMonad[Html, Seq[String]] {
+    def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, Seq[String]]] =
+      Future.successful(
+        pageIn.toPageOut(AskResult.Success[Html, Seq[String]](pageIn.pathPrefix))
+      )
+  }
+
   protected def pushPathPrefix(key: List[String]) = new WebMonad[Html, Unit] {
     def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html,Unit]] =
       Future.successful(
@@ -52,6 +59,7 @@ trait Primatives[Html] {
         )
       )
   }
+
   protected def popPathPrefix(qty: Int) = new WebMonad[Html, Seq[String]] {
     def apply(pageIn: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, Seq[String]]] =
       Future.successful(

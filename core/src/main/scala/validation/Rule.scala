@@ -127,4 +127,21 @@ object Rule extends Quantifiable.ToQuantifiableOps {
   def forEachInList[A](inner: Rule[A]): Rule[List[A]] =
     ForEachInList[A](inner)
 
+  case class In[A](allowed: Seq[A], errorMsg: String) extends Rule[A] {
+    def apply(in: A): Validated[ErrorTree, A] =
+      Validated.cond(allowed.contains(in), in, error(errorMsg))
+  }
+
+  def in[A](allowed: Seq[A], errorMsg: String = "not-in-allowed-list"): Rule[A] =
+    In(allowed, errorMsg)
+
+  case class NotIn[A](disallowed: Seq[A], errorMsg: String) extends Rule[A] {
+    def apply(in: A): Validated[ErrorTree, A] =
+      Validated.cond(!disallowed.contains(in), in, error(errorMsg))
+  }
+
+  def notIn[A](disallowed: Seq[A], errorMsg: String = "in-disallowed-list"): Rule[A] =
+    NotIn(disallowed, errorMsg)
+
+
 }

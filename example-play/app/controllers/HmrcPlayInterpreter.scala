@@ -14,38 +14,33 @@ trait HmrcPlayInterpreter
     with Widgets
 {
 
-  def renderAnd(
-    pageKey: List[String],
-    fieldKey: List[String],
-    tell: Option[Tag],
-    breadcrumbs: Breadcrumbs,
-    data: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Tag],
+  def renderAnd[T](
+    pageIn: PageIn[Tag],
+    stepDetails: StepDetails[Tag, T],
     members: Seq[(String, Tag)]
   ): Tag = members.toList match {
     case (_, sole) :: Nil => sole
     case many =>
-      Widgets.fieldSurround(fieldKey, tell, errors, messages) (many.map(_._2) :_*)
+      Widgets.fieldSurround(
+        stepDetails.fieldKey,
+        stepDetails.tell,
+        stepDetails.errors,
+        pageIn.messages
+      ) (many.map(_._2) :_*)
   }
 
-  def renderOr(
-    pageKey: List[String],
-    fieldKey: List[String],
-    tell: Option[Tag],
-    breadcrumbs: Breadcrumbs,
-    data: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Tag],
+  def renderOr[T](
+    pageIn: PageIn[Tag],
+    stepDetails: StepDetails[Tag, T],
     alternatives: Seq[(String, Option[Tag])],
     selected: Option[String]
   ): Tag = Widgets.radios(
-    fieldKey,
-    tell,
+    stepDetails.fieldKey,
+    stepDetails.tell,
     alternatives.map(_._1),
     selected,
-    errors,
-    messages,
+    stepDetails.errors,
+    pageIn.messages,
     alternatives.collect{case (k, Some(v)) => (k,v)}.toMap
   )
 

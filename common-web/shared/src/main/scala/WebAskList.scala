@@ -154,28 +154,26 @@ object WebAskList {
       def codec: Codec[WebAskList.ListAction] = listActionCodec
 
       def getPage(
+        pageIn: PageIn[Html],
         key: List[String],
         tell: Option[WebAskList.ListingTable[A]],
-        state: DB,
         existing: Input,
-        breadcrumbs: Breadcrumbs,
-        messages: UniformMessages[Html]
+        rule: Rule[WebAskList.ListAction]
       )(implicit ec: ExecutionContext): Option[Html] = {
-        val tellHtml = tell.flatMap(tellList.render(_, key.last, messages))
-        ff.render(key, key, tellHtml, breadcrumbs, existing, ErrorTree.empty, messages)
+        val tellHtml = tell.flatMap(tellList.render(_, key.last, pageIn.messages))
+        ff.render(pageIn, StepDetails[Html, WebAskList.ListActionGeneral](key, key, tellHtml, existing, ErrorTree.empty, Rule.alwaysPass))
       }
 
       def postPage(
+        pageIn: PageIn[Html],        
         key: List[String],
         tell: Option[WebAskList.ListingTable[A]],
-        state: DB,
         request: Input,
-        errors: ErrorTree,
-        breadcrumbs: Breadcrumbs,
-        messages: UniformMessages[Html]
+        rule: Rule[WebAskList.ListAction],
+        errors: ErrorTree
       )(implicit ec: ExecutionContext): Option[Html] = {
-        val tellHtml = tell.flatMap(tellList.render(_, key.last, messages))
-        ff.render(key, key, tellHtml, breadcrumbs, request, errors, messages)
+        val tellHtml = tell.flatMap(tellList.render(_, key.last, pageIn.messages))
+        ff.render(pageIn, StepDetails[Html, WebAskList.ListActionGeneral](key, key, tellHtml, request, errors, Rule.alwaysPass))
       }
 
       override val customRouting: PartialFunction[List[String],WebAskList.ListAction] = {

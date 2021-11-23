@@ -12,25 +12,15 @@ trait InferWebAsk[Html] {
   implicit def blockCollections[X[_] <: Traversable[_], A]: WebAsk[Html, X[A]] = ???
   implicit def blockCollections2[X[_] <: Traversable[_], A]: WebAsk[Html, X[A]] = ???  
 
-  def renderAnd(
-    pageKey: List[String],
-    fieldKey: List[String],
-    tell: Option[Html],
-    breadcrumbs: Breadcrumbs,
-    data: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Html],
+  def renderAnd[T](
+    pageIn: PageIn[Html],
+    stepDetails: StepDetails[Html, T],
     members: Seq[(String, Html)]
   ): Html
 
-  def renderOr(
-    pageKey: List[String],
-    fieldKey: List[String],
-    tell: Option[Html],    
-    breadcrumbs: Breadcrumbs,
-    data: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Html],
+  def renderOr[T](
+    pageIn: PageIn[Html],
+    stepDetails: StepDetails[Html, T],
     alternatives: Seq[(String, Option[Html])],
     selected: Option[String]
   ): Html
@@ -51,36 +41,22 @@ trait InferWebAsk[Html] {
     }
 
     def render(
-      pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[Html], 
-      breadcrumbs: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Html]
-    ): Option[Html] =
-
+      pageIn: PageIn[Html],
+      stepDetails: StepDetails[Html, T]
+    ): Option[Html] = {
+      import stepDetails._
     if (caseClass.isObject) None else 
     renderAnd(
-      pageKey,
-      fieldKey,
-      tell, 
-      breadcrumbs,
-      data,
-      errors,
-      messages,
+      pageIn,
+      stepDetails,
       caseClass.parameters.map {
         p => p.label -> p.typeclass.render(
-          pageKey,
-          fieldKey :+ p.label,
-          tell, 
-          breadcrumbs,
-          data / p.label,
-          errors / p.label,
-          messages
+          pageIn,
+          stepDetails / p.label
         )
       }.collect{ case (k, Some(v)) => (k,v)}
     ).some
+    }
   }
   
   def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] = new WebAsk[Html, T] {
@@ -99,35 +75,21 @@ trait InferWebAsk[Html] {
     }
 
     def render(
-      pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[Html], 
-      breadcrumbs: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Html]
+      pageIn: PageIn[Html],
+      stepDetails: StepDetails[Html, T],
     ): Option[Html] = {
+      import stepDetails._
       renderOr(
-        pageKey,
-        fieldKey,
-        tell,
-        breadcrumbs,
-        data,
-        errors,
-        messages,
+        pageIn,
+        stepDetails,
         sealedTrait.subtypes.map{ subtype =>
           (
             subtype.typeName.short,
             {
-            subtype.typeclass.render(
-              pageKey,
-              fieldKey :+ subtype.typeName.short,
-              tell, 
-              breadcrumbs,
-              data / subtype.typeName.short,
-              errors / subtype.typeName.short,
-              messages
-            )
+              subtype.typeclass.render(
+                pageIn,
+                stepDetails / subtype.typeName.short
+              )
             }
           )
         },
