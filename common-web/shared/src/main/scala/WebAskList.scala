@@ -161,7 +161,7 @@ object WebAskList {
         rule: Rule[WebAskList.ListAction]
       )(implicit ec: ExecutionContext): Option[Html] = {
         val tellHtml = tell.flatMap(tellList.render(_, key.last, pageIn.messages))
-        ff.render(pageIn, key, key, tellHtml, existing, ErrorTree.empty)
+        ff.render(pageIn, StepDetails[Html, WebAskList.ListActionGeneral](key, key, tellHtml, existing, ErrorTree.empty, Rule.alwaysPass))
       }
 
       def postPage(
@@ -173,7 +173,7 @@ object WebAskList {
         errors: ErrorTree
       )(implicit ec: ExecutionContext): Option[Html] = {
         val tellHtml = tell.flatMap(tellList.render(_, key.last, pageIn.messages))
-        ff.render(pageIn, key, key, tellHtml, request, errors)
+        ff.render(pageIn, StepDetails[Html, WebAskList.ListActionGeneral](key, key, tellHtml, request, errors, Rule.alwaysPass))
       }
 
       override val customRouting: PartialFunction[List[String],WebAskList.ListAction] = {

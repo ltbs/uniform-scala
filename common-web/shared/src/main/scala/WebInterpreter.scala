@@ -56,12 +56,8 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
     def encode(in: Unit): Input = Input.empty
     def render(
       pageIn: PageIn[Html],
-      pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[Html],
-      data: Input,
-      errors: ErrorTree
-    ): Option[Html] = tell
+      stepDetails: StepDetails[Html, Unit]
+    ): Option[Html] = stepDetails.tell
   }
 
   implicit def nothingField = new WebAsk[Html,Nothing] {
@@ -72,13 +68,9 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
       sys.error("encoding nothing is not possible!")
 
     def render(
-      pageIn: PageIn[Html],      
-      pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[Html],
-      data: Input,
-      errors: ErrorTree
-    ): Option[Html] = tell
+      pageIn: PageIn[Html],
+      stepDetails: StepDetails[Html, Nothing]
+    ): Option[Html] = stepDetails.tell
   }
 
   implicit val tellHtml = new WebTell[Html, Html] {

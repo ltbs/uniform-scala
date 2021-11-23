@@ -12,11 +12,7 @@ trait WebAsk[Html, A] extends Codec[A] {
 
   def render(
     pageIn: PageIn[Html],
-    pageKey: List[String],
-    fieldKey: List[String],
-    tell: Option[Html],
-    data: Input,
-    errors: ErrorTree
+    stepDetails: StepDetails[Html, A],
   ): Option[Html]
 
   /** Produce a new `WebAsk` from this one by mapping the types */
@@ -34,13 +30,9 @@ trait WebAsk[Html, A] extends Codec[A] {
       def decode(out: Input): Either[ErrorTree,B] = orig.decode(out) >>= f
       def render(
         pageIn: PageIn[Html],
-        pageKey: List[String],
-        fieldKey: List[String],
-        tell: Option[Html],
-        data: Input,
-        errors: ErrorTree
+        stepDetails: StepDetails[Html, B]
       ): Option[Html] = {
-        orig.render(pageIn, pageKey, fieldKey, tell, data, errors)
+        orig.render(pageIn, stepDetails.copy(validation = Rule.alwaysPass))
       }
     }
   }

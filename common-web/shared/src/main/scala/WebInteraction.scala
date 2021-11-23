@@ -21,14 +21,14 @@ object WebInteraction {
   ): WebInteraction[Html, T, A] = new PostAndGetPage[Html, T, A] {
     def codec: Codec[A] = ff.codec
     override def getPage(
-      pageIn: PageIn[Html],      
+      pageIn: PageIn[Html],
       key: List[String],
       tell: Option[T],
       existing: Input,
       rule: Rule[A]
     )(implicit ec: ExecutionContext): Option[Html] = {
       val tellHtml = tell.flatMap(gwt.render(_, key.last, pageIn.messages))
-      ff.render(pageIn, key, key, tellHtml, existing, ErrorTree.empty)
+      ff.render(pageIn, StepDetails[Html, A](key, key, tellHtml, existing, ErrorTree.empty, rule))
     }
 
     override def postPage(
@@ -40,7 +40,7 @@ object WebInteraction {
       errors: ErrorTree
     )(implicit ec: ExecutionContext): Option[Html] = {
       val tellHtml = tell.flatMap(gwt.render(_, key.last, pageIn.messages))
-      ff.render(pageIn, key, key, tellHtml, request, errors)
+      ff.render(pageIn, StepDetails[Html, A](key, key, tellHtml, request, errors, rule))
     }
   }
 
@@ -57,7 +57,7 @@ object WebInteraction {
       rule: Rule[Nothing]
     )(implicit ec: ExecutionContext): Option[Html] = {
       val tellHtml = tell.flatMap(gwt.render(_, key.last, pageIn.messages))
-      ff.render(pageIn, key, key, tellHtml, existing, ErrorTree.empty)
+      ff.render(pageIn, StepDetails[Html, Nothing](key, key, tellHtml, existing, ErrorTree.empty, rule))
     }
 
     override def postPage(
@@ -82,7 +82,7 @@ object WebInteraction {
       existing: Input,
       rule: Rule[A]
     )(implicit ec: ExecutionContext): Option[Html] = {
-      ff.render(pageIn, key, key, None, existing, ErrorTree.empty)
+      ff.render(pageIn, StepDetails[Html, A](key, key, None, existing, ErrorTree.empty, rule))
     }
 
     override def postPage(
@@ -93,7 +93,7 @@ object WebInteraction {
       rule: Rule[A],
       errors: ErrorTree
     )(implicit ec: ExecutionContext): Option[Html] = {
-      ff.render(pageIn, key, key, None, request, errors)
+      ff.render(pageIn, StepDetails[Html, A](key, key, None, request, errors, rule))
     }
   }
 

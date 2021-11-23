@@ -11,28 +11,21 @@ trait SampleFormFields {
   implicit val twirlUnitField = new WebAsk[String,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
+
     def render(
-      @silent("never used") pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[String],
-      path: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[String]
-    ): Option[String] = Some("")
+      pageIn: PageIn[String],
+      stepDetails: StepDetails[String,Unit]
+    ):Option[String] = Some("")
+
   }
 
   implicit val stringFieldR = new WebAsk[String, String] {
+
     def render(
-      @silent("never used") pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[String],
-      @silent("never used") path: Breadcrumbs,
-      @silent("never used") data: Input,
-      @silent("never used") errors: ErrorTree,
-      @silent("never used") messages: UniformMessages[String]
-    ): Option[String] = Some {
-      val k = fieldKey.mkString(".")
+      pageIn: PageIn[String],
+      stepDetails: StepDetails[String,String]
+    ):Option[String] = Some{
+      val k = stepDetails.fieldKey.mkString(".")
       s"STRING[$k]"
     }
 
@@ -58,16 +51,11 @@ trait SampleFormFields {
       )(_.toString)
 
     def render(
-      @silent("never used") pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[String],
-      @silent("never used") path: Breadcrumbs,
-      @silent("never used") data: Input,
-      @silent("never used") errors: ErrorTree,
-      @silent("never used") messages: UniformMessages[String]
-    ): Option[String] = Some {
-      val k = fieldKey.mkString(".")
-      s"INT[$k]"
+      pageIn: PageIn[String],
+      stepDetails: StepDetails[String,Int]
+    ):Option[String] = Some{
+      val k = stepDetails.fieldKey.mkString(".")
+      s"Int[$k]"
     }
 
     def decode(out: Input): Either[ErrorTree, Int] =
