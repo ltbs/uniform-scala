@@ -126,7 +126,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
                 validation
               ),
               ErrorTree.empty,
-              pageIn.messages
+              messages
             )
             pageIn.toPageOut(html).copy(
               breadcrumbs =  currentId :: pageIn.breadcrumbs
