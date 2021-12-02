@@ -30,6 +30,7 @@ trait WebAskList[Html, A] extends Primatives[Html] {
       case Rule.MaxLength(h, _) => (0, h)
       case Rule.MinLength(l,_) => (l,Int.MaxValue)
       case Rule.LengthBetween(l,h) => (l,h)
+      case Rule.NonEmpty(_) => (1,Int.MaxValue)
     }.foldLeft((0, Int.MaxValue)){
       case ((al, ah),(bl, bh)) => (Math.max(al, bl), Math.min(ah, bh))
     }
@@ -58,7 +59,7 @@ trait WebAskList[Html, A] extends Primatives[Html] {
           }
         }
 
-        if (data.isEmpty && min > 0) {
+        if (data.isEmpty && min > 0 && pageIn.config.askFirstListItem) {
           subjourneyWM(_.copy(leapAhead = false), Seq(key, "add"):_*)(for {
               r <- askJourney(None, data)
               _ <- db(List(s"${key}-zzdata")) = data :+ r
@@ -165,7 +166,7 @@ object WebAskList {
       }
 
       def postPage(
-        pageIn: PageIn[Html],        
+        pageIn: PageIn[Html],
         key: List[String],
         tell: Option[WebAskList.ListingTable[A]],
         request: Input,

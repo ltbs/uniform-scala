@@ -54,7 +54,8 @@ class WitchController @Inject()(
     implicit val persistence: PersistenceEngine[Request[AnyContent]] =
       SessionPersistence("witches")
 
-    interpret(witchProgram).runSync(targetId, config = JourneyConfig(leapAhead = true)) {
+    val config = JourneyConfig(leapAhead = true, askFirstListItem = true)
+    interpret(witchProgram).runSync(targetId, config = config) {
       case WitchReport(acc, _, fam) => Ok(
         s"Thankyou for your report, ${acc.name} and their ${fam.size} familiars will now be put to death."
       )

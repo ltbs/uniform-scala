@@ -7,7 +7,7 @@ package object witchcraft {
 
   def witchProgram = for {
     e <- askList[Evidence]("evidence",
-      validation = Rule.forEachInList(Rule.cond({_ != Evidence.HasWartOnNose}, "dont-care-about-warts"))
+      validation = Rule.nonEmpty[List[Evidence]] alongWith Rule.forEachInList(Rule.cond({_ != Evidence.HasWartOnNose}, "dont-care-about-warts"))
     ) {
       case (index: Option[Int], existing: List[Evidence]) =>
         ask[Evidence]("ev1", default = index.map(existing))
