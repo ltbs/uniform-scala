@@ -73,12 +73,6 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
     ): Option[Html] = stepDetails.tell
   }
 
-  implicit val tellHtml = new WebTell[Html, Html] {
-    def render(
-      in: Html,
-      key: String,
-      messages: UniformMessages[Html]
-    ): Option[Html] = Some(in)
-  }
+  implicit val tellHtml: WebTell[Html, Html] = WebTell.fromFunction(identity)
 
 }

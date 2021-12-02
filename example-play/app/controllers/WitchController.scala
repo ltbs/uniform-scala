@@ -34,17 +34,17 @@ class WitchController @Inject()(
   }
 
   implicit val tellListFam = new WebTell[Tag, WebAskList.ListingTable[Familiar]] {
-    def render(in: WebAskList.ListingTable[Familiar], key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(table(
+    def render(in: WebAskList.ListingTable[Familiar], key: List[String], pageIn: PageIn[Tag]): Option[Tag] = Some(table(
       in.value.zipWithIndex.map{case (row, index) => tr(
-        td(row.toString), td(a(href:=s"$key/edit/$index")("Edit")), td(a(href:=s"$key/delete/$index")("Delete"))
+        td(row.toString), td(a(href:=s"${key.last}/edit/$index")("Edit")), td(a(href:=s"${key.last}/delete/$index")("Delete"))
       )}
     ))
   }
 
   implicit val tellListEv = new WebTell[Tag, WebAskList.ListingTable[Evidence]] {
-    def render(in: WebAskList.ListingTable[Evidence], key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(table(
+    def render(in: WebAskList.ListingTable[Evidence], key: List[String], pageIn: PageIn[Tag]): Option[Tag] = Some(table(
       in.value.zipWithIndex.map{case (row, index) => tr(
-        td(row.toString), td(a(href:=s"$key/edit/$index")("Edit")), td(a(href:=s"$key/delete/$index")("Delete"))
+        td(row.toString), td(a(href:=s"${key.last}/edit/$index")("Edit")), td(a(href:=s"${key.last}/delete/$index")("Delete"))
       )}
     ))
   }
