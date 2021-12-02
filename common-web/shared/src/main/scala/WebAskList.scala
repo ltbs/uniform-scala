@@ -160,7 +160,7 @@ object WebAskList {
         existing: Input,
         rule: Rule[WebAskList.ListAction]
       )(implicit ec: ExecutionContext): Option[Html] = {
-        val tellHtml = tell.flatMap(tellList.render(_, key.last, pageIn.messages))
+        val tellHtml = tell.flatMap(tellList.render(_, key, pageIn))
         ff.render(pageIn, StepDetails[Html, WebAskList.ListActionGeneral](key, key, tellHtml, existing, ErrorTree.empty, Rule.alwaysPass))
       }
 
@@ -172,7 +172,7 @@ object WebAskList {
         rule: Rule[WebAskList.ListAction],
         errors: ErrorTree
       )(implicit ec: ExecutionContext): Option[Html] = {
-        val tellHtml = tell.flatMap(tellList.render(_, key.last, pageIn.messages))
+        val tellHtml = tell.flatMap(tellList.render(_, key, pageIn))
         ff.render(pageIn, StepDetails[Html, WebAskList.ListActionGeneral](key, key, tellHtml, request, errors, Rule.alwaysPass))
       }
 

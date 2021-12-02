@@ -20,17 +20,9 @@ private[examples] trait AbstractWidgets[Builder, Output <: FragT, FragT] {
       if (errors.definedAtRoot) { className } else ""
   }
 
-  implicit val tellInt = new WebTell[Tag, Int] {
-    def render(in: Int, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in.toString))
-  }
-
-  implicit val tellString = new WebTell[Tag, String] {
-    def render(in: String, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in))
-  }
-
-  implicit val tellBoolean = new WebTell[Tag, Boolean] {
-    def render(in: Boolean, key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(span(in.toString))
-  }
+  implicit val tellInt: WebTell[Tag, Int] = WebTell.fromFunction(x => span(x.toString))
+  implicit val tellString: WebTell[Tag, String] = WebTell.fromFunction(span(_))
+  implicit val tellBoolean: WebTell[Tag, Boolean] = WebTell.fromFunction(x => span(x.toString))
 
   def formSurround(key: String, tell: Option[Tag], errors: ErrorTree, messages: UniformMessages[Tag])(inner: Tag*): Tag =
     div(cls := s"govuk-form-group ${errors.cls("govuk-form-group--error")}")(

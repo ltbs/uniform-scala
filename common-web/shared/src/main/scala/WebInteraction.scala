@@ -27,7 +27,7 @@ object WebInteraction {
       existing: Input,
       rule: Rule[A]
     )(implicit ec: ExecutionContext): Option[Html] = {
-      val tellHtml = tell.flatMap(gwt.render(_, key.last, pageIn.messages))
+      val tellHtml = tell.flatMap(gwt.render(_, key, pageIn))
       ff.render(pageIn, StepDetails[Html, A](key, key, tellHtml, existing, ErrorTree.empty, rule))
     }
 
@@ -39,7 +39,7 @@ object WebInteraction {
       rule: Rule[A],      
       errors: ErrorTree
     )(implicit ec: ExecutionContext): Option[Html] = {
-      val tellHtml = tell.flatMap(gwt.render(_, key.last, pageIn.messages))
+      val tellHtml = tell.flatMap(gwt.render(_, key, pageIn))
       ff.render(pageIn, StepDetails[Html, A](key, key, tellHtml, request, errors, rule))
     }
   }
@@ -56,7 +56,7 @@ object WebInteraction {
       existing: Input,
       rule: Rule[Nothing]
     )(implicit ec: ExecutionContext): Option[Html] = {
-      val tellHtml = tell.flatMap(gwt.render(_, key.last, pageIn.messages))
+      val tellHtml = tell.flatMap(gwt.render(_, key, pageIn))
       ff.render(pageIn, StepDetails[Html, Nothing](key, key, tellHtml, existing, ErrorTree.empty, rule))
     }
 
