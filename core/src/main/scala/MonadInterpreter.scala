@@ -38,6 +38,11 @@ trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[
     asker: ASKLISTTC[A]
   ): F[List[A]]
 
+  @silent("never used")
+  protected def nonReturnImpl(
+    nonReturn: Uniform.NonReturn
+  ): F[Unit] = monadInstance.pure(())
+
   @silent("erasure") override def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
     program: Uniform[H, T, A], 
     interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[_,_]],
@@ -90,6 +95,8 @@ trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[
           listAskMap(tag.tag).asInstanceOf[ASKLISTTC[A]]
         )
         x.map(identity)
+      case nr: U.NonReturn =>
+        nonReturnImpl(nr).asInstanceOf[F[A]]
     }
   }
 }

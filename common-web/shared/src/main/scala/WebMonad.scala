@@ -51,4 +51,5 @@ object WebMonad {
         case Right(b) => pure(b)
       }
     }
+
 }
