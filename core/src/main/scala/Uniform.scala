@@ -57,9 +57,8 @@ trait Uniform[-R <: Needs[_, _], -T, +A] {
     * ask[Salary]("salary") emptyUnless user.isEmployed
     * }}}
     */
-  def emptyUnless[B >: A](predicate: => Boolean)(implicit mon: cats.Monoid[B]): Uniform[R, T, B] = this.map{ v =>
-    if (predicate) v else mon.empty
-  }
+  def emptyUnless[B >: A](predicate: => Boolean)(implicit mon: cats.Monoid[B]): Uniform[R, T, B] = 
+    if (predicate) this else pure(mon.empty)
 
   /** Returns monoid empty unless the predicate given is true, will short
     * circuit if possible.
