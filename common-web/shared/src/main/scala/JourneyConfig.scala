@@ -4,7 +4,7 @@ package common.web
 /**
   *
   * @param leapAhead
-  *                  fast forward to the first empty question in a journey
+  *                  enables 'leap ahead' behaviour when requested as a parameter
   * @param askFirstListItem
   *                         when asking for list A with a minimum number of A required then go straight to add A subjourney
   *                         rather than to the empty listing index page

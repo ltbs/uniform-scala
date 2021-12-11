@@ -36,7 +36,7 @@ package object uniform
     }
   }
 
-  implicit class RichInput(input: Input) {
+  implicit class RichInput(val input: Input) extends AnyVal {
 
     /** Generate a UTF-8 URL encoded String. */
     def toUrlEncodedString: String = {
@@ -203,5 +203,7 @@ package object uniform
     default: Option[List[A]] = None,
     validation: Rule[List[A]] = Rule.alwaysPass[List[A]]
   ) = new AskListBuilder[A](key, default, validation)
+
+  def nonReturn(key: String, hard: Boolean = true) = Uniform.NonReturn(key, hard)
 
 }

@@ -4,7 +4,7 @@ import javax.inject._
 import ltbs.uniform._
 import interpreters.playframework._
 import examples.beardtax._
-import ltbs.uniform.common.web.JourneyConfig
+import ltbs.uniform.common.web.{JourneyConfig, FutureAdapter}
 import play.api.i18n.{Messages => _, _}
 import play.api.mvc._
 
@@ -22,7 +22,7 @@ class BeardController @Inject()(
 
     implicit val persistence = SessionPersistence("beard")
 
-    val adaptor = FutureAdaptor.rerunOnStateChange[Tag](1.minute)
+    val adaptor = FutureAdapter.rerunOnStateChange[Tag](1.minute)
     import adaptor._
 
     interpret(beardProgram(new HodConnector)).runSync(targetId, config = JourneyConfig(leapAhead = true)){

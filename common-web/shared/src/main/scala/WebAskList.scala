@@ -30,6 +30,7 @@ trait WebAskList[Html, A] extends Primatives[Html] {
       case Rule.MaxLength(h, _) => (0, h)
       case Rule.MinLength(l,_) => (l,Int.MaxValue)
       case Rule.LengthBetween(l,h) => (l,h)
+      case Rule.NonEmpty(_) => (1,Int.MaxValue)
     }.foldLeft((0, Int.MaxValue)){
       case ((al, ah),(bl, bh)) => (Math.max(al, bl), Math.min(ah, bh))
     }
@@ -58,7 +59,7 @@ trait WebAskList[Html, A] extends Primatives[Html] {
           }
         }
 
-        if (data.isEmpty && min > 0) {
+        if (data.isEmpty && min > 0 && pageIn.config.askFirstListItem) {
           subjourneyWM(_.copy(leapAhead = false), Seq(key, "add"):_*)(for {
               r <- askJourney(None, data)
               _ <- db(List(s"${key}-zzdata")) = data :+ r
@@ -154,28 +155,26 @@ object WebAskList {
       def codec: Codec[WebAskList.ListAction] = listActionCodec
 
       def getPage(
+        pageIn: PageIn[Html],
         key: List[String],
         tell: Option[WebAskList.ListingTable[A]],
-        state: DB,
         existing: Input,
-        breadcrumbs: Breadcrumbs,
-        messages: UniformMessages[Html]
+        rule: Rule[WebAskList.ListAction]
       )(implicit ec: ExecutionContext): Option[Html] = {
-        val tellHtml = tell.flatMap(tellList.render(_, key.last, messages))
-        ff.render(key, key, tellHtml, breadcrumbs, existing, ErrorTree.empty, messages)
+        val tellHtml = tell.flatMap(tellList.render(_, key, pageIn))
+        ff.render(pageIn, StepDetails[Html, WebAskList.ListActionGeneral](key, key, tellHtml, existing, ErrorTree.empty, Rule.alwaysPass))
       }
 
       def postPage(
+        pageIn: PageIn[Html],
         key: List[String],
         tell: Option[WebAskList.ListingTable[A]],
-        state: DB,
         request: Input,
-        errors: ErrorTree,
-        breadcrumbs: Breadcrumbs,
-        messages: UniformMessages[Html]
+        rule: Rule[WebAskList.ListAction],
+        errors: ErrorTree
       )(implicit ec: ExecutionContext): Option[Html] = {
-        val tellHtml = tell.flatMap(tellList.render(_, key.last, messages))
-        ff.render(key, key, tellHtml, breadcrumbs, request, errors, messages)
+        val tellHtml = tell.flatMap(tellList.render(_, key, pageIn))
+        ff.render(pageIn, StepDetails[Html, WebAskList.ListActionGeneral](key, key, tellHtml, request, errors, Rule.alwaysPass))
       }
 
       override val customRouting: PartialFunction[List[String],WebAskList.ListAction] = {

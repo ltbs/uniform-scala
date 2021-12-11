@@ -42,18 +42,22 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
   ): WebMonad[Html, List[A]] =
     asker(key, askJourney, default, validation, customContent)
 
+  override def nonReturnImpl(
+    nonReturn: Uniform.NonReturn
+  ): WebMonad[Html, Unit] = for {
+    pp <- getPathPrefix
+    fullKey = pp :+ nonReturn.key
+    _  <- db.updateF{db => db + (("_non-return" :: Nil) -> fullKey.mkString("/"))}
+    _  <- pushBreadcrumb(fullKey.toList)
+  } yield ()
+
   implicit def unitField = new WebAsk[Html,Unit] {
     def decode(out: Input): Either[ltbs.uniform.ErrorTree,Unit] = Right(())
     def encode(in: Unit): Input = Input.empty
     def render(
-      pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[Html],
-      path: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Html]
-    ): Option[Html] = tell
+      pageIn: PageIn[Html],
+      stepDetails: StepDetails[Html, Unit]
+    ): Option[Html] = stepDetails.tell
   }
 
   implicit def nothingField = new WebAsk[Html,Nothing] {
@@ -64,22 +68,11 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
       sys.error("encoding nothing is not possible!")
 
     def render(
-      pageKey: List[String],
-      fieldKey: List[String],
-      tell: Option[Html],
-      path: Breadcrumbs,
-      data: Input,
-      errors: ErrorTree,
-      messages: UniformMessages[Html]
-    ): Option[Html] = tell
+      pageIn: PageIn[Html],
+      stepDetails: StepDetails[Html, Nothing]
+    ): Option[Html] = stepDetails.tell
   }
 
-  implicit val tellHtml = new WebTell[Html, Html] {
-    def render(
-      in: Html,
-      key: String,
-      messages: UniformMessages[Html]
-    ): Option[Html] = Some(in)
-  }
+  implicit val tellHtml: WebTell[Html, Html] = WebTell.fromFunction(identity)
 
 }

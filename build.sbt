@@ -15,7 +15,6 @@ lazy val root = project.in(file("."))
     `interpreter-gui`,
     interpreterLogictableJS,
     interpreterLogictableJVM,
-//    `interpreter-play`.projects(Play25), // please see README.md
     `interpreter-play`.projects(Play26),
     `interpreter-play`.projects(Play27),
     `interpreter-play`.projects(Play28),
@@ -70,7 +69,7 @@ lazy val commonSettings = Seq(
     "-Xlint:inaccessible",               // Warn about inacces(sible types in method signatures.
     "-Xlint:infer-any",                  // Warn when a type argument is inferred to be `Any`.
     "-Xlint:missing-interpolator",       // A string literal appears to be missing an interpolator id.
-    "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+//    "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
     "-Xlint:nullary-unit",               // Warn when nullary methods return Unit.
     "-Xlint:option-implicit",            // Option.apply used implicit view.
     "-Xlint:package-object-classes",     // Class or object defined in package object.
@@ -151,8 +150,8 @@ lazy val commonSettings = Seq(
   licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
     "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test,
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.5" cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % "1.7.5" % Provided cross CrossVersion.full
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.7" cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % "1.7.7" % Provided cross CrossVersion.full
   )
 )
 
@@ -162,11 +161,11 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "2.6.1"),
-      "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.1.0",
+      "org.typelevel" %%% "cats-core" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "2.7.0"),
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "org.typelevel" %%% "simulacrum" % "1.0.1",
       "dev.zio" %%% "izumi-reflect" % "1.1.3",
-      "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.2.8" )  % "test"
+      "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.3.0" )  % "test"
     ) ++ macroDependencies(scalaVersion.value),
     console / initialCommands := List(
       "import cats.implicits._",
@@ -224,15 +223,10 @@ lazy val interpreterLogictableJVM = `interpreter-logictable`.jvm
 lazy val interpreterLogictableDocs = docProject(interpreterLogictableJVM, docs)
 
 lazy val `interpreter-play`: sbtcrossproject.CrossProject =
-  crossProject(Play25, Play26, Play27, Play28)
+  crossProject(Play26, Play27, Play28)
     .crossType(CrossType.Full)
     .settings(commonSettings)
     .configure(_.dependsOn(core.jvm, `common-web`.jvm))
-    // .configurePlatform(Play25) {_.settings(
-    //   name := "interpreter-play25",
-    //   scalaVersion := allCrossScala.find(_.startsWith("2.11")).get,
-    //   crossScalaVersions := allCrossScala.filter{_.startsWith("2.11")}
-    // )}
     .configurePlatform(Play26) {_.settings(
       name := "interpreter-play26",
       crossScalaVersions := allCrossScala.filter{x => x.startsWith("2.11") || x.startsWith("2.12")}

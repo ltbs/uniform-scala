@@ -5,18 +5,14 @@ import cats.syntax.either._
 import cats.syntax.flatMap._
 import scala.concurrent.ExecutionContext
 import com.github.ghik.silencer.silent
+import validation._
 
 /** Defines both the rendering and the encoding for a given datatype */
 trait WebAsk[Html, A] extends Codec[A] {
 
   def render(
-    pageKey: List[String],
-    fieldKey: List[String],
-    tell: Option[Html],
-    breadcrumbs: Breadcrumbs,
-    data: Input,
-    errors: ErrorTree,
-    messages: UniformMessages[Html]
+    pageIn: PageIn[Html],
+    stepDetails: StepDetails[Html, A],
   ): Option[Html]
 
   /** Produce a new `WebAsk` from this one by mapping the types */
@@ -33,38 +29,13 @@ trait WebAsk[Html, A] extends Codec[A] {
       def encode(in: B): Input = orig.encode(g(in))
       def decode(out: Input): Either[ErrorTree,B] = orig.decode(out) >>= f
       def render(
-        pageKey: List[String],
-        fieldKey: List[String],
-        tell: Option[Html],
-        breadcrumbs: Breadcrumbs,
-        data: Input,
-        errors: ErrorTree,
-        messages: UniformMessages[Html]
-      ): Option[Html] = orig.render(pageKey, fieldKey, tell, breadcrumbs, data, errors, messages)
+        pageIn: PageIn[Html],
+        stepDetails: StepDetails[Html, B]
+      ): Option[Html] = {
+        orig.render(pageIn, stepDetails.copy(validation = Rule.alwaysPass))
+      }
     }
   }
 
-  @silent("never used")
-  def getPage(
-    key: List[String],
-    tell: Option[Html],    
-    state: DB,
-    existing: Input,
-    breadcrumbs: Breadcrumbs,
-    messages: UniformMessages[Html]
-  )(implicit ec: ExecutionContext): Option[Html] =
-    render(key, key.last :: Nil, tell, breadcrumbs, existing, ErrorTree.empty, messages)
-
-  @silent("never used")  
-  def postPage(
-    key: List[String],
-    tell: Option[Html],        
-    state: DB,
-    request: Input,
-    errors: ErrorTree,
-    breadcrumbs: Breadcrumbs,
-    messages: UniformMessages[Html]
-  )(implicit ec: ExecutionContext): Option[Html] =
-    render(key, key.last :: Nil, tell, breadcrumbs, request, errors, messages)
-    def codec: Codec[A] = this
+  def codec: Codec[A] = this
 }

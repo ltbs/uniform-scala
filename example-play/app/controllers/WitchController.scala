@@ -34,17 +34,17 @@ class WitchController @Inject()(
   }
 
   implicit val tellListFam = new WebTell[Tag, WebAskList.ListingTable[Familiar]] {
-    def render(in: WebAskList.ListingTable[Familiar], key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(table(
+    def render(in: WebAskList.ListingTable[Familiar], key: List[String], pageIn: PageIn[Tag]): Option[Tag] = Some(table(
       in.value.zipWithIndex.map{case (row, index) => tr(
-        td(row.toString), td(a(href:=s"$key/edit/$index")("Edit")), td(a(href:=s"$key/delete/$index")("Delete"))
+        td(row.toString), td(a(href:=s"${key.last}/edit/$index")("Edit")), td(a(href:=s"${key.last}/delete/$index")("Delete"))
       )}
     ))
   }
 
   implicit val tellListEv = new WebTell[Tag, WebAskList.ListingTable[Evidence]] {
-    def render(in: WebAskList.ListingTable[Evidence], key: String, messages: UniformMessages[Tag]): Option[Tag] = Some(table(
+    def render(in: WebAskList.ListingTable[Evidence], key: List[String], pageIn: PageIn[Tag]): Option[Tag] = Some(table(
       in.value.zipWithIndex.map{case (row, index) => tr(
-        td(row.toString), td(a(href:=s"$key/edit/$index")("Edit")), td(a(href:=s"$key/delete/$index")("Delete"))
+        td(row.toString), td(a(href:=s"${key.last}/edit/$index")("Edit")), td(a(href:=s"${key.last}/delete/$index")("Delete"))
       )}
     ))
   }
@@ -54,7 +54,8 @@ class WitchController @Inject()(
     implicit val persistence: PersistenceEngine[Request[AnyContent]] =
       SessionPersistence("witches")
 
-    interpret(witchProgram).runSync(targetId, config = JourneyConfig(leapAhead = true)) {
+    val config = JourneyConfig(leapAhead = true, askFirstListItem = true)
+    interpret(witchProgram).runSync(targetId, config = config) {
       case WitchReport(acc, _, fam) => Ok(
         s"Thankyou for your report, ${acc.name} and their ${fam.size} familiars will now be put to death."
       )

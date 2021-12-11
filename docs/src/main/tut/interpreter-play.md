@@ -14,13 +14,6 @@ libraryDependencies +=
   "com.luketebbs.uniform" %% "interpreter-play26" % "{{ site.last-stable-version }}"
 ```
 
-Or if you are using play 2.5 -
-
-```
-libraryDependencies +=
-  "com.luketebbs.uniform" %% "interpreter-play25" % "{{ site.last-stable-version }}"
-```
-
 ## Controller Setup
 
 Next you will need to extend your controller using `PlayController`.
