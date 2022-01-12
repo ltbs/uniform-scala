@@ -150,8 +150,8 @@ lazy val commonSettings = Seq(
   licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
     "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test,
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.7" cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % "1.7.7" % Provided cross CrossVersion.full
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.8" cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % "1.7.8" % Provided cross CrossVersion.full
   )
 )
 
