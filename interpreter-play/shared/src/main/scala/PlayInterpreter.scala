@@ -45,10 +45,8 @@ trait PlayInterpreter[Html] extends Results with WebInterpreter[Html] {
     ): Future[Result] = {
       val baseUrl = request.path.dropRight(path.size)
       val id = path.split("/", -1).toList
-      
-      val data: Option[Input] = request.body.asFormUrlEncoded.map {
-        _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
-      }
+
+      val data: Option[Input] = getData(request)
 
       persistence(request) { db =>
         wm(PageIn(id, Nil, data, db, Nil, config, messages, request.queryString)) flatMap {
@@ -58,16 +56,69 @@ trait PlayInterpreter[Html] extends Results with WebInterpreter[Html] {
                 val path = baseUrl + targetPath.mkString("/")
                 (dbOut, Redirect(path)).pure[Future]
               case AskResult.Payload(html, errors, messagesOut) =>
-                val convertedBreadcrumbs = breadcrumbs.map { c => 
+                val convertedBreadcrumbs = breadcrumbs.map { c =>
                   baseUrl + c.mkString("/")
                 }
-                (db, Ok(pageChrome(breadcrumbs.head, errors, html, convertedBreadcrumbs, request, messagesOut))).pure[Future]
+                  (db, Ok(pageChrome(breadcrumbs.head, errors, html, convertedBreadcrumbs, request, messagesOut))).pure[Future]
               case AskResult.Success(result) =>
                 f(result).map{ (if (purgeStateUponCompletion) DB.empty else dbOut, _) }
             }
         }
       }
     }
-  }  
+
+    def runExecRender[B](
+      path: String,
+      purgeStateUponCompletion: Boolean = false,
+      config: JourneyConfig = JourneyConfig()
+    )(
+      exec: A => Future[B],
+      finalPath: String,
+      render: (A,B) => Html
+    )(implicit
+      request: Req,
+      persistence: PersistenceEngine[Req],
+      ec: ExecutionContext,
+      writeable: Writeable[Html],
+      messages: UniformMessages[Html],
+      codec: ltbs.uniform.common.web.Codec[(A,B)]
+    ): Future[Result] = {
+      val baseUrl = request.path.dropRight(path.size)
+      val id = path.split("/", -1).toList
+
+      val data: Option[Input] = getData(request)
+
+      persistence(request) { db =>
+        db.get(List("__final")).map(s => Input.fromUrlEncodedString(s).flatMap(codec.decode)) match {
+          case Some(Right((a,b))) if path == finalPath =>
+            val newDb = if (purgeStateUponCompletion) DB.empty else db
+            (newDb, Ok(pageChrome(id, ErrorTree.empty, Some(render(a,b)), Nil, request, messages))).pure[Future]
+          case Some(Right(_)) => (db, Redirect(finalPath)).pure[Future]
+          case None =>
+            wm(PageIn(id, Nil, data, db, Nil, config, messages, request.queryString)) flatMap {
+              case common.web.PageOut(breadcrumbs, dbOut, pageOut, _, _) =>
+                pageOut match {
+                  case AskResult.GotoPath(targetPath) =>
+                    val path = baseUrl + targetPath.mkString("/")
+                      (dbOut, Redirect(path)).pure[Future]
+                  case AskResult.Payload(html, errors, messagesOut) =>
+                    val convertedBreadcrumbs = breadcrumbs.map { c =>
+                      baseUrl + c.mkString("/")
+                    }
+                      (db, Ok(pageChrome(breadcrumbs.head, errors, html, convertedBreadcrumbs, request, messagesOut))).pure[Future]
+                  case AskResult.Success(a) =>
+                    exec(a).map { b =>
+                      (db + (List("__final") -> codec.encode((a,b)).toUrlEncodedString), Redirect(finalPath))
+                    }
+                }
+            }
+        }
+      }
+    }
+
+    protected def getData(request: Req): Option[Input] = request.body.asFormUrlEncoded.map {
+      _.map{ case (k,v) => (k.split("[.]").toList.dropWhile(_.isEmpty), v.toList) }
+    }
+  }
 
 }
