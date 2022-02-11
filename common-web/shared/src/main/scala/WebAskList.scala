@@ -9,17 +9,13 @@ trait WebAskList[Html, A] extends Primatives[Html] {
 
   import WebAskList._
 
-  def deleteConfirmationJourney(
-    allRecords: List[A],
-    deletionIndex: Int
-  ): WebMonad[Html, Boolean] = true.pure[WebMonad[Html, *]]
-
   def menuPage: WebInteraction[Html, ListingTable[A], WebAskList.ListAction]
   implicit def codec: Codec[List[A]]
 
   def apply(
     key: String,
     askJourney: (Option[Int], List[A]) => WebMonad[Html,A],
+    deleteConfirmationJourney: (Int, List[A]) => WebMonad[Html,Boolean],
     default: Option[List[A]],
     validation: Rule[List[A]],
     customContent: Map[String,(String, List[Any])],
@@ -82,7 +78,7 @@ trait WebAskList[Html, A] extends Primatives[Html] {
             case ListAction.Delete(index) =>
               subjourneyWM(_.copy(leapAhead = false), Seq(key, "delete") :_ *)(for {
                 _ <- pushBreadcrumb(key.split("/").toList)
-                confirm <- deleteConfirmationJourney(data, index)
+                confirm <- deleteConfirmationJourney(index, data)
                 _ <- confirm match {
                   case true =>
                     db(List(s"${key}-zzdata")) = data.deleteAtIndex(index)
