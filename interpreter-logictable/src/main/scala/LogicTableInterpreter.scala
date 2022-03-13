@@ -11,6 +11,7 @@ object LogicTableInterpreter extends MonadInterpreter[Logic, LTInteraction, Samp
   override def askListImpl[A](
     key: String,
     askJourney: (Option[Int], List[A]) => Logic[A],
+    deleteJourney: (Int, List[A]) => Logic[Boolean],
     default: Option[List[A]],
     validation: Rule[List[A]],
     customContent: Map[String,(String, List[Any])],
