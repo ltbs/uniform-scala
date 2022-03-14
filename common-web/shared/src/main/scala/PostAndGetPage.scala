@@ -69,7 +69,6 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
     def apply(pageInPreLeapPoint: PageIn[Html])(implicit ec: ExecutionContext): Future[PageOut[Html, A]] = {
       val (pageIn, leapAhead) = trackLeapPoint(pageInPreLeapPoint, id)
 //      import pageIn.{messages => _, _}
-
       val messages = pageIn.messages.withCustomContent(customContent)
       val currentId = pageIn.pathPrefix :+ id
 
@@ -78,7 +77,7 @@ trait PostAndGetPage[Html, T, A] extends WebInteraction[Html, T, A] {
 
       lazy val dbObject: Option[Either[ErrorTree,A]] = {
         val fromState = dbInput map {_ >>= codec.decode >>= validation.either}
-        if (leapAhead) {
+        if (leapAhead || pageIn.config.defaultAsEntry) {
           fromState orElse default.map(validation.either)
         } else {
           fromState
