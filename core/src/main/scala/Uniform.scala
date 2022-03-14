@@ -16,7 +16,7 @@ trait Uniform[-R <: Needs[_, _], -T, +A] {
     * ask[Salary]("salary") when user.isEmployed
     * }}}
     */
-  def when(predicate: => Boolean): Uniform[R, T, Option[A]] = 
+  def when(predicate: => Boolean): Uniform[R, T, Option[A]] =
     if (predicate) this.map(x => Some(x)) else Uniform.Pure[Option[A]](None: Option[A])
 
   /** Returns None unless the predicate given is true, will short
@@ -57,7 +57,7 @@ trait Uniform[-R <: Needs[_, _], -T, +A] {
     * ask[Salary]("salary") emptyUnless user.isEmployed
     * }}}
     */
-  def emptyUnless[B >: A](predicate: => Boolean)(implicit mon: cats.Monoid[B]): Uniform[R, T, B] = 
+  def emptyUnless[B >: A](predicate: => Boolean)(implicit mon: cats.Monoid[B]): Uniform[R, T, B] =
     if (predicate) this else pure(mon.empty)
 
   /** Returns monoid empty unless the predicate given is true, will short
@@ -97,7 +97,7 @@ object Uniform {
   case class Map[-R <: Needs[_, _], T, A, +B](base: Uniform[R, T, A], f: A => B) extends Uniform[R, T, B]
 
   case class FlatMap[R <: Needs[_, _], -R2 <: R, T, A, +B](base: Uniform[R, T, A], f: A => Uniform[R2, T, B]) extends Uniform[R2, T, B]
-  
+
   case class Interact[T, A](
     key: String,
     value: T,
@@ -124,7 +124,7 @@ object Uniform {
       customContent = customContent + ((from,(to, args.toList)))
     )
 
-    override def toString = s"Uniform[..., ${tag.tag}, Nothing]"    
+    override def toString = s"Uniform[..., ${tag.tag}, Nothing]"
 
   }
 
@@ -135,14 +135,17 @@ object Uniform {
     base: Uniform[R, T, A]
   ) extends Uniform[R, T, A]
 
-  case class ListOf[-R <: Needs[_, _], A](
+  case class ListOf[-R <: Needs[_, _], A, T1, T2](
     key: String,
-    base: (Option[Int], List[A]) => Uniform[R, Unit, A],
+    base: (Option[Int], List[A]) => Uniform[R, T1, A],
+    deleteConfirmation: (Int, List[A]) => Uniform[R, T2, Boolean],
     default: Option[List[A]],
     validation: Rule[List[A]],
     customContent: IMap[String,(String,List[Any])],
-    tag: Tag[A]
-  ) extends Uniform[R with Needs.AskList[A], Any, List[A]]
+    tag: Tag[A],
+    tagt1: Tag[T1],
+    tagt2: Tag[T2]
+  ) extends Uniform[R with Needs.AskList[A], T1, List[A]]
 
   object ListOf {
 
@@ -159,10 +162,10 @@ object Uniform {
   }
 
   case class Convert[F[_], A](
-    key: String, 
+    key: String,
     action: () => F[A],
     tagF: TagK[F],
-    tagA: Tag[A]    
+    tagA: Tag[A]
   ) extends Uniform[Needs.Convert[F, A], Unit, A]
 
   // R -> Uniform Type (asks, tells and converts)

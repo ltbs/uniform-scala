@@ -33,6 +33,7 @@ object ListInterpreter extends MonadInterpreter[List, Example, Noop] {
   override def askListImpl[A](
     key: String,
     askJourney: (Option[Int], List[A]) => List[A],
+    deleteJourney: (Int, List[A]) => List[Boolean],
     default: Option[List[A]],
     validation: Rule[List[A]],
     customContent: Map[String,(String,List[Any])],    

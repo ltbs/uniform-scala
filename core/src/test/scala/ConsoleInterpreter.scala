@@ -84,6 +84,7 @@ case class ConsoleInterpreter() extends MonadInterpreter[IO, ConsoleInteract, Co
   override def askListImpl[A](
     key: String,
     askJourney: (Option[Int], List[A]) => IO[A],
+    deleteJourney: (Int, List[A]) => IO[Boolean],
     default: Option[List[A]], 
     validation: Rule[List[A]],
     customContent: Map[String,(String,List[Any])],    

@@ -35,12 +35,13 @@ trait WebInterpreter[Html] extends Primatives[Html] with MonadInterpreter [
   override def askListImpl[A](
     key: String,
     askJourney: (Option[Int], List[A]) => WebMonad[Html,A],
+    customDelete: (Int, List[A]) => WebMonad[Html,Boolean],
     default: Option[List[A]],
     validation: Rule[List[A]],
     customContent: Map[String,(String, List[Any])],
     asker: WebAskList[Html,A]
   ): WebMonad[Html, List[A]] =
-    asker(key, askJourney, default, validation, customContent)
+    asker(key, askJourney, customDelete, default, validation, customContent)
 
   override def nonReturnImpl(
     nonReturn: Uniform.NonReturn
