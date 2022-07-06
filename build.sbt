@@ -165,7 +165,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "org.typelevel" %%% "simulacrum" % "1.0.1",
       "dev.zio" %%% "izumi-reflect" % "1.1.3",
-      "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.3.4" )  % "test"
+      "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.3.13" )  % "test"
     ) ++ macroDependencies(scalaVersion.value),
     console / initialCommands := List(
       "import cats.implicits._",
