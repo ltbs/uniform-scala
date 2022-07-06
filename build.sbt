@@ -251,7 +251,7 @@ lazy val `interpreter-js` = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "2.0",
+    libraryDependencies += "org.querki" %%% "jquery-facade" % "2.1",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
   )
   .enablePlugins(ScalaJSPlugin)
@@ -308,7 +308,7 @@ lazy val `example-js` = project
     scalaJSUseMainModuleInitializer := true,
     crossScalaVersions ~= {_.filter{_.startsWith("2.12")}},
     libraryDependencies ++= Seq(
-      "org.querki" %%% "jquery-facade" % "2.0",
+      "org.querki" %%% "jquery-facade" % "2.1",
       "org.scala-js" %%% "scalajs-java-time" % "1.0.0",
       "com.lihaoyi" %%% "scalatags" % "0.9.1"
     )
