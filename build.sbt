@@ -185,7 +185,7 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "com.propensive" %%% "magnolia" % (if (scalaVersion.value.startsWith("2.11")) "0.10.0" else "0.17.0" ),
-      "org.portable-scala" %%% "portable-scala-reflect" % "1.1.1"
+      "org.portable-scala" %%% "portable-scala-reflect" % "1.1.2"
     ) ++ macroDependencies(scalaVersion.value)
   )
 
