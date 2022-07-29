@@ -32,9 +32,10 @@ trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[
   protected def askListImpl[A](
     key: String,
     askJourney: (Option[Int], List[A]) => F[A],
+    deleteJourney: (Int, List[A]) => F[Boolean],
     default: Option[List[A]],
     validation: Rule[List[A]],
-    customContent: Map[String,(String,List[Any])],    
+    customContent: Map[String,(String,List[Any])],
     asker: ASKLISTTC[A]
   ): F[List[A]]
 
@@ -44,10 +45,10 @@ trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[
   ): F[Unit] = monadInstance.pure(())
 
   @silent("erasure") override def interpretImpl[H <: Needs[_,_], T: Tag, A: Tag, E[_]](
-    program: Uniform[H, T, A], 
+    program: Uniform[H, T, A],
     interactMap: Map[(LightTypeTag, LightTypeTag), INTERACTTC[_,_]],
     convertMap: Map[(LightTypeTag, LightTypeTag), Any],
-    listAskMap: Map[LightTypeTag, ASKLISTTC[_]] 
+    listAskMap: Map[LightTypeTag, ASKLISTTC[_]]
   ): F[A] = {
     program match {
       case U.Map(base, f) =>
@@ -81,17 +82,18 @@ trait MonadInterpreter[F[_], INTERACTTC[_,_], ASKLISTTC[_]] extends Interpreter[
         subjourneyImpl(path, interpretImpl(inner, interactMap, convertMap, listAskMap))
       case U.Convert(key, action, tagF, tagA) =>
         convertImpl[E, A](
-          key, 
+          key,
           action.asInstanceOf[() => E[A]],
           convertMap((tagF.tag, tagA.tag)).asInstanceOf[Converter[E, F, A]]
         )
-      case U.ListOf(key, base, default, validation, customContent, tag: Tag[A]) =>
+      case U.ListOf(key, base, customDelete, default, validation, customContent, tag: Tag[A], tagt1, tagt2) =>
         val x: F[List[A]] = askListImpl[A](
           key,
           (index, existing) => interpretImpl(base(index, existing), interactMap, convertMap, listAskMap),
+          (index, existing) => interpretImpl(customDelete(index, existing), interactMap, convertMap, listAskMap),
           default,
           validation,
-          customContent, 
+          customContent,
           listAskMap(tag.tag).asInstanceOf[ASKLISTTC[A]]
         )
         x.map(identity)

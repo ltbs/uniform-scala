@@ -39,33 +39,28 @@ object ConsoleTell {
   }
 }
 
-case class ConsoleInterpreter() extends MonadInterpreter[Either[String,+?], ConsoleAsk, ConsoleTell, ConsoleAsk] {
+case class ConsoleInteract[T,A](teller: ConsoleTell[T], asker: ConsoleAsk[A])
+
+case class ConsoleInterpreter() extends MonadInterpreter[Either[String,+?], ConsoleInteract, ConsoleAsk] {
 
   def monadInstance = implicitly[cats.Monad[Either[String,+?]]]
 
-  override def askImpl[A](
+  override def interactImpl[T, A](
     key: String,
+    tellValue: T,
     default: Option[A],
-    validation: Rule[A],
-    customContent: Map[String,(String,List[Any])],
-    asker: ConsoleAsk[A]
-  ): Either[String, A] = asker(key, default, validation)
-
-  override def tellImpl[T](
-    key: String,
-    value: T,
-    customContent: Map[String,(String,List[Any])],
-    teller: ConsoleTell[T]
-  ): Either[String,Unit] = Right(teller(key, value))
-
-  override def endImpl(
-    key: String,
-    customContent: Map[String,(String,List[Any])]
-  ): Either[String, Nothing] = Left(s"End of journey: $key")
+    validation: ltbs.uniform.validation.Rule[A],
+    customContent: Map[String,(String, List[Any])],
+    interaction: ConsoleInteract[T,A]
+  ): Either[String, A] = { 
+    interaction.teller(key, tellValue) 
+    interaction.asker(key, default, validation)
+  }
 
   override def askListImpl[A](
     key: String,
     askJourney: (Option[Int], List[A]) => Either[String,A],
+    deleteJourney: (Int, List[A]) => Either[String, Boolean],
     default: Option[List[A]],
     validation: Rule[List[A]],
     customContent: Map[String,(String,List[Any])],
