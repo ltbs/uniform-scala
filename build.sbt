@@ -150,8 +150,8 @@ lazy val commonSettings = Seq(
   licenses += ("GPL-3.0", url("https://www.gnu.org/licenses/gpl-3.0.en.html")),
   libraryDependencies ++= Seq(
     "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test,
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.7" cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % "1.7.7" % Provided cross CrossVersion.full
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.9" cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % "1.7.9" % Provided cross CrossVersion.full
   )
 )
 
@@ -161,11 +161,11 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "2.7.0"),
+      "org.typelevel" %%% "cats-core" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "2.8.0"),
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "org.typelevel" %%% "simulacrum" % "1.0.1",
       "dev.zio" %%% "izumi-reflect" % "1.1.3",
-      "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.3.4" )  % "test"
+      "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.3.14" )  % "test"
     ) ++ macroDependencies(scalaVersion.value),
     console / initialCommands := List(
       "import cats.implicits._",
@@ -185,7 +185,7 @@ lazy val `common-web` = crossProject(JSPlatform, JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "com.propensive" %%% "magnolia" % (if (scalaVersion.value.startsWith("2.11")) "0.10.0" else "0.17.0" ),
-      "org.portable-scala" %%% "portable-scala-reflect" % "1.1.1"
+      "org.portable-scala" %%% "portable-scala-reflect" % "1.1.2"
     ) ++ macroDependencies(scalaVersion.value)
   )
 
@@ -251,7 +251,7 @@ lazy val `interpreter-js` = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.querki" %%% "jquery-facade" % "2.0",
+    libraryDependencies += "org.querki" %%% "jquery-facade" % "2.1",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
   )
   .enablePlugins(ScalaJSPlugin)
@@ -308,7 +308,7 @@ lazy val `example-js` = project
     scalaJSUseMainModuleInitializer := true,
     crossScalaVersions ~= {_.filter{_.startsWith("2.12")}},
     libraryDependencies ++= Seq(
-      "org.querki" %%% "jquery-facade" % "2.0",
+      "org.querki" %%% "jquery-facade" % "2.1",
       "org.scala-js" %%% "scalajs-java-time" % "1.0.0",
       "com.lihaoyi" %%% "scalatags" % "0.9.1"
     )
