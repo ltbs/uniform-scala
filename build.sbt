@@ -164,7 +164,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.typelevel" %%% "cats-core" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "2.8.0"),
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "1.1.2",
       "org.typelevel" %%% "simulacrum" % "1.0.1",
-      "dev.zio" %%% "izumi-reflect" % "1.1.3",
+      "dev.zio" %%% "izumi-reflect" % "2.2.2",
       "org.typelevel" %%% "cats-effect" % (if (scalaVersion.value.startsWith("2.11")) "2.0.0" else "3.3.14" )  % "test"
     ) ++ macroDependencies(scalaVersion.value),
     console / initialCommands := List(
