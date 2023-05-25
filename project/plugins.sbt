@@ -5,7 +5,7 @@ resolvers ++= Seq(
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.10.1")
 
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.13")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.21")
 
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.2-1")
 
