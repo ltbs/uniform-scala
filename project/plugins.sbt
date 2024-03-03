@@ -30,5 +30,5 @@ addSbtPlugin("com.typesafe.play" % "sbt-twirl" % "1.6.5")
 // ========================================
 // https://github.com/sbt/sbt/issues/5107
 resolvers += "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.9.2") 
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.3") 
 // ========================================
