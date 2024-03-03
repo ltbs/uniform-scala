@@ -17,7 +17,7 @@ addSbtPlugin("com.47deg"  % "sbt-microsites" % "1.4.4")
 
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.3.8")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
+addSbtPlugin("com.github.sbt" % "sbt-ghpages" % "0.8.0")
 
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.9.2")
 
